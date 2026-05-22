@@ -1,0 +1,88 @@
+name: Sync knowledge bases
+
+# Weekly refresh of the integrated knowledge bases:
+#   - GTFOBins      → commands/gtfobins/
+#   - LOLBAS        → commands/lolbas/
+#   - reverse-shell-generator → commands/payloads/
+#   - HackTricks    → js/hacktricks-index.js + js/hacktricks-tag-map.js (Phase 6)
+#
+# Rebuilds js/commands.js and js/chains.js, validates, and opens a single PR
+# with the diff.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'   # every Monday at 06:00 UTC
+  workflow_dispatch:       # manual run from the Actions tab
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Sync GTFOBins
+        run: node scripts/sync-gtfobins.js
+
+      - name: Sync LOLBAS
+        run: node scripts/sync-lolbas.js
+
+      - name: Sync reverse-shell-generator
+        run: node scripts/sync-rsg.js
+
+      - name: Sync HackTricks
+        # Allow to fail in case of upstream layout changes; the other KBs still ship.
+        continue-on-error: true
+        run: node scripts/sync-hacktricks.js
+
+      - name: Validate
+        run: npm run validate
+
+      - name: Build
+        run: npm run build
+
+      - name: Open / update PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(kb): weekly KB sync"
+          title: "KB sync — ${{ github.event.schedule || 'manual' }}"
+          body: |
+            Automated weekly refresh of integrated knowledge bases.
+
+            **Sources**
+            - GTFOBins (`scripts/sync-gtfobins.js`)
+            - LOLBAS   (`scripts/sync-lolbas.js`)
+            - reverse-shell-generator (`scripts/sync-rsg.js`)
+            - HackTricks (`scripts/sync-hacktricks.js`, may be skipped on upstream layout changes)
+
+            Inspect the file changes in `commands/gtfobins/`, `commands/lolbas/`,
+            `commands/payloads/`, `js/commands.js`, and the HackTricks index files.
+
+            If anything looks suspicious (mass deletions, structural changes,
+            unexpected categories), close this PR without merging and bump the
+            sync script versions.
+          branch: kb-sync/auto
+          delete-branch: true
+          add-paths: |
+            commands/gtfobins/**
+            commands/lolbas/**
+            commands/payloads/**
+            commands/_archived/**
+            js/commands.js
+            js/chains.js
+            js/hacktricks-index.js
+            js/hacktricks-tag-map.js

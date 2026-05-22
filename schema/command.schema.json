@@ -84,6 +84,34 @@
       }
     },
     "category": { "type": "string" },
-    "subcategory": { "type": "string" }
+    "subcategory": { "type": "string" },
+    "source": {
+      "type": "string",
+      "enum": ["manual", "gtfobins", "lolbas", "rsg", "hacktricks"],
+      "description": "Where this command originated. Absent = manual (hand-authored)."
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Upstream URL for sync-sourced commands (link back to the original page)."
+    },
+    "upstream_id": {
+      "type": "string",
+      "description": "Stable upstream identifier (binary/function/payload key) used by the sync script to detect updates vs additions."
+    },
+    "related_hacktricks": {
+      "type": "array",
+      "description": "Auto-populated by the build step (Phase 6) when HackTricks tags match this command's tags.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "url"],
+        "properties": {
+          "title":  { "type": "string", "minLength": 1 },
+          "url":    { "type": "string", "format": "uri" },
+          "anchor": { "type": "string" }
+        }
+      }
+    }
   }
 }

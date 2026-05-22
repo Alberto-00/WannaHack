@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WannaHack - Chain Editor</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="js/vendor/drawflow.min.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' fill='%23ff4757' viewBox='0 0 24 24' width='48' height='48'><path d='m6.75 7.5 3 2.25-3 2.25m4.5 0h3m-9 8.25h13.5A2.25 2.25 0 0 0 21 18V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v12a2.25 2.25 0 0 0 2.25 2.25Z' stroke='%23ffffff' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round' fill='%23ff4757'/></svg>">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-mono, 'JetBrains Mono', monospace);
+            background: var(--bg-board, #0d1117);
+            color: var(--text-primary, #c9d1d9);
+            overflow: hidden;
+            height: 100vh;
+        }
+        .ce-shell { display: flex; flex-direction: column; height: 100vh; }
+        .ce-topbar {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: var(--bg-panel, #161b22);
+            border-bottom: 1px solid var(--border-default, #30363d);
+        }
+        .ce-topbar h1 { margin: 0; font-size: 1.1em; color: var(--accent-primary, #ff4757); }
+        .ce-topbar .ce-spacer { flex: 1; }
+        .ce-btn {
+            background: var(--bg-elevated, #21262d);
+            border: 1px solid var(--border-default, #30363d);
+            color: var(--text-primary, #c9d1d9);
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: inherit;
+            font-size: 0.85em;
+        }
+        .ce-btn:hover { border-color: var(--accent-info, #1e90ff); }
+        .ce-btn-primary {
+            background: var(--accent-primary, #ff4757);
+            border-color: var(--accent-primary, #ff4757);
+            color: #fff;
+        }
+        .ce-btn-primary:hover { background: #ff6b78; }
+        .ce-body { flex: 1; display: flex; min-height: 0; }
+        .ce-palette {
+            width: 280px;
+            background: var(--bg-panel, #161b22);
+            border-right: 1px solid var(--border-default, #30363d);
+            display: flex;
+            flex-direction: column;
+        }
+        .ce-palette-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-default, #30363d);
+        }
+        .ce-palette-search {
+            width: 100%;
+            background: var(--bg-elevated, #21262d);
+            border: 1px solid var(--border-default, #30363d);
+            color: var(--text-primary, #c9d1d9);
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.85em;
+        }
+        .ce-palette-list {
+            flex: 1;
+            overflow: auto;
+            padding: 8px 10px;
+        }
+        .ce-palette-cat {
+            margin-bottom: 10px;
+        }
+        .ce-palette-cat h4 {
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted, #6e7681);
+            margin: 4px 0;
+        }
+        .ce-palette-item {
+            background: var(--bg-elevated, #21262d);
+            border: 1px solid var(--border-default, #30363d);
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 3px;
+            cursor: grab;
+            font-size: 0.8em;
+            color: var(--text-primary, #c9d1d9);
+            user-select: none;
+        }
+        .ce-palette-item:hover { border-color: var(--accent-primary, #ff4757); }
+        .ce-palette-item:active { cursor: grabbing; }
+        .ce-palette-item .ce-palette-item-id {
+            display: block;
+            font-size: 0.85em;
+            color: var(--text-muted, #6e7681);
+        }
+        .ce-canvas-wrap { flex: 1; position: relative; }
+        #drawflow {
+            width: 100%;
+            height: 100%;
+            background: var(--bg-board, #0d1117);
+            background-image:
+                radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+        .ce-inspector {
+            width: 320px;
+            background: var(--bg-panel, #161b22);
+            border-left: 1px solid var(--border-default, #30363d);
+            display: flex;
+            flex-direction: column;
+        }
+        .ce-inspector-header {
+            padding: 10px 12px;
+            border-bottom: 1px solid var(--border-default, #30363d);
+        }
+        .ce-inspector-header h2 { margin: 0; font-size: 0.9em; color: var(--accent-info, #1e90ff); text-transform: uppercase; letter-spacing: 0.06em; }
+        .ce-inspector-body { flex: 1; overflow: auto; padding: 10px 12px; }
+        .ce-field { margin-bottom: 10px; }
+        .ce-field label {
+            display: block;
+            font-size: 0.7em;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted, #6e7681);
+            margin-bottom: 3px;
+        }
+        .ce-field input, .ce-field textarea, .ce-field select {
+            width: 100%;
+            background: var(--bg-elevated, #21262d);
+            border: 1px solid var(--border-default, #30363d);
+            color: var(--text-primary, #c9d1d9);
+            padding: 6px 8px;
+            border-radius: 3px;
+            font-family: inherit;
+            font-size: 0.8em;
+            box-sizing: border-box;
+        }
+        .ce-field textarea { resize: vertical; min-height: 60px; }
+
+        /* Drawflow node theming — minimal, on top of vendored CSS */
+        .drawflow .drawflow-node {
+            background: var(--bg-panel, #161b22);
+            border: 1px solid var(--border-default, #30363d);
+            border-radius: 6px;
+            color: var(--text-primary, #c9d1d9);
+            font-family: var(--font-mono, monospace);
+            padding: 8px 14px;
+            min-width: 180px;
+        }
+        .drawflow .drawflow-node.selected { border-color: var(--accent-primary, #ff4757); }
+        .drawflow .drawflow-node .ce-node-title { font-weight: 600; font-size: 0.85em; }
+        .drawflow .drawflow-node .ce-node-meta { font-size: 0.7em; color: var(--text-muted, #6e7681); margin-top: 3px; }
+        .drawflow .input, .drawflow .output {
+            background: var(--accent-info, #1e90ff);
+            border: 2px solid var(--bg-panel, #161b22);
+        }
+        .drawflow .connection .main-path { stroke: var(--accent-info, #1e90ff); }
+
+        /* YAML import/export modal */
+        .ce-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9000;
+        }
+        .ce-modal.open { display: flex; }
+        .ce-modal-panel {
+            background: var(--bg-panel, #161b22);
+            border: 1px solid var(--border-default, #30363d);
+            border-radius: 6px;
+            padding: 16px;
+            width: 680px;
+            max-width: 92vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .ce-modal-panel h2 { margin: 0 0 8px 0; color: var(--accent-primary, #ff4757); }
+        .ce-modal-panel textarea {
+            flex: 1;
+            min-height: 380px;
+            background: var(--bg-board, #0d1117);
+            border: 1px solid var(--border-default, #30363d);
+            color: var(--text-primary, #c9d1d9);
+            padding: 10px;
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 0.85em;
+            resize: vertical;
+        }
+        .ce-modal-actions { margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end; }
+        .ce-helper {
+            font-size: 0.75em;
+            color: var(--text-muted, #6e7681);
+            margin-top: 4px;
+        }
+        .ce-empty { color: var(--text-muted, #6e7681); padding: 20px; text-align: center; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="ce-shell">
+        <header class="ce-topbar">
+            <h1>🛠️ WannaHack - Chain Editor</h1>
+            <span class="ce-helper">Drag a command from the palette to the canvas. Connect outputs → inputs to declare variable flow.</span>
+            <span class="ce-spacer"></span>
+            <button class="ce-btn" id="ce-new">🆕 New chain</button>
+            <button class="ce-btn" id="ce-import">📁 Import YAML</button>
+            <button class="ce-btn ce-btn-primary" id="ce-export">💾 Export YAML</button>
+            <a class="ce-btn" href="index.html">← Back to app</a>
+        </header>
+        <div class="ce-body">
+            <aside class="ce-palette">
+                <div class="ce-palette-header">
+                    <input class="ce-palette-search" id="ce-palette-search" placeholder="Filter commands…" autocomplete="off">
+                </div>
+                <div class="ce-palette-list" id="ce-palette-list"></div>
+            </aside>
+            <div class="ce-canvas-wrap">
+                <div id="drawflow"></div>
+            </div>
+            <aside class="ce-inspector">
+                <header class="ce-inspector-header">
+                    <h2>Chain metadata</h2>
+                </header>
+                <div class="ce-inspector-body">
+                    <div class="ce-field">
+                        <label for="ce-chain-id">Chain ID (kebab-case)</label>
+                        <input type="text" id="ce-chain-id" placeholder="my-new-chain" autocomplete="off">
+                    </div>
+                    <div class="ce-field">
+                        <label for="ce-chain-name">Display name</label>
+                        <input type="text" id="ce-chain-name" placeholder="What this chain accomplishes" autocomplete="off">
+                    </div>
+                    <div class="ce-field">
+                        <label for="ce-chain-desc">Description</label>
+                        <textarea id="ce-chain-desc" rows="3" placeholder="2-3 sentence summary"></textarea>
+                    </div>
+                    <div class="ce-field">
+                        <label for="ce-chain-tags">Tags (comma separated)</label>
+                        <input type="text" id="ce-chain-tags" placeholder="kerberos, lateral-movement" autocomplete="off">
+                    </div>
+                    <div class="ce-field">
+                        <label for="ce-chain-difficulty">Difficulty</label>
+                        <select id="ce-chain-difficulty">
+                            <option value="">—</option>
+                            <option value="easy">easy</option>
+                            <option value="medium">medium</option>
+                            <option value="hard">hard</option>
+                        </select>
+                    </div>
+                    <hr style="border: 0; border-top: 1px solid var(--border-default, #30363d); margin: 14px 0;">
+                    <h3 style="font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted, #6e7681); margin: 0 0 6px 0;">Selected step</h3>
+                    <div id="ce-step-inspector"><div class="ce-empty">Click a node on the canvas to edit its capture/requires/inputs.</div></div>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div class="ce-modal" id="ce-yaml-modal">
+        <div class="ce-modal-panel">
+            <h2 id="ce-yaml-title">Export YAML</h2>
+            <p class="ce-helper">Copy this into <code>chains/&lt;chain-id&gt;.yaml</code>, run <code>npm run validate</code> and <code>npm run build</code>, then reload the app.</p>
+            <textarea id="ce-yaml-text" spellcheck="false"></textarea>
+            <div class="ce-modal-actions">
+                <button class="ce-btn" id="ce-yaml-close">Close</button>
+                <button class="ce-btn ce-btn-primary" id="ce-yaml-copy">📋 Copy</button>
+                <button class="ce-btn ce-btn-primary" id="ce-yaml-load" style="display:none;">Load into editor</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/vendor/drawflow.min.js"></script>
+    <script src="js/vendor/js-yaml.min.js"></script>
+    <script src="js/commands.js"></script>
+    <script src="js/chains.js"></script>
+    <script src="js/chain-editor.js"></script>
+</body>
+</html>

@@ -71,5 +71,55 @@
       "network-setup": "Network & Time Setup",
       "shell-helpers": "Shell Helpers"
     }
+  },
+  "gtfobins": {
+    "name": "🐧 GTFOBins (Unix bin abuse)",
+    "subcategories": {
+      "shell": "Shell",
+      "command": "Command",
+      "reverse-shell": "Reverse Shell",
+      "bind-shell": "Bind Shell",
+      "file-upload": "File Upload",
+      "file-download": "File Download",
+      "file-write": "File Write",
+      "file-read": "File Read",
+      "library-load": "Library Load",
+      "sudo": "Sudo",
+      "suid": "SUID",
+      "capabilities": "Capabilities",
+      "limited-suid": "Limited SUID",
+      "non-interactive-reverse-shell": "Non-interactive Reverse Shell",
+      "non-interactive-bind-shell": "Non-interactive Bind Shell"
+    }
+  },
+  "lolbas": {
+    "name": "🪟 LOLBAS (Windows bin abuse)",
+    "subcategories": {
+      "execute": "Execute",
+      "download": "Download",
+      "upload": "Upload",
+      "credentials": "Credentials",
+      "encode": "Encode",
+      "decode": "Decode",
+      "awl-bypass": "AWL Bypass",
+      "uac-bypass": "UAC Bypass",
+      "copy": "Copy",
+      "compile": "Compile",
+      "dump": "Dump",
+      "ads": "Alternate Data Streams",
+      "reconnaissance": "Reconnaissance",
+      "misc": "Misc"
+    }
+  },
+  "payloads": {
+    "name": "💣 Reverse / Bind Shells (RSG)",
+    "subcategories": {
+      "reverse-shell": "Reverse Shell",
+      "bind-shell": "Bind Shell",
+      "msfvenom": "MSFVenom",
+      "hoax-shell": "HoaxShell",
+      "tty-upgrade": "TTY Upgrade",
+      "misc": "Misc"
+    }
   }
 }

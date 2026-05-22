@@ -1,4 +1,7 @@
-// Command Manager - Main Application Logic
+// WannaHack - Main Application Logic
+// (Internal class names like `CommandManager` and localStorage keys prefixed
+//  `command-manager-*` are kept for backwards compatibility — see Phase 1
+//  notes in the plan. Renaming would wipe existing user profiles.)
 
 class CommandManager {
   constructor() {
@@ -199,6 +202,10 @@ class CommandManager {
     this.renderCommands();
     this.renderCommandBuilder();
     this.updateFavoritesButton();
+    // Mission Control state is per-profile too.
+    if (this.missionControl && typeof this.missionControl.reloadFromProfile === 'function') {
+      this.missionControl.reloadFromProfile();
+    }
   }
 
   // ==================== STORAGE KEY HELPER ====================
@@ -1116,8 +1123,8 @@ class CommandManager {
     if (!this.selectedCommand) {
       container.innerHTML = `
                 <div class="empty-state">
-                    <h3>🚀 Welcome to Command Manager</h3>
-                    <p>Select a command from the list to start building your penetration testing toolkit</p>
+                    <h3>🚀 Welcome to WannaHack</h3>
+                    <p>Search a command, or pick a chain to start your CTF mission</p>
                 </div>
             `;
       return;
@@ -1144,6 +1151,15 @@ class CommandManager {
       ? `<div class="platform-info">
            <span class="platform-icon">${platformIcon}</span>
            <span class="platform-name">${platformName}</span>
+         </div>`
+      : '';
+
+    // Phase 6: HackTricks context (auto-populated by build-commands.js).
+    const ht = this.selectedCommand.related_hacktricks;
+    const hacktricksSection = (Array.isArray(ht) && ht.length)
+      ? `<div class="wh-cmd-hacktricks">
+           <h4>📚 HackTricks context</h4>
+           <ul>${ht.map(r => `<li>• <a href="${this.escapeHtml(r.url)}" target="_blank" rel="noopener">${this.escapeHtml(r.title)}</a></li>`).join('')}</ul>
          </div>`
       : '';
 
@@ -1238,6 +1254,7 @@ class CommandManager {
                 }</div>
             </div>
 
+            ${hacktricksSection}
             ${referencesSection}
             ${commandLinksSection}
         `;
@@ -2689,6 +2706,16 @@ let app;
 // Initialize app when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
   app = new CommandManager();
+  // Expose for cross-module navigation (NextMoves, PivotMenu jump to commands).
+  window.commandManager = app;
+
+  // Bootstrap Mission Control on top of the existing UI. All pieces are
+  // additive — if any dependency is missing we silently skip and the legacy
+  // Commands-only UX continues to work.
+  if (window.WannaMissionControl) {
+    try { app.missionControl = new window.WannaMissionControl(app); }
+    catch (e) { console.error('[WannaHack] Mission Control failed to mount:', e); }
+  }
 
   // Setup list management modal event listeners
   setupListManagementEvents();

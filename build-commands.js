@@ -90,8 +90,55 @@ commands.sort((a, b) => {
   return a.name.localeCompare(b.name);
 });
 
+// ─── Phase 6: auto-populate related_hacktricks from the eager tag map ───
+// If `js/hacktricks-tag-map.js` exists (produced by scripts/sync-hacktricks.js)
+// we score each command's tags + id-parts against the map and attach the top N
+// pages. Skipped silently when the tag map is absent — no hard dependency.
+let autoLinked = 0;
+try {
+  const tagMapPath = path.join(__dirname, 'js', 'hacktricks-tag-map.js');
+  if (fs.existsSync(tagMapPath)) {
+    const { HACKTRICKS_TAG_MAP } = require(tagMapPath);
+    if (HACKTRICKS_TAG_MAP && typeof HACKTRICKS_TAG_MAP === 'object') {
+      const MAX_PER_COMMAND = 3;
+      const MIN_SCORE = 2;  // require either an explicit tag match or two id-token hits
+      for (const cmd of commands) {
+        // Skip if the command was authored with a curated related_hacktricks list.
+        if (Array.isArray(cmd.related_hacktricks) && cmd.related_hacktricks.length) continue;
+
+        const idTokens = String(cmd.id || '').toLowerCase().split(/[-_]/).filter((s) => s.length >= 3);
+        const tags = (cmd.tags || []).map((t) => String(t).toLowerCase());
+        const candidates = new Map(); // url -> { entry, score }
+        const consider = (tag, weight) => {
+          const pages = HACKTRICKS_TAG_MAP[tag];
+          if (!Array.isArray(pages)) return;
+          for (const p of pages) {
+            const cur = candidates.get(p.url) || { entry: p, score: 0 };
+            cur.score += weight;
+            candidates.set(p.url, cur);
+          }
+        };
+        for (const tag of tags) consider(tag, 3);     // explicit tags weigh most
+        for (const tok of idTokens) consider(tok, 1); // id-derived tokens are softer
+
+        const ranked = [...candidates.values()]
+          .filter((c) => c.score >= MIN_SCORE)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, MAX_PER_COMMAND);
+        if (ranked.length) {
+          cmd.related_hacktricks = ranked.map((r) => ({ title: r.entry.title, url: r.entry.url }));
+          autoLinked += 1;
+        }
+      }
+      console.log(`  auto-linked HackTricks pages on ${autoLinked} command(s)`);
+    }
+  }
+} catch (e) {
+  console.error('  (related_hacktricks linkage skipped: ' + e.message + ')');
+}
+
 // Generate output
-const output = `// Command Manager - Command Database
+const output = `// WannaHack - Command Database
 // AUTO-GENERATED — do not edit manually.
 // To add or modify commands, edit the JSON files in the commands/ directory.
 // Then run: node build-commands.js

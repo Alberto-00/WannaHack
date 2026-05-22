@@ -1,4 +1,43 @@
-/* Command Manager - Main Stylesheet */
+/* WannaHack - Main Stylesheet */
+
+/* ──────────────────────────────────────────────────────────────────────────
+   WAR-ROOM DESIGN TOKENS
+   Semantic color coding for the CTF mental model:
+     red    → attack / exploit / payload
+     green  → loot / captured creds / shells
+     yellow → intel / recon / target metadata
+     blue   → info / reference / neutral UI
+   Phase 1 introduces the tokens; subsequent phases migrate hardcoded colors
+   to these variables. Existing literal colors continue to work meanwhile.
+   ────────────────────────────────────────────────────────────────────────── */
+:root {
+    /* Brand & semantic accents */
+    --accent-primary:  #ff4757;   /* red    — attack / exploit */
+    --accent-loot:     #2ed573;   /* green  — captured creds / loot */
+    --accent-intel:    #ffa502;   /* yellow — recon / intel */
+    --accent-info:     #1e90ff;   /* blue   — info / reference */
+
+    /* Status pills (chain step states, etc.) */
+    --status-pending: #57606a;
+    --status-blocked: #6e7681;
+    --status-ready:   #1e90ff;
+    --status-done:    #2ed573;
+    --status-failed:  #ff4757;
+
+    /* Surfaces */
+    --bg-board:     #0d1117;
+    --bg-panel:     #161b22;
+    --bg-elevated:  #21262d;
+    --border-default: #30363d;
+
+    /* Text */
+    --text-primary:   #c9d1d9;
+    --text-secondary: #8b949e;
+    --text-muted:     #6e7681;
+
+    /* Typography */
+    --font-mono: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+}
 
 * {
     margin: 0;

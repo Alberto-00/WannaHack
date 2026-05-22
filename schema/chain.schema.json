@@ -1,0 +1,171 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/wannahack/chain.schema.json",
+  "title": "Chain",
+  "description": "Schema for a single CTF attack-chain playbook. YAML files under chains/ are loaded, validated against this schema, then bundled into js/chains.js.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "name", "description", "steps"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9-]*$",
+      "description": "Unique kebab-case identifier. Must match the filename (without extension)."
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Human-readable display name."
+    },
+    "description": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short explanation of what this chain accomplishes."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "difficulty": {
+      "type": "string",
+      "enum": ["easy", "medium", "hard"]
+    },
+    "inputs": {
+      "type": "array",
+      "description": "Variables the chain consumes from profile/context before running.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z_][a-z0-9_]*$",
+            "description": "snake_case variable name used in ${...} substitution."
+          },
+          "description": { "type": "string" },
+          "source": {
+            "type": "string",
+            "description": "Optional auto-fill source. Currently supported: target_context.<field> (ip, user, domain, password, hash, ...)."
+          },
+          "required": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "steps": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/step" }
+    },
+    "references": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "url"],
+        "properties": {
+          "title": { "type": "string", "minLength": 1 },
+          "url":   { "type": "string", "format": "uri" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]*$",
+          "description": "Step identifier, unique within the chain."
+        },
+        "name": { "type": "string" },
+        "notes": { "type": "string" },
+        "command_ref": {
+          "type": "string",
+          "description": "Id of an existing command (validated against COMMAND_DATA at validate time)."
+        },
+        "inline_command": {
+          "type": "string",
+          "description": "Escape hatch: write the command template here instead of referencing an existing one."
+        },
+        "branch": {
+          "type": "array",
+          "minItems": 2,
+          "description": "One-of selection. The runner shows a chooser; user picks which variant to execute. Exactly one of command_ref/inline_command/branch must be set per step.",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["when"],
+            "properties": {
+              "when": {
+                "type": "string",
+                "description": "Variable name whose presence enables this branch (e.g. 'password', 'hash', 'ticket')."
+              },
+              "label": { "type": "string" },
+              "command_ref":    { "type": "string" },
+              "inline_command": { "type": "string" }
+            }
+          }
+        },
+        "requires": {
+          "type": "array",
+          "description": "Variables that must be populated before this step is unblocked.",
+          "items": { "type": "string", "pattern": "^[a-z_][a-z0-9_]*$" },
+          "uniqueItems": true
+        },
+        "inputs": {
+          "type": "object",
+          "description": "Map of command placeholder (e.g. 'dc-ip', 'hash_file') to value template. Use ${var} to interpolate chain variables.",
+          "additionalProperties": { "type": ["string", "number", "boolean"] }
+        },
+        "capture": {
+          "type": "array",
+          "description": "Regex extractors run against pasted output to populate downstream variables.",
+          "items": { "$ref": "#/$defs/capture" }
+        }
+      },
+      "oneOf": [
+        { "required": ["command_ref"],    "not": { "anyOf": [{ "required": ["inline_command"] }, { "required": ["branch"] }] } },
+        { "required": ["inline_command"], "not": { "anyOf": [{ "required": ["command_ref"]    }, { "required": ["branch"] }] } },
+        { "required": ["branch"],         "not": { "anyOf": [{ "required": ["command_ref"]    }, { "required": ["inline_command"] }] } }
+      ]
+    },
+    "capture": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["var", "regex"],
+      "properties": {
+        "var": {
+          "type": "string",
+          "pattern": "^[a-z_][a-z0-9_]*$",
+          "description": "snake_case variable name to assign."
+        },
+        "regex": {
+          "type": "string",
+          "minLength": 1,
+          "description": "JavaScript-compatible regex source. Multiline by default."
+        },
+        "match": {
+          "type": "string",
+          "enum": ["first", "all"],
+          "default": "first",
+          "description": "first: single value (or first capture group); all: array of all matches."
+        },
+        "transform": {
+          "type": "string",
+          "enum": ["raw", "lines", "trim", "json"],
+          "default": "raw",
+          "description": "Post-processing applied to the matched string(s)."
+        },
+        "groups": {
+          "type": "object",
+          "description": "When set, the result is an object built from named groups. Keys = result field names, values = regex group indices (1-based).",
+          "additionalProperties": { "type": "integer", "minimum": 1 }
+        }
+      }
+    }
+  }
+}
