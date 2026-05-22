@@ -63,3 +63,11 @@ references:
     url:   "https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/"
   - title: "HackTricks — Shells (Linux)"
     url:   "https://book.hacktricks.wiki/en/generic-methodologies-and-resources/shells/linux.html"
+
+next_chains:
+  - chain: linux-priv-esc-recon
+    when:   'shell is on Linux'
+    reason: 'You''re stable — start enumeration.'
+  - chain: windows-priv-esc-recon
+    when:   'shell is on Windows'
+    reason: 'You''re stable — start enumeration.'

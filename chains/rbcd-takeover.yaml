@@ -85,3 +85,11 @@ references:
     url:   "https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html"
   - title: "HackTricks — RBCD"
     url:   "https://book.hacktricks.wiki/en/windows-hardening/active-directory-methodology/resource-based-constrained-delegation.html"
+
+next_chains:
+  - chain: dpapi-secrets-extraction
+    when:   'forged admin ticket'
+    reason: 'Loot the target with the fresh admin ticket.'
+  - chain: ad-persistence-golden-ticket
+    when:   'target was DC'
+    reason: 'Take a Golden Ticket out before cleanup.'

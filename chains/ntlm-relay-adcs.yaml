@@ -81,3 +81,11 @@ references:
     url:   "https://github.com/p0dalirius/Coercer"
   - title: "Certipy"
     url:   "https://github.com/ly4k/Certipy"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'dc_nt_hash captured'
+    reason: 'DA hash → Golden Ticket.'
+  - chain: pth-lateral-spread
+    when:   'dc_nt_hash captured'
+    reason: 'Spread the DA hash.'

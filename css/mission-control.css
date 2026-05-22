@@ -679,3 +679,51 @@ html[data-theme="light"] .wh-cmd-hacktricks { background: rgba(30,144,255,0.08);
 /* Help overlay (the built-in HotkeyManager modal already styles itself inline;
    nothing to add — but ensure code/kbd inherit the war-room theme.) */
 kbd { font-family: var(--font-mono); }
+
+/* ────── Attack-tree hops at the end of a chain ────── */
+.wh-chain-next-section {
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--border-default);
+}
+.wh-chain-next-title {
+    margin: 0 0 10px 0;
+    color: var(--accent-loot);
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+.wh-chain-next-list { list-style: none; padding: 0; margin: 0; }
+.wh-chain-next-item {
+    background: var(--bg-panel);
+    border: 1px solid var(--border-default);
+    border-left: 3px solid var(--accent-loot);
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin-bottom: 6px;
+}
+.wh-chain-next-item:hover { border-color: var(--accent-loot); background: var(--bg-elevated); }
+.wh-chain-next-btn {
+    background: transparent;
+    border: 0;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 0.95em;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    text-align: left;
+}
+.wh-chain-next-btn:hover { color: var(--accent-loot); }
+.wh-chain-next-arrow { color: var(--accent-loot); margin-right: 4px; }
+.wh-chain-next-when {
+    color: var(--accent-intel);
+    font-size: 0.75em;
+    margin-top: 4px;
+    font-style: italic;
+}
+.wh-chain-next-reason {
+    color: var(--text-secondary);
+    font-size: 0.8em;
+    margin-top: 4px;
+}

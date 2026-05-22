@@ -61,3 +61,10 @@ references:
     url:   "https://itm4n.github.io/printspoofer-abusing-impersonate-privileges/"
   - title: "GodPotato"
     url:   "https://github.com/BeichenDream/GodPotato"
+
+next_chains:
+  - chain: dpapi-secrets-extraction
+    reason: 'SYSTEM → secretsdump locally, pull every user''s DPAPI.'
+  - chain: pth-lateral-spread
+    when:   'NTLM hashes captured locally'
+    reason: 'New identities → lateral movement.'

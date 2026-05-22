@@ -64,3 +64,8 @@ references:
     url:   "https://gtfobins.github.io/#+suid"
   - title: "HackTricks — SUID escalation"
     url:   "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html#suid"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'rooted shell is messy'
+    reason: 'Upgrade the new root shell.'

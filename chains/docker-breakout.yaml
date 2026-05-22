@@ -66,3 +66,7 @@ references:
     url:   "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/interesting-groups-linux-pe/index.html#lxd-group"
   - title: "Container escape patterns"
     url:   "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/docker-security/docker-breakout-privilege-escalation/index.html"
+
+next_chains:
+  - chain: shell-stabilization
+    reason: 'Host shells almost always need a TTY upgrade.'

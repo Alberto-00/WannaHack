@@ -66,3 +66,14 @@ references:
     url:   "https://gtfobins.github.io/"
   - title: "HackTricks — Linux PE"
     url:   "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html"
+
+next_chains:
+  - chain: sudo-gtfobins-escalation
+    when:   'sudo_allowed populated'
+    reason: 'sudo -l returned anything → GTFOBins lookup.'
+  - chain: suid-binary-escalation
+    when:   'suid_binaries populated'
+    reason: 'SUID binaries → check each against GTFOBins.'
+  - chain: docker-breakout
+    when:   'user is in docker or lxd group'
+    reason: 'Group membership = root.'

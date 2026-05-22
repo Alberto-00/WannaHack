@@ -62,3 +62,11 @@ references:
     url:   "https://www.thehacker.recipes/ad/movement/kerberos/kerberoast"
   - title: "Impacket secretsdump"
     url:   "https://github.com/fortra/impacket/blob/master/examples/secretsdump.py"
+
+next_chains:
+  - chain: pth-lateral-spread
+    when:   'cracked_service_creds captured'
+    reason: 'Service accounts often live across many hosts.'
+  - chain: mssql-impersonation-chain
+    when:   'cracked MSSQLSvc'
+    reason: 'A SQL service account → instant MSSQL pivot.'

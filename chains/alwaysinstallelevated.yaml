@@ -47,3 +47,7 @@ steps:
 references:
   - title: "HackTricks — AlwaysInstallElevated"
     url:   "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#alwaysinstallelevated"
+
+next_chains:
+  - chain: dpapi-secrets-extraction
+    reason: 'SYSTEM shell — loot the box.'

@@ -70,3 +70,11 @@ references:
     url:   "https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html"
   - title: "PetitPotam"
     url:   "https://github.com/topotam/PetitPotam"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'krbtgt via DCSync'
+    reason: 'You DCSyncd — Golden Ticket time.'
+  - chain: pth-lateral-spread
+    when:   'ntlm_hashes captured'
+    reason: 'You have everyone''s hash — spread.'

@@ -88,3 +88,17 @@ references:
     url:   "https://www.thehacker.recipes/ad/movement/"
   - title: "BloodHound queries"
     url:   "https://bloodhound.specterops.io/get-started/quickstart/community-edition-quickstart"
+
+next_chains:
+  - chain: asrep-to-shell
+    when:   'asrep_hashes captured'
+    reason: 'AS-REP-roastable accounts found.'
+  - chain: kerberoast-chain
+    when:   'tgs_hashes captured'
+    reason: 'Kerberoastable SPNs found.'
+  - chain: password-spray
+    when:   'user_list populated'
+    reason: 'Try the obvious passwords against the user list.'
+  - chain: shadow-credentials
+    when:   'BloodHound shows GenericWrite edge'
+    reason: 'Silent takeover path for write-access primitives.'

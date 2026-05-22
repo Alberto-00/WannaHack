@@ -80,3 +80,11 @@ references:
     url:   "https://www.thehacker.recipes/ad/movement/mssql"
   - title: "NetExec — MSSQL"
     url:   "https://www.netexec.wiki/mssql-protocol"
+
+next_chains:
+  - chain: windows-priv-esc-recon
+    when:   'shell returned'
+    reason: 'On the box — sweep for privesc.'
+  - chain: seimpersonate-potato
+    when:   'SeImpersonatePrivilege enabled'
+    reason: 'SQL service accounts usually have it — instant SYSTEM.'

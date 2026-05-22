@@ -61,3 +61,13 @@ references:
     url:   "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-smb/index.html"
   - title: "NetExec SMB module"
     url:   "https://www.netexec.wiki/smb-protocol"
+
+next_chains:
+  - chain: password-spray
+    when:   'user_list captured'
+    reason: 'You have users — spray a small candidate set.'
+  - chain: ldap-anonymous-enum
+    reason: 'Pair SMB enum with LDAP enum for the full AD picture.'
+  - chain: gpp-cpassword-recovery
+    when:   'any valid credential'
+    reason: 'Authenticated SMB → grep SYSVOL for GPP.'

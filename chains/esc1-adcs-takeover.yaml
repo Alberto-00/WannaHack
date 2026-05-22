@@ -85,3 +85,11 @@ references:
     url:   "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
   - title: "Certipy README"
     url:   "https://github.com/ly4k/Certipy"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'dc_nt_hash captured'
+    reason: 'You hold the DA — forge golden tickets.'
+  - chain: pth-lateral-spread
+    when:   'dc_nt_hash captured'
+    reason: 'Use the DA NT hash to walk every server.'

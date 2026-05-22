@@ -68,6 +68,20 @@
           "url":   { "type": "string", "format": "uri" }
         }
       }
+    },
+    "next_chains": {
+      "type": "array",
+      "description": "Natural follow-up chains. Renders as 'continue with' hops at the end of this chain. Forms the navigable attack tree across the chain library.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["chain"],
+        "properties": {
+          "chain":  { "type": "string", "description": "id of the follow-up chain (validated against CHAIN_DATA)." },
+          "when":   { "type": "string", "description": "Optional one-line precondition shown in the UI (e.g. 'once you have a Pwn3d! host')." },
+          "reason": { "type": "string", "description": "Human-readable why-this-makes-sense blurb." }
+        }
+      }
     }
   },
   "$defs": {

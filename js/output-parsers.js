@@ -13,23 +13,45 @@
     // ──────────────────────────────── nmap ───────────────────────────────
     {
       name: 'nmap',
-      detect: (t) => /Nmap scan report for|^PORT\s+STATE\s+SERVICE/m.test(t),
+      detect: (t) => /Nmap scan report for|^\s*PORT\s+STATE\s+SERVICE/m.test(t),
       parse: (t) => {
         const vars = {};
-        const target = t.match(/Nmap scan report for\s+(?:([^\s()]+)\s+)?\(?([0-9.]+)\)?/);
-        if (target) vars.target_ip = target[2];
+
+        // "Nmap scan report for <hostname> (<ip>)"  OR  "Nmap scan report for <ip>"
+        // The hostname is the entire token before " (" and isn't a pure IP.
+        const target = t.match(/Nmap scan report for\s+(\S+?)(?:\s+\(([0-9.]+)\))?\s*$/m);
+        if (target) {
+          if (target[2]) {
+            vars.target_ip = target[2];
+            // target[1] is the hostname (rDNS) iff it isn't itself an IP
+            if (!/^[0-9.]+$/.test(target[1])) vars.target_hostname = target[1];
+          } else if (/^[0-9.]+$/.test(target[1])) {
+            vars.target_ip = target[1];
+          } else {
+            vars.target_hostname = target[1];
+          }
+        }
+
+        // Port lines. Accept "open" and "open|filtered" (common for UDP).
+        // Format: "<port>/<proto>  <state>  <service>  [version...]"
         const ports = [];
         const services = {};
-        const portRe = /^(\d{1,5})\/(tcp|udp)\s+open\s+(\S+)/gm;
+        const versioned = {};
+        // [ \t]+ instead of \s+ everywhere to keep the line-local match from
+        // wandering into the next line via the lazy version-group backtrack.
+        const portRe = /^(\d{1,5})\/(tcp|udp)[ \t]+(open(?:\|filtered)?)[ \t]+(\S+)(?:[ \t]+([^\n]*))?$/gm;
         let m;
         while ((m = portRe.exec(t)) !== null) {
           const port = parseInt(m[1], 10);
+          if (ports.includes(port)) continue;
           ports.push(port);
-          services[String(port)] = m[3];
+          services[String(port)] = m[4];
+          if (m[5]) versioned[String(port)] = { service: m[4], version: m[5].trim() };
         }
         if (ports.length) {
           vars.open_ports = ports;
           vars.services = services;
+          if (Object.keys(versioned).length) vars.services_versioned = versioned;
         }
         return vars;
       },
@@ -65,8 +87,10 @@
         const vars = {};
         const hashes = [];
         const users = new Set();
-        // $krb5tgs$23$*user$realm$spn*$...
-        const re = /\$krb5tgs\$\d+\$\*([A-Za-z0-9._$-]+)\$[^*]+\*\$[A-Fa-f0-9]+/g;
+        // Format: $krb5tgs$<etype>$*<user>$<realm>$<spn>*$<hash>
+        // user can contain $ (computer-account SPNs end in $), but the realm
+        // separator is also $ — so capture up to the FIRST $ after the marker.
+        const re = /\$krb5tgs\$\d+\$\*([^$]+)\$[^*]+\*\$[A-Fa-f0-9]+/g;
         let m;
         while ((m = re.exec(t)) !== null) {
           hashes.push(m[0]);
@@ -103,19 +127,37 @@
     },
 
     // ─────────────────────────── hashcat cracked ──────────────────────────
+    //
+    // hashcat's default --outfile/--show separator is `:` and the hash can
+    // itself contain colons (kerberos: $krb5tgs$23$*user$realm$spn*$abc:def).
+    // We can't unambiguously parse the kerberos form, so we ONLY recognize
+    // the two unambiguous NTLM shapes and leave kerberos to chain capture
+    // rules (which know the per-step format).
+    //
+    // Recognized shapes per line:
+    //   1) <32-hex-nt>:<password>
+    //   2) <32-hex-lm>:<32-hex-nt>:<password>
     {
       name: 'hashcat-cracked',
-      detect: (t) => /^(?:\$[a-z0-9]+\$|[a-f0-9]{32,})[^:]*:[^:\n]+$/m.test(t),
+      detect: (t) => /^(?:[a-f0-9]{32}:){1,2}\S+/m.test(t),
       parse: (t) => {
         const vars = {};
         const cracked = [];
-        // Conservative: hashcat --show emits `hash:password`. Accept hashes that
-        // are either $-prefixed (kerberos/asrep/etc.) or 32+ hex chars (NTLM).
-        const re = /^((?:\$[a-z0-9_$-]+\$[^:]+)|(?:[a-f0-9]{32,}))(?::[^:\n]+)*:([^:\n]+)$/gm;
+        const reThree = /^([a-f0-9]{32}):([a-f0-9]{32}):([^\n]+)$/gm;
+        const reTwo   = /^([a-f0-9]{32}):([^\n]+)$/gm;
         let m;
-        while ((m = re.exec(t)) !== null) {
-          // Reject anything that contains the obvious AS-REP-uncracked marker
-          if (m[2].startsWith('$krb5')) continue;
+        while ((m = reThree.exec(t)) !== null) {
+          cracked.push({ hash: m[2], lm: m[1], password: m[3] });
+        }
+        // Re-scan for 2-field lines that DON'T already match the 3-field form.
+        // We do this with a Set of starting offsets we already consumed.
+        const consumed = new Set();
+        reThree.lastIndex = 0;
+        while ((m = reThree.exec(t)) !== null) consumed.add(m.index);
+        while ((m = reTwo.exec(t)) !== null) {
+          if (consumed.has(m.index)) continue;
+          // Don't double-count NT-half that already appears as group 2 of a 3-field match.
+          if (cracked.some((c) => c.hash === m[1])) continue;
           cracked.push({ hash: m[1], password: m[2] });
         }
         if (cracked.length) vars.cracked_creds = cracked;

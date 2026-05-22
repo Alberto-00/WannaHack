@@ -54,6 +54,19 @@ const errors = [];
 const seenIds = new Map(); // id -> file
 const knownCommandIds = collectCommandIds();
 
+function checkNextChainRefs(chainFile, chain, knownChainIds) {
+  if (!Array.isArray(chain.next_chains)) return;
+  for (const nc of chain.next_chains) {
+    if (!nc || typeof nc !== 'object') continue;
+    if (!knownChainIds.has(nc.chain)) {
+      errors.push(`${rel(chainFile)}: next_chains references unknown chain id "${nc.chain}"`);
+    }
+    if (nc.chain === chain.id) {
+      errors.push(`${rel(chainFile)}: next_chains["${nc.chain}"] points to itself`);
+    }
+  }
+}
+
 function checkStepRefs(chainFile, chain) {
   const stepIds = new Set();
   for (const step of chain.steps || []) {
@@ -126,6 +139,17 @@ for (const entry of fs.readdirSync(CHAINS_DIR, { withFileTypes: true })) {
   }
 
   checkStepRefs(full, data);
+}
+
+// Second pass: cross-check next_chains references now that every chain id is known.
+{
+  const knownChainIds = new Set(seenIds.keys());
+  for (const [id, file] of seenIds.entries()) {
+    try {
+      const data = yaml.load(fs.readFileSync(file, 'utf8'));
+      checkNextChainRefs(file, data, knownChainIds);
+    } catch (_) { /* parse error already reported */ }
+  }
 }
 
 if (errors.length > 0) {

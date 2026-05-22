@@ -66,3 +66,14 @@ references:
     url:   "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html"
   - title: "PEASS-ng"
     url:   "https://github.com/peass-ng/PEASS-ng"
+
+next_chains:
+  - chain: seimpersonate-potato
+    when:   'privs include SeImpersonate'
+    reason: 'The classic Potato escalation.'
+  - chain: unquoted-service-path
+    when:   'unquoted service found'
+    reason: 'Drop a payload at the truncated prefix.'
+  - chain: alwaysinstallelevated
+    when:   'AlwaysInstallElevated registry = 1'
+    reason: 'MSI elevation freebie.'

@@ -71,3 +71,10 @@ references:
     url:   "https://bloodhound.specterops.io/resources/edges/generic-all"
   - title: "bloodyAD"
     url:   "https://github.com/CravateRouge/bloodyAD"
+
+next_chains:
+  - chain: shadow-credentials
+    reason: 'Silent path when you have GenericAll/Write — usually safer than a password reset.'
+  - chain: pth-lateral-spread
+    when:   'new credential captured'
+    reason: 'Spread the harvested identity.'

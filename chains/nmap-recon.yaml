@@ -55,3 +55,16 @@ references:
     url:   "https://nmap.org/nsedoc/"
   - title: "HackTricks — Pentesting Methodology"
     url:   "https://book.hacktricks.wiki/en/generic-methodologies-and-resources/pentesting-methodology.html"
+
+next_chains:
+  - chain: smb-null-session-enum
+    when:   'open_ports includes 445 or 139'
+    reason: 'SMB open → null-session enum first.'
+  - chain: ldap-anonymous-enum
+    when:   'open_ports includes 389 or 636'
+    reason: 'LDAP/AD detected — walk the directory.'
+  - chain: mssql-impersonation-chain
+    when:   'open_ports includes 1433'
+    reason: 'MSSQL is open and almost always exploitable.'
+  - chain: shell-stabilization
+    reason: 'Keep in reach — needed the moment any service yields a shell.'

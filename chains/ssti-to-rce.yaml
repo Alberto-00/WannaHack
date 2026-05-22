@@ -71,3 +71,10 @@ references:
     url:   "https://portswigger.net/research/server-side-template-injection"
   - title: "HackTricks — SSTI"
     url:   "https://book.hacktricks.wiki/en/pentesting-web/ssti-server-side-template-injection/index.html"
+
+next_chains:
+  - chain: shell-stabilization
+    reason: 'Stabilize the resulting shell.'
+  - chain: linux-priv-esc-recon
+    when:   'shell on Linux'
+    reason: 'Escalate.'

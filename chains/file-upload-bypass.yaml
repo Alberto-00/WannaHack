@@ -77,3 +77,14 @@ references:
     url:   "https://book.hacktricks.wiki/en/pentesting-web/file-upload/index.html"
   - title: "PayloadsAllTheThings — Upload Insecure Files"
     url:   "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Upload%20Insecure%20Files"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'reverse shell received'
+    reason: 'Stabilize.'
+  - chain: linux-priv-esc-recon
+    when:   'shell on Linux'
+    reason: 'Escalate from www-data.'
+  - chain: windows-priv-esc-recon
+    when:   'shell on Windows IIS'
+    reason: 'IIS AppPool → SeImpersonate path.'

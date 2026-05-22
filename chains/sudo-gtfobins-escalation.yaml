@@ -67,3 +67,8 @@ references:
     url:   "https://gtfobins.github.io/"
   - title: "Sudo env_keep abuse"
     url:   "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html#ld_preload"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'rooted shell is messy'
+    reason: 'Upgrade the new root shell to a real TTY.'

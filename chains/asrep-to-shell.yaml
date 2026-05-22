@@ -64,3 +64,14 @@ references:
     url:   "https://www.thehacker.recipes/ad/movement/kerberos/asreproast"
   - title: "Evil-WinRM"
     url:   "https://github.com/Hackplayers/evil-winrm"
+
+next_chains:
+  - chain: pth-lateral-spread
+    when:   'cracked password gives admin somewhere'
+    reason: 'Spread the freshly-cracked credential.'
+  - chain: dpapi-secrets-extraction
+    when:   'local admin on the host'
+    reason: 'Loot every saved cred via DPAPI.'
+  - chain: windows-priv-esc-recon
+    when:   'low-priv evil-winrm shell'
+    reason: 'If not Administrator, enumerate for privesc.'

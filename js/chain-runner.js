@@ -467,6 +467,25 @@
       });
       html += `</ol>`;
 
+      // Attack-tree hops: the chains that naturally follow this one.
+      if (Array.isArray(chain.next_chains) && chain.next_chains.length) {
+        html += `<section class="wh-chain-next-section">`;
+        html += `<h3 class="wh-chain-next-title">→ Continue the attack tree</h3>`;
+        html += `<ul class="wh-chain-next-list">`;
+        for (const nc of chain.next_chains) {
+          const target = this.getChain(nc.chain);
+          if (!target) continue;
+          html += `<li class="wh-chain-next-item">`;
+          html += `<button class="wh-chain-next-btn" data-action="hop-to" data-chain="${esc(nc.chain)}">`;
+          html += `<span class="wh-chain-next-arrow">▸</span> ${esc(target.name)}`;
+          html += `</button>`;
+          if (nc.when)   html += `<div class="wh-chain-next-when">when: ${esc(nc.when)}</div>`;
+          if (nc.reason) html += `<div class="wh-chain-next-reason">${esc(nc.reason)}</div>`;
+          html += `</li>`;
+        }
+        html += `</ul></section>`;
+      }
+
       el.innerHTML = html;
       this._wireRunner(el);
     }
@@ -677,6 +696,7 @@
       el.querySelectorAll('[data-action="mark-done"]').forEach((b) => b.addEventListener('click', () => this.markStepStatus(b.dataset.step, STATUS.DONE)));
       el.querySelectorAll('[data-action="reset-step"]').forEach((b) => b.addEventListener('click', () => this.resetStep(b.dataset.step)));
       el.querySelectorAll('[data-action="fork"]').forEach((b) => b.addEventListener('click', () => this.forkAt(parseInt(b.dataset.idx, 10))));
+      el.querySelectorAll('[data-action="hop-to"]').forEach((b) => b.addEventListener('click', () => this.startChain(b.dataset.chain)));
     }
 
     _currentCommandText(stepId) {

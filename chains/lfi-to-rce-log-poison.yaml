@@ -72,3 +72,11 @@ references:
     url:   "https://book.hacktricks.wiki/en/pentesting-web/file-inclusion/index.html"
   - title: "PHP wrappers"
     url:   "https://book.hacktricks.wiki/en/pentesting-web/file-inclusion/lfi2rce-via-php-filters.html"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'reverse shell received'
+    reason: 'Stabilize before doing anything else.'
+  - chain: linux-priv-esc-recon
+    when:   'shell on Linux web server'
+    reason: 'www-data → escalate to root.'

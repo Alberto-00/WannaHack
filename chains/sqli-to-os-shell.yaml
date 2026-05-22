@@ -70,3 +70,14 @@ references:
     url:   "https://book.hacktricks.wiki/en/pentesting-web/sql-injection/index.html"
   - title: "sqlmap usage"
     url:   "https://github.com/sqlmapproject/sqlmap/wiki/Usage"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'reverse shell received'
+    reason: 'Stabilize.'
+  - chain: linux-priv-esc-recon
+    when:   'shell on Linux DB host'
+    reason: 'DB user is usually low-priv.'
+  - chain: windows-priv-esc-recon
+    when:   'shell on Windows MSSQL host'
+    reason: 'NT SERVICE\MSSQLSERVER often has SeImpersonate.'

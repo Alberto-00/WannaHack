@@ -79,3 +79,14 @@ references:
     url:   "https://book.hacktricks.wiki/en/windows-hardening/ntlm/index.html"
   - title: "NetExec — SMB"
     url:   "https://www.netexec.wiki/smb-protocol"
+
+next_chains:
+  - chain: dpapi-secrets-extraction
+    when:   'Pwn3d! host found'
+    reason: 'Loot DPAPI on every Pwn3d! host.'
+  - chain: mssql-impersonation-chain
+    when:   'SQL service reachable'
+    reason: 'Pivot to MSSQL with captured creds.'
+  - chain: windows-priv-esc-recon
+    when:   'low-priv shell'
+    reason: 'If you landed but aren''t SYSTEM yet.'
