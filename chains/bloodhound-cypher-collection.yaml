@@ -1,0 +1,104 @@
+id: bloodhound-cypher-collection
+name: "AD — BloodHound Cypher query collection"
+description: >
+  Not a chain you run linearly — a curated set of Cypher one-liners to
+  paste into BloodHound (CE or legacy) once you've ingested data. Each
+  query exposes a different attack primitive.
+tags: [bloodhound, cypher, active-directory, recon]
+difficulty: easy
+
+inputs: []
+
+steps:
+  - id: shortest_path_to_da
+    name: "Classic: shortest path from owned to Domain Admins"
+    inline_command: |
+      MATCH (n {owned: true}),(g:Group),
+            p = shortestPath((n)-[*1..]->(g))
+      WHERE g.name STARTS WITH 'DOMAIN ADMINS'
+      RETURN p
+
+  - id: asrep_kerberoast
+    name: "AS-REP-roastable + Kerberoastable"
+    inline_command: |
+      MATCH (u:User {dontreqpreauth: true}) RETURN u
+      MATCH (u:User {hasspn: true}) RETURN u
+
+  - id: dcsync_holders
+    name: "Anyone with DCSync rights"
+    inline_command: |
+      MATCH p=(n)-[r:GetChangesAll|GetChanges|GetChangesInFilteredSet]->(d:Domain)
+      RETURN p
+
+  - id: unconstrained_delegation
+    name: "Unconstrained-delegation hosts"
+    inline_command: |
+      MATCH (c:Computer {unconstraineddelegation: true}) RETURN c
+
+  - id: rbcd_writable
+    name: "Where you can write RBCD (computer takeover candidates)"
+    inline_command: |
+      MATCH p=(n {owned: true})-[r:AddAllowedToAct|WriteAccountRestrictions|GenericAll|GenericWrite|WriteDacl|WriteOwner]->(c:Computer)
+      RETURN p
+
+  - id: shadow_credentials_paths
+    name: "Where you can add KeyCredentialLink (Shadow Credentials)"
+    inline_command: |
+      MATCH p=(n {owned: true})-[r:AddKeyCredentialLink|GenericAll|GenericWrite|WriteOwner|WriteDacl|AllExtendedRights]->(t)
+      WHERE t:User OR t:Computer
+      RETURN p
+
+  - id: gpo_abuse
+    name: "GPO write rights → push payload to every linked host"
+    inline_command: |
+      MATCH p=(n {owned: true})-[r:GenericAll|GenericWrite|WriteDacl|WriteOwner]->(g:GPO)
+      RETURN p
+      // Then: MATCH (g:GPO {name:'<name>'})-[:GpLink]->(ou) RETURN ou — see what's linked.
+
+  - id: high_value_in_easy_reach
+    name: "HighValue targets within 3 hops of any owned principal"
+    inline_command: |
+      MATCH (n {owned: true}),(h {highvalue: true}),
+            p = shortestPath((n)-[*1..3]->(h))
+      RETURN p
+
+  - id: kerberos_double_hop
+    name: "Computers with unconstrained delegation pointing at HVT services"
+    inline_command: |
+      MATCH (c:Computer {unconstraineddelegation: true})-[:HasSession]->(u:User)
+      WHERE u.admincount = true
+      RETURN c, u
+
+  - id: machine_accounts_as_admin
+    name: "Machine accounts that are local admins on other computers"
+    inline_command: |
+      MATCH p=(c1:Computer)-[r:AdminTo|MemberOf*1..]->(c2:Computer)
+      WHERE c1 <> c2
+      RETURN p LIMIT 50
+
+  - id: foreign_group_membership
+    name: "Cross-domain group memberships (cross-forest pivot)"
+    inline_command: |
+      MATCH (u:User)-[r:MemberOf]->(g:Group)
+      WHERE NOT u.domain = g.domain
+      RETURN u.name, g.name, g.domain
+
+references:
+  - title: "BloodHound docs"
+    url:   "https://bloodhound.specterops.io/"
+  - title: "CompassSecurity Cypher cheatsheet"
+    url:   "https://blog.compass-security.com/2022/05/bloodhound-inner-workings-part-1/"
+
+next_chains:
+  - chain: dacl-genericall-abuse
+    when:   'GenericAll path found'
+    reason: 'Cash in the DACL primitive.'
+  - chain: shadow-credentials
+    when:   'AddKeyCredentialLink path found'
+    reason: 'Silent takeover.'
+  - chain: rbcd-takeover
+    when:   'RBCD-writable computer found'
+    reason: 'Take over the computer via RBCD.'
+  - chain: kerberoast-chain
+    when:   'hasspn=true users surfaced'
+    reason: 'Kerberoast the new candidates.'
