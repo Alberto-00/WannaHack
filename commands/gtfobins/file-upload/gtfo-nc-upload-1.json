@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nc-upload-1",
+  "name": "GTFOBins · nc (upload) #1",
+  "command": "nc -l -p 12345 </path/to/input-file",
+  "description": "Use nc to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nc",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nc/#upload",
+  "upstream_id": "nc/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nc/"
+    }
+  ]
+}

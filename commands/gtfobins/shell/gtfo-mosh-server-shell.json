@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-mosh-server-shell",
+  "name": "GTFOBins · mosh-server (shell)",
+  "command": "mosh --server=mosh-server localhost /bin/sh",
+  "description": "Use mosh-server to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "mosh-server",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/mosh-server/#shell",
+  "upstream_id": "mosh-server/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/mosh-server/"
+    }
+  ]
+}

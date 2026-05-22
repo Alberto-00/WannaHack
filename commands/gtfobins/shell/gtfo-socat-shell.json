@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-socat-shell",
+  "name": "GTFOBins · socat (shell)",
+  "command": "socat - exec:/bin/sh,pty,ctty,raw,echo=0",
+  "description": "Use socat to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "socat",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/socat/#shell",
+  "upstream_id": "socat/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/socat/"
+    }
+  ]
+}

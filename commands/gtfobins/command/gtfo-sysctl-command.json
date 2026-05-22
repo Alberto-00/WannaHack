@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-sysctl-command",
+  "name": "GTFOBins · sysctl (command)",
+  "command": "sysctl 'kernel.core_pattern=|/path/to/command'",
+  "description": "Use sysctl to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "sysctl",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/sysctl/#command",
+  "upstream_id": "sysctl/command/0",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/sysctl/"
+    }
+  ]
+}

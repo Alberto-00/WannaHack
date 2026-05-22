@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ntsd-exe-execute",
+  "name": "LOLBAS · Ntsd.exe (Execute)",
+  "command": "ntsd.exe -g {CMD}",
+  "description": "Launches command through the debugging process; optionally add `-G` to exit the debugger automatically.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ntsd",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ntsd/",
+  "upstream_id": "Ntsd.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Ntsd.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Ntsd/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-curl-file-read",
+  "name": "GTFOBins · curl (file-read)",
+  "command": "curl file:///path/to/input-file",
+  "description": "Use curl to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "curl",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/curl/#file-read",
+  "upstream_id": "curl/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/curl/"
+    }
+  ]
+}

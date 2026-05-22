@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-regasm-exe-execute",
+  "name": "LOLBAS · Regasm.exe (Execute)",
+  "command": "regasm.exe /U {PATH:.dll}",
+  "description": "Loads the target .DLL file and executes the UnRegisterClass function.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "regasm",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Regasm/",
+  "upstream_id": "Regasm.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Regasm.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Regasm/"
+    }
+  ]
+}

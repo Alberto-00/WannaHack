@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-go-file-write",
+  "name": "GTFOBins · go (file-write)",
+  "command": "echo -e 'package main\\nimport \"os\"\\nfunc main(){\\n\\tf, _ := os.OpenFile(\"/path/to/output-file\", os.O_RDWR|os.O_CREATE, 0644)\\n\\tf.Write([]byte(\"DATA\\\\n\"))\\n\\tf.Close()\\n}' >/path/to/temp-file.go\ngo run /path/to/temp-file.go",
+  "description": "Use go to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "go",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/go/#file-write",
+  "upstream_id": "go/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/go/"
+    }
+  ]
+}

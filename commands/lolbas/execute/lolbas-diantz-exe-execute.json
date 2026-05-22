@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-diantz-exe-execute",
+  "name": "LOLBAS · Diantz.exe (Execute)",
+  "command": "diantz /f {PATH:.ddf}",
+  "description": "Execute diantz directives as defined in the specified Diamond Definition File (.ddf); see resources for the format specification.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "diantz",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Diantz/",
+  "upstream_id": "Diantz.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Diantz.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Diantz/"
+    }
+  ]
+}

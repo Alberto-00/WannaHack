@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-mv-privilege-escalation",
+  "name": "GTFOBins · mv (privilege-escalation)",
+  "command": "mv /path/to/input-file /path/to/output-file",
+  "description": "Use mv to privilege escalation via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "mv",
+    "privilege-escalation"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/mv/#privilege-escalation",
+  "upstream_id": "mv/privilege-escalation/0",
+  "category": "gtfobins",
+  "subcategory": "suid",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/mv/"
+    }
+  ]
+}

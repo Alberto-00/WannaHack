@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-cmd-exe-download",
+  "name": "LOLBAS · Cmd.exe (Download)",
+  "command": "type {PATH_SMB} > {PATH_ABSOLUTE}",
+  "description": "Downloads a specified file from a WebDAV server to the target file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "cmd",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Cmd/",
+  "upstream_id": "Cmd.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Cmd.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Cmd/"
+    }
+  ]
+}

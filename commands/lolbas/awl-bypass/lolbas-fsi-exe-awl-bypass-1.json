@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-fsi-exe-awl-bypass-1",
+  "name": "LOLBAS · Fsi.exe (AWL Bypass) #1",
+  "command": "fsi.exe {PATH:.fsscript}",
+  "description": "Execute F# code via script file",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "fsi",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Fsi/",
+  "upstream_id": "Fsi.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Fsi.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Fsi/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-execute-5",
+  "name": "LOLBAS · Update.exe (Execute) #5",
+  "command": "Update.exe --processStart {PATH:.exe} --process-start-args \"{CMD:args}\"",
+  "description": "Copy your payload into %userprofile%\\AppData\\Local\\Microsoft\\Teams\\current\\. Then run the command. Update.exe will execute the file you copied.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/Execute/4",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

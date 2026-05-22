@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-rundll32-exe-execute-4",
+  "name": "LOLBAS · Rundll32.exe (Execute) #4",
+  "command": "rundll32.exe -sta {CLSID}",
+  "description": "Use Rundll32.exe to load a registered or hijacked COM Server payload. Also works with ProgID.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "rundll32",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Rundll32/",
+  "upstream_id": "Rundll32.exe/Execute/3",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Rundll32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Rundll32/"
+    }
+  ]
+}

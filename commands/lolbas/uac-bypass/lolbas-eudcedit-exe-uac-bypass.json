@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-eudcedit-exe-uac-bypass",
+  "name": "LOLBAS · Eudcedit.exe (UAC Bypass)",
+  "command": "eudcedit",
+  "description": "Once executed, the Private Charecter Editor will be opened - click OK, then click File -> Font Links. In the next window choose the option \"Link with Selected Fonts\" and click on Save As, then in the opened enter the command you want to execute.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "eudcedit",
+    "uac-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Eudcedit/",
+  "upstream_id": "Eudcedit.exe/UAC Bypass/0",
+  "category": "lolbas",
+  "subcategory": "uac-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Eudcedit.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Eudcedit/"
+    }
+  ]
+}

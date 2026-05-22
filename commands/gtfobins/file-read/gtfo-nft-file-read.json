@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nft-file-read",
+  "name": "GTFOBins · nft (file-read)",
+  "command": "nft -f /path/to/input-file",
+  "description": "Use nft to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nft",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nft/#file-read",
+  "upstream_id": "nft/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nft/"
+    }
+  ]
+}

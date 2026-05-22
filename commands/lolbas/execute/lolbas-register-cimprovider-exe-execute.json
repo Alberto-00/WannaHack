@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-register-cimprovider-exe-execute",
+  "name": "LOLBAS · Register-cimprovider.exe (Execute)",
+  "command": "Register-cimprovider -path {PATH_ABSOLUTE:.dll}",
+  "description": "Load the target .DLL.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "register-cimprovider",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Register-cimprovider/",
+  "upstream_id": "Register-cimprovider.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Register-cimprovider.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Register-cimprovider/"
+    }
+  ]
+}

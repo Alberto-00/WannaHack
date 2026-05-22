@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-regedit-exe-ads-1",
+  "name": "LOLBAS · Regedit.exe (ADS) #1",
+  "command": "regedit /E {PATH_ABSOLUTE}:regfile.reg HKEY_CURRENT_USER\\MyCustomRegKey",
+  "description": "Export the target Registry key to the specified .REG file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "regedit",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Regedit/",
+  "upstream_id": "Regedit.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Regedit.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Regedit/"
+    }
+  ]
+}

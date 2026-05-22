@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-printbrm-exe-download",
+  "name": "LOLBAS · PrintBrm.exe (Download)",
+  "command": "PrintBrm -b -d {PATH_SMB:folder} -f {PATH_ABSOLUTE:.zip}",
+  "description": "Create a ZIP file from a folder in a remote drive",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "printbrm",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/PrintBrm/",
+  "upstream_id": "PrintBrm.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — PrintBrm.exe",
+      "url": "https://lolbas-project.github.io/lolbas/PrintBrm/"
+    }
+  ]
+}

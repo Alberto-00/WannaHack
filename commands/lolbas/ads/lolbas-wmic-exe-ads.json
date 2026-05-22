@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wmic-exe-ads",
+  "name": "LOLBAS · Wmic.exe (ADS)",
+  "command": "wmic.exe process call create \"{PATH_ABSOLUTE}:program.exe\"",
+  "description": "Execute a .EXE file stored as an Alternate Data Stream (ADS)",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wmic",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Wmic/",
+  "upstream_id": "Wmic.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Wmic.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Wmic/"
+    }
+  ]
+}

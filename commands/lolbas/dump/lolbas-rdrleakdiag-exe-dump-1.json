@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-rdrleakdiag-exe-dump-1",
+  "name": "LOLBAS · rdrleakdiag.exe (Dump) #1",
+  "command": "rdrleakdiag.exe /p 940 /o {PATH_ABSOLUTE:folder} /fullmemdmp /wait 1",
+  "description": "Dump process by PID and create a dump file (creates files called `minidump_<PID>.dmp` and `results_<PID>.hlk`).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "rdrleakdiag",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/rdrleakdiag/",
+  "upstream_id": "rdrleakdiag.exe/Dump/0",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — rdrleakdiag.exe",
+      "url": "https://lolbas-project.github.io/lolbas/rdrleakdiag/"
+    }
+  ]
+}

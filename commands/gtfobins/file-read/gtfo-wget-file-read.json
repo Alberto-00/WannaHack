@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-wget-file-read",
+  "name": "GTFOBins · wget (file-read)",
+  "command": "wget -i /path/to/input-file",
+  "description": "Use wget to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "wget",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/wget/#file-read",
+  "upstream_id": "wget/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/wget/"
+    }
+  ]
+}

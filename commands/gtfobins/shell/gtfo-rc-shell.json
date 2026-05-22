@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rc-shell",
+  "name": "GTFOBins · rc (shell)",
+  "command": "rc",
+  "description": "Use rc to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rc",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rc/#shell",
+  "upstream_id": "rc/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rc/"
+    }
+  ]
+}

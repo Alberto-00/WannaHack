@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-vi-shell-4",
+  "name": "GTFOBins · vi (shell) #4",
+  "command": "vi -c :terminal /bin/sh",
+  "description": "Use vi to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "vi",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/vi/#shell",
+  "upstream_id": "vi/shell/3",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/vi/"
+    }
+  ]
+}

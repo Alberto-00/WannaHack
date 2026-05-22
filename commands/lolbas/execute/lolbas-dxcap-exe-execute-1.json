@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dxcap-exe-execute-1",
+  "name": "LOLBAS · Dxcap.exe (Execute) #1",
+  "command": "Dxcap.exe -c {PATH_ABSOLUTE:.exe}",
+  "description": "Launch specified executable as a subprocess of dxcap.exe. Note that you should have write permissions in the current working directory for the command to succeed; alternatively, add '-file c:\\path\\to\\writable\\location.ext' as first argument.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dxcap",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Dxcap/",
+  "upstream_id": "Dxcap.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Dxcap.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Dxcap/"
+    }
+  ]
+}

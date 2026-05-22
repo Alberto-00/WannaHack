@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-tttracer-exe-execute",
+  "name": "LOLBAS · Tttracer.exe (Execute)",
+  "command": "tttracer.exe {PATH_ABSOLUTE:.exe}",
+  "description": "Execute specified executable from tttracer.exe. Requires administrator privileges.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "tttracer",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Tttracer/",
+  "upstream_id": "Tttracer.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Tttracer.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Tttracer/"
+    }
+  ]
+}

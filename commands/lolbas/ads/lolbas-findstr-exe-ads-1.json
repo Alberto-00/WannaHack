@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-findstr-exe-ads-1",
+  "name": "LOLBAS · Findstr.exe (ADS) #1",
+  "command": "findstr /V /L W3AllLov3LolBas {PATH_ABSOLUTE:.exe} > {PATH_ABSOLUTE}:file.exe",
+  "description": "Searches for the string W3AllLov3LolBas, since it does not exist (/V) the specified .exe file is written to an Alternate Data Stream (ADS) of the specified target file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "findstr",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Findstr/",
+  "upstream_id": "Findstr.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Findstr.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Findstr/"
+    }
+  ]
+}

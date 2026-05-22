@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-pcalua-exe-execute-2",
+  "name": "LOLBAS · Pcalua.exe (Execute) #2",
+  "command": "pcalua.exe -a {PATH_SMB:.dll}",
+  "description": "Open the target .DLL file with the Program Compatibilty Assistant.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "pcalua",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Pcalua/",
+  "upstream_id": "Pcalua.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Pcalua.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Pcalua/"
+    }
+  ]
+}

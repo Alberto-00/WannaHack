@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ansible-test-shell",
+  "name": "GTFOBins · ansible-test (shell)",
+  "command": "ansible-test shell",
+  "description": "Use ansible-test to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ansible-test",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ansible-test/#shell",
+  "upstream_id": "ansible-test/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ansible-test/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wsl-exe-execute-2",
+  "name": "LOLBAS · Wsl.exe (Execute) #2",
+  "command": "wsl.exe -u root -e cat /etc/shadow",
+  "description": "Cats /etc/shadow file as root",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wsl",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Wsl/",
+  "upstream_id": "Wsl.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Wsl.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Wsl/"
+    }
+  ]
+}

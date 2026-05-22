@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-wc-file-read",
+  "name": "GTFOBins · wc (file-read)",
+  "command": "wc --files0-from /path/to/input-file",
+  "description": "Use wc to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "wc",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/wc/#file-read",
+  "upstream_id": "wc/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/wc/"
+    }
+  ]
+}

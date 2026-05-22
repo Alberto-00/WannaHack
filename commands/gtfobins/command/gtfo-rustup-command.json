@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rustup-command",
+  "name": "GTFOBins · rustup (command)",
+  "command": "mkdir /path/to/temp-dir/bin/\nmkdir /path/to/temp-dir/lib/\necho '/path/to/command' >/path/to/temp-dir/bin/rustc\nchmod +x /path/to/temp-dir/bin/rustc\nrustup toolchain link x /path/to/temp-dir/\nrustup run x rustc",
+  "description": "Use rustup to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rustup",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rustup/#command",
+  "upstream_id": "rustup/command/0",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rustup/"
+    }
+  ]
+}

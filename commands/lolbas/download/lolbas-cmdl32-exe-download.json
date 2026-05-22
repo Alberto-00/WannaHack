@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-cmdl32-exe-download",
+  "name": "LOLBAS · cmdl32.exe (Download)",
+  "command": "cmdl32 /vpn /lan %cd%\\config",
+  "description": "Download a file from the web address specified in the configuration file. The downloaded file will be in %TMP% under the name VPNXXXX.tmp where \"X\" denotes a random number or letter.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "cmdl32",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/cmdl32/",
+  "upstream_id": "cmdl32.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — cmdl32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/cmdl32/"
+    }
+  ]
+}

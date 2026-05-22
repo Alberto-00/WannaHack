@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-pkg-command",
+  "name": "GTFOBins · pkg (command)",
+  "command": "pkg install -y --no-repo-update ./x-1.0.txz",
+  "description": "Use pkg to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "pkg",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/pkg/#command",
+  "upstream_id": "pkg/command/0",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/pkg/"
+    }
+  ]
+}

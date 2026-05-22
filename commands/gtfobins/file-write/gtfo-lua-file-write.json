@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-lua-file-write",
+  "name": "GTFOBins · lua (file-write)",
+  "command": "lua -e 'local f=io.open(\"/path/to/output-file\", \"wb\"); f:write(\"DATA\"); io.close(f);'",
+  "description": "Use lua to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "lua",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/lua/#file-write",
+  "upstream_id": "lua/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/lua/"
+    }
+  ]
+}

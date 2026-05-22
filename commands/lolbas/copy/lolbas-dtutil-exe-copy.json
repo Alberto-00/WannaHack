@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dtutil-exe-copy",
+  "name": "LOLBAS · dtutil.exe (Copy)",
+  "command": "dtutil.exe /FILE {PATH_ABSOLUTE:.source.ext} /COPY FILE;{PATH_ABSOLUTE:.dest.ext}",
+  "description": "Copy file from source to destination",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dtutil",
+    "copy"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/dtutil/",
+  "upstream_id": "dtutil.exe/Copy/0",
+  "category": "lolbas",
+  "subcategory": "copy",
+  "references": [
+    {
+      "title": "LOLBAS — dtutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/dtutil/"
+    }
+  ]
+}

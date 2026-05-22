@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-regsvr32-exe-execute-4",
+  "name": "LOLBAS · Regsvr32.exe (Execute) #4",
+  "command": "regsvr32.exe /u /s {PATH:.dll}",
+  "description": "Execute code in a DLL. The code must be inside the exported function `DllUnRegisterServer`.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "regsvr32",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Regsvr32/",
+  "upstream_id": "Regsvr32.exe/Execute/3",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Regsvr32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Regsvr32/"
+    }
+  ]
+}

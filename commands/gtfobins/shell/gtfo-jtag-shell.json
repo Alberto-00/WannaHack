@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-jtag-shell",
+  "name": "GTFOBins · jtag (shell)",
+  "command": "jtag --interactive\nshell /bin/sh",
+  "description": "Use jtag to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "jtag",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/jtag/#shell",
+  "upstream_id": "jtag/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/jtag/"
+    }
+  ]
+}

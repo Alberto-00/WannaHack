@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-exiftool-file-write-3",
+  "name": "GTFOBins · exiftool (file-write) #3",
+  "command": "exiftool \"-description=DATA --filename /path/to/output-file",
+  "description": "Use exiftool to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "exiftool",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/exiftool/#file-write",
+  "upstream_id": "exiftool/file-write/2",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/exiftool/"
+    }
+  ]
+}

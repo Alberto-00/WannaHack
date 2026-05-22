@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-findstr-exe-download",
+  "name": "LOLBAS · Findstr.exe (Download)",
+  "command": "findstr /V /L W3AllLov3LolBas {PATH_SMB:.exe} > {PATH_ABSOLUTE:.exe}",
+  "description": "Searches for the string W3AllLov3LolBas, since it does not exist (/V) file.exe is downloaded to the target file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "findstr",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Findstr/",
+  "upstream_id": "Findstr.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Findstr.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Findstr/"
+    }
+  ]
+}

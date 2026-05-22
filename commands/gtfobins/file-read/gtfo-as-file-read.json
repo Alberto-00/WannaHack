@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-as-file-read",
+  "name": "GTFOBins · as (file-read)",
+  "command": "as @/path/to/input-file",
+  "description": "Use as to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "as",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/as/#file-read",
+  "upstream_id": "as/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/as/"
+    }
+  ]
+}

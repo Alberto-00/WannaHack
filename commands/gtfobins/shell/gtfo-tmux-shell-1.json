@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tmux-shell-1",
+  "name": "GTFOBins · tmux (shell) #1",
+  "command": "tmux -c /bin/sh",
+  "description": "Use tmux to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tmux",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tmux/#shell",
+  "upstream_id": "tmux/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tmux/"
+    }
+  ]
+}

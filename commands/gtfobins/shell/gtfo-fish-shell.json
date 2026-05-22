@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-fish-shell",
+  "name": "GTFOBins · fish (shell)",
+  "command": "fish",
+  "description": "Use fish to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "fish",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/fish/#shell",
+  "upstream_id": "fish/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/fish/"
+    }
+  ]
+}

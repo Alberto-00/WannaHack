@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-posh-shell",
+  "name": "GTFOBins · posh (shell)",
+  "command": "posh",
+  "description": "Use posh to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "posh",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/posh/#shell",
+  "upstream_id": "posh/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/posh/"
+    }
+  ]
+}

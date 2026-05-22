@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dumpminitool-exe-dump",
+  "name": "LOLBAS · DumpMinitool.exe (Dump)",
+  "command": "DumpMinitool.exe --file {PATH_ABSOLUTE} --processId 1132 --dumpType Full",
+  "description": "Creates a memory dump of the lsass process",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dumpminitool",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/DumpMinitool/",
+  "upstream_id": "DumpMinitool.exe/Dump/0",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — DumpMinitool.exe",
+      "url": "https://lolbas-project.github.io/lolbas/DumpMinitool/"
+    }
+  ]
+}

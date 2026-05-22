@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-git-file-write",
+  "name": "GTFOBins · git (file-write)",
+  "command": "git apply --unsafe-paths --directory / x.patch",
+  "description": "Use git to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "git",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/git/#file-write",
+  "upstream_id": "git/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/git/"
+    }
+  ]
+}

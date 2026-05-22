@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-guile-shell",
+  "name": "GTFOBins · guile (shell)",
+  "command": "guile -c '(system \"/bin/sh\")'",
+  "description": "Use guile to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "guile",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/guile/#shell",
+  "upstream_id": "guile/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/guile/"
+    }
+  ]
+}

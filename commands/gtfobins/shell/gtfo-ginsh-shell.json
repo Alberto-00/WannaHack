@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ginsh-shell",
+  "name": "GTFOBins · ginsh (shell)",
+  "command": "ginsh\n!/bin/sh",
+  "description": "Use ginsh to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ginsh",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ginsh/#shell",
+  "upstream_id": "ginsh/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ginsh/"
+    }
+  ]
+}

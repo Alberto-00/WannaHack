@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-rundll32-exe-execute-1",
+  "name": "LOLBAS · Rundll32.exe (Execute) #1",
+  "command": "rundll32.exe {PATH},EntryPoint",
+  "description": "First part should be a DLL file (any extension accepted), EntryPoint should be the name of the entry point in the DLL file to execute.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "rundll32",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Rundll32/",
+  "upstream_id": "Rundll32.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Rundll32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Rundll32/"
+    }
+  ]
+}

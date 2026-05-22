@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-xbootmgr-exe-execute-1",
+  "name": "LOLBAS · XBootMgr.exe (Execute) #1",
+  "command": "xbootmgr.exe -trace \"{boot|hibernate|standby|shutdown|rebootCycle}\" -callBack {PATH:.exe}",
+  "description": "Executes an executable after the trace is complete using the callBack parameter.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "xbootmgr",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/XBootMgr/",
+  "upstream_id": "XBootMgr.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — XBootMgr.exe",
+      "url": "https://lolbas-project.github.io/lolbas/XBootMgr/"
+    }
+  ]
+}

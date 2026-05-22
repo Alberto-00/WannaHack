@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bitsadmin-exe-copy",
+  "name": "LOLBAS · Bitsadmin.exe (Copy)",
+  "command": "bitsadmin /create 1 & bitsadmin /addfile 1 c:\\windows\\system32\\cmd.exe c:\\data\\playfolder\\cmd.exe & bitsadmin /RESUME 1 & bitsadmin /Complete 1 & bitsadmin /reset",
+  "description": "Command for copying cmd.exe to another folder",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bitsadmin",
+    "copy"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bitsadmin/",
+  "upstream_id": "Bitsadmin.exe/Copy/0",
+  "category": "lolbas",
+  "subcategory": "copy",
+  "references": [
+    {
+      "title": "LOLBAS — Bitsadmin.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bitsadmin/"
+    }
+  ]
+}

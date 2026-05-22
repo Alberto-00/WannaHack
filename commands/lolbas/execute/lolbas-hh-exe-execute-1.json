@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-hh-exe-execute-1",
+  "name": "LOLBAS · Hh.exe (Execute) #1",
+  "command": "HH.exe {PATH_ABSOLUTE:.exe}",
+  "description": "Executes specified executable with HTML Help.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "hh",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Hh/",
+  "upstream_id": "Hh.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Hh.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Hh/"
+    }
+  ]
+}

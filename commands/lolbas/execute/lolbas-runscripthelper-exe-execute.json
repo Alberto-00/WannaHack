@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-runscripthelper-exe-execute",
+  "name": "LOLBAS · Runscripthelper.exe (Execute)",
+  "command": "runscripthelper.exe surfacecheck \\\\?\\{PATH_ABSOLUTE:.txt} {PATH_ABSOLUTE:folder}",
+  "description": "Execute the PowerShell script with .txt extension",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "runscripthelper",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Runscripthelper/",
+  "upstream_id": "Runscripthelper.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Runscripthelper.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Runscripthelper/"
+    }
+  ]
+}

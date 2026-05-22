@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-te-exe-execute-1",
+  "name": "LOLBAS · te.exe (Execute) #1",
+  "command": "te.exe {PATH:.wsc}",
+  "description": "Run COM Scriptlets (e.g. VBScript) by calling a Windows Script Component (WSC) file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "te",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/te/",
+  "upstream_id": "te.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — te.exe",
+      "url": "https://lolbas-project.github.io/lolbas/te/"
+    }
+  ]
+}

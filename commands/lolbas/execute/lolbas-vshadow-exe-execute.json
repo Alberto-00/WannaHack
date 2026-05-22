@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-vshadow-exe-execute",
+  "name": "LOLBAS · Vshadow.exe (Execute)",
+  "command": "vshadow.exe -nw -exec={PATH_ABSOLUTE:.exe} C:",
+  "description": "Executes specified executable from vshadow.exe.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "vshadow",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Vshadow/",
+  "upstream_id": "Vshadow.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Vshadow.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Vshadow/"
+    }
+  ]
+}

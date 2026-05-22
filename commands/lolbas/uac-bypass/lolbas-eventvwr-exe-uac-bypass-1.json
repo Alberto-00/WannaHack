@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-eventvwr-exe-uac-bypass-1",
+  "name": "LOLBAS · Eventvwr.exe (UAC Bypass) #1",
+  "command": "eventvwr.exe",
+  "description": "During startup, eventvwr.exe checks the registry value `HKCU\\Software\\Classes\\mscfile\\shell\\open\\command` for the location of mmc.exe, which is used to open the eventvwr.msc saved console file. If the location of another binary or script is added to this registry value, it will be executed as a high-integrity process without a UAC prompt being displayed to the user.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "eventvwr",
+    "uac-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Eventvwr/",
+  "upstream_id": "Eventvwr.exe/UAC Bypass/0",
+  "category": "lolbas",
+  "subcategory": "uac-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Eventvwr.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Eventvwr/"
+    }
+  ]
+}

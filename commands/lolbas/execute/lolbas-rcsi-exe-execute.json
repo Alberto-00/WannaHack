@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-rcsi-exe-execute",
+  "name": "LOLBAS · rcsi.exe (Execute)",
+  "command": "rcsi.exe {PATH:.csx}",
+  "description": "Use embedded C# within the csx script to execute the code.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "rcsi",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/rcsi/",
+  "upstream_id": "rcsi.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — rcsi.exe",
+      "url": "https://lolbas-project.github.io/lolbas/rcsi/"
+    }
+  ]
+}

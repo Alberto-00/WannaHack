@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-elvish-file-write",
+  "name": "GTFOBins · elvish (file-write)",
+  "command": "elvish -c 'print DATA >/path/to/output-file'",
+  "description": "Use elvish to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "elvish",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/elvish/#file-write",
+  "upstream_id": "elvish/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/elvish/"
+    }
+  ]
+}

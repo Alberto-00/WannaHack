@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-diskshadow-exe-dump",
+  "name": "LOLBAS · Diskshadow.exe (Dump)",
+  "command": "diskshadow.exe /s {PATH:.txt}",
+  "description": "Execute commands using diskshadow.exe from a prepared diskshadow script.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "diskshadow",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Diskshadow/",
+  "upstream_id": "Diskshadow.exe/Dump/0",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — Diskshadow.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Diskshadow/"
+    }
+  ]
+}

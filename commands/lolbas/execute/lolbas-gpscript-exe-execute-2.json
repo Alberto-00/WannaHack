@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-gpscript-exe-execute-2",
+  "name": "LOLBAS · Gpscript.exe (Execute) #2",
+  "command": "Gpscript /startup",
+  "description": "Executes startup scripts configured in Group Policy",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "gpscript",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Gpscript/",
+  "upstream_id": "Gpscript.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Gpscript.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Gpscript/"
+    }
+  ]
+}

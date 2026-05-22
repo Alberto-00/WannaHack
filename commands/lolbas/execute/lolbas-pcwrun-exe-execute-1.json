@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-pcwrun-exe-execute-1",
+  "name": "LOLBAS · Pcwrun.exe (Execute) #1",
+  "command": "Pcwrun.exe {PATH_ABSOLUTE:.exe}",
+  "description": "Open the target .EXE file with the Program Compatibility Wizard.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "pcwrun",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Pcwrun/",
+  "upstream_id": "Pcwrun.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Pcwrun.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Pcwrun/"
+    }
+  ]
+}

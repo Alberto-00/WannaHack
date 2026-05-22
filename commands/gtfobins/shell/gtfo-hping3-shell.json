@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-hping3-shell",
+  "name": "GTFOBins · hping3 (shell)",
+  "command": "hping3\n/bin/sh",
+  "description": "Use hping3 to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "hping3",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/hping3/#shell",
+  "upstream_id": "hping3/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/hping3/"
+    }
+  ]
+}

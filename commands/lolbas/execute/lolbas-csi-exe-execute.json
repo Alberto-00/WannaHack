@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-csi-exe-execute",
+  "name": "LOLBAS · csi.exe (Execute)",
+  "command": "csi.exe {PATH:.cs}",
+  "description": "Use csi.exe to run unsigned C# code.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "csi",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/csi/",
+  "upstream_id": "csi.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — csi.exe",
+      "url": "https://lolbas-project.github.io/lolbas/csi/"
+    }
+  ]
+}

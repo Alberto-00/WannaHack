@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nc-download-1",
+  "name": "GTFOBins · nc (download) #1",
+  "command": "nc -l -p 12345 >/path/to/output-file",
+  "description": "Use nc to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nc",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nc/#download",
+  "upstream_id": "nc/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nc/"
+    }
+  ]
+}

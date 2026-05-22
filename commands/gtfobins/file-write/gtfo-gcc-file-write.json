@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-gcc-file-write",
+  "name": "GTFOBins · gcc (file-write)",
+  "command": "gcc -x c /dev/null -o /path/to/input-file",
+  "description": "Use gcc to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "gcc",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/gcc/#file-write",
+  "upstream_id": "gcc/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/gcc/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ar-file-read",
+  "name": "GTFOBins · ar (file-read)",
+  "command": "ar r /path/to/output-file /path/to/input-file\nar p /path/to/output-file",
+  "description": "Use ar to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ar",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ar/#file-read",
+  "upstream_id": "ar/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ar/"
+    }
+  ]
+}

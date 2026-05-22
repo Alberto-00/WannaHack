@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wsl-exe-execute-1",
+  "name": "LOLBAS · Wsl.exe (Execute) #1",
+  "command": "wsl.exe -e /mnt/c/Windows/System32/calc.exe",
+  "description": "Executes calc.exe from wsl.exe",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wsl",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Wsl/",
+  "upstream_id": "Wsl.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Wsl.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Wsl/"
+    }
+  ]
+}

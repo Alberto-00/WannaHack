@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tailscale-upload",
+  "name": "GTFOBins · tailscale (upload)",
+  "command": "tailscale serve --http=12345 /path/to/input-file",
+  "description": "Use tailscale to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tailscale",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tailscale/#upload",
+  "upstream_id": "tailscale/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tailscale/"
+    }
+  ]
+}

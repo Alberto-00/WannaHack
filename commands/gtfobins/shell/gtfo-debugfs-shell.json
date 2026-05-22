@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-debugfs-shell",
+  "name": "GTFOBins · debugfs (shell)",
+  "command": "debugfs\n!/bin/sh",
+  "description": "Use debugfs to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "debugfs",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/debugfs/#shell",
+  "upstream_id": "debugfs/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/debugfs/"
+    }
+  ]
+}

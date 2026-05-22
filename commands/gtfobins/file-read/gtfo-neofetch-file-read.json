@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-neofetch-file-read",
+  "name": "GTFOBins · neofetch (file-read)",
+  "command": "neofetch --ascii /path/to/input-file",
+  "description": "Use neofetch to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "neofetch",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/neofetch/#file-read",
+  "upstream_id": "neofetch/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/neofetch/"
+    }
+  ]
+}

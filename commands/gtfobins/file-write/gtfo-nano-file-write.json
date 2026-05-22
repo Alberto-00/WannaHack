@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nano-file-write",
+  "name": "GTFOBins · nano (file-write)",
+  "command": "nano /path/to/output-file\nDATA\n^O",
+  "description": "Use nano to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nano",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nano/#file-write",
+  "upstream_id": "nano/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nano/"
+    }
+  ]
+}

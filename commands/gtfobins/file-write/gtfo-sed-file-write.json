@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-sed-file-write",
+  "name": "GTFOBins · sed (file-write)",
+  "command": "sed -n '1s/.*/DATA/w /path/to/output-file' /etc/hosts",
+  "description": "Use sed to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "sed",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/sed/#file-write",
+  "upstream_id": "sed/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/sed/"
+    }
+  ]
+}

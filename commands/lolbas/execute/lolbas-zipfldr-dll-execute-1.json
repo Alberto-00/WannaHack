@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-zipfldr-dll-execute-1",
+  "name": "LOLBAS · Zipfldr.dll (Execute) #1",
+  "command": "rundll32.exe zipfldr.dll,RouteTheCall {PATH:.exe}",
+  "description": "Launch an executable payload by calling RouteTheCall.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "zipfldr.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Zipfldr.dll/",
+  "upstream_id": "Zipfldr.dll/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Zipfldr.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Zipfldr.dll/"
+    }
+  ]
+}

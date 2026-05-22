@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-xbootmgrsleep-exe-execute",
+  "name": "LOLBAS · XBootMgrSleep.exe (Execute)",
+  "command": "xbootmgrsleep.exe 1000 {PATH:.exe}",
+  "description": "Execute executable via XBootMgrSleep, with a 1 second (=1000 milliseconds) delay. Alternatively, it is also possible to replace the delay with any string for immediate execution.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "xbootmgrsleep",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/XBootMgrSleep/",
+  "upstream_id": "XBootMgrSleep.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — XBootMgrSleep.exe",
+      "url": "https://lolbas-project.github.io/lolbas/XBootMgrSleep/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-jsc-exe-compile-1",
+  "name": "LOLBAS · Jsc.exe (Compile) #1",
+  "command": "jsc.exe {PATH:.js}",
+  "description": "Use jsc.exe to compile JavaScript code stored in the provided .JS file and generate a .EXE file with the same name.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "jsc",
+    "compile"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Jsc/",
+  "upstream_id": "Jsc.exe/Compile/0",
+  "category": "lolbas",
+  "subcategory": "compile",
+  "references": [
+    {
+      "title": "LOLBAS — Jsc.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Jsc/"
+    }
+  ]
+}

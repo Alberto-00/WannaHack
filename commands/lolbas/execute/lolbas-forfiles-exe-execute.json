@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-forfiles-exe-execute",
+  "name": "LOLBAS · Forfiles.exe (Execute)",
+  "command": "forfiles /p c:\\windows\\system32 /m notepad.exe /c \"{CMD}\"",
+  "description": "Executes specified command since there is a match for notepad.exe in the c:\\windows\\System32 folder.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "forfiles",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Forfiles/",
+  "upstream_id": "Forfiles.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Forfiles.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Forfiles/"
+    }
+  ]
+}

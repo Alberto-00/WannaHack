@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ssh-exe-execute-2",
+  "name": "LOLBAS · ssh.exe (Execute) #2",
+  "command": "ssh -o ProxyCommand=\"{CMD}\" .",
+  "description": "Executes specified command from ssh.exe",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ssh",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/ssh/",
+  "upstream_id": "ssh.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — ssh.exe",
+      "url": "https://lolbas-project.github.io/lolbas/ssh/"
+    }
+  ]
+}

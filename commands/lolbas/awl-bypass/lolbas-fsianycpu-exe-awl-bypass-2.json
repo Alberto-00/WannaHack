@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-fsianycpu-exe-awl-bypass-2",
+  "name": "LOLBAS · FsiAnyCpu.exe (AWL Bypass) #2",
+  "command": "fsianycpu.exe",
+  "description": "Execute F# code via interactive command line",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "fsianycpu",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/FsiAnyCpu/",
+  "upstream_id": "FsiAnyCpu.exe/AWL Bypass/1",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — FsiAnyCpu.exe",
+      "url": "https://lolbas-project.github.io/lolbas/FsiAnyCpu/"
+    }
+  ]
+}

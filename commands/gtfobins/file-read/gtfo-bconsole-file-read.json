@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bconsole-file-read",
+  "name": "GTFOBins · bconsole (file-read)",
+  "command": "bconsole -c /path/to/file-input",
+  "description": "Use bconsole to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bconsole",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bconsole/#file-read",
+  "upstream_id": "bconsole/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bconsole/"
+    }
+  ]
+}

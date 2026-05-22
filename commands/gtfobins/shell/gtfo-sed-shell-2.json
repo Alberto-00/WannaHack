@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-sed-shell-2",
+  "name": "GTFOBins · sed (shell) #2",
+  "command": "sed e",
+  "description": "Use sed to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "sed",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/sed/#shell",
+  "upstream_id": "sed/shell/1",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/sed/"
+    }
+  ]
+}

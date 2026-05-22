@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-php-command-3",
+  "name": "GTFOBins · php (command) #3",
+  "command": "php -r '$p = array(array(\"pipe\",\"r\"),array(\"pipe\",\"w\"),array(\"pipe\", \"w\"));$h = @proc_open(\"/path/to/command\", $p, $pipes);if($h&&$pipes){while(!feof($pipes[1])) echo(fread($pipes[1],4096));while(!feof($pipes[2])) echo(fread($pipes[2],4096));fclose($pipes[0]);fclose($pipes[1]);fclose($pipes[2]);proc_close($h);}'",
+  "description": "Use php to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "php",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/php/#command",
+  "upstream_id": "php/command/2",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/php/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-sqltoolsps-exe-execute",
+  "name": "LOLBAS · SQLToolsPS.exe (Execute)",
+  "command": "SQLToolsPS.exe -noprofile -command Start-Process {PATH:.exe}",
+  "description": "Run a SQL Server PowerShell mini-console without Module and ScriptBlock Logging.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "sqltoolsps",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/SQLToolsPS/",
+  "upstream_id": "SQLToolsPS.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — SQLToolsPS.exe",
+      "url": "https://lolbas-project.github.io/lolbas/SQLToolsPS/"
+    }
+  ]
+}

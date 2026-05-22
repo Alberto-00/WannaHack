@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dxcap-exe-execute-2",
+  "name": "LOLBAS · Dxcap.exe (Execute) #2",
+  "command": "dxcap.exe -usage",
+  "description": "Once executed, `dxcap.exe` will execute `xperf.exe` in the same folder. Thus, if `dxcap.exe` is copied to a folder and an arbitrary executable is renamed to `xperf.exe`, `dxcap.exe` will spawn it.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dxcap",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Dxcap/",
+  "upstream_id": "Dxcap.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Dxcap.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Dxcap/"
+    }
+  ]
+}

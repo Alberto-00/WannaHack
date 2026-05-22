@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bc-file-read",
+  "name": "GTFOBins · bc (file-read)",
+  "command": "bc -s /path/to/input-file\nquit",
+  "description": "Use bc to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bc",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bc/#file-read",
+  "upstream_id": "bc/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bc/"
+    }
+  ]
+}

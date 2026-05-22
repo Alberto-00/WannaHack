@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-vstest-console-exe-awl-bypass",
+  "name": "LOLBAS · vstest.console.exe (AWL Bypass)",
+  "command": "vstest.console.exe {PATH:.dll}",
+  "description": "VSTest functionality may allow an adversary to executes their malware by wrapping it as a test method then build it to a .exe or .dll file to be later run by vstest.console.exe. This may both allow AWL bypass or defense bypass in general",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "vstest.console",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/vstest.console/",
+  "upstream_id": "vstest.console.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — vstest.console.exe",
+      "url": "https://lolbas-project.github.io/lolbas/vstest.console/"
+    }
+  ]
+}

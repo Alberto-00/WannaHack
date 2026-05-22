@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-xargs-file-read",
+  "name": "GTFOBins · xargs (file-read)",
+  "command": "xargs -a /path/to/input-file -0",
+  "description": "Use xargs to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "xargs",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/xargs/#file-read",
+  "upstream_id": "xargs/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/xargs/"
+    }
+  ]
+}

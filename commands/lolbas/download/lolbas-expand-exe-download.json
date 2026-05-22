@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-expand-exe-download",
+  "name": "LOLBAS · Expand.exe (Download)",
+  "command": "expand {PATH_SMB:.bat} {PATH_ABSOLUTE:.bat}",
+  "description": "Copies source file to destination.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "expand",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Expand/",
+  "upstream_id": "Expand.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Expand.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Expand/"
+    }
+  ]
+}

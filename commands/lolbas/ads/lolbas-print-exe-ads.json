@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-print-exe-ads",
+  "name": "LOLBAS · Print.exe (ADS)",
+  "command": "print /D:{PATH_ABSOLUTE}:file.exe {PATH_ABSOLUTE:.exe}",
+  "description": "Copy file.exe into the Alternate Data Stream (ADS) of file.txt.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "print",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Print/",
+  "upstream_id": "Print.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Print.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Print/"
+    }
+  ]
+}

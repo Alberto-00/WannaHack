@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-launch-vsdevshell-ps1-execute-2",
+  "name": "LOLBAS · Launch-VsDevShell.ps1 (Execute) #2",
+  "command": "powershell -ep RemoteSigned -f .\\Launch-VsDevShell.ps1 -VsInstallationPath \"/../../../../../; {PATH:.exe} ;\"",
+  "description": "Execute binaries and commands from the context of the signed script using the \"VsInstallationPath\" flag.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "launch-vsdevshell.ps1",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Launch-VsDevShell.ps1/",
+  "upstream_id": "Launch-VsDevShell.ps1/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Launch-VsDevShell.ps1",
+      "url": "https://lolbas-project.github.io/lolbas/Launch-VsDevShell.ps1/"
+    }
+  ]
+}

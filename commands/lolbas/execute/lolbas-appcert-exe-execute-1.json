@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-appcert-exe-execute-1",
+  "name": "LOLBAS · AppCert.exe (Execute) #1",
+  "command": "appcert.exe test -apptype desktop -setuppath {PATH_ABSOLUTE:.exe} -reportoutputpath {PATH_ABSOLUTE:.xml}",
+  "description": "Execute an executable file via the Windows App Certification Kit command-line tool.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "appcert",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/AppCert/",
+  "upstream_id": "AppCert.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — AppCert.exe",
+      "url": "https://lolbas-project.github.io/lolbas/AppCert/"
+    }
+  ]
+}

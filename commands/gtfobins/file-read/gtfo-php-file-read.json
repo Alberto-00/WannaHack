@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-php-file-read",
+  "name": "GTFOBins · php (file-read)",
+  "command": "php -r 'readfile(\"/path/to/input-file\");'",
+  "description": "Use php to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "php",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/php/#file-read",
+  "upstream_id": "php/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/php/"
+    }
+  ]
+}

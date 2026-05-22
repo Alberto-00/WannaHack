@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-logger-exe-execute-3",
+  "name": "LOLBAS · Logger.exe (Execute) #3",
+  "command": "logger.exe \"{CMD}\"",
+  "description": "Executes the command specified as a child of `logger.exe`.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "logger",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Logger/",
+  "upstream_id": "Logger.exe/Execute/2",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Logger.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Logger/"
+    }
+  ]
+}

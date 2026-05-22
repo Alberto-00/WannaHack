@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-gfxdownloadwrapper-exe-download",
+  "name": "LOLBAS · GfxDownloadWrapper.exe (Download)",
+  "command": "C:\\Windows\\System32\\DriverStore\\FileRepository\\igdlh64.inf_amd64_[0-9]+\\GfxDownloadWrapper.exe \"URL\" \"DESTINATION FILE\"",
+  "description": "GfxDownloadWrapper.exe downloads the content that returns URL and writes it to the file DESTINATION FILE PATH. The binary is signed by \"Microsoft Windows Hardware\", \"Compatibility Publisher\", \"Microsoft Windows Third Party Component CA 2012\", \"Microsoft Time-Stamp PCA 2010\", \"Microsoft Time-Stamp Service\".",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "gfxdownloadwrapper",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/GfxDownloadWrapper/",
+  "upstream_id": "GfxDownloadWrapper.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — GfxDownloadWrapper.exe",
+      "url": "https://lolbas-project.github.io/lolbas/GfxDownloadWrapper/"
+    }
+  ]
+}

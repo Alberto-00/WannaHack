@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-at-exe-execute",
+  "name": "LOLBAS · At.exe (Execute)",
+  "command": "C:\\Windows\\System32\\at.exe 09:00 /interactive /every:m,t,w,th,f,s,su {CMD}",
+  "description": "Create a recurring task to execute every day at a specific time.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "at",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/At/",
+  "upstream_id": "At.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — At.exe",
+      "url": "https://lolbas-project.github.io/lolbas/At/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-teams-exe-execute-3",
+  "name": "LOLBAS · Teams.exe (Execute) #3",
+  "command": "teams.exe --disable-gpu-sandbox --gpu-launcher=\"{CMD} &&\"",
+  "description": "Teams spawns cmd.exe as a child process of teams.exe and executes the ping command",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "teams",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Teams/",
+  "upstream_id": "Teams.exe/Execute/2",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Teams.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Teams/"
+    }
+  ]
+}

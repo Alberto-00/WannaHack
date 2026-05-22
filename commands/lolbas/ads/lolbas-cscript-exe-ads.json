@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-cscript-exe-ads",
+  "name": "LOLBAS · Cscript.exe (ADS)",
+  "command": "cscript //e:vbscript {PATH_ABSOLUTE}:script.vbs",
+  "description": "Use cscript.exe to exectute a Visual Basic script stored in an Alternate Data Stream (ADS).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "cscript",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Cscript/",
+  "upstream_id": "Cscript.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Cscript.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Cscript/"
+    }
+  ]
+}

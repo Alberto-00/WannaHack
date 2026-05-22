@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ieframe-dll-execute",
+  "name": "LOLBAS · Ieframe.dll (Execute)",
+  "command": "rundll32.exe ieframe.dll,OpenURL {PATH_ABSOLUTE:.url}",
+  "description": "Launch an executable payload via proxy through a(n) URL (information) file by calling OpenURL.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ieframe.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ieframe.dll/",
+  "upstream_id": "Ieframe.dll/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Ieframe.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Ieframe.dll/"
+    }
+  ]
+}

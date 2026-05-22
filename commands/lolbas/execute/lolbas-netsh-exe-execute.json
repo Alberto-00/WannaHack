@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-netsh-exe-execute",
+  "name": "LOLBAS · Netsh.exe (Execute)",
+  "command": "netsh.exe add helper {PATH_ABSOLUTE:.dll}",
+  "description": "Use Netsh in order to execute a .dll file and also gain persistence, every time the netsh command is called",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "netsh",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Netsh/",
+  "upstream_id": "Netsh.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Netsh.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Netsh/"
+    }
+  ]
+}

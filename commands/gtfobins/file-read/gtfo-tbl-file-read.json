@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tbl-file-read",
+  "name": "GTFOBins · tbl (file-read)",
+  "command": "tbl /path/to/input-file",
+  "description": "Use tbl to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tbl",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tbl/#file-read",
+  "upstream_id": "tbl/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tbl/"
+    }
+  ]
+}

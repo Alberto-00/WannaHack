@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-certutil-exe-decode-1",
+  "name": "LOLBAS · Certutil.exe (Decode) #1",
+  "command": "certutil -decode {PATH:.base64} {PATH}",
+  "description": "Command to decode a Base64 encoded file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "certutil",
+    "decode"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Certutil/",
+  "upstream_id": "Certutil.exe/Decode/0",
+  "category": "lolbas",
+  "subcategory": "decode",
+  "references": [
+    {
+      "title": "LOLBAS — Certutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Certutil/"
+    }
+  ]
+}

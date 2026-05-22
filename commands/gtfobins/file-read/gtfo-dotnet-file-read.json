@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-dotnet-file-read",
+  "name": "GTFOBins · dotnet (file-read)",
+  "command": "dotnet fsi\nSystem.IO.File.ReadAllText(\"/path/to/input-file\");;",
+  "description": "Use dotnet to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "dotnet",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/dotnet/#file-read",
+  "upstream_id": "dotnet/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/dotnet/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-varnishncsa-file-write",
+  "name": "GTFOBins · varnishncsa (file-write)",
+  "command": "varnishncsa -g request -q 'ReqURL ~ \"/xxxxxxxxxx\"' -F '%{yyy}i' -w /path/to/output-file",
+  "description": "Use varnishncsa to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "varnishncsa",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/varnishncsa/#file-write",
+  "upstream_id": "varnishncsa/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/varnishncsa/"
+    }
+  ]
+}

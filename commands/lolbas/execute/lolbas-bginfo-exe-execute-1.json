@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bginfo-exe-execute-1",
+  "name": "LOLBAS · Bginfo.exe (Execute) #1",
+  "command": "bginfo.exe {PATH:.bgi} /popup /nolicprompt",
+  "description": "Execute VBscript code that is referenced within the specified .bgi file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bginfo",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bginfo/",
+  "upstream_id": "Bginfo.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Bginfo.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bginfo/"
+    }
+  ]
+}

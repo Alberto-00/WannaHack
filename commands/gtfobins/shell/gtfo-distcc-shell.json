@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-distcc-shell",
+  "name": "GTFOBins · distcc (shell)",
+  "command": "distcc /bin/sh",
+  "description": "Use distcc to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "distcc",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/distcc/#shell",
+  "upstream_id": "distcc/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/distcc/"
+    }
+  ]
+}

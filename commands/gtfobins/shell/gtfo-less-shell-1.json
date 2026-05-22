@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-less-shell-1",
+  "name": "GTFOBins · less (shell) #1",
+  "command": "less /etc/hosts\n!/bin/sh",
+  "description": "Use less to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "less",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/less/#shell",
+  "upstream_id": "less/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/less/"
+    }
+  ]
+}

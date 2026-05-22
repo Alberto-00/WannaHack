@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tcpdump-command-2",
+  "name": "GTFOBins · tcpdump (command) #2",
+  "command": "tcpdump -ln -i lo -w 'command-argument' -W 1 -G 1 -z /path/to/command",
+  "description": "Use tcpdump to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tcpdump",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tcpdump/#command",
+  "upstream_id": "tcpdump/command/1",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tcpdump/"
+    }
+  ]
+}

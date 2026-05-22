@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-vsdiagnostics-exe-execute-1",
+  "name": "LOLBAS · VSDiagnostics.exe (Execute) #1",
+  "command": "VSDiagnostics.exe start 1 /launch:{PATH:.exe}",
+  "description": "Starts a collection session with sessionID 1 and calls kernelbase.CreateProcessW to launch specified executable.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "vsdiagnostics",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/VSDiagnostics/",
+  "upstream_id": "VSDiagnostics.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — VSDiagnostics.exe",
+      "url": "https://lolbas-project.github.io/lolbas/VSDiagnostics/"
+    }
+  ]
+}

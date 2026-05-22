@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-cmd-exe-ads-2",
+  "name": "LOLBAS · Cmd.exe (ADS) #2",
+  "command": "cmd.exe - < {PATH}:payload.bat",
+  "description": "Execute payload.bat stored in an Alternate Data Stream (ADS).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "cmd",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Cmd/",
+  "upstream_id": "Cmd.exe/ADS/1",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Cmd.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Cmd/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-opencode-command",
+  "name": "GTFOBins · opencode (command)",
+  "command": "opencode\n! /path/to/command",
+  "description": "Use opencode to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "opencode",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/opencode/#command",
+  "upstream_id": "opencode/command/0",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/opencode/"
+    }
+  ]
+}

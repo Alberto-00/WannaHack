@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-start-stop-daemon-shell",
+  "name": "GTFOBins · start-stop-daemon (shell)",
+  "command": "start-stop-daemon -S -x /bin/sh",
+  "description": "Use start-stop-daemon to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "start-stop-daemon",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/start-stop-daemon/#shell",
+  "upstream_id": "start-stop-daemon/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/start-stop-daemon/"
+    }
+  ]
+}

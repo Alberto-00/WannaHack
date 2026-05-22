@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-remote-exe-execute-1",
+  "name": "LOLBAS · Remote.exe (Execute) #1",
+  "command": "Remote.exe /s {PATH:.exe} anythinghere",
+  "description": "Spawns specified executable as a child process of remote.exe",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "remote",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Remote/",
+  "upstream_id": "Remote.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Remote.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Remote/"
+    }
+  ]
+}

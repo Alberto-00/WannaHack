@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-mypy-file-write",
+  "name": "GTFOBins · mypy (file-write)",
+  "command": "mypy /path/to/input-file --junit-xml /path/to/output-file",
+  "description": "Use mypy to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "mypy",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/mypy/#file-write",
+  "upstream_id": "mypy/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/mypy/"
+    }
+  ]
+}

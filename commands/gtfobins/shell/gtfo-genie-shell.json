@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-genie-shell",
+  "name": "GTFOBins · genie (shell)",
+  "command": "genie -c '/bin/sh'",
+  "description": "Use genie to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "genie",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/genie/#shell",
+  "upstream_id": "genie/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/genie/"
+    }
+  ]
+}

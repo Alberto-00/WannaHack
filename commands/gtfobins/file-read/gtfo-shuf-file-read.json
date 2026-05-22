@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-shuf-file-read",
+  "name": "GTFOBins · shuf (file-read)",
+  "command": "shuf -z /path/to/input-file",
+  "description": "Use shuf to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "shuf",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/shuf/#file-read",
+  "upstream_id": "shuf/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/shuf/"
+    }
+  ]
+}

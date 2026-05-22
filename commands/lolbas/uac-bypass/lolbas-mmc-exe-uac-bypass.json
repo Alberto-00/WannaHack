@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mmc-exe-uac-bypass",
+  "name": "LOLBAS · Mmc.exe (UAC Bypass)",
+  "command": "mmc.exe gpedit.msc",
+  "description": "Load an arbitrary payload DLL by configuring COR Profiler registry settings and launching MMC to bypass UAC.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mmc",
+    "uac-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mmc/",
+  "upstream_id": "Mmc.exe/UAC Bypass/0",
+  "category": "lolbas",
+  "subcategory": "uac-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Mmc.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Mmc/"
+    }
+  ]
+}

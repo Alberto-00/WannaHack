@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-presentationhost-exe-execute",
+  "name": "LOLBAS · Presentationhost.exe (Execute)",
+  "command": "Presentationhost.exe {PATH_ABSOLUTE:.xbap}",
+  "description": "Executes the target XAML Browser Application (XBAP) file",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "presentationhost",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Presentationhost/",
+  "upstream_id": "Presentationhost.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Presentationhost.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Presentationhost/"
+    }
+  ]
+}

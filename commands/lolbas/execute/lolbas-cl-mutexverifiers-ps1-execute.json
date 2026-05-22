@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-cl-mutexverifiers-ps1-execute",
+  "name": "LOLBAS · CL_Mutexverifiers.ps1 (Execute)",
+  "command": ". C:\\Windows\\diagnostics\\system\\AERO\\CL_Mutexverifiers.ps1   \\nrunAfterCancelProcess {PATH:.ps1}",
+  "description": "Import the PowerShell Diagnostic CL_Mutexverifiers script and call runAfterCancelProcess to launch an executable.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "cl_mutexverifiers.ps1",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/CL_Mutexverifiers.ps1/",
+  "upstream_id": "CL_Mutexverifiers.ps1/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — CL_Mutexverifiers.ps1",
+      "url": "https://lolbas-project.github.io/lolbas/CL_Mutexverifiers.ps1/"
+    }
+  ]
+}

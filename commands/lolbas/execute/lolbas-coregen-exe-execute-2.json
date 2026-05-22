@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-coregen-exe-execute-2",
+  "name": "LOLBAS · coregen.exe (Execute) #2",
+  "command": "coregen.exe dummy_assembly_name",
+  "description": "Loads the coreclr.dll in the corgen.exe directory (e.g. C:\\Program Files\\Microsoft Silverlight\\5.1.50918.0).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "coregen",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/coregen/",
+  "upstream_id": "coregen.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — coregen.exe",
+      "url": "https://lolbas-project.github.io/lolbas/coregen/"
+    }
+  ]
+}

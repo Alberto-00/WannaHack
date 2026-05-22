@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-gtester-file-write",
+  "name": "GTFOBins · gtester (file-write)",
+  "command": "gtester DATA -o /path/to/output-file",
+  "description": "Use gtester to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "gtester",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/gtester/#file-write",
+  "upstream_id": "gtester/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/gtester/"
+    }
+  ]
+}

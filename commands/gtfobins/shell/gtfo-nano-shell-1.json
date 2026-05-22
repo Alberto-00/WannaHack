@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nano-shell-1",
+  "name": "GTFOBins · nano (shell) #1",
+  "command": "nano\n^R^X\nreset; sh 1>&0 2>&0",
+  "description": "Use nano to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nano",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nano/#shell",
+  "upstream_id": "nano/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nano/"
+    }
+  ]
+}

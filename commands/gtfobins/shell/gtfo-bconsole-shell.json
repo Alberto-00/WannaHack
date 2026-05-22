@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bconsole-shell",
+  "name": "GTFOBins · bconsole (shell)",
+  "command": "bconsole\n@exec /bin/sh",
+  "description": "Use bconsole to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bconsole",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bconsole/#shell",
+  "upstream_id": "bconsole/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bconsole/"
+    }
+  ]
+}

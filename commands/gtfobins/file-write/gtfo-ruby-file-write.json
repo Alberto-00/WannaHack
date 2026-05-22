@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ruby-file-write",
+  "name": "GTFOBins · ruby (file-write)",
+  "command": "ruby -e 'File.open(\"/path/to/output-file\", \"w+\") { |f| f.write(\"DATA\") }'",
+  "description": "Use ruby to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ruby",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ruby/#file-write",
+  "upstream_id": "ruby/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ruby/"
+    }
+  ]
+}

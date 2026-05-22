@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-certoc-exe-execute",
+  "name": "LOLBAS · CertOC.exe (Execute)",
+  "command": "certoc.exe -LoadDLL {PATH_ABSOLUTE:.dll}",
+  "description": "Loads the target DLL file",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "certoc",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/CertOC/",
+  "upstream_id": "CertOC.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — CertOC.exe",
+      "url": "https://lolbas-project.github.io/lolbas/CertOC/"
+    }
+  ]
+}

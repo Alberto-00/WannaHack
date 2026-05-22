@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-pax-file-read",
+  "name": "GTFOBins · pax (file-read)",
+  "command": "pax -w /path/to/input-file | tar -xO",
+  "description": "Use pax to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "pax",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/pax/#file-read",
+  "upstream_id": "pax/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/pax/"
+    }
+  ]
+}

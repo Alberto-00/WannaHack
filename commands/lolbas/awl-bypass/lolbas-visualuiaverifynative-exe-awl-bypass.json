@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-visualuiaverifynative-exe-awl-bypass",
+  "name": "LOLBAS · VisualUiaVerifyNative.exe (AWL Bypass)",
+  "command": "VisualUiaVerifyNative.exe",
+  "description": "Generate Serialized gadget and save to - `C:\\Users\\%USERNAME%\\AppData\\Roaminguiverify.config` before executing.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "visualuiaverifynative",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/VisualUiaVerifyNative/",
+  "upstream_id": "VisualUiaVerifyNative.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — VisualUiaVerifyNative.exe",
+      "url": "https://lolbas-project.github.io/lolbas/VisualUiaVerifyNative/"
+    }
+  ]
+}

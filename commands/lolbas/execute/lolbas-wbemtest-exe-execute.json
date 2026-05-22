@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wbemtest-exe-execute",
+  "name": "LOLBAS · wbemtest.exe (Execute)",
+  "command": "wbemtest.exe",
+  "description": "Execute arbitary commands through WMI through a GUI managment interface for Web Based Enterprise Management testing (WBEM). Uses WMI to Create and instance of a Win32_Process WMI class with a commandline argument of the target command to spawn. Spawns a GUI so it requires interactive access. For a demo, see link to blog in resources.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wbemtest",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/wbemtest/",
+  "upstream_id": "wbemtest.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — wbemtest.exe",
+      "url": "https://lolbas-project.github.io/lolbas/wbemtest/"
+    }
+  ]
+}

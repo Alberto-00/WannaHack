@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-tracker-exe-awl-bypass",
+  "name": "LOLBAS · Tracker.exe (AWL Bypass)",
+  "command": "Tracker.exe /d {PATH:.dll} /c C:\\Windows\\write.exe",
+  "description": "Use tracker.exe to proxy execution of an arbitrary DLL into another process. Since tracker.exe is also signed it can be used to bypass application whitelisting solutions.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "tracker",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Tracker/",
+  "upstream_id": "Tracker.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Tracker.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Tracker/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-php-file-write",
+  "name": "GTFOBins · php (file-write)",
+  "command": "php -r 'file_put_contents(\"/path/to/output-file\", \"DATA\");'",
+  "description": "Use php to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "php",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/php/#file-write",
+  "upstream_id": "php/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/php/"
+    }
+  ]
+}

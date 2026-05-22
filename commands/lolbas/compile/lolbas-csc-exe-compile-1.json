@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-csc-exe-compile-1",
+  "name": "LOLBAS · Csc.exe (Compile) #1",
+  "command": "csc.exe -out:{PATH:.exe} {PATH:.cs}",
+  "description": "Use csc.exe to compile C# code, targeting the .NET Framework, stored in the specified .cs file and output the compiled version to the specified .exe path.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "csc",
+    "compile"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Csc/",
+  "upstream_id": "Csc.exe/Compile/0",
+  "category": "lolbas",
+  "subcategory": "compile",
+  "references": [
+    {
+      "title": "LOLBAS — Csc.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Csc/"
+    }
+  ]
+}

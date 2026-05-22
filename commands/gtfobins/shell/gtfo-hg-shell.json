@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-hg-shell",
+  "name": "GTFOBins · hg (shell)",
+  "command": "hg --config alias.x='!/bin/sh' x",
+  "description": "Use hg to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "hg",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/hg/#shell",
+  "upstream_id": "hg/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/hg/"
+    }
+  ]
+}

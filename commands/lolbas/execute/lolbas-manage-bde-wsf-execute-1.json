@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-manage-bde-wsf-execute-1",
+  "name": "LOLBAS · Manage-bde.wsf (Execute) #1",
+  "command": "set comspec={PATH_ABSOLUTE:.exe} & cscript c:\\windows\\system32\\manage-bde.wsf",
+  "description": "Set the comspec variable to another executable prior to calling manage-bde.wsf for execution.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "manage-bde.wsf",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Manage-bde.wsf/",
+  "upstream_id": "Manage-bde.wsf/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Manage-bde.wsf",
+      "url": "https://lolbas-project.github.io/lolbas/Manage-bde.wsf/"
+    }
+  ]
+}

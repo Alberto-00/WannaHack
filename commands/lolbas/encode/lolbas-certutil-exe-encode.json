@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-certutil-exe-encode",
+  "name": "LOLBAS · Certutil.exe (Encode)",
+  "command": "certutil -encode {PATH} {PATH:.base64}",
+  "description": "Command to encode a file using Base64",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "certutil",
+    "encode"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Certutil/",
+  "upstream_id": "Certutil.exe/Encode/0",
+  "category": "lolbas",
+  "subcategory": "encode",
+  "references": [
+    {
+      "title": "LOLBAS — Certutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Certutil/"
+    }
+  ]
+}

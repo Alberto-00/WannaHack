@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-jjs-file-read",
+  "name": "GTFOBins · jjs (file-read)",
+  "command": "jjs\nvar BufferedReader = Java.type('java.io.BufferedReader');\nvar FileReader = Java.type('java.io.FileReader');\nvar br = new BufferedReader(new FileReader('/path/to/input-file'));\nwhile ((line = br.readLine()) != null) { print(line); }",
+  "description": "Use jjs to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "jjs",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/jjs/#file-read",
+  "upstream_id": "jjs/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/jjs/"
+    }
+  ]
+}

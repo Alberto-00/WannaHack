@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bash-exe-execute-4",
+  "name": "LOLBAS · Bash.exe (Execute) #4",
+  "command": "bash.exe",
+  "description": "When executed, `bash.exe` queries the registry value of `HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Lxss\\MSI\\InstallLocation`, which contains a folder path (`c:\\program files\\wsl` by default). If the value points to another folder containing a file named `wsl.exe`, it will be executed instead of the legitimate `wsl.exe` in the program files folder.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bash",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bash/",
+  "upstream_id": "Bash.exe/Execute/3",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Bash.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bash/"
+    }
+  ]
+}

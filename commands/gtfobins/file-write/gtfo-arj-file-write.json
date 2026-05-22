@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-arj-file-write",
+  "name": "GTFOBins · arj (file-write)",
+  "command": "echo DATA >output-file\narj a x output-file\narj e x /path/to/output-dir/",
+  "description": "Use arj to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "arj",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/arj/#file-write",
+  "upstream_id": "arj/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/arj/"
+    }
+  ]
+}

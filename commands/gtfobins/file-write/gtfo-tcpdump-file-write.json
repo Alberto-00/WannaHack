@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tcpdump-file-write",
+  "name": "GTFOBins · tcpdump (file-write)",
+  "command": "tcpdump -ln -i lo -w /path/to/output-file -c 1 -Z user",
+  "description": "Use tcpdump to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tcpdump",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tcpdump/#file-write",
+  "upstream_id": "tcpdump/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tcpdump/"
+    }
+  ]
+}

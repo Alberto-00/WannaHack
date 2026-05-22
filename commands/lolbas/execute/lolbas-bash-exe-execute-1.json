@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bash-exe-execute-1",
+  "name": "LOLBAS · Bash.exe (Execute) #1",
+  "command": "bash.exe -c \"{CMD}\"",
+  "description": "Executes executable from bash.exe",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bash",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bash/",
+  "upstream_id": "Bash.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Bash.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bash/"
+    }
+  ]
+}

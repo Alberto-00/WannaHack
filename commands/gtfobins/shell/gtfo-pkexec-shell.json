@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-pkexec-shell",
+  "name": "GTFOBins · pkexec (shell)",
+  "command": "pkexec /bin/sh",
+  "description": "Use pkexec to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "pkexec",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/pkexec/#shell",
+  "upstream_id": "pkexec/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/pkexec/"
+    }
+  ]
+}

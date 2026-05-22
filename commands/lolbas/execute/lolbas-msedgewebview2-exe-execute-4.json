@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msedgewebview2-exe-execute-4",
+  "name": "LOLBAS · msedgewebview2.exe (Execute) #4",
+  "command": "msedgewebview2.exe --no-sandbox --renderer-cmd-prefix=\"{CMD}\"",
+  "description": "This command launches the Microsoft Edge WebView2 browser control without sandboxing and will spawn the specified command as its subprocess.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msedgewebview2",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/msedgewebview2/",
+  "upstream_id": "msedgewebview2.exe/Execute/3",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — msedgewebview2.exe",
+      "url": "https://lolbas-project.github.io/lolbas/msedgewebview2/"
+    }
+  ]
+}

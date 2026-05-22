@@ -1,0 +1,28 @@
+{
+  "id": "rsg-reverseshell-powershell-5-stderr-support-base64",
+  "name": "RSG · ReverseShell · PowerShell #5 (stderr support) (Base64)",
+  "command": "PowerShell #5 (stderr support) (Base64)",
+  "description": "Reverse Shell payload — PowerShell #5 (stderr support) (Base64) (via reverse-shell-generator).",
+  "platform": "windows",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "windows"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/PowerShell #5 (stderr support) (Base64)/42",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

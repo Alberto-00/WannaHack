@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ruby-shell",
+  "name": "GTFOBins · ruby (shell)",
+  "command": "ruby -e 'exec \"/bin/sh\"'",
+  "description": "Use ruby to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ruby",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ruby/#shell",
+  "upstream_id": "ruby/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ruby/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-julia-shell",
+  "name": "GTFOBins · julia (shell)",
+  "command": "julia -e 'run(`/bin/sh`)'",
+  "description": "Use julia to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "julia",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/julia/#shell",
+  "upstream_id": "julia/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/julia/"
+    }
+  ]
+}

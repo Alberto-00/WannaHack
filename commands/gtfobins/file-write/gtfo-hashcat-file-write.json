@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-hashcat-file-write",
+  "name": "GTFOBins · hashcat (file-write)",
+  "command": "echo -n DATA | tee /path/to/wordlist | md5sum | awk '{print $1}' >/path/to/hash\nhashcat -m 0 --quiet --potfile-disable -o /path/to/output-file --outfile-format=2 --outfile-autohex-disable /path/to/hash /path/to/wordlist",
+  "description": "Use hashcat to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "hashcat",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/hashcat/#file-write",
+  "upstream_id": "hashcat/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/hashcat/"
+    }
+  ]
+}

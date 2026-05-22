@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-squirrel-exe-download",
+  "name": "LOLBAS · Squirrel.exe (Download)",
+  "command": "squirrel.exe --download {REMOTEURL}",
+  "description": "The above binary will go to url and look for RELEASES file and download the nuget package.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "squirrel",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Squirrel/",
+  "upstream_id": "Squirrel.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Squirrel.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Squirrel/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nmap-file-read",
+  "name": "GTFOBins · nmap (file-read)",
+  "command": "nmap -iL /path/to/input-file",
+  "description": "Use nmap to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nmap",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nmap/#file-read",
+  "upstream_id": "nmap/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nmap/"
+    }
+  ]
+}

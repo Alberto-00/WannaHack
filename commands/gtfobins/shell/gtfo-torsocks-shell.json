@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-torsocks-shell",
+  "name": "GTFOBins · torsocks (shell)",
+  "command": "torsocks /bin/sh",
+  "description": "Use torsocks to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "torsocks",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/torsocks/#shell",
+  "upstream_id": "torsocks/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/torsocks/"
+    }
+  ]
+}

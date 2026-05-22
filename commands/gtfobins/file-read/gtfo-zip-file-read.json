@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-zip-file-read",
+  "name": "GTFOBins · zip (file-read)",
+  "command": "zip /path/to/temp-file /path/to/input-file\nunzip -p /path/to/temp-file",
+  "description": "Use zip to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "zip",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/zip/#file-read",
+  "upstream_id": "zip/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/zip/"
+    }
+  ]
+}

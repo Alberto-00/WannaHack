@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bash-file-write-1",
+  "name": "GTFOBins · bash (file-write) #1",
+  "command": "bash -c 'echo DATA >/path/to/output-file'",
+  "description": "Use bash to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bash",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bash/#file-write",
+  "upstream_id": "bash/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bash/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-node-file-read",
+  "name": "GTFOBins · node (file-read)",
+  "command": "node -e 'process.stdout.write(require(\"fs\").readFileSync(\"/path/to/input-file\"))'",
+  "description": "Use node to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "node",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/node/#file-read",
+  "upstream_id": "node/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/node/"
+    }
+  ]
+}

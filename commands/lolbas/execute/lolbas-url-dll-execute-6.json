@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-url-dll-execute-6",
+  "name": "LOLBAS · Url.dll (Execute) #6",
+  "command": "rundll32.exe url.dll,FileProtocolHandler file:///C:/test/test.hta",
+  "description": "Launch a HTML application payload by calling FileProtocolHandler.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "url.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Url.dll/",
+  "upstream_id": "Url.dll/Execute/5",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Url.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Url.dll/"
+    }
+  ]
+}

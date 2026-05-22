@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-dos2unix-file-read",
+  "name": "GTFOBins · dos2unix (file-read)",
+  "command": "dos2unix -f -O /path/to/input-file",
+  "description": "Use dos2unix to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "dos2unix",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/dos2unix/#file-read",
+  "upstream_id": "dos2unix/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/dos2unix/"
+    }
+  ]
+}

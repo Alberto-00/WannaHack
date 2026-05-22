@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-control-exe-execute",
+  "name": "LOLBAS · Control.exe (Execute)",
+  "command": "control.exe {PATH_ABSOLUTE:.cpl}",
+  "description": "Execute .cpl file. A CPL is a DLL file with CPlApplet export function)",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "control",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Control/",
+  "upstream_id": "Control.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Control.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Control/"
+    }
+  ]
+}

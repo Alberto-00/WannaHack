@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-dash-shell",
+  "name": "GTFOBins · dash (shell)",
+  "command": "dash",
+  "description": "Use dash to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "dash",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/dash/#shell",
+  "upstream_id": "dash/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/dash/"
+    }
+  ]
+}

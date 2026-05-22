@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-cdb-exe-execute-3",
+  "name": "LOLBAS · Cdb.exe (Execute) #3",
+  "command": "cdb.exe -c {PATH:.txt} \"{CMD}\"",
+  "description": "Execute arbitrary commands and binaries using a debugging script (see Resources section for a sample file).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "cdb",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Cdb/",
+  "upstream_id": "Cdb.exe/Execute/2",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Cdb.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Cdb/"
+    }
+  ]
+}

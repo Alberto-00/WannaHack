@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-runexehelper-exe-execute",
+  "name": "LOLBAS · Runexehelper.exe (Execute)",
+  "command": "runexehelper.exe {PATH_ABSOLUTE:.exe}",
+  "description": "Launches the specified exe. Prerequisites: (1) diagtrack_action_output environment variable must be set to an existing, writable folder; (2) runexewithargs_output.txt file cannot exist in the folder indicated by the variable.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "runexehelper",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Runexehelper/",
+  "upstream_id": "Runexehelper.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Runexehelper.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Runexehelper/"
+    }
+  ]
+}

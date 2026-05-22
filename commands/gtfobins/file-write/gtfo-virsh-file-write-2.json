@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-virsh-file-write-2",
+  "name": "GTFOBins · virsh (file-write) #2",
+  "command": "virsh -c qemu:///system pool-create-as x dir --target /path/to/dir/\nvirsh -c qemu:///system vol-download --pool x input-file output-file\nvirsh -c qemu:///system pool-destroy x",
+  "description": "Use virsh to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "virsh",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/virsh/#file-write",
+  "upstream_id": "virsh/file-write/1",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/virsh/"
+    }
+  ]
+}

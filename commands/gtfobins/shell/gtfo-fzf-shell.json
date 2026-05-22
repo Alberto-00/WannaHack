@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-fzf-shell",
+  "name": "GTFOBins · fzf (shell)",
+  "command": "fzf --bind 'enter:execute(/bin/sh)'",
+  "description": "Use fzf to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "fzf",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/fzf/#shell",
+  "upstream_id": "fzf/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/fzf/"
+    }
+  ]
+}

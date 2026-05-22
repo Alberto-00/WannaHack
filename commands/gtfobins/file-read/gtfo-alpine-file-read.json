@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-alpine-file-read",
+  "name": "GTFOBins · alpine (file-read)",
+  "command": "alpine -F /path/to/input-file",
+  "description": "Use alpine to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "alpine",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/alpine/#file-read",
+  "upstream_id": "alpine/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/alpine/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-links-file-read",
+  "name": "GTFOBins · links (file-read)",
+  "command": "links /path/to/input-file",
+  "description": "Use links to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "links",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/links/#file-read",
+  "upstream_id": "links/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/links/"
+    }
+  ]
+}

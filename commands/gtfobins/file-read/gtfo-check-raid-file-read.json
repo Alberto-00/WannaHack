@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-check-raid-file-read",
+  "name": "GTFOBins · check_raid (file-read)",
+  "command": "check_raid --extra-opts=@/path/to/input-file",
+  "description": "Use check_raid to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "check_raid",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/check_raid/#file-read",
+  "upstream_id": "check_raid/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/check_raid/"
+    }
+  ]
+}

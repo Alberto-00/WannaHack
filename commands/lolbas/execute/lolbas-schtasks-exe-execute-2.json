@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-schtasks-exe-execute-2",
+  "name": "LOLBAS · Schtasks.exe (Execute) #2",
+  "command": "schtasks /create /s targetmachine /tn \"MyTask\" /tr \"{CMD}\" /sc daily",
+  "description": "Create a scheduled task on a remote computer for persistence/lateral movement",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "schtasks",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Schtasks/",
+  "upstream_id": "Schtasks.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Schtasks.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Schtasks/"
+    }
+  ]
+}

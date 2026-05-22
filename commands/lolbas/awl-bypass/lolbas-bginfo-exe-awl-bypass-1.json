@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bginfo-exe-awl-bypass-1",
+  "name": "LOLBAS · Bginfo.exe (AWL Bypass) #1",
+  "command": "bginfo.exe {PATH:.bgi} /popup /nolicprompt",
+  "description": "Execute VBscript code that is referenced within the specified .bgi file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bginfo",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bginfo/",
+  "upstream_id": "Bginfo.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Bginfo.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bginfo/"
+    }
+  ]
+}

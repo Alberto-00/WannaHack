@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-rustdoc-file-write",
+  "name": "GTFOBins · rustdoc (file-write)",
+  "command": "echo '//! DATA' >/path/to/temp-file\nrustdoc /path/to/temp-file -o /path/to/output-dir/",
+  "description": "Use rustdoc to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "rustdoc",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/rustdoc/#file-write",
+  "upstream_id": "rustdoc/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/rustdoc/"
+    }
+  ]
+}

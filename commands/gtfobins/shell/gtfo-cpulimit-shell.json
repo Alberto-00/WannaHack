@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-cpulimit-shell",
+  "name": "GTFOBins · cpulimit (shell)",
+  "command": "cpulimit -l 100 -f -- /bin/sh",
+  "description": "Use cpulimit to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "cpulimit",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/cpulimit/#shell",
+  "upstream_id": "cpulimit/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/cpulimit/"
+    }
+  ]
+}

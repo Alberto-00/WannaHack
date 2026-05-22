@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-customshellhost-exe-execute",
+  "name": "LOLBAS · CustomShellHost.exe (Execute)",
+  "command": "CustomShellHost.exe",
+  "description": "Executes explorer.exe (with command-line argument /NoShellRegistrationCheck) if present in the current working folder.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "customshellhost",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/CustomShellHost/",
+  "upstream_id": "CustomShellHost.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — CustomShellHost.exe",
+      "url": "https://lolbas-project.github.io/lolbas/CustomShellHost/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-expand-exe-ads",
+  "name": "LOLBAS · Expand.exe (ADS)",
+  "command": "expand {PATH_SMB:.bat} {PATH_ABSOLUTE}:file.bat",
+  "description": "Copies source file to destination Alternate Data Stream (ADS)",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "expand",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Expand/",
+  "upstream_id": "Expand.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Expand.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Expand/"
+    }
+  ]
+}

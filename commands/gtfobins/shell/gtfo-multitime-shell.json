@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-multitime-shell",
+  "name": "GTFOBins · multitime (shell)",
+  "command": "multitime /bin/sh",
+  "description": "Use multitime to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "multitime",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/multitime/#shell",
+  "upstream_id": "multitime/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/multitime/"
+    }
+  ]
+}

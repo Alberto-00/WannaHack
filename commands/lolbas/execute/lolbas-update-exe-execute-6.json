@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-execute-6",
+  "name": "LOLBAS · Update.exe (Execute) #6",
+  "command": "Update.exe --createShortcut={PATH:.exe} -l=Startup",
+  "description": "Copy your payload into \"%localappdata%\\Microsoft\\Teams\\current\\\". Then run the command. Update.exe will create a shortcut to the specified executable in \"%appdata%\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\". Then payload will run on every login of the user who runs it.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/Execute/5",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

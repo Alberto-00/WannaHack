@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-wt-exe-execute",
+  "name": "LOLBAS · wt.exe (Execute)",
+  "command": "wt.exe {CMD}",
+  "description": "Execute a command via Windows Terminal.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "wt",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/wt/",
+  "upstream_id": "wt.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — wt.exe",
+      "url": "https://lolbas-project.github.io/lolbas/wt/"
+    }
+  ]
+}

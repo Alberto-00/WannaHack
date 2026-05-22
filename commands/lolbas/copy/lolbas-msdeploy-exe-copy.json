@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msdeploy-exe-copy",
+  "name": "LOLBAS · Msdeploy.exe (Copy)",
+  "command": "msdeploy.exe -verb:sync -source:filePath={PATH_ABSOLUTE:.source.ext} -dest:filePath={PATH_ABSOLUTE:.dest.ext}",
+  "description": "Copy file from source to destination.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msdeploy",
+    "copy"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Msdeploy/",
+  "upstream_id": "Msdeploy.exe/Copy/0",
+  "category": "lolbas",
+  "subcategory": "copy",
+  "references": [
+    {
+      "title": "LOLBAS — Msdeploy.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Msdeploy/"
+    }
+  ]
+}

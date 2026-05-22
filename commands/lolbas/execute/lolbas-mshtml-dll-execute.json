@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mshtml-dll-execute",
+  "name": "LOLBAS · Mshtml.dll (Execute)",
+  "command": "rundll32.exe Mshtml.dll,PrintHTML {PATH_ABSOLUTE:.hta}",
+  "description": "Invoke an HTML Application via mshta.exe (note: pops a security warning and a print dialogue box).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mshtml.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mshtml.dll/",
+  "upstream_id": "Mshtml.dll/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Mshtml.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Mshtml.dll/"
+    }
+  ]
+}

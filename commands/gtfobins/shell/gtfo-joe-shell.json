@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-joe-shell",
+  "name": "GTFOBins · joe (shell)",
+  "command": "joe\n^K!/bin/sh",
+  "description": "Use joe to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "joe",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/joe/#shell",
+  "upstream_id": "joe/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/joe/"
+    }
+  ]
+}

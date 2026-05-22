@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-less-command-2",
+  "name": "GTFOBins · less (command) #2",
+  "command": "LESSOPEN='/path/to/command # %s' less /etc/hosts",
+  "description": "Use less to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "less",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/less/#command",
+  "upstream_id": "less/command/1",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/less/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-fmt-file-read-1",
+  "name": "GTFOBins · fmt (file-read) #1",
+  "command": "fmt -pNON_EXISTING_PREFIX /path/to/input-file",
+  "description": "Use fmt to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "fmt",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/fmt/#file-read",
+  "upstream_id": "fmt/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/fmt/"
+    }
+  ]
+}

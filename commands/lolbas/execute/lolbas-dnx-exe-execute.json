@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dnx-exe-execute",
+  "name": "LOLBAS · dnx.exe (Execute)",
+  "command": "dnx.exe {PATH_ABSOLUTE:folder}",
+  "description": "Execute C# code located in the specified folder via 'Program.cs' and 'Project.json' (Note - Requires dependencies)",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dnx",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/dnx/",
+  "upstream_id": "dnx.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — dnx.exe",
+      "url": "https://lolbas-project.github.io/lolbas/dnx/"
+    }
+  ]
+}

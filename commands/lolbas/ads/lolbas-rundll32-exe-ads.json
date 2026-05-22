@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-rundll32-exe-ads",
+  "name": "LOLBAS · Rundll32.exe (ADS)",
+  "command": "rundll32 \"{PATH}:ADSDLL.dll\",DllMain",
+  "description": "Use Rundll32.exe to execute a .DLL file stored in an Alternate Data Stream (ADS).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "rundll32",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Rundll32/",
+  "upstream_id": "Rundll32.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Rundll32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Rundll32/"
+    }
+  ]
+}

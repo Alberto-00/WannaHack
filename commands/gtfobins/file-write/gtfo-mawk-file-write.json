@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-mawk-file-write",
+  "name": "GTFOBins · mawk (file-write)",
+  "command": "mawk 'BEGIN { print \"DATA\" > \"/path/to/output-file\" }'",
+  "description": "Use mawk to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "mawk",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/mawk/#file-write",
+  "upstream_id": "mawk/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/mawk/"
+    }
+  ]
+}

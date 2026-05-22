@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-rcsi-exe-awl-bypass",
+  "name": "LOLBAS · rcsi.exe (AWL Bypass)",
+  "command": "rcsi.exe {PATH:.csx}",
+  "description": "Use embedded C# within the csx script to execute the code.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "rcsi",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/rcsi/",
+  "upstream_id": "rcsi.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — rcsi.exe",
+      "url": "https://lolbas-project.github.io/lolbas/rcsi/"
+    }
+  ]
+}

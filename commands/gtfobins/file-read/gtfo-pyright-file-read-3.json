@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-pyright-file-read-3",
+  "name": "GTFOBins · pyright (file-read) #3",
+  "command": "pyright -w /path/to/input-dir/",
+  "description": "Use pyright to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "pyright",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/pyright/#file-read",
+  "upstream_id": "pyright/file-read/2",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/pyright/"
+    }
+  ]
+}

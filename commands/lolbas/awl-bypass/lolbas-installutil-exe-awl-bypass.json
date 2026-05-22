@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-installutil-exe-awl-bypass",
+  "name": "LOLBAS · Installutil.exe (AWL Bypass)",
+  "command": "InstallUtil.exe /logfile= /LogToConsole=false /U {PATH:.dll}",
+  "description": "Execute the target .NET DLL or EXE.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "installutil",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Installutil/",
+  "upstream_id": "Installutil.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Installutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Installutil/"
+    }
+  ]
+}

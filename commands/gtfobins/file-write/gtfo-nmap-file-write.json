@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nmap-file-write",
+  "name": "GTFOBins · nmap (file-write)",
+  "command": "nmap -oG=/path/to/output-file DATA",
+  "description": "Use nmap to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nmap",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nmap/#file-write",
+  "upstream_id": "nmap/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nmap/"
+    }
+  ]
+}

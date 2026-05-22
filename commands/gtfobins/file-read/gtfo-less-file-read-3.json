@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-less-file-read-3",
+  "name": "GTFOBins · less (file-read) #3",
+  "command": "LESSOPEN='echo /path/to/input-file # %s' less /etc/hosts",
+  "description": "Use less to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "less",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/less/#file-read",
+  "upstream_id": "less/file-read/2",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/less/"
+    }
+  ]
+}

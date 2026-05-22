@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-less-file-write",
+  "name": "GTFOBins · less (file-write)",
+  "command": "echo DATA | less\ns/path/to/output-file\nq",
+  "description": "Use less to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "less",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/less/#file-write",
+  "upstream_id": "less/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/less/"
+    }
+  ]
+}

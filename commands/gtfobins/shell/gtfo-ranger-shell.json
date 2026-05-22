@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ranger-shell",
+  "name": "GTFOBins · ranger (shell)",
+  "command": "ranger\nS",
+  "description": "Use ranger to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ranger",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ranger/#shell",
+  "upstream_id": "ranger/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ranger/"
+    }
+  ]
+}

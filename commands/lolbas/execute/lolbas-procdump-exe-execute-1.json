@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-procdump-exe-execute-1",
+  "name": "LOLBAS · Procdump.exe (Execute) #1",
+  "command": "procdump.exe -md {PATH:.dll} explorer.exe",
+  "description": "Loads the specified DLL where DLL is configured with a 'MiniDumpCallbackRoutine' exported function. Valid process must be provided as dump still created.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "procdump",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Procdump/",
+  "upstream_id": "Procdump.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Procdump.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Procdump/"
+    }
+  ]
+}

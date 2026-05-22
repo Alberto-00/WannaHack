@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-shell32-dll-execute-2",
+  "name": "LOLBAS · Shell32.dll (Execute) #2",
+  "command": "rundll32.exe shell32.dll,ShellExec_RunDLL {PATH:.exe}",
+  "description": "Launch an executable by calling the ShellExec_RunDLL function.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "shell32.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Shell32.dll/",
+  "upstream_id": "Shell32.dll/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Shell32.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Shell32.dll/"
+    }
+  ]
+}

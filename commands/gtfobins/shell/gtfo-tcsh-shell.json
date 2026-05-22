@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-tcsh-shell",
+  "name": "GTFOBins · tcsh (shell)",
+  "command": "tcsh",
+  "description": "Use tcsh to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "tcsh",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/tcsh/#shell",
+  "upstream_id": "tcsh/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/tcsh/"
+    }
+  ]
+}

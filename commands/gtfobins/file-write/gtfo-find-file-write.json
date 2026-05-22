@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-find-file-write",
+  "name": "GTFOBins · find (file-write)",
+  "command": "find / -fprintf /path/to/output-file DATA -quit",
+  "description": "Use find to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "find",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/find/#file-write",
+  "upstream_id": "find/file-write/0",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/find/"
+    }
+  ]
+}

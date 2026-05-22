@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mmc-exe-download",
+  "name": "LOLBAS · Mmc.exe (Download)",
+  "command": "mmc.exe -Embedding {PATH_ABSOLUTE:.msc}",
+  "description": "Download and save an executable to disk",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mmc",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mmc/",
+  "upstream_id": "Mmc.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Mmc.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Mmc/"
+    }
+  ]
+}

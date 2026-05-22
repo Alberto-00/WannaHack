@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msbuild-exe-awl-bypass",
+  "name": "LOLBAS · Msbuild.exe (AWL Bypass)",
+  "command": "msbuild.exe {PATH:.xml}",
+  "description": "Build and execute a C# project stored in the target XML file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msbuild",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Msbuild/",
+  "upstream_id": "Msbuild.exe/AWL Bypass/0",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Msbuild.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Msbuild/"
+    }
+  ]
+}

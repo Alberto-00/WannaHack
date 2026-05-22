@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-installutil-exe-execute",
+  "name": "LOLBAS · Installutil.exe (Execute)",
+  "command": "InstallUtil.exe /logfile= /LogToConsole=false /U {PATH:.dll}",
+  "description": "Execute the target .NET DLL or EXE.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "installutil",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Installutil/",
+  "upstream_id": "Installutil.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Installutil.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Installutil/"
+    }
+  ]
+}

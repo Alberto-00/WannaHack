@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ftp-exe-execute",
+  "name": "LOLBAS · Ftp.exe (Execute)",
+  "command": "echo !{CMD} > ftpcommands.txt && ftp -s:ftpcommands.txt",
+  "description": "Executes the commands you put inside the text file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ftp",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ftp/",
+  "upstream_id": "Ftp.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Ftp.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Ftp/"
+    }
+  ]
+}

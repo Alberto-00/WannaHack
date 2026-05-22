@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-workfolders-exe-execute-1",
+  "name": "LOLBAS · WorkFolders.exe (Execute) #1",
+  "command": "WorkFolders",
+  "description": "Execute `control.exe` in the current working directory",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "workfolders",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/WorkFolders/",
+  "upstream_id": "WorkFolders.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — WorkFolders.exe",
+      "url": "https://lolbas-project.github.io/lolbas/WorkFolders/"
+    }
+  ]
+}

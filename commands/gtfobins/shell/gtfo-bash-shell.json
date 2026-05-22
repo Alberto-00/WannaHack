@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-bash-shell",
+  "name": "GTFOBins · bash (shell)",
+  "command": "bash",
+  "description": "Use bash to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "bash",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/bash/#shell",
+  "upstream_id": "bash/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/bash/"
+    }
+  ]
+}

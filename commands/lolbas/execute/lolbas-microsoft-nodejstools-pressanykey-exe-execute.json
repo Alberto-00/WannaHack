@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-microsoft-nodejstools-pressanykey-exe-execute",
+  "name": "LOLBAS · Microsoft.NodejsTools.PressAnyKey.exe (Execute)",
+  "command": "Microsoft.NodejsTools.PressAnyKey.exe normal 1 {PATH:.exe}",
+  "description": "Launch specified executable as a subprocess of Microsoft.NodejsTools.PressAnyKey.exe.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "microsoft.nodejstools.pressanykey",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Microsoft.NodejsTools.PressAnyKey/",
+  "upstream_id": "Microsoft.NodejsTools.PressAnyKey.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Microsoft.NodejsTools.PressAnyKey.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Microsoft.NodejsTools.PressAnyKey/"
+    }
+  ]
+}

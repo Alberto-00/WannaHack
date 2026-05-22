@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-defaultpack-exe-execute",
+  "name": "LOLBAS · DefaultPack.EXE (Execute)",
+  "command": "DefaultPack.EXE /C:\"{CMD}\"",
+  "description": "Use DefaultPack.EXE to execute arbitrary binaries, with added argument support.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "defaultpack",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/DefaultPack/",
+  "upstream_id": "DefaultPack.EXE/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — DefaultPack.EXE",
+      "url": "https://lolbas-project.github.io/lolbas/DefaultPack/"
+    }
+  ]
+}

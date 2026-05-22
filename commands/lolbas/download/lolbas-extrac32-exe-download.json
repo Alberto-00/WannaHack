@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-extrac32-exe-download",
+  "name": "LOLBAS · Extrac32.exe (Download)",
+  "command": "extrac32 /Y /C {PATH_SMB} {PATH_ABSOLUTE}",
+  "description": "Copy the source file to the destination file and overwrite it.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "extrac32",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Extrac32/",
+  "upstream_id": "Extrac32.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Extrac32.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Extrac32/"
+    }
+  ]
+}

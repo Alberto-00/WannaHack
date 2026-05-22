@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-fzf-command",
+  "name": "GTFOBins · fzf (command)",
+  "command": "fzf --listen=12345",
+  "description": "Use fzf to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "fzf",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/fzf/#command",
+  "upstream_id": "fzf/command/0",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/fzf/"
+    }
+  ]
+}

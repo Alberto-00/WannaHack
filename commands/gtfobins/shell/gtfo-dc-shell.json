@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-dc-shell",
+  "name": "GTFOBins · dc (shell)",
+  "command": "dc -e '!/bin/sh'",
+  "description": "Use dc to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "dc",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/dc/#shell",
+  "upstream_id": "dc/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/dc/"
+    }
+  ]
+}

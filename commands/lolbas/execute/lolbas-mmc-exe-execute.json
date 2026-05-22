@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mmc-exe-execute",
+  "name": "LOLBAS · Mmc.exe (Execute)",
+  "command": "mmc.exe -Embedding {PATH_ABSOLUTE:.msc}",
+  "description": "Launch a 'backgrounded' MMC process and invoke a COM payload",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mmc",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Mmc/",
+  "upstream_id": "Mmc.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Mmc.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Mmc/"
+    }
+  ]
+}

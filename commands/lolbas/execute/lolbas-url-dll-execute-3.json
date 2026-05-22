@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-url-dll-execute-3",
+  "name": "LOLBAS · Url.dll (Execute) #3",
+  "command": "rundll32.exe url.dll,OpenURL file://^C^:^/^W^i^n^d^o^w^s^/^s^y^s^t^e^m^3^2^/^c^a^l^c^.^e^x^e",
+  "description": "Launch an executable by calling OpenURL.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "url.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Url.dll/",
+  "upstream_id": "Url.dll/Execute/2",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Url.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Url.dll/"
+    }
+  ]
+}

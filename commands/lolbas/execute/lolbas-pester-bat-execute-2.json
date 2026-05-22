@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-pester-bat-execute-2",
+  "name": "LOLBAS · Pester.bat (Execute) #2",
+  "command": "Pester.bat ;{PATH:.exe}",
+  "description": "Execute code using Pester. Example here executes specified executable.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "pester.bat",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Pester.bat/",
+  "upstream_id": "Pester.bat/Execute/1",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Pester.bat",
+      "url": "https://lolbas-project.github.io/lolbas/Pester.bat/"
+    }
+  ]
+}

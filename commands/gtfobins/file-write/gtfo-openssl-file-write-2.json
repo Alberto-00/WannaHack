@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-openssl-file-write-2",
+  "name": "GTFOBins · openssl (file-write) #2",
+  "command": "openssl enc -in /path/to/input-file -out /path/to/output-file",
+  "description": "Use openssl to file write via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "openssl",
+    "file-write"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/openssl/#file-write",
+  "upstream_id": "openssl/file-write/1",
+  "category": "gtfobins",
+  "subcategory": "file-write",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/openssl/"
+    }
+  ]
+}

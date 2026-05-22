@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ie4uinit-exe-execute",
+  "name": "LOLBAS · Ie4uinit.exe (Execute)",
+  "command": "ie4uinit.exe -BaseSettings",
+  "description": "Executes commands from a specially prepared ie4uinit.inf file.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ie4uinit",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ie4uinit/",
+  "upstream_id": "Ie4uinit.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Ie4uinit.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Ie4uinit/"
+    }
+  ]
+}

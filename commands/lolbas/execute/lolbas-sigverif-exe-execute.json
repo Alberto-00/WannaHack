@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-sigverif-exe-execute",
+  "name": "LOLBAS · Sigverif.exe (Execute)",
+  "command": "sigverif.exe",
+  "description": "Launch sigverif.exe GUI, click 'Advanced', specify arbitrary executable path as 'log file name', then click 'View Log' to execute the binary.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "sigverif",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Sigverif/",
+  "upstream_id": "Sigverif.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Sigverif.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Sigverif/"
+    }
+  ]
+}

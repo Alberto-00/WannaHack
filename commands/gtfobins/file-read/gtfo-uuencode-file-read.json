@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-uuencode-file-read",
+  "name": "GTFOBins · uuencode (file-read)",
+  "command": "uuencode /path/to/input-file /dev/stdout | uudecode",
+  "description": "Use uuencode to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "uuencode",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/uuencode/#file-read",
+  "upstream_id": "uuencode/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/uuencode/"
+    }
+  ]
+}

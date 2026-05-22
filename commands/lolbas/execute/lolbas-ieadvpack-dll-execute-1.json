@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-ieadvpack-dll-execute-1",
+  "name": "LOLBAS · Ieadvpack.dll (Execute) #1",
+  "command": "rundll32.exe ieadvpack.dll,RegisterOCX {PATH:.dll}",
+  "description": "Launch a DLL payload by calling the RegisterOCX function.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "ieadvpack.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Ieadvpack.dll/",
+  "upstream_id": "Ieadvpack.dll/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Ieadvpack.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Ieadvpack.dll/"
+    }
+  ]
+}

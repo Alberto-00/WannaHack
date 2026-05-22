@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-ltrace-shell",
+  "name": "GTFOBins · ltrace (shell)",
+  "command": "ltrace -b -L /bin/sh",
+  "description": "Use ltrace to shell via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "ltrace",
+    "shell"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/ltrace/#shell",
+  "upstream_id": "ltrace/shell/0",
+  "category": "gtfobins",
+  "subcategory": "shell",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/ltrace/"
+    }
+  ]
+}

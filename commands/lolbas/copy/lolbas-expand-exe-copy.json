@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-expand-exe-copy",
+  "name": "LOLBAS · Expand.exe (Copy)",
+  "command": "expand {PATH_ABSOLUTE:.source.ext} {PATH_ABSOLUTE:.dest.ext}",
+  "description": "Copies source file to destination.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "expand",
+    "copy"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Expand/",
+  "upstream_id": "Expand.exe/Copy/0",
+  "category": "lolbas",
+  "subcategory": "copy",
+  "references": [
+    {
+      "title": "LOLBAS — Expand.exe",
+      "url": "https://lolbas-project.github.io/lolbas/Expand/"
+    }
+  ]
+}

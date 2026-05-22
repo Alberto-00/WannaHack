@@ -1,0 +1,23 @@
+{
+  "id": "lolbas-msedge-proxy-exe-execute",
+  "name": "LOLBAS · msedge_proxy.exe (Execute)",
+  "command": "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge_proxy.exe --disable-gpu-sandbox --gpu-launcher=\"{CMD} &&\"",
+  "description": "msedge_proxy.exe will execute file in the background",
+  "platform": "windows",
+  "tags": [
+    "lolbas",
+    "msedge_proxy",
+    "execute"
+  ],
+  "source": "lolbas",
+  "source_url": "https://lolbas-project.github.io/lolbas/msedge_proxy/",
+  "upstream_id": "msedge_proxy.exe/Execute/0",
+  "category": "lolbas",
+  "subcategory": "execute",
+  "references": [
+    {
+      "title": "LOLBAS — msedge_proxy.exe",
+      "url": "https://lolbas-project.github.io/lolbas/msedge_proxy/"
+    }
+  ]
+}
