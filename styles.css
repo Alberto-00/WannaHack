@@ -960,6 +960,64 @@ input, select, textarea { font: inherit; color: inherit; }
 .builder-variant-note-body p:last-child { margin-bottom: 0; }
 .builder-variant-note-body ul { margin: 4px 0; padding-left: 18px; }
 
+/* ── Note callout — Markdown and/or HTML block, before the references.
+   Author writes Markdown (and may mix in raw HTML) in the command's `note`, e.g.:
+       note: `# 🔥 Titolo
+              Testo con **grassetto**, \`codice\` e <kbd>HTML</kbd>.`
+   A "# heading" line becomes the colored header bar (put an emoji in it for
+   the icon). Border, header, bold and code all inherit the active phase color
+   automatically. Code-span contents are escaped; other HTML passes through. ── */
+.builder-callout {
+  padding: 13px 15px;
+  border: 1px solid oklch(from var(--phase-color) l c h / 0.45);
+  border-radius: var(--radius-lg);
+  background: oklch(from var(--phase-color) l c h / 0.07);
+  overflow: hidden;
+  color: var(--fg-1);
+  font-size: 13.5px;
+  line-height: 1.55;
+  animation: fadeInUp 0.3s ease both;
+}
+/* Optional header bar: the first heading bleeds to the box edges */
+.builder-callout h2,
+.builder-callout h3,
+.builder-callout h4 {
+  margin: -13px -15px 12px;
+  padding: 10px 15px;
+  background: oklch(from var(--phase-color) l c h / 0.16);
+  border-bottom: 1px solid oklch(from var(--phase-color) l c h / 0.32);
+  color: var(--phase-color);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  display: flex; align-items: center; gap: 8px;
+}
+.builder-callout p { margin: 0 0 8px; }
+.builder-callout > :last-child { margin-bottom: 0; }
+.builder-callout b,
+.builder-callout strong { color: var(--phase-color); font-weight: 700; }
+.builder-callout i,
+.builder-callout em { color: var(--fg-2); font-style: italic; }
+.builder-callout code {
+  font-family: var(--font-mono);
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  padding: 0 5px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--phase-color);
+}
+.builder-callout ul {
+  margin: 4px 0;
+  padding-left: 18px;
+  display: flex; flex-direction: column; gap: 3px;
+}
+.builder-callout a {
+  color: var(--phase-color);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .variant-tabs {
   display: inline-flex;
   background: var(--bg-1);

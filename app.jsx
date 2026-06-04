@@ -127,6 +127,43 @@ const renderRich = (text) => {
   return out;
 };
 
+// Note callouts accept Markdown AND raw HTML, mixed (GitHub-style). Markdown
+// shortcuts are expanded; any literal HTML you write passes through untouched.
+// Only code-span contents are HTML-escaped, so `<?php …>` shows verbatim.
+// Returns an HTML string (rendered via dangerouslySetInnerHTML — note text is
+// author-controlled KB data, not third-party input).
+const escHtml = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+const mdInline = (s) =>
+  // split on code spans: their contents are escaped and skip markdown; every
+  // other segment gets markdown applied, with any raw HTML left to pass through.
+  s.split(/(`[^`]+`)/g).map((seg) =>
+    seg.startsWith('`') && seg.endsWith('`') && seg.length > 1
+      ? `<code>${escHtml(seg.slice(1, -1))}</code>`
+      : seg
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')          // **bold**
+          .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>')          // *italic*
+          .replace(/(^|[^a-zA-Z0-9_])_([^_\n]+)_/g, '$1<em>$2</em>')   // _italic_
+  ).join('');
+
+// Block-level: "# heading" → header bar, "- "/"• " → list, a line starting with
+// "<" → raw HTML passthrough, anything else → paragraph. Blank line ends a list.
+const markdownToHtml = (text) => {
+  if (!text) return '';
+  const out = [];
+  let list = null;
+  const flush = () => { if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; } };
+  String(text).split('\n').forEach((ln) => {
+    const t = ln.trim();
+    if (!t)                        { flush(); }
+    else if (/^#{1,6}\s+/.test(t)) { flush(); out.push(`<h4>${mdInline(t.replace(/^#{1,6}\s+/, ''))}</h4>`); }
+    else if (/^[-•]\s+/.test(t))   { (list = list || []).push(`<li>${mdInline(t.replace(/^[-•]\s+/, ''))}</li>`); }
+    else if (t.startsWith('<'))    { flush(); out.push(t); }              // raw HTML block/line
+    else                           { flush(); out.push(`<p>${mdInline(t)}</p>`); }
+  });
+  flush();
+  return out.join('');
+};
+
 const Pill = ({ tone, children }) => (
   <span className={`pill pill-${tone}`}>{children}</span>
 );
@@ -967,6 +1004,11 @@ const Builder = ({ cmd, ctx, onToast }) => {
         </div>
       </div>
 
+      {cmd.note && (
+        <div className="builder-callout"
+             dangerouslySetInnerHTML={{ __html: markdownToHtml(cmd.note) }} />
+      )}
+
       {refs.length > 0 && (
         <>
           <hr className="builder-divider" />
@@ -1553,6 +1595,7 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
     params: cmd?.params || [],
     variants: cmd?.variants ? cmd.variants.map(v => ({ ...v })) : [],
     refs: (cmd?.refs || []).map(r => (typeof r === 'string' ? r : `${r.label || ''} | ${r.url}`)).join('\n'),
+    note: cmd?.note || '',
   }));
 
   const cat = CATEGORIES.find(c => c.id === form.category);
@@ -1655,6 +1698,7 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
       params: form.params,
       ...(cleanVariants.length > 0 ? { variants: cleanVariants } : {}),
       ...(cleanRefs.length > 0 ? { refs: cleanRefs } : {}),
+      ...(form.note.trim() ? { note: form.note.trim() } : {}),
       isCustom: true,
     });
   };
@@ -1715,6 +1759,12 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
             <textarea value={form.description}
                       onChange={e => setForm({ ...form, description: e.target.value })}
                       placeholder="Cosa fa il comando, quando usarlo, gotchas…" />
+          </div>
+          <div className="modal-row mono">
+            <label>Nota — callout Markdown e/o HTML, opzionale, appare prima dei Riferimenti</label>
+            <textarea value={form.note}
+                      onChange={e => setForm({ ...form, note: e.target.value })}
+                      placeholder={'# 🔥 Titolo\nTesto con **grassetto**, `codice` e *corsivo*.\nAnche <kbd>HTML</kbd> inline è ammesso.'} />
           </div>
           <div className="modal-row-pair">
             <div className="modal-row">
