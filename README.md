@@ -11,7 +11,6 @@
 7. [Scorciatoie da tastiera](#scorciatoie-da-tastiera)
 8. [Modello dati](#modello-dati-per-chi-contribuisce)
 
----
 
 ## Cos'è e a cosa serve
 
@@ -36,8 +35,6 @@ Il tutto con un **contesto Target condiviso**: si scrive una volta l'IP/dominio/
 | 7 | **Lateral Movement & Pivoting** | PsExec/WMI/WinRM, Pass-the-Hash, Pass-the-Ticket, Chisel/Ligolo/Proxychains |
 | 8 | **Active Directory** | Setup, enum (BloodHound/LDAP), AS-REP/Kerberoasting/spray, ACL/ADCS/DCSync, persistence |
 | 9 | **Utilities** | Reverse shell, GTFOBins, LOLBAS, cheatsheet (hashcat, file transfer, cURL) |
-
----
 
 ## Avvio rapido
 
@@ -76,8 +73,6 @@ command-manager.bat help         :: aiuto (anche -h, --help)
 | `status` | Verifica file dell'app, Python (conda first), porta libera, icone. Non scrive nulla. |
 | `help` | Mostra l'aiuto: comandi, note. Anche `-h` / `--help`. |
 
----
-
 ## Struttura del progetto
 
 ```
@@ -94,8 +89,6 @@ WannaHack/
 │  ├─ command-manager.sh   # launcher Linux/macOS (cmd: launch/install/uninstall/status/help)
 │  └─ command-manager.bat  # launcher Windows (stessi comandi, in cmd)
 ```
-
----
 
 ## Le due viste: Library e Attack Chains
 
@@ -115,7 +108,6 @@ Si passa dall'una all'altra con la TopBar o coi tasti `1` e `2`.
 - **Avanzamento**: ogni step si segna `todo → active → done` (o si salta), con campo **note** per output e osservazioni.
 - **Captures**: i valori che si catturano in uno step (es. un hash, una lista di host) sono evidenziati come output da riusare nei passi successivi.
 
----
 
 ## Tutte le funzionalità
 
@@ -135,8 +127,6 @@ Si passa dall'una all'altra con la TopBar o coi tasti `1` e `2`.
 - ⌨️ **Scorciatoie da tastiera** (vedi sotto, `?` per la lista).
 - 🎨 **Tema** mint/scuro con densità comoda, definito in `styles.css`.
 
----
-
 ## Scorciatoie da tastiera
 
 | Tasti | Azione |
@@ -151,7 +141,6 @@ Si passa dall'una all'altra con la TopBar o coi tasti `1` e `2`.
 | `E` / `C` | Espandi / comprimi tutte le fasi |
 | `G` | Espandi / comprimi tutti i gruppi |
 
----
 
 ## Modello dati
 
