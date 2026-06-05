@@ -209,7 +209,7 @@ const Sidebar = ({ query, setQuery, searching,
   <aside className="sidebar">
     <div className="sidebar-header">
       <div className="logo-mark">
-        <Icon name="terminal" size={18} />
+        <img src="icon.png" alt="WannaHack" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="logo-title">Command Manager</div>
