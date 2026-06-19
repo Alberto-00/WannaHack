@@ -113,33 +113,7 @@ wait_up() {  # wait until $1 is listening
   return 1
 }
 
-# LAN IP (VPN-safe): skip tun/tap/wg/ppp, prefer 192.168.x / 172.16-31.x
-lan_ip() {
-  local ip="" a
-  if have ip; then
-    ip=$(ip -4 addr show scope global 2>/dev/null \
-         | grep -v -E 'tun[0-9]|tap[0-9]|wg[0-9]|ppp[0-9]' \
-         | grep 'inet ' | head -1 | awk '{print $2}' | cut -d/ -f1)
-  fi
-  if [[ -z "$ip" ]] && have hostname; then
-    for a in $(hostname -I 2>/dev/null); do
-      if [[ "$a" =~ ^192\.168\. || "$a" =~ ^172\.(1[6-9]|2[0-9]|3[01])\. ]]; then ip="$a"; break; fi
-    done
-    [[ -z "$ip" ]] && ip=$(hostname -I 2>/dev/null | awk '{print $1}')
-  fi
-  [[ -z "$ip" ]] && ip=$(ipconfig getifaddr en0 2>/dev/null)   # macOS
-  echo "$ip"
-}
-
-# Prefer binding 0.0.0.0 (LAN-reachable); fall back to 127.0.0.1 if blocked.
-pick_bind() {
-  local py="$1" port="$2"
-  if "$py" -c "import socket; s=socket.socket(); s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1); s.bind(('0.0.0.0',$port)); s.close()" 2>/dev/null; then
-    echo "0.0.0.0"
-  else
-    echo "127.0.0.1"
-  fi
-}
+# Server binds to localhost only (127.0.0.1) — no LAN exposure, no interface scan.
 
 browser_cmd() {
   local b
@@ -154,7 +128,7 @@ cmd_status() {
   ok "repo: $REPO_DIR"
   [[ -f "$REPO_DIR/$HTML_FILE" ]] && ok "found: $HTML_FILE" || die "missing $HTML_FILE"
   local f
-  for f in app.jsx data.js categories.js chains.js styles.css; do
+  for f in js/app.jsx data/data.js data/categories.js data/chains.js css/styles.css; do
     [[ -f "$REPO_DIR/$f" ]] && ok "found: $f" || warn "missing: $f (app may not fully load)"
   done
   local py; py="$(resolve_python)"
@@ -188,15 +162,13 @@ cleanup_server() { [[ -n "${SERVER_PID:-}" ]] && kill "$SERVER_PID" 2>/dev/null 
 
 cmd_launch() {
   [[ -f "$REPO_DIR/$HTML_FILE" ]] || die "missing $HTML_FILE"
-  local py port bind ip url_local url_net bc
+  local py port bind url_local bc
   py="$(resolve_python)"
   [[ -n "$py" ]] || die "Python not found — install Python 3 (conda recommended)"
 
   port="$(free_port)"
-  bind="$(pick_bind "$py" "$port")"
-  ip="$(lan_ip)"
+  bind="127.0.0.1"                                # localhost only — no LAN exposure
   url_local="http://localhost:${port}/"          # index.html served at root
-  url_net="http://${ip}:${port}/"
 
   ( serve "$port" "$bind" ) &
   SERVER_PID=$!
@@ -221,12 +193,7 @@ cmd_launch() {
   printf "\n"
   hr
   printf "  ${BLUE}[LOCALE]${NC}     ${MAGENTA}%s${NC}\n" "$url_local"
-  if [[ "$bind" == "0.0.0.0" && -n "$ip" ]]; then
-    printf "  ${BLUE}[RETE]${NC}       ${MAGENTA}%s${NC}\n" "$url_net"
-    printf "\n  ${GRAY}Accessibile da qualsiasi dispositivo sulla stessa rete${NC}\n"
-  else
-    printf "  ${YELLOW}[NOTA]${NC}      ${GRAY}Accesso da rete non disponibile (VPN/firewall o IP assente)${NC}\n"
-  fi
+  printf "\n  ${GRAY}Solo su questo computer (127.0.0.1) — nessun accesso da rete${NC}\n"
   printf "  ${YELLOW}Chiudi questa finestra per fermare il server${NC}\n"
   hr
   printf "\n  ${GREEN}[AVVIO]${NC} ${WHITE}Server in esecuzione con python sulla porta %s (%s)${NC}\n\n" "$port" "$bind"
@@ -238,7 +205,7 @@ cmd_launch() {
 # repo and is the single source for both the desktop icon and the program icon.
 #   <repo>/icon.png                              icon image
 #   ~/Desktop/WannaHack Command Manager.desktop  the clickable launcher
-icon_path() { echo "$REPO_DIR/icon.png"; }
+icon_path() { echo "$REPO_DIR/img/icon.png"; }
 desktop_dir() {
   local d=""
   have xdg-user-dir && d="$(xdg-user-dir DESKTOP 2>/dev/null)"
@@ -316,7 +283,7 @@ Opzioni:
 
 Note:
   - Server: 'python -m http.server' — conda come prima scelta, poi python di sistema.
-  - Rete:   prova bind 0.0.0.0 (LAN), fallback 127.0.0.1. Stampa URL [LOCALE] e [RETE].
+  - Rete:   solo localhost (127.0.0.1) — nessuna esposizione su LAN.
   - Stop:   chiudi la finestra del launcher (o Ctrl+C).
 EOF
 }

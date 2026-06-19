@@ -10,8 +10,8 @@ REM    install           mette l'icona sul Desktop (icon.ico)
 REM    uninstall         rimuove l'icona dal Desktop
 REM    status            controlla ambiente (python, porta, icona)
 REM    help / -h / --help
-REM  Server = Python, conda come prima scelta. Bind 0.0.0.0 (LAN),
-REM  fallback 127.0.0.1. Niente PowerShell (shortcut via cscript/VBS).
+REM  Server = Python, conda come prima scelta. Solo localhost (127.0.0.1).
+REM  Niente PowerShell (shortcut via cscript/VBS).
 REM ====================================================================
 
 REM ---- palette ANSI (Windows 10+) ----
@@ -74,7 +74,6 @@ if "!CONDA_FOUND!"=="1" (
 )
 echo.
 
-call :find_ip
 call :find_port
 if !PORT! equ 0 (
     echo   !RED![ERRORE]!RESET! !WHITE!Nessuna porta disponibile!!RESET!
@@ -83,19 +82,12 @@ if !PORT! equ 0 (
 echo   !GREEN![OK]!RESET! !WHITE!Porta !PORT! disponibile!RESET!
 echo.
 
-set "BIND_ADDR=0.0.0.0"
-!PYTHON_CMD! -c "import socket,sys;s=socket.socket();s.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1);s.bind(('0.0.0.0',!PORT!));s.close()" >nul 2>&1
-if !errorlevel! neq 0 set "BIND_ADDR=127.0.0.1"
+set "BIND_ADDR=127.0.0.1"
 
 echo !CYAN!==========================================================!RESET!
 echo   !BLUE![LOCALE]!RESET!     !MAGENTA!http://localhost:!PORT!/!RESET!
-if "!BIND_ADDR!"=="0.0.0.0" (
-    echo   !BLUE![RETE]!RESET!       !MAGENTA!http://!IP!:!PORT!/!RESET!
-    echo.
-    echo   !GRAY!Accessibile da qualsiasi dispositivo sulla stessa rete!RESET!
-) else (
-    echo   !YELLOW![NOTA]!RESET!      !GRAY!Accesso da rete non disponibile ^(VPN/firewall^)!RESET!
-)
+echo.
+echo   !GRAY!Solo su questo computer ^(127.0.0.1^) - nessun accesso da rete!RESET!
 echo   !YELLOW!Chiudi questa finestra per fermare il server!RESET!
 echo !CYAN!==========================================================!RESET!
 echo.
@@ -118,7 +110,7 @@ REM ====================================================================
 :install
 cls
 set "TARGET=%SCRIPT_DIR%command-manager.bat"
-set "ICON=%PROJECT_DIR%\icon.ico"
+set "ICON=%PROJECT_DIR%\img\icon.ico"
 for /f "tokens=2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v Desktop 2^>nul') do set "DESKTOP_PATH=%%b"
 if not defined DESKTOP_PATH set "DESKTOP_PATH=%USERPROFILE%\Desktop"
 set "SHORTCUT=%DESKTOP_PATH%\%APP%.lnk"
@@ -186,8 +178,8 @@ if not "!PYTHON_CMD!"=="" (
 ) else (
     echo   !RED![X]!RESET! Python non trovato ^(installa Python 3 / conda^)
 )
-if exist "%PROJECT_DIR%\icon.ico" ( echo   !GREEN![OK]!RESET! icon.ico ) else ( echo   !YELLOW![!]!RESET! icon.ico mancante )
-if exist "%PROJECT_DIR%\icon.png" ( echo   !GREEN![OK]!RESET! icon.png ) else ( echo   !YELLOW![!]!RESET! icon.png mancante )
+if exist "%PROJECT_DIR%\img\icon.ico" ( echo   !GREEN![OK]!RESET! icon.ico ) else ( echo   !YELLOW![!]!RESET! icon.ico mancante )
+if exist "%PROJECT_DIR%\img\icon.png" ( echo   !GREEN![OK]!RESET! icon.png ) else ( echo   !YELLOW![!]!RESET! icon.png mancante )
 call :find_port
 echo   !GREEN![OK]!RESET! porta libera: !PORT!
 echo. & pause & exit /b 0
@@ -207,7 +199,7 @@ echo     uninstall   Rimuove l'icona dal Desktop
 echo     status      Controlla ambiente ^(python, porta, icone^)
 echo     help        Questo aiuto ^(anche -h, --help^)
 echo.
-echo   !WHITE!Note:!RESET! Server Python, conda come prima scelta. Bind 0.0.0.0 ^(LAN^), fallback 127.0.0.1.
+echo   !WHITE!Note:!RESET! Server Python, conda come prima scelta. Solo localhost ^(127.0.0.1^).
 echo. & pause & exit /b 0
 
 
@@ -268,27 +260,6 @@ if "!CONDA_FOUND!"=="0" (
         if !errorlevel! equ 0 set "PYTHON_CMD=python3"
     )
 )
-exit /b 0
-
-:find_ip
-set "IP=localhost"
-set "IP_VPN="
-for /f "tokens=2 delims=:" %%a in ('ipconfig ^| findstr /c:"IPv4" ^| findstr /v "127.0.0.1"') do (
-    set "CAND=%%a"
-    set "CAND=!CAND: =!"
-    echo !CAND! | findstr /b "192.168." >nul 2>&1
-    if !errorlevel! equ 0 (
-        if "!IP!"=="localhost" set "IP=!CAND!"
-    ) else (
-        echo !CAND! | findstr /b "172." >nul 2>&1
-        if !errorlevel! equ 0 (
-            if "!IP!"=="localhost" set "IP=!CAND!"
-        ) else (
-            if "!IP_VPN!"=="" set "IP_VPN=!CAND!"
-        )
-    )
-)
-if "!IP!"=="localhost" if not "!IP_VPN!"=="" set "IP=!IP_VPN!"
 exit /b 0
 
 :find_port

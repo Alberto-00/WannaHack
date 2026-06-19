@@ -11,6 +11,7 @@ const Icon = ({ name, size = 16, ...rest }) => {
     'star-fill': <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor"/>,
     globe:     <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>,
     radar:     <><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="12" x2="20" y2="6"/></>,
+    wifi:      <><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></>,
     list:      <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>,
     alert:     <><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
     target:    <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
@@ -54,6 +55,7 @@ const Icon = ({ name, size = 16, ...rest }) => {
     lock:      <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>,
     linux:     <path d="M12 2a4 4 0 0 1 4 4c0 1-.4 1.9-1 2.6L17 14l1 4-3-2-3 2-3-2-3 2 1-4 2-5.4A4 4 0 0 1 8 6a4 4 0 0 1 4-4z"/>,
     windows:   <path d="M3 5.3 11 4v7H3zM12 4l9-1.5V11h-9zM3 13h8v7L3 18.7zM12 13h9v8.5L12 20z"/>,
+    sparkle:   <><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></>,
   };
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
@@ -72,6 +74,14 @@ const SUB_MAP = {};
 CATEGORIES.forEach(c => c.subcategories.forEach(s => {
   SUB_MAP[s.id] = { ...s, category: c.id, hue: c.hue };
 }));
+
+// Disciplines (PT/Web, WiFi, …) — top-level mode that swaps the whole phase set
+const DISCS = window.DISCIPLINES || [
+  { id: 'pt', name: 'Pentest', short: 'PT', icon: 'crosshair', showPlatform: true,
+    targetFields: [], accessOptions: [{ value: 'all', label: 'Qualsiasi accesso' }] },
+];
+const DISC_MAP = Object.fromEntries(DISCS.map(d => [d.id, d]));
+const catsForDiscipline = (id) => CATEGORIES.filter(c => (c.domain || 'pt') === id);
 const catColor = (hue) => `oklch(0.72 0.12 ${hue})`;
 const catColorSoft = (hue) => `oklch(0.72 0.12 ${hue} / 0.14)`;
 
@@ -103,24 +113,33 @@ const renderTemplateString = (tmpl, values) =>
   renderTemplate(tmpl, values).map(t => t.text).join('');
 
 // Lightweight rich text for descriptions: `code` spans, "- "/"• " bullet lists, line breaks
+// Inline markdown → React nodes: `code`, **bold**, *italic*/_italic_.
+// Bold is matched before italic so ** non viene letto come due delimitatori *.
+const renderInline = (s, kp = 'i') => {
+  if (s == null) return null;
+  return String(s)
+    .split(/(`[^`]+`|\*\*[^*]+\*\*|\*[^*\n]+\*|_[^_\n]+_)/g)
+    .map((p, i) => {
+      const key = kp + '-' + i;
+      if (/^`[^`]+`$/.test(p))       return <code key={key}>{p.slice(1, -1)}</code>;
+      if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={key}>{p.slice(2, -2)}</strong>;
+      if (/^\*[^*\n]+\*$/.test(p) || /^_[^_\n]+_$/.test(p))
+                                     return <em key={key}>{p.slice(1, -1)}</em>;
+      return <React.Fragment key={key}>{p}</React.Fragment>;
+    });
+};
 const renderRich = (text) => {
   if (!text) return null;
-  const inline = (s, kp) =>
-    s.split(/(`[^`]+`)/g).map((p, i) =>
-      p.startsWith('`') && p.endsWith('`') && p.length > 1
-        ? <code key={kp + '-' + i}>{p.slice(1, -1)}</code>
-        : <React.Fragment key={kp + '-' + i}>{p}</React.Fragment>
-    );
   const out = [];
   let list = null;
   String(text).split('\n').forEach((ln, i) => {
     const t = ln.trim();
     const m = t.match(/^[-•]\s+(.*)/);
     if (m) {
-      (list = list || []).push(<li key={'li' + i}>{inline(m[1], 'li' + i)}</li>);
+      (list = list || []).push(<li key={'li' + i}>{renderInline(m[1], 'li' + i)}</li>);
     } else {
       if (list) { out.push(<ul key={'ul' + i}>{list}</ul>); list = null; }
-      if (t) out.push(<p key={'p' + i}>{inline(t, 'p' + i)}</p>);
+      if (t) out.push(<p key={'p' + i}>{renderInline(t, 'p' + i)}</p>);
     }
   });
   if (list) out.push(<ul key="ul-end">{list}</ul>);
@@ -198,22 +217,86 @@ const RenderedCommand = ({ template, values }) => {
 };
 
 /* ─────────────────────────────────────────────────────────────
+   Discipline switch — top-level mode (PT/Web · WiFi · …)
+   Dropdown so it scales to any number of disciplines.
+   ───────────────────────────────────────────────────────────── */
+const DisciplineSwitch = ({ discipline, setDiscipline }) => {
+  const [open, setOpen] = useState(false);
+  const [coords, setCoords] = useState(null);
+  const ref = useRef(null);
+  const triggerRef = useRef(null);
+  const cur = DISC_MAP[discipline] || DISCS[0];
+  useEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const r = triggerRef.current?.getBoundingClientRect();
+      if (!r) return;
+      const MENU_W = 260;          // matches .disc-menu fixed width
+      // centered left edge, clamped inside the viewport
+      let left = r.left + r.width / 2 - MENU_W / 2;
+      left = Math.min(Math.max(left, 8), window.innerWidth - 8 - MENU_W);
+      setCoords({ top: r.bottom + 6, left });
+    };
+    place();
+    const onDown = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    document.addEventListener('mousedown', onDown);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+      document.removeEventListener('mousedown', onDown);
+    };
+  }, [open]);
+  return (
+    <div className="disc-switch" ref={ref}>
+      <button ref={triggerRef} className={`disc-trigger ${open ? 'open' : ''}`}
+              onClick={() => setOpen(o => !o)}
+              title="Cambia disciplina">
+        <Icon name={cur.icon} size={15} />
+        <span className="disc-trigger-name">{cur.name}</span>
+        <Icon name="chevron" size={12}
+              style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform .2s' }} />
+      </button>
+      {open && coords && (
+        <div className="disc-menu" role="listbox"
+             style={{ position: 'fixed', top: coords.top, left: coords.left, right: 'auto' }}>
+          {DISCS.map(d => (
+            <button key={d.id} role="option" aria-selected={discipline === d.id}
+                    className={`disc-menu-item ${discipline === d.id ? 'active' : ''}`}
+                    onClick={() => { setDiscipline(d.id); setOpen(false); }}>
+              <span className="disc-menu-icon"><Icon name={d.icon} size={15} /></span>
+              <div className="disc-menu-text">
+                <div className="disc-menu-name">{d.name}</div>
+                {d.blurb && <div className="disc-menu-blurb">{d.blurb}</div>}
+              </div>
+              {discipline === d.id && <Icon name="check" size={14} />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────
    Sidebar — hierarchical tree
    ───────────────────────────────────────────────────────────── */
 const Sidebar = ({ query, setQuery, searching,
                    activeCat, activeSub, setActive,
                    platform, setPlatform, access, setAccess, protocol, setProtocol,
-                   showFavs, setShowFavs, favCount, counts, visibleCats,
+                   counts, visibleCats,
+                   categories, disciplineCfg,
                    expandedCats, toggleCatExpand, expandAll, collapseAll,
                    sidebarCollapsed, setSidebarCollapsed }) => (
   <aside className="sidebar">
     <div className="sidebar-header">
       <div className="logo-mark">
-        <img src="icon.png" alt="WannaHack" />
+        <img src="img/icon.png" alt="WannaHack" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div className="logo-title">Command Manager</div>
-        <div className="logo-sub">Pentest Cheatsheet</div>
+        <div className="logo-sub">{disciplineCfg?.blurb || 'Pentest Cheatsheet'}</div>
       </div>
       <button className="sidebar-toggle"
               onClick={() => setSidebarCollapsed(c => !c)}
@@ -230,38 +313,29 @@ const Sidebar = ({ query, setQuery, searching,
         value={query}
         onChange={e => setQuery(e.target.value)}
       />
-      {!query && <span className="search-kbd">Ctrl K</span>}
-    </div>
-
-    <div className="sidebar-section">
-      <button className={`favorites-btn ${showFavs ? 'active' : ''}`}
-              onClick={() => setShowFavs(v => !v)}>
-        <Icon name={showFavs ? 'star-fill' : 'star'} size={14} />
-        Preferiti
-        <span className="count">{favCount}</span>
-      </button>
+      {query
+        ? <button className="sidebar-search-clear" onClick={() => setQuery('')} title="Pulisci"><Icon name="x" size={12}/></button>
+        : <span className="search-kbd">Ctrl K</span>}
     </div>
 
     <div className="filters">
-      <div>
-        <label className="filter-label">Piattaforma</label>
-        <select className="select" value={platform} onChange={e => setPlatform(e.target.value)}>
-          <option value="all">Tutte</option>
-          <option value="linux">Linux</option>
-          <option value="windows">Windows</option>
-          <option value="cross-platform">Cross-platform</option>
-        </select>
-      </div>
+      {disciplineCfg?.showPlatform && (
+        <div>
+          <label className="filter-label">Piattaforma</label>
+          <select className="select" value={platform} onChange={e => setPlatform(e.target.value)}>
+            <option value="all">Tutte</option>
+            <option value="linux">Linux</option>
+            <option value="windows">Windows</option>
+            <option value="cross-platform">Cross-platform</option>
+          </select>
+        </div>
+      )}
       <div>
         <label className="filter-label">Cosa hai</label>
         <select className="select" value={access} onChange={e => setAccess(e.target.value)}>
-          <option value="all">Qualsiasi accesso</option>
-          <option value="no-creds">Nessuna credenziale</option>
-          <option value="password">Password</option>
-          <option value="hash">Hash (NTLM)</option>
-          <option value="ticket">Ticket Kerberos</option>
-          <option value="cert">Certificato (PFX)</option>
-          <option value="shell">Shell</option>
+          {(disciplineCfg?.accessOptions || [{ value: 'all', label: 'Qualsiasi' }]).map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
         </select>
       </div>
     </div>
@@ -287,7 +361,7 @@ const Sidebar = ({ query, setQuery, searching,
         <span className="nav-sub-count">{counts.all || 0}</span>
       </div>
 
-      {CATEGORIES.map(c => {
+      {categories.map(c => {
         if (visibleCats && !visibleCats.has(c.id)) return null;
         const hasMatches = (counts[c.id] || 0) > 0;
         // During a search, auto-reveal phases that contain matches
@@ -364,13 +438,6 @@ const Sidebar = ({ query, setQuery, searching,
         );
       })}
     </nav>
-
-    <div className="sidebar-footer">
-      <a href="#" onClick={e => e.preventDefault()}>
-        <Icon name="docs" size={13} /> Docs
-      </a>
-      <span style={{ fontFamily: 'var(--font-mono)', fontSize: 11 }}>v3.0</span>
-    </div>
   </aside>
 );
 
@@ -381,6 +448,7 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
                   addMenuOpen, setAddMenuOpen,
                   onAddCommand, onAddChain, onExport, onImport,
                   onExportSourceCmds, onExportSourceChains, onResetAll, onShowShortcuts,
+                  discipline, setDiscipline, showFavs, setShowFavs, favCount, onOpenAI,
                   layout, setLayout }) => {
   const modeRef = useRef(null);
   const menuRef = useRef(null);
@@ -454,6 +522,17 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
         )}
       </div>
       <div className="spacer" />
+      <DisciplineSwitch discipline={discipline} setDiscipline={setDiscipline} />
+      <button className={`topbar-fav ${showFavs ? 'active' : ''}`}
+              onClick={() => setShowFavs(v => !v)}
+              title="Preferiti (F)">
+        <Icon name={showFavs ? 'star-fill' : 'star'} size={15} />
+        {favCount > 0 && <span className="topbar-fav-count">{favCount}</span>}
+      </button>
+      <button className="btn btn-ai" onClick={onOpenAI} title="Ricerca con AI">
+        <Icon name="sparkle" size={14} /> AI
+      </button>
+      <div className="topbar-divider" />
       <div className="layout-toggle" role="group" aria-label="Vista pannelli">
         <button
           className={layout === 'list' ? 'active' : ''}
@@ -545,27 +624,29 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
 /* ─────────────────────────────────────────────────────────────
    Target context bar
    ───────────────────────────────────────────────────────────── */
-const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed }) => {
-  const fields = [
+const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields }) => {
+  const flds = (fields && fields.length) ? fields : [
     { key: 'ip',       label: 'IP',       placeholder: '10.10.10.11' },
     { key: 'user',     label: 'Utente',   placeholder: 'jdoe' },
-    { key: 'password', label: 'Password', placeholder: '••••••' },
+    { key: 'password', label: 'Password', placeholder: '••••••', secret: true },
     { key: 'domain',   label: 'Dominio',  placeholder: 'corp.local' },
-    { key: 'hash',     label: 'Hash',     placeholder: 'aad3b…' },
+    { key: 'hash',     label: 'Hash',     placeholder: 'aad3b…', secret: true },
   ];
+  const primary = flds[0];
+  const isSecret = (f) => f.secret || f.key === 'password' || f.key === 'hash';
   return (
     <div className={`context-bar ${collapsed ? 'collapsed' : ''}`}>
       <div className="context-label">
         <Icon name="target" size={12} />
         Target
-        {ctx.ip && <span className="target-host">{ctx.ip}</span>}
+        {primary && ctx[primary.key] && <span className="target-host">{ctx[primary.key]}</span>}
         {collapsed && (
           <span className="context-chips">
-            {fields.filter(f => f.key !== 'ip' && ctx[f.key]).map(f => (
+            {flds.filter(f => f.key !== primary?.key && ctx[f.key]).map(f => (
               <span key={f.key} className="context-chip">
                 <span className="context-chip-key">{f.label}</span>
                 <span className="context-chip-val">
-                  {f.key === 'password' || f.key === 'hash'
+                  {isSecret(f)
                     ? '•'.repeat(Math.min(8, String(ctx[f.key]).length))
                     : ctx[f.key]}
                 </span>
@@ -576,7 +657,7 @@ const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed }) => {
       </div>
       <div className={`context-fields-wrap ${collapsed ? 'collapsed' : ''}`}>
         <div className="context-fields">
-          {fields.map(f => (
+          {flds.map(f => (
             <div key={f.key} className="field">
               <label className="field-label">{f.label}</label>
               <input
@@ -1159,8 +1240,6 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
         <div className={`step-content-wrap ${expanded ? 'expanded' : ''}`}>
           <div className="step-content-inner">
             <div className="step-content">
-              {!cmd && step.rationale && <p className="step-rationale">{step.rationale}</p>}
-
               {cmd?.description && (
                 <div className="step-desc">
                   {renderRich(cmd.description)}
@@ -1221,7 +1300,7 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
 
               {step.verify && (
                 <div className="step-verify">
-                  <span style={{ marginLeft: 4 }}>{step.verify}</span>
+                  <span style={{ marginLeft: 4 }}>{renderInline(step.verify, 'verify')}</span>
                 </div>
               )}
 
@@ -2336,13 +2415,6 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
                       <StepCommandEditor step={s} allCommands={allCommands}
                                          onChange={(patch) => updateStep(i, patch)} />
 
-                      <div className="modal-section-title"><Icon name="book" size={12}/> Motivazione</div>
-                      <textarea value={s.rationale || ''}
-                                onChange={e => updateStep(i, { rationale: e.target.value })}
-                                placeholder="Perché questo step. Spiegazione del razionale."
-                                rows={2}
-                                className="step-editor-textarea"/>
-
                       <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
                       <input value={s.verify || ''}
                              onChange={e => updateStep(i, { verify: e.target.value })}
@@ -2567,11 +2639,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
           </div>
           <StepCommandEditor step={form} allCommands={allCommands} onChange={set} />
 
-          <div className="modal-row">
-            <div className="modal-section-title"><Icon name="book" size={12}/> Motivazione</div>
-            <textarea value={form.rationale} onChange={e => set({ rationale: e.target.value })}
-                      placeholder="Perché questo step…" />
-          </div>
           <div className="modal-row mono">
             <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
             <input value={form.verify} onChange={e => set({ verify: e.target.value })}
@@ -2678,12 +2745,539 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
 };
 
 /* ─────────────────────────────────────────────────────────────
+   AI search (OpenAI) — natural-language → command / playbook.
+   Key stored locally (localStorage), never leaves the browser
+   except in the request to OpenAI. opsec warning shown.
+   ───────────────────────────────────────────────────────────── */
+const AI_DEFAULTS = {
+  model: 'gpt-4.1-mini-2025-04-14',
+  temperature: '0',
+  maxResults: '15',
+  maxTokens: '1000',
+  webSearch: '0',
+  alwaysExplain: '0',
+};
+const AI_DEFAULT_PROMPT =
+`Sei l'assistente di ricerca di WannaHack per un penetration tester / red teamer in un ingaggio AUTORIZZATO (lab, CTF o pentest con mandato), disciplina "{{DISCIPLINE}}".
+Compito: mappare la richiesta in linguaggio naturale dell'utente sui comandi e sui playbook elencati in fondo. Selezioni voci pertinenti dall'indice, non esegui nulla.
+
+Output: restituisci ESCLUSIVAMENTE un oggetto JSON valido (RFC 8259), senza testo prima o dopo, senza commenti e senza racchiuderlo in blocchi di codice. Usa doppi apici e nessuna virgola finale.
+Schema esatto:
+{"commandIds": string[], "chainIds": string[], "explanation": string, "suggestedCommand": {"name": string, "template": string, "note": string} | null}
+
+Come scegliere:
+- Interpreta l'INTENTO, non solo le parole: gestisci sinonimi, termini IT/EN, nomi di tool e abbreviazioni (es. "scalare privilegi su windows" -> privesc Windows; "catturare hash di rete" -> responder/ntlm relay).
+- Valuta ogni voce su nome + fase + tag + descrizione. Preferisci i comandi piu' specifici e direttamente azionabili per l'obiettivo dell'utente; scarta i match solo vagamente correlati.
+- Resta nella disciplina "{{DISCIPLINE}}" e nelle fasi coerenti con la richiesta (recon, enum, vuln, exploit, post, privesc, lateral, AD...).
+
+Campi:
+- commandIds: id dei comandi piu' pertinenti, dal piu' rilevante, massimo {{MAX_RESULTS}}, senza duplicati.
+- chainIds: id dei playbook adatti allo scenario, massimo 3, per rilevanza.
+- explanation: SOLO se l'utente chiede esplicitamente di spiegare/capire (es. "spiega", "perche'", "come funziona") -> massimo 3 frasi, in italiano, concettuali, senza sintassi di comandi. Altrimenti "".
+- suggestedCommand: SOLO se l'utente chiede esplicitamente un comando assente o una variante con flag diversi E nessuna voce dell'indice lo copre gia'; altrimenti null. In esso: name = nome breve; template = una riga, con i segnaposto <ip> <user> <password> <domain> <hash> dove servono; note = una frase in italiano.
+
+Vincoli:
+- Usa SOLO id presenti nell'indice, copiati ESATTAMENTE (case-sensitive): non inventarli, non modificarli, non tradurli.
+- Se nulla e' pertinente, rispondi: {"commandIds": [], "chainIds": [], "explanation": "", "suggestedCommand": null}.
+
+COMANDI (id | nome | fase | tag | descrizione):
+{{COMMAND_INDEX}}
+
+PLAYBOOK (id | nome | obiettivo):
+{{CHAIN_INDEX}}`;
+
+// secret.env <-> object
+const parseEnv = (text) => {
+  const out = {};
+  text.split(/\r?\n/).forEach(line => {
+    const t = line.trim();
+    if (!t || t.startsWith('#')) return;
+    const i = t.indexOf('=');
+    if (i < 0) return;
+    out[t.slice(0, i).trim()] = t.slice(i + 1).trim();
+  });
+  return out;
+};
+// Lenient JSON: a model (specie con web search ON) puo' avvolgere il JSON in
+// prosa o fence. Prova il parse diretto, poi estrai il primo blocco {...}.
+const parseModelJson = (text) => {
+  if (typeof text !== 'string') return null;
+  try { return JSON.parse(text); } catch {}
+  const a = text.indexOf('{'), b = text.lastIndexOf('}');
+  if (a >= 0 && b > a) { try { return JSON.parse(text.slice(a, b + 1)); } catch {} }
+  return null;
+};
+const buildEnv = (c) => [
+  '# API Key (required)',
+  `OPENAI_API_KEY=${c.apiKey || ''}`,
+  '',
+  '# Model Configuration',
+  `OPENAI_MODEL=${c.model || ''}`,
+  `OPENAI_TEMPERATURE=${c.temperature ?? '0'}`,
+  `OPENAI_MAX_RESULTS=${c.maxResults ?? '15'}`,
+  `OPENAI_MAX_TOKENS=${c.maxTokens ?? '1000'}`,
+  '',
+  '# Behaviour',
+  `OPENAI_WEB_SEARCH=${c.webSearch ?? '0'}`,
+  `OPENAI_ALWAYS_EXPLAIN=${c.alwaysExplain ?? '0'}`,
+  '',
+].join('\n');
+const aiDownload = (name, text, mime) => {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 500);
+};
+
+const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
+                         onOpenCommand, onOpenChain }) => {
+  const lsGet = (k) => { const v = localStorage.getItem(k); return v === null ? null : v; };
+  const lastSaved = (() => { try { return JSON.parse(localStorage.getItem('cm-ai-last') || 'null'); } catch { return null; } })();
+  const [apiKey, setApiKey]           = useState(() => lsGet('cm-openai-key') ?? '');
+  const [model, setModel]             = useState(() => lsGet('cm-openai-model'));
+  const [temperature, setTemperature] = useState(() => lsGet('cm-openai-temp'));
+  const [maxResults, setMaxResults]   = useState(() => lsGet('cm-openai-maxresults'));
+  const [maxTokens, setMaxTokens]     = useState(() => lsGet('cm-openai-maxtokens'));
+  const [webSearch, setWebSearch]     = useState(() => lsGet('cm-openai-websearch'));
+  const [alwaysExplain, setAlwaysExplain] = useState(() => lsGet('cm-openai-always-explain'));
+  const [promptTpl, setPromptTpl]     = useState(() => lsGet('cm-ai-prompt'));
+  const [prompt, setPrompt]   = useState(() => lastSaved?.q || '');
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState(null);
+  const [result, setResult]   = useState(() => lastSaved?.result || null);
+  const [models, setModels]               = useState([]);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [modelsError, setModelsError]     = useState(null);
+  const [modelManual, setModelManual]     = useState(false);
+  const [showSettings, setShowSettings] = useState(() => !localStorage.getItem('cm-openai-key'));
+  const inputRef = useRef(null);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+
+  // Load defaults from secret.env + ai-system-prompt.md (localStorage overrides win)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await fetch('config/secret.env', { cache: 'no-store' });
+        if (!r.ok) throw 0;
+        const env = parseEnv(await r.text());
+        if (cancelled) return;
+        setApiKey(v => v || env.OPENAI_API_KEY || '');
+        setModel(v => v ?? (env.OPENAI_MODEL || AI_DEFAULTS.model));
+        setTemperature(v => v ?? (env.OPENAI_TEMPERATURE ?? AI_DEFAULTS.temperature));
+        setMaxResults(v => v ?? (env.OPENAI_MAX_RESULTS ?? AI_DEFAULTS.maxResults));
+        setMaxTokens(v => v ?? (env.OPENAI_MAX_TOKENS ?? AI_DEFAULTS.maxTokens));
+        setWebSearch(v => v ?? (env.OPENAI_WEB_SEARCH ?? AI_DEFAULTS.webSearch));
+        setAlwaysExplain(v => v ?? (env.OPENAI_ALWAYS_EXPLAIN ?? AI_DEFAULTS.alwaysExplain));
+      } catch {
+        if (cancelled) return;
+        setModel(v => v ?? AI_DEFAULTS.model);
+        setTemperature(v => v ?? AI_DEFAULTS.temperature);
+        setMaxResults(v => v ?? AI_DEFAULTS.maxResults);
+        setMaxTokens(v => v ?? AI_DEFAULTS.maxTokens);
+        setWebSearch(v => v ?? AI_DEFAULTS.webSearch);
+        setAlwaysExplain(v => v ?? AI_DEFAULTS.alwaysExplain);
+      }
+      try {
+        const r = await fetch('config/ai-system-prompt.md', { cache: 'no-store' });
+        if (!r.ok) throw 0;
+        const t = await r.text();
+        if (!cancelled) setPromptTpl(v => v ?? t);
+      } catch { if (!cancelled) setPromptTpl(v => v ?? AI_DEFAULT_PROMPT); }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => { localStorage.setItem('cm-openai-key', apiKey); }, [apiKey]);
+  useEffect(() => { if (model != null) localStorage.setItem('cm-openai-model', model); }, [model]);
+  useEffect(() => { if (temperature != null) localStorage.setItem('cm-openai-temp', temperature); }, [temperature]);
+  useEffect(() => { if (maxResults != null) localStorage.setItem('cm-openai-maxresults', maxResults); }, [maxResults]);
+  useEffect(() => { if (maxTokens != null) localStorage.setItem('cm-openai-maxtokens', maxTokens); }, [maxTokens]);
+  useEffect(() => { if (promptTpl != null) localStorage.setItem('cm-ai-prompt', promptTpl); }, [promptTpl]);
+  useEffect(() => { if (webSearch != null) localStorage.setItem('cm-openai-websearch', webSearch); }, [webSearch]);
+  useEffect(() => { if (alwaysExplain != null) localStorage.setItem('cm-openai-always-explain', alwaysExplain); }, [alwaysExplain]);
+
+  const cmdById   = useMemo(() => Object.fromEntries(commands.map(c => [c.id, c])), [commands]);
+  const chainById = useMemo(() => Object.fromEntries(chains.map(c => [c.id, c])), [chains]);
+
+  const buildIndex = () => {
+    const cmdLines = commands.map(c =>
+      `${c.id} | ${c.name} | ${CAT_MAP[c.category]?.name || c.category}`
+      + ` | ${(c.tags || []).slice(0, 5).join(',')}`
+      + ` | ${(c.description || '').replace(/\s+/g, ' ').slice(0, 90)}`
+    ).join('\n');
+    const chainLines = chains.map(c =>
+      `${c.id} | ${c.name} | ${(c.objective || '').replace(/\s+/g, ' ').slice(0, 110)}`
+    ).join('\n');
+    return { cmdLines, chainLines };
+  };
+
+  const baseUrl = 'https://api.openai.com/v1';
+
+  // List the models available to this key (GET /v1/models), filtered to chat-capable ids.
+  const fetchModels = async () => {
+    if (!apiKey) { setModelsError('Inserisci la API key per elencare i modelli.'); return; }
+    setModelsLoading(true); setModelsError(null);
+    try {
+      const r = await fetch(`${baseUrl}/models`, { headers: { 'Authorization': `Bearer ${apiKey}` } });
+      if (!r.ok) {
+        const t = await r.text(); let m = `HTTP ${r.status}`;
+        try { m = JSON.parse(t)?.error?.message || m; } catch {}
+        throw new Error(m);
+      }
+      const data = await r.json();
+      const ids = (data.data || []).map(x => x.id)
+        .filter(id => /^(gpt-|o[1-9]|chatgpt-)/.test(id))
+        .filter(id => !/(embedding|whisper|tts|audio|transcribe|image|dall-e|moderation|realtime)/i.test(id))
+        .sort();
+      setModels(ids);
+      if (!ids.length) setModelsError('Nessun modello chat trovato per questa key.');
+    } catch (e) { setModels([]); setModelsError(e.message || String(e)); }
+    finally { setModelsLoading(false); }
+  };
+  // Auto-list once when the settings panel opens with a key present.
+  useEffect(() => {
+    if (showSettings && apiKey && !models.length && !modelsLoading && !modelsError) fetchModels();
+  }, [showSettings, apiKey]);
+
+  // The last search persists in localStorage; this wipes it for good.
+  const clearLast = () => {
+    setResult(null); setPrompt(''); setError(null);
+    try { localStorage.removeItem('cm-ai-last'); } catch {}
+    inputRef.current?.focus();
+  };
+
+  // Restore AI config (model, params, prompt) to defaults from secret.env /
+  // ai-system-prompt.md / AI_DEFAULTS. Keeps the API key.
+  const resetAiSettings = async () => {
+    ['cm-openai-model','cm-openai-temp','cm-openai-maxresults','cm-openai-maxtokens',
+     'cm-openai-websearch','cm-openai-always-explain','cm-ai-prompt']
+      .forEach(k => { try { localStorage.removeItem(k); } catch {} });
+    let env = {};
+    try { const r = await fetch('config/secret.env', { cache: 'no-store' }); if (r.ok) env = parseEnv(await r.text()); } catch {}
+    setModel(env.OPENAI_MODEL || AI_DEFAULTS.model);
+    setTemperature(env.OPENAI_TEMPERATURE ?? AI_DEFAULTS.temperature);
+    setMaxResults(env.OPENAI_MAX_RESULTS ?? AI_DEFAULTS.maxResults);
+    setMaxTokens(env.OPENAI_MAX_TOKENS ?? AI_DEFAULTS.maxTokens);
+    setWebSearch(env.OPENAI_WEB_SEARCH ?? AI_DEFAULTS.webSearch);
+    setAlwaysExplain(env.OPENAI_ALWAYS_EXPLAIN ?? AI_DEFAULTS.alwaysExplain);
+    let tpl = AI_DEFAULT_PROMPT;
+    try { const r = await fetch('config/ai-system-prompt.md', { cache: 'no-store' }); if (r.ok) tpl = await r.text(); } catch {}
+    setPromptTpl(tpl);
+    setError(null);
+  };
+
+  const cfg = { apiKey, model, temperature, maxResults, maxTokens, webSearch, alwaysExplain };
+  const downloadEnv = () => aiDownload('secret.env', buildEnv(cfg), 'text/plain');
+  const downloadPrompt = () => aiDownload('ai-system-prompt.md', promptTpl || AI_DEFAULT_PROMPT, 'text/markdown');
+
+  const run = async () => {
+    const q = prompt.trim();
+    if (!q) return;
+    if (!apiKey) { setShowSettings(true); setError('Inserisci prima la tua API key OpenAI.'); return; }
+    setLoading(true); setError(null); setResult(null);
+    const { cmdLines, chainLines } = buildIndex();
+    const nMax = parseInt(maxResults, 10) || 15;
+    const useWeb = webSearch === '1';
+    const wantExplain = alwaysExplain === '1';
+    const tpl = promptTpl || AI_DEFAULT_PROMPT;
+    // function replacements so $ in command templates is never treated specially
+    let system = tpl
+      .replace(/\{\{DISCIPLINE\}\}/g, () => disciplineCfg?.name || 'Pentest')
+      .replace(/\{\{MAX_RESULTS\}\}/g, () => String(nMax))
+      .replace(/\{\{COMMAND_INDEX\}\}/g, () => cmdLines)
+      .replace(/\{\{CHAIN_INDEX\}\}/g, () => chainLines || '(nessuno)');
+    if (wantExplain)
+      system += '\n\nIMPORTANTE: compila SEMPRE il campo "explanation" (massimo 3 frasi, concettuale) anche se non richiesto, da mostrare prima dell\'elenco.';
+
+    // Search-capable models reject temperature / response_format: con web search ON li
+    // omettiamo e interpretiamo il JSON in modo tollerante (il modello puo' aggiungere prosa).
+    const body = {
+      model: model || AI_DEFAULTS.model,
+      messages: [{ role: 'system', content: system }, { role: 'user', content: q }],
+      max_tokens: parseInt(maxTokens, 10) || 1000,
+    };
+    if (useWeb) {
+      body.web_search_options = {};
+    } else {
+      body.temperature = Number(temperature) || 0;
+      body.response_format = { type: 'json_object' };
+    }
+
+    try {
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const txt = await res.text();
+        let msg = `HTTP ${res.status}`;
+        try { msg = JSON.parse(txt)?.error?.message || msg; } catch {}
+        if (useWeb && res.status === 400)
+          msg += ' — la ricerca web richiede un modello "search" (es. gpt-5-search-api).';
+        throw new Error(msg);
+      }
+      const data = await res.json();
+      const content = data.choices?.[0]?.message?.content || '{}';
+      const parsed = parseModelJson(content);
+      if (!parsed) throw new Error('Risposta non interpretabile dal modello.');
+      const out = {
+        commandIds: (parsed.commandIds || []).filter(id => cmdById[id]).slice(0, nMax),
+        chainIds:   (parsed.chainIds || []).filter(id => chainById[id]),
+        explanation: typeof parsed.explanation === 'string' ? parsed.explanation : '',
+        suggestedCommand: parsed.suggestedCommand || null,
+      };
+      setResult(out);
+      try { localStorage.setItem('cm-ai-last', JSON.stringify({ q, result: out, ts: Date.now() })); } catch {}
+    } catch (err) {
+      setError(err.message || String(err));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onKeyDown = (e) => {
+    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); run(); }
+  };
+
+  return (
+    <div className="modal-backdrop" onMouseDown={onClose}>
+      <div className="modal ai-modal" onMouseDown={e => e.stopPropagation()}>
+        <div className="modal-header">
+          <h3 className="modal-title">
+            <Icon name="sparkle" size={16} /> Ricerca con AI
+            <span className="ai-disc-tag">{disciplineCfg?.name}</span>
+          </h3>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="btn btn-icon"
+                    title={showSettings ? 'Torna alla ricerca' : 'Impostazioni AI'}
+                    onClick={() => setShowSettings(s => !s)}>
+              <Icon name={showSettings ? 'search' : 'settings'} size={15} />
+            </button>
+            <button className="btn btn-icon" onClick={onClose}><Icon name="x" size={15} /></button>
+          </div>
+        </div>
+
+        <div className="modal-body ai-body">
+          {showSettings && (
+            <div className="ai-settings">
+              <div className="ai-settings-head">
+                <span className="modal-label">Configurazione · secret.env</span>
+                <div className="ai-field-actions">
+                  <button className="ai-mini-btn" onClick={resetAiSettings}
+                          title="Riporta modello, parametri e system prompt ai valori di default (mantiene la API key)">
+                    <Icon name="arrow-left" size={11} /> Ripristina
+                  </button>
+                  <button className="ai-mini-btn" onClick={downloadEnv}>
+                    <Icon name="box" size={12} /> Scarica secret.env
+                  </button>
+                </div>
+              </div>
+
+              <div className="ai-group-label">Connessione</div>
+              <div className="modal-row">
+                <label className="modal-label">OPENAI_API_KEY</label>
+                <input type="password" value={apiKey} placeholder="sk-…"
+                       onChange={e => setApiKey(e.target.value)} />
+                <div className="ai-hint">Salvata solo su questo dispositivo (localStorage). Inviata solo a OpenAI.</div>
+              </div>
+              <div className="modal-row">
+                <div className="ai-field-head">
+                  <label className="modal-label">Modello</label>
+                  <div className="ai-field-actions">
+                    <button className="ai-mini-btn" onClick={fetchModels} disabled={modelsLoading || !apiKey}>
+                      <Icon name="search" size={11} /> {modelsLoading ? 'Carico…' : 'Ricarica'}
+                    </button>
+                    <button className="ai-mini-btn" onClick={() => setModelManual(m => !m)}>
+                      <Icon name={modelManual ? 'list' : 'edit'} size={11} /> {modelManual ? 'Elenco' : 'Manuale'}
+                    </button>
+                  </div>
+                </div>
+                {(modelManual || !models.length) ? (
+                  <input value={model || ''} placeholder="gpt-4.1-mini-…"
+                         onChange={e => setModel(e.target.value)} />
+                ) : (
+                  <select value={model || ''} onChange={e => setModel(e.target.value)}>
+                    {model && !models.includes(model) && <option value={model}>{model} (corrente)</option>}
+                    {models.map(id => <option key={id} value={id}>{id}</option>)}
+                  </select>
+                )}
+                {modelsError
+                  ? <div className="ai-hint ai-hint-warn">{modelsError}</div>
+                  : (!models.length && !modelsLoading &&
+                     <div className="ai-hint">Premi «Ricarica» per elencare i modelli della tua key, oppure «Manuale» per digitarlo.</div>)}
+              </div>
+
+              <div className="ai-group-label">Generazione</div>
+              <div className="ai-settings-grid ai-grid-3">
+                <div className="modal-row">
+                  <label className="modal-label">Temperature</label>
+                  <input type="number" step="0.1" min="0" max="2" value={temperature ?? ''}
+                         disabled={webSearch === '1'}
+                         onChange={e => setTemperature(e.target.value)} />
+                </div>
+                <div className="modal-row">
+                  <label className="modal-label">Max risultati</label>
+                  <input type="number" min="1" value={maxResults ?? ''}
+                         onChange={e => setMaxResults(e.target.value)} />
+                </div>
+                <div className="modal-row">
+                  <label className="modal-label">Max tokens</label>
+                  <input type="number" min="1" value={maxTokens ?? ''}
+                         onChange={e => setMaxTokens(e.target.value)} />
+                </div>
+              </div>
+
+              <div className="ai-group-label">Comportamento</div>
+              <div className="ai-toggles">
+                <label className="ai-toggle">
+                  <input type="checkbox" checked={alwaysExplain === '1'}
+                         onChange={e => setAlwaysExplain(e.target.checked ? '1' : '0')} />
+                  <span><strong>Spiegazione sempre attiva</strong><br />Mostra una breve spiegazione prima dell'elenco di comandi e playbook, anche se non la chiedi.</span>
+                </label>
+                <label className="ai-toggle">
+                  <input type="checkbox" checked={webSearch === '1'}
+                         onChange={e => setWebSearch(e.target.checked ? '1' : '0')} />
+                  <span><strong>Ricerca web</strong> <span className="ai-tag-exp">sperimentale</span><br />Richiede un modello «search» (es. gpt-5-search-api). Disattiva JSON rigido e temperature; più lenta e meno precisa.</span>
+                </label>
+              </div>
+
+              <div className="ai-settings-head" style={{ marginTop: 4 }}>
+                <span className="modal-label">System prompt</span>
+                <button className="ai-mini-btn" onClick={downloadPrompt}>
+                  <Icon name="box" size={12} /> Scarica prompt
+                </button>
+              </div>
+              <textarea className="ai-prompt-edit" rows={8} value={promptTpl || ''}
+                        onChange={e => setPromptTpl(e.target.value)} />
+              <div className="ai-hint">{'Placeholder: {{DISCIPLINE}}, {{MAX_RESULTS}}, {{COMMAND_INDEX}}, {{CHAIN_INDEX}}.'}</div>
+            </div>
+          )}
+
+          {!showSettings && (
+          <div className="ai-search-panel">
+          <div className="ai-input-wrap">
+            <textarea ref={inputRef} className="ai-input" rows={3}
+                      placeholder="Descrivi cosa vuoi fare… (Ctrl+Invio per cercare)"
+                      value={prompt}
+                      onChange={e => setPrompt(e.target.value)}
+                      onKeyDown={onKeyDown} />
+            <button className="btn btn-primary ai-run" onClick={run} disabled={loading}>
+              {loading ? 'Cerco…' : <><Icon name="sparkle" size={13} /> Cerca</>}
+            </button>
+          </div>
+
+          <div className="ai-opsec">
+            <Icon name="alert" size={12} /> OPSEC: le query vengono inviate a OpenAI. Non incollare dati reali del target (IP, host, credenziali).
+          </div>
+
+          {error && <div className="ai-error"><Icon name="alert" size={13} /> {error}</div>}
+
+          {result && (
+            <div className="ai-results">
+              <div className="ai-results-head">
+                <span className="ai-results-meta"><Icon name="check" size={11} /> Ultima ricerca</span>
+                <button className="ai-mini-btn" onClick={clearLast}
+                        title="Rimuove la ricerca salvata da questo dispositivo">
+                  <Icon name="x" size={11} /> Pulisci ultima ricerca
+                </button>
+              </div>
+              {result.explanation && (
+                <div className="ai-explanation">
+                  <span className="ai-block-label"><Icon name="book" size={11} /> Spiegazione</span>
+                  <p>{result.explanation}</p>
+                </div>
+              )}
+
+              {result.suggestedCommand && result.suggestedCommand.template && (
+                <div className="ai-suggested">
+                  <span className="ai-block-label"><Icon name="terminal" size={11} /> Comando suggerito (non in libreria)</span>
+                  <div className="ai-suggested-name">{result.suggestedCommand.name}</div>
+                  <div className="ai-suggested-cmd">
+                    <code>{result.suggestedCommand.template}</code>
+                    <button className="copy-btn copy-btn-icon"
+                            title="Copia"
+                            onClick={() => navigator.clipboard?.writeText(result.suggestedCommand.template)}>
+                      <Icon name="copy" size={13} />
+                    </button>
+                  </div>
+                  {result.suggestedCommand.note && <div className="ai-hint">{result.suggestedCommand.note}</div>}
+                </div>
+              )}
+
+              {result.commandIds.length > 0 && (
+                <div className="ai-section">
+                  <span className="ai-block-label"><Icon name="list" size={11} /> Comandi pertinenti</span>
+                  {result.commandIds.map(id => {
+                    const c = cmdById[id];
+                    return (
+                      <button key={id} className="ai-hit" onClick={() => onOpenCommand(id)}>
+                        <div className="ai-hit-main">
+                          <div className="ai-hit-name">{c.name}</div>
+                          <div className="ai-hit-syntax">{c.template}</div>
+                        </div>
+                        <span className="ai-hit-cat" style={{ '--cat-color': catColor(CAT_MAP[c.category]?.hue || 200) }}>
+                          {CAT_MAP[c.category]?.short || ''}
+                        </span>
+                        <Icon name="arrow-right" size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {result.chainIds.length > 0 && (
+                <div className="ai-section">
+                  <span className="ai-block-label"><Icon name="link" size={11} /> Playbook suggeriti</span>
+                  {result.chainIds.map(id => {
+                    const c = chainById[id];
+                    return (
+                      <button key={id} className="ai-hit" onClick={() => onOpenChain(id)}>
+                        <div className="ai-hit-main">
+                          <div className="ai-hit-name">{c.name}</div>
+                          <div className="ai-hit-syntax">{c.objective}</div>
+                        </div>
+                        <Icon name="arrow-right" size={14} />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {result.commandIds.length === 0 && result.chainIds.length === 0 &&
+               !result.suggestedCommand && !result.explanation && (
+                <div className="ai-empty">Nessun risultato pertinente. Prova a riformulare.</div>
+              )}
+            </div>
+          )}
+          </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────
    App — top level
    ───────────────────────────────────────────────────────────── */
 function App() {
   // Mode
   const [mode, setMode] = useState(() => localStorage.getItem('cm-mode') || 'library');
   useEffect(() => { localStorage.setItem('cm-mode', mode); }, [mode]);
+
+  // Discipline (PT/Web · WiFi · …) — swaps the entire phase set, library and chains
+  const [discipline, setDiscipline] = useState(() =>
+    localStorage.getItem('cm-discipline') || (DISCS[0]?.id || 'pt'));
+  useEffect(() => { localStorage.setItem('cm-discipline', discipline); }, [discipline]);
+  const disciplineCfg = DISC_MAP[discipline] || DISCS[0];
+  const disciplineCats = useMemo(() => catsForDiscipline(discipline), [discipline]);
+  const disciplineCatIds = useMemo(
+    () => new Set(disciplineCats.map(c => c.id)), [disciplineCats]);
 
   // Active selection
   const [activeCat, setActiveCat] = useState(() => localStorage.getItem('cm-cat') || 'all');
@@ -2842,6 +3436,7 @@ function App() {
   const [showAddChainModal, setShowAddChainModal] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showAI, setShowAI] = useState(false);
 
   // Dialog popup
   const [dialogState, setDialogState] = useState(null);
@@ -2882,8 +3477,8 @@ function App() {
     customChains.forEach(c => {
       if (!CHAINS.find(b => b.id === c.id)) merged.push(c);
     });
-    return applyOrder(merged.filter(c => !hidden.has(c.id)), chainOrder);
-  }, [customChains, hiddenChains, chainOrder]);
+    return applyOrder(merged.filter(c => !hidden.has(c.id) && disciplineCatIds.has(c.category)), chainOrder);
+  }, [customChains, hiddenChains, chainOrder, disciplineCatIds]);
 
   // === Composite command list (built-in + custom, with overrides) ===
   const allCommands = useMemo(() => {
@@ -2911,6 +3506,7 @@ function App() {
   const filteredCommands = useMemo(() => {
     const q = query.trim().toLowerCase();
     return allCommands.filter(c => {
+      if (!disciplineCatIds.has(c.category)) return false;
       if (showFavs && !favs.includes(c.id)) return false;
       if (activeCat !== 'all' && c.category !== activeCat) return false;
       if (activeSub && c.subcategory !== activeSub) return false;
@@ -2924,7 +3520,7 @@ function App() {
       }
       return true;
     });
-  }, [allCommands, query, activeCat, activeSub, platform, access, protocol, showFavs, favs]);
+  }, [allCommands, query, activeCat, activeSub, platform, access, protocol, showFavs, favs, disciplineCatIds]);
 
   // Group names currently rendered — drives the 'G' shortcut without touching the DOM
   const currentGroupNames = useMemo(() => {
@@ -2945,6 +3541,7 @@ function App() {
   const counts = useMemo(() => {
     const q = query.trim().toLowerCase();
     const matches = (c) => {
+      if (!disciplineCatIds.has(c.category)) return false;
       if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
       if (access !== 'all' && !c.requires.includes(access)) return false;
       if (protocol !== 'all' && !c.protocols.includes(protocol)) return false;
@@ -2958,14 +3555,14 @@ function App() {
     };
     const subset = allCommands.filter(matches);
     const out = { all: subset.length };
-    CATEGORIES.forEach(c => {
+    disciplineCats.forEach(c => {
       out[c.id] = subset.filter(x => x.category === c.id).length;
       c.subcategories.forEach(s => {
         out[`${c.id}:${s.id}`] = subset.filter(x => x.category === c.id && x.subcategory === s.id).length;
       });
     });
     return out;
-  }, [allCommands, query, platform, access, protocol, showFavs, favs]);
+  }, [allCommands, query, platform, access, protocol, showFavs, favs, disciplineCats, disciplineCatIds]);
 
   // Categories that should be visible in sidebar (have at least one matching command)
   const visibleCats = useMemo(() => {
@@ -2992,6 +3589,19 @@ function App() {
       setActiveChainId(pertinentChains[0].id);
     }
   }, [mode, activeCat, activeSub]);
+
+  // Switching discipline → reset navigation + filters to that discipline's defaults
+  const didMountDisc = useRef(false);
+  useEffect(() => {
+    if (!didMountDisc.current) { didMountDisc.current = true; return; }
+    setActive('all', null);
+    setAccess('all'); setPlatform('all'); setProtocol('all');
+    setShowFavs(false);
+    const firstCmd = allCommands.find(c => disciplineCatIds.has(c.category));
+    if (firstCmd) setSelectedId(firstCmd.id);
+    const firstChain = allChains.find(c => disciplineCatIds.has(c.category));
+    if (firstChain) setActiveChainId(firstChain.id);
+  }, [discipline]);
 
   const selected = filteredCommands.find(c => c.id === selectedId) ||
                    allCommands.find(c => c.id === selectedId) ||
@@ -3278,6 +3888,23 @@ function App() {
     input.click();
   };
 
+  // AI search → jump to a command or a chain in the current discipline
+  const aiOpenCommand = (id) => {
+    const c = allCommands.find(x => x.id === id);
+    if (!c) return;
+    setShowFavs(false); setQueryRaw(''); setAccess('all'); setPlatform('all'); setProtocol('all');
+    setMode('library'); setActive(c.category, c.subcategory || null); setSelectedId(id);
+    setShowAI(false);
+    showToast('Comando aperto');
+  };
+  const aiOpenChain = (id) => {
+    const c = allChains.find(x => x.id === id);
+    if (!c) return;
+    setMode('chains'); setActive(c.category, null); setActiveChainId(id);
+    setShowAI(false);
+    showToast('Playbook aperto');
+  };
+
   // Phase color cascade: derive --phase-color from active phase (fallback: accent)
   const activePhase = activeCat !== 'all' ? CAT_MAP[activeCat] : null;
   const appStyle = activePhase ? {
@@ -3294,10 +3921,10 @@ function App() {
           platform={platform} setPlatform={setPlatform}
           access={access} setAccess={setAccess}
           protocol={protocol} setProtocol={setProtocol}
-          showFavs={showFavs} setShowFavs={setShowFavs}
-          favCount={favs.length}
           counts={counts}
           visibleCats={visibleCats}
+          categories={disciplineCats}
+          disciplineCfg={disciplineCfg}
           expandedCats={expandedCats} toggleCatExpand={toggleCatExpand}
           expandAll={expandAll} collapseAll={collapseAll}
           sidebarCollapsed={sidebarCollapsed} setSidebarCollapsed={setSidebarCollapsed}
@@ -3314,8 +3941,12 @@ function App() {
                   onExportSourceChains={exportSourceChains}
                   onResetAll={resetAll}
                   onShowShortcuts={() => setShowShortcutsModal(true)}
+                  discipline={discipline} setDiscipline={setDiscipline}
+                  showFavs={showFavs} setShowFavs={setShowFavs} favCount={favs.length}
+                  onOpenAI={() => setShowAI(true)}
                   layout={layout} setLayout={setLayout} />
           <TargetContext ctx={ctx} setCtx={setCtx}
+                         fields={disciplineCfg?.targetFields}
                          collapsed={ctxCollapsed} setCollapsed={setCtxCollapsed} />
           {mode === 'chains' ? (
             <ChainsView
@@ -3416,6 +4047,17 @@ function App() {
       <Dialog dialog={dialogState} onClose={() => setDialogState(null)} />
 
       <ShortcutsModal open={showShortcutsModal} onClose={() => setShowShortcutsModal(false)} />
+
+      {showAI && (
+        <AISearchModal
+          onClose={() => setShowAI(false)}
+          commands={allCommands.filter(c => disciplineCatIds.has(c.category))}
+          chains={allChains}
+          disciplineCfg={disciplineCfg}
+          onOpenCommand={aiOpenCommand}
+          onOpenChain={aiOpenChain}
+        />
+      )}
     </>
   );
 }

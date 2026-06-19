@@ -78,16 +78,25 @@ command-manager.bat help         :: aiuto (anche -h, --help)
 ```
 WannaHack/
 ├─ index.html                   # punto di ingresso (shell HTML, servito su /)
-├─ app.jsx                      # tutta l'interfaccia React (~3.400 righe)
-├─ categories.js                # tassonomia (9 fasi) + mappe colore dei tag
-├─ data.js                      # COMMANDS[] — la libreria dei comandi
-├─ chains.js                    # CHAINS[] — i playbook / attack chain
-├─ styles.css                   # tutto lo stile (tema, layout, densità)
-├─ icon.png                     # icona: favicon + logo in alto a sinistra
-├─ icon.ico                     # icona multi-size per lo shortcut Windows
+├─ js/
+│  └─ app.jsx                   # tutta l'interfaccia React (~3.900 righe)
+├─ data/
+│  ├─ categories.js             # tassonomia (9 fasi) + mappe colore dei tag
+│  ├─ data.js                   # COMMANDS[] — libreria comandi (pentest)
+│  ├─ data-wifi.js              # COMMANDS[] — disciplina Wi-Fi
+│  ├─ chains.js                 # CHAINS[] — playbook / attack chain
+│  └─ chains-wifi.js            # CHAINS[] — playbook Wi-Fi
+├─ config/
+│  ├─ secret.env                # config AI: OPENAI_API_KEY + modello (gitignored)
+│  └─ ai-system-prompt.md       # template del system prompt (Ricerca AI)
+├─ css/
+│  └─ styles.css                # tutto lo stile (tema, layout, densità)
+├─ img/
+│  ├─ icon.png                  # icona: favicon + logo in alto a sinistra
+│  └─ icon.ico                  # icona multi-size per lo shortcut Windows
 ├─ launcher/
-│  ├─ command-manager.sh   # launcher Linux/macOS (cmd: launch/install/uninstall/status/help)
-│  └─ command-manager.bat  # launcher Windows (stessi comandi, in cmd)
+│  ├─ command-manager.sh        # launcher Linux/macOS (launch/install/uninstall/status/help)
+│  └─ command-manager.bat       # launcher Windows (stessi comandi, in cmd)
 ```
 
 ## Le due viste: Library e Attack Chains
