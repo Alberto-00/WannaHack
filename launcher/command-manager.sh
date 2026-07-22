@@ -149,12 +149,17 @@ cmd_status() {
 }
 
 # ---- serve -----------------------------------------------------------------
-serve() {  # exec `python -m http.server` on port $1, bind $2 (foreground)
+serve() {  # exec the no-cache server on port $1, bind $2 (foreground)
   local port="$1" bind="${2:-127.0.0.1}" py
   py="$(resolve_python)"
   [[ -n "$py" ]] || die "Python not found (install Python 3, ideally via conda)"
   cd "$REPO_DIR"
-  exec "$py" -m http.server "$port" --bind "$bind"
+  # serve.py sends no-store headers so the browser never shows stale app.jsx.
+  if [[ -f "$SELF/serve.py" ]]; then
+    exec "$py" "$SELF/serve.py" "$port" "$bind"
+  else
+    exec "$py" -m http.server "$port" --bind "$bind"
+  fi
 }
 
 SERVER_PID=""

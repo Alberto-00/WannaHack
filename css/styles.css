@@ -845,6 +845,7 @@ input, select, textarea { font: inherit; color: inherit; }
    A "# heading" line becomes the colored header bar (put an emoji in it for
    the icon). Border, header, bold and code all inherit the active phase color
    automatically. Code-span contents are escaped; other HTML passes through. ── */
+.builder-callouts { display: flex; flex-direction: column; gap: 12px; }
 .builder-callout {
   padding: 13px 15px;
   border: 1px solid oklch(from var(--phase-color) l c h / 0.45);
@@ -1037,7 +1038,8 @@ input, select, textarea { font: inherit; color: inherit; }
   line-height: 1.7;
   color: var(--fg-1);
   background: var(--bg-code);
-  word-break: break-all;
+  white-space: pre-wrap;      /* preserva i newline manuali, auto-wrap se non entra */
+  overflow-wrap: anywhere;    /* spezza i token lunghissimi, niente scroll orizzontale */
 }
 .tok-placeholder {
   display: inline-block;
@@ -1494,7 +1496,8 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   font-size: 12.5px;
   line-height: 1.6;
   color: var(--fg-1);
-  word-break: break-all;
+  white-space: pre-wrap;      /* preserva i newline manuali, auto-wrap se non entra */
+  overflow-wrap: anywhere;
   position: relative;
 }
 .step-command-preview code { display: block; }
@@ -1574,8 +1577,8 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
 .capture-label .ctx-tag {
   font-family: var(--font-mono);
   font-size: 9px;
-  background: var(--accent-soft);
-  color: var(--accent);
+  background: var(--phase-color-soft);
+  color: var(--phase-color);
   padding: 1px 5px;
   border-radius: 3px;
   letter-spacing: 0;
@@ -1592,10 +1595,10 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   color: var(--fg);
   outline: none;
 }
-.capture input:focus { border-color: var(--accent); }
+.capture input:focus { border-color: var(--phase-color); }
 .capture input.has-value {
-  border-color: var(--accent);
-  background: var(--accent-soft);
+  border-color: var(--phase-color);
+  background: var(--phase-color-soft);
 }
 
 .step-notes {
@@ -3193,7 +3196,8 @@ body.sidebar-collapsed .nav-sub-flyout:hover {
   padding: 8px 10px;
   font-size: 12px;
   color: var(--fg-1);
-  word-break: break-all;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 .variant-edit-list { display: flex; flex-direction: column; gap: 5px; }
 .variant-edit-row {

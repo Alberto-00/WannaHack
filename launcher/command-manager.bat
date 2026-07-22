@@ -95,7 +95,12 @@ echo   !GREEN![AVVIO]!RESET! !WHITE!Server in esecuzione con !PYTHON_CMD! sulla 
 echo.
 
 start "" http://localhost:!PORT!/
-!PYTHON_CMD! -m http.server !PORT! --bind !BIND_ADDR!
+REM serve.py invia header no-store: il browser non mostra app.jsx vecchio
+if exist "%SCRIPT_DIR%serve.py" (
+    !PYTHON_CMD! "%SCRIPT_DIR%serve.py" !PORT! !BIND_ADDR!
+) else (
+    !PYTHON_CMD! -m http.server !PORT! --bind !BIND_ADDR!
+)
 
 if errorlevel 1 (
     echo.

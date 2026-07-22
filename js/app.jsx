@@ -183,6 +183,23 @@ const markdownToHtml = (text) => {
   return out.join('');
 };
 
+// Split a note into sections, one per top-level "# " heading, so each renders
+// as its own callout box (visually separated). Single-heading notes → one box.
+const splitNote = (text) => {
+  if (!text) return [];
+  const out = [];
+  let cur = [];
+  String(text).split('\n').forEach((ln) => {
+    if (/^#\s+/.test(ln.trim()) && cur.some(l => l.trim())) {
+      out.push(cur.join('\n')); cur = [ln];
+    } else {
+      cur.push(ln);
+    }
+  });
+  if (cur.some(l => l.trim())) out.push(cur.join('\n'));
+  return out;
+};
+
 const Pill = ({ tone, children }) => (
   <span className={`pill pill-${tone}`}>{children}</span>
 );
@@ -1086,8 +1103,12 @@ const Builder = ({ cmd, ctx, onToast }) => {
       </div>
 
       {cmd.note && (
-        <div className="builder-callout"
-             dangerouslySetInnerHTML={{ __html: markdownToHtml(cmd.note) }} />
+        <div className="builder-callouts">
+          {splitNote(cmd.note).map((sec, i) => (
+            <div key={i} className="builder-callout"
+                 dangerouslySetInnerHTML={{ __html: markdownToHtml(sec) }} />
+          ))}
+        </div>
       )}
 
       {refs.length > 0 && (
@@ -1162,7 +1183,7 @@ const ChainCard = ({ chain, active, progress, onClick, onReorder }) => {
 };
 
 const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
-                ctx, chainCaptures, onToast, expanded, onToggleExpand, onEdit }) => {
+                ctx, onToast, expanded, onToggleExpand, onEdit }) => {
   const cmd = step.cmd || (step.cmdRef ? commandsMap[step.cmdRef] : null);
   const variantList = cmd?.variants || [];
   // A step can run any of the command's variants; chain data may set a default via step.variant
@@ -1173,32 +1194,36 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
 
   const template = useMemo(() => {
     if (!cmd) return null;
-    let t = (activeVariant && activeVariant.template) || cmd.template;
-    if (step.overrides) {
-      Object.entries(step.overrides).forEach(([k, v]) => {
-        t = t.split(`<${k}>`).join(v);
-      });
-    }
-    return t;
-  }, [cmd, step.overrides, activeVariant]);
+    return (activeVariant && activeVariant.template) || cmd.template;
+  }, [cmd, activeVariant]);
 
-  const values = useMemo(() => {
-    if (!cmd) return {};
-    const v = {};
-    (cmd.params || []).forEach(p => {
-      v[p.key] = (p.ctx ? ctx[p.ctx] : '') || chainCaptures[p.key] || '';
-    });
-    if (step.overrides) {
-      Object.entries(step.overrides).forEach(([k, v2]) => {
-        let resolved = v2;
-        Object.entries(chainCaptures).forEach(([ck, cv]) => {
-          resolved = resolved.split(`<${ck}>`).join(cv);
-        });
-        v[k] = resolved;
-      });
+  // Fillable keys: command params + any <token> that only appears in the template
+  const paramList = useMemo(() => {
+    if (!cmd) return [];
+    const list = (cmd.params || []).map(p => ({ ...p }));
+    const seen = new Set(list.map(p => p.key));
+    if (template) {
+      const re = /<(\w+)>/g; let m;
+      while ((m = re.exec(template))) {
+        if (!seen.has(m[1])) { seen.add(m[1]); list.push({ key: m[1], label: m[1] }); }
+      }
     }
+    return list;
+  }, [cmd, template]);
+
+  const stepValues = stepState.values || {};
+
+  // Resolved value per param: runtime override → static playbook override → Context → empty
+  const values = useMemo(() => {
+    const v = {};
+    paramList.forEach(p => {
+      v[p.key] = stepValues[p.key]
+        ?? (step.overrides ? step.overrides[p.key] : undefined)
+        ?? (p.ctx ? ctx[p.ctx] : '')
+        ?? '';
+    });
     return v;
-  }, [cmd, ctx, chainCaptures, step.overrides]);
+  }, [paramList, stepValues, step.overrides, ctx]);
 
   const handleCopy = () => {
     if (!template) return;
@@ -1207,7 +1232,6 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
   };
 
   const status = stepState.status || 'todo';
-  const captures = stepState.captures || {};
 
   return (
     <div className={`step ${status}`}>
@@ -1271,25 +1295,25 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
                 </div>
               )}
 
-              {step.captures && step.captures.length > 0 && (
+              {paramList.length > 0 && (
                 <div className="captures">
                   <h5 className="captures-title">
                     <span className="dot"></span>
-                    Cattura da questo step
+                    Parametri
                   </h5>
                   <div className="captures-grid">
-                    {step.captures.map(c => (
-                      <div key={c.key} className="capture">
+                    {paramList.map(p => (
+                      <div key={p.key} className="capture">
                         <label className="capture-label">
-                          {c.label}
-                          {c.ctx && <span className="ctx-tag">→ {c.ctx}</span>}
+                          {p.label || p.key}
+                          {p.ctx && <span className="ctx-tag">→ {p.ctx}</span>}
                         </label>
                         <input
-                          placeholder={c.hint || c.label}
-                          value={captures[c.key] || ''}
-                          className={captures[c.key] ? 'has-value' : ''}
+                          placeholder={p.placeholder || p.key}
+                          value={values[p.key] || ''}
+                          className={values[p.key] ? 'has-value' : ''}
                           onChange={e => onUpdate({
-                            captures: { ...captures, [c.key]: e.target.value },
+                            values: { ...stepValues, [p.key]: e.target.value },
                           })}
                         />
                       </div>
@@ -1334,7 +1358,7 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
 
 const ChainsView = ({ chains, activeChainId, setActiveChainId,
                      progress, setProgress,
-                     ctx, setCtx, chainCaptures, onToast, commandsMap, dialog,
+                     ctx, setCtx, onToast, commandsMap, dialog,
                      onEditChain, onEditStep, onNewChain, onReorderChain, layout }) => {
   const chain = chains.find(c => c.id === activeChainId) || chains[0];
 
@@ -1358,18 +1382,7 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
     setProgress(p => {
       const c = p[chain.id] || { steps: {} };
       const prev = c.steps[stepId] || {};
-      const next = { ...prev, ...patch };
-      if (patch.captures) {
-        const step = chain.steps.find(s => s.id === stepId);
-        const ctxUpdates = {};
-        (step?.captures || []).forEach(c => {
-          if (c.ctx && patch.captures[c.key] !== undefined) {
-            ctxUpdates[c.ctx] = patch.captures[c.key];
-          }
-        });
-        if (Object.keys(ctxUpdates).length > 0) setCtx(cx => ({ ...cx, ...ctxUpdates }));
-      }
-      return { ...p, [chain.id]: { ...c, steps: { ...c.steps, [stepId]: next } } };
+      return { ...p, [chain.id]: { ...c, steps: { ...c.steps, [stepId]: { ...prev, ...patch } } } };
     });
   };
 
@@ -1390,7 +1403,7 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
     dialog({
       type: 'warning',
       title: 'Azzerare progresso playbook?',
-      message: `Tutti gli stati degli step, le capture e le note per "${chain.name}" saranno cancellati.`,
+      message: `Tutti gli stati degli step, i valori inseriti e le note per "${chain.name}" saranno cancellati.`,
       confirmLabel: 'Azzera',
       cancelLabel: 'Mantieni',
       onConfirm: () => setProgress(p => ({ ...p, [chain.id]: { steps: {} } })),
@@ -1501,7 +1514,6 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
                     onToggleStatus={() => cycleStatus(s.id)}
                     onUpdate={(patch) => updateStep(s.id, patch)}
                     ctx={ctx}
-                    chainCaptures={chainCaptures}
                     onToast={onToast}
                     expanded={isOpen}
                     onToggleExpand={() => toggleStep(s.id, isOpen)}
@@ -1933,9 +1945,10 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
                       <input value={v.label || ''}
                              placeholder="es. Anonymous"
                              onChange={e => updateVariant(i, { label: e.target.value })}/>
-                      <input value={v.template || ''}
+                      <textarea value={v.template || ''}
                              placeholder="ftp -A <ip>"
                              className="mono"
+                             rows={1}
                              onChange={e => updateVariant(i, { template: e.target.value })}/>
                       <button type="button" onClick={() => removeVariant(i)} title="Rimuovi variante">
                         <Icon name="x" size={11}/>
@@ -2085,7 +2098,7 @@ const StepCommandEditor = ({ step, allCommands, onChange }) => {
                   <div key={vi} className="variant-edit-row">
                     <input value={v.label || ''} placeholder="Etichetta"
                            onChange={e => vUpd(vi, { label: e.target.value })} className="step-editor-input"/>
-                    <input value={v.template || ''} placeholder="template"
+                    <textarea value={v.template || ''} placeholder="template" rows={1}
                            onChange={e => vUpd(vi, { template: e.target.value })} className="step-editor-input mono"/>
                     <input value={v.description || ''} placeholder="descrizione (opzionale)"
                            onChange={e => vUpd(vi, { description: e.target.value })} className="step-editor-input"/>
@@ -2134,14 +2147,12 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
     mitre: (chain?.mitre || []).join(','),
     steps: chain?.steps?.map(s => ({
       ...s,
-      // Normalize structure so editor always has these fields
-      captures: Array.isArray(s.captures) ? s.captures.map(c => ({ ...c })) : [],
       // editor keeps overrides as an array {key,value}; serialized back to an object on save
       overrides: s.overrides && typeof s.overrides === 'object'
         ? Object.entries(s.overrides).map(([k, v]) => ({ key: k, value: v }))
         : [],
     })) || [
-      { id: 's1', title: '', cmdRef: '', rationale: '', verify: '', captures: [], overrides: [] },
+      { id: 's1', title: '', cmdRef: '', rationale: '', verify: '', overrides: [] },
     ],
   }));
 
@@ -2168,7 +2179,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
       steps: [
         ...f.steps,
         { id: `s${f.steps.length + 1}`, title: '', cmdRef: '', rationale: '',
-          verify: '', captures: [], overrides: [] },
+          verify: '', overrides: [] },
       ],
     }));
   };
@@ -2185,19 +2196,6 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
     next[i] = { ...next[i], ...patch };
     return { ...f, steps: next };
   });
-
-  // ── Captures editor (per step) ─────────────────────────────
-  const addCapture = (stepIdx) => updateStep(stepIdx, {
-    captures: [...(form.steps[stepIdx].captures || []), { key: '', label: '', hint: '', ctx: '' }],
-  });
-  const removeCapture = (stepIdx, capIdx) => updateStep(stepIdx, {
-    captures: (form.steps[stepIdx].captures || []).filter((_, i) => i !== capIdx),
-  });
-  const updateCapture = (stepIdx, capIdx, patch) => {
-    const next = [...(form.steps[stepIdx].captures || [])];
-    next[capIdx] = { ...next[capIdx], ...patch };
-    updateStep(stepIdx, { captures: next });
-  };
 
   // ── Overrides editor (per step) ────────────────────────────
   // overrides is an object {paramKey: value}. Editor maintains as ordered array internally,
@@ -2249,14 +2247,6 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
       prereqs: form.prereqs.split('\n').map(s => s.trim()).filter(Boolean),
       mitre: form.mitre.split(',').map(s => s.trim()).filter(Boolean),
       steps: form.steps.filter(s => s.title.trim()).map((s, i) => {
-        const cleanCaptures = (s.captures || [])
-          .filter(c => (c.key || '').trim() && (c.label || '').trim())
-          .map(c => ({
-            key: c.key.trim(),
-            label: c.label.trim(),
-            ...(c.hint?.trim() ? { hint: c.hint.trim() } : {}),
-            ...(c.ctx?.trim() ? { ctx: c.ctx.trim() } : {}),
-          }));
         const overridesObj = {};
         (s.overrides || []).forEach(({ key, value }) => {
           if (key && key.trim()) overridesObj[key.trim()] = value;
@@ -2271,7 +2261,6 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
           ...(s.variant ? { variant: s.variant } : {}),
           ...(s.rationale?.trim() ? { rationale: s.rationale.trim() } : {}),
           ...(s.verify?.trim() ? { verify: s.verify.trim() } : {}),
-          ...(cleanCaptures.length > 0 ? { captures: cleanCaptures } : {}),
           ...(hasOverrides ? { overrides: overridesObj } : {}),
         };
       }),
@@ -2424,51 +2413,6 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
                       <div className="step-editor-sub">
                         <div className="step-editor-sub-head">
                           <span className="step-editor-sub-title">
-                            <Icon name="target" size={11}/>
-                            Cattura da questo step (opzionale)
-                          </span>
-                          <button type="button" onClick={() => addCapture(i)} className="step-editor-add-mini">
-                            <Icon name="plus" size={10}/> Capture
-                          </button>
-                        </div>
-                        {(s.captures || []).length > 0 && (
-                          <div className="capture-editor-grid">
-                            <span className="capture-editor-h">Chiave</span>
-                            <span className="capture-editor-h">Etichetta</span>
-                            <span className="capture-editor-h">Hint</span>
-                            <span className="capture-editor-h">ctx</span>
-                            <span/>
-                            {(s.captures || []).map((c, ci) => (
-                              <React.Fragment key={ci}>
-                                <input value={c.key || ''}
-                                       placeholder="hash"
-                                       onChange={e => updateCapture(i, ci, { key: e.target.value })}
-                                       className="step-editor-input mono"/>
-                                <input value={c.label || ''}
-                                       placeholder="NT hash"
-                                       onChange={e => updateCapture(i, ci, { label: e.target.value })}
-                                       className="step-editor-input"/>
-                                <input value={c.hint || ''}
-                                       placeholder="aad3b…"
-                                       onChange={e => updateCapture(i, ci, { hint: e.target.value })}
-                                       className="step-editor-input mono"/>
-                                <input value={c.ctx || ''}
-                                       placeholder="hash"
-                                       onChange={e => updateCapture(i, ci, { ctx: e.target.value })}
-                                       className="step-editor-input mono"/>
-                                <button type="button" onClick={() => removeCapture(i, ci)}
-                                        className="step-editor-remove" title="Rimuovi capture">
-                                  <Icon name="x" size={10}/>
-                                </button>
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-
-                      <div className="step-editor-sub">
-                        <div className="step-editor-sub-head">
-                          <span className="step-editor-sub-title">
                             <Icon name="edit" size={11}/>
                             Override parametri comando (opzionale)
                           </span>
@@ -2565,7 +2509,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
     variant: step.variant || '',
     rationale: step.rationale || '',
     verify: step.verify || '',
-    captures: Array.isArray(step.captures) ? step.captures.map(c => ({ ...c })) : [],
     overrides: step.overrides && typeof step.overrides === 'object'
       ? Object.entries(step.overrides).map(([k, v]) => ({ key: k, value: v })) : [],
   }));
@@ -2580,9 +2523,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
     : '';
   const overrideKeys = [...new Set([...String(stepTmpl).matchAll(/<(\w+)>/g)].map(m => m[1]))];
 
-  const addCapture = () => set({ captures: [...form.captures, { key: '', label: '', hint: '', ctx: '' }] });
-  const updCapture = (i, patch) => set({ captures: form.captures.map((c, idx) => idx === i ? { ...c, ...patch } : c) });
-  const rmCapture  = (i) => set({ captures: form.captures.filter((_, idx) => idx !== i) });
   // a parameter can be overridden once: filter out keys already used by other rows
   const availKeys = (oi) => {
     const used = form.overrides.filter((_, idx) => idx !== oi).map(o => o.key).filter(Boolean);
@@ -2600,13 +2540,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
   }, [onClose]);
 
   const handleSave = () => {
-    const cleanCaptures = form.captures
-      .filter(c => (c.key || '').trim() && (c.label || '').trim())
-      .map(c => ({
-        key: c.key.trim(), label: c.label.trim(),
-        ...(c.hint?.trim() ? { hint: c.hint.trim() } : {}),
-        ...(c.ctx?.trim() ? { ctx: c.ctx.trim() } : {}),
-      }));
     const ov = {};
     form.overrides.forEach(({ key, value }) => { if (key && key.trim()) ov[key.trim()] = value; });
     // inline command copy (step-local; never touches the library)
@@ -2619,7 +2552,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
       ...(form.variant ? { variant: form.variant } : {}),
       ...(form.rationale.trim() ? { rationale: form.rationale.trim() } : {}),
       ...(form.verify.trim() ? { verify: form.verify.trim() } : {}),
-      ...(cleanCaptures.length ? { captures: cleanCaptures } : {}),
       ...(Object.keys(ov).length ? { overrides: ov } : {}),
     });
   };
@@ -2643,41 +2575,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
             <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
             <input value={form.verify} onChange={e => set({ verify: e.target.value })}
                    placeholder="es. `Got hash for administrator@…`" />
-          </div>
-
-          <div className="step-editor-sub">
-            <div className="step-editor-sub-head">
-              <span className="step-editor-sub-title">
-                <Icon name="target" size={11}/> Cattura da questo step
-              </span>
-              <button type="button" onClick={addCapture} className="step-editor-add-mini">
-                <Icon name="plus" size={10}/> Capture
-              </button>
-            </div>
-            {form.captures.length > 0 && (
-              <div className="capture-editor-grid">
-                <span className="capture-editor-h">Chiave</span>
-                <span className="capture-editor-h">Etichetta</span>
-                <span className="capture-editor-h">Hint</span>
-                <span className="capture-editor-h">ctx</span>
-                <span/>
-                {form.captures.map((c, ci) => (
-                  <React.Fragment key={ci}>
-                    <input value={c.key || ''} placeholder="hash"
-                           onChange={e => updCapture(ci, { key: e.target.value })} className="step-editor-input mono"/>
-                    <input value={c.label || ''} placeholder="NT hash"
-                           onChange={e => updCapture(ci, { label: e.target.value })} className="step-editor-input"/>
-                    <input value={c.hint || ''} placeholder="aad3b…"
-                           onChange={e => updCapture(ci, { hint: e.target.value })} className="step-editor-input mono"/>
-                    <input value={c.ctx || ''} placeholder="hash"
-                           onChange={e => updCapture(ci, { ctx: e.target.value })} className="step-editor-input mono"/>
-                    <button type="button" onClick={() => rmCapture(ci)} className="step-editor-remove" title="Rimuovi">
-                      <Icon name="x" size={10}/>
-                    </button>
-                  </React.Fragment>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="step-editor-sub">
@@ -3494,14 +3391,6 @@ function App() {
 
   const commandsMap = useMemo(() => CMD_MAP_BUILD(allCommands), [allCommands]);
 
-  // === Aggregate captures ===
-  const chainCaptures = useMemo(() => {
-    const cp = progress[activeChainId]?.steps || {};
-    const out = {};
-    Object.values(cp).forEach(st => Object.assign(out, st.captures || {}));
-    return out;
-  }, [progress, activeChainId]);
-
   // === Filtering ===
   const filteredCommands = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -3825,24 +3714,45 @@ function App() {
     showToast('Esportato come file JSON');
   };
 
-  // Source export — regenerate the .js data files (built-in + custom merged),
-  // ready to drop in place of data.js / chains.js.
+  // Source export — regenerate the per-discipline .js data file (built-in + custom
+  // merged). Discipline-scoped: the base discipline regenerates the canonical
+  // data.js / chains.js that DEFINE the global; every add-on discipline regenerates
+  // its own data-<id>.js / chains-<id>.js that APPENDS to it. Keeps the modules
+  // separate instead of dumping every discipline's entries into data.js.
   const stripInternal = ({ isCustom, ...rest }) => rest;
+  const baseDiscipline = DISCS[0]?.id || 'pt';
+  const buildSource = (kind, items) => {
+    const isBase = discipline === baseDiscipline;
+    const suffix = isBase ? '' : `-${discipline}`;
+    const fname = `${kind === 'COMMANDS' ? 'data' : 'chains'}${suffix}.js`;
+    const varName = isBase
+      ? kind
+      : `${discipline.toUpperCase().replace(/[^A-Z0-9]/g, '_')}_${kind}`;
+    const decl = `const ${varName} = ${JSON.stringify(items.map(stripInternal), null, 2)};\n`;
+    const footer = isBase
+      ? `window.${kind} = ${varName};\n`
+      : `if (window.${kind} && Array.isArray(window.${kind})) {\n` +
+        `  window.${kind}.push(...${varName});\n` +
+        `} else {\n` +
+        `  window.${kind} = ${varName}.slice();\n` +
+        `}\n`;
+    const js = `/* ${fname} — generato da Command Manager il ${new Date().toISOString()} */\n` +
+      decl + footer;
+    return { fname, js };
+  };
   const exportSourceCmds = () => {
     setAddMenuOpen(false);
-    const js = `/* data.js — generato da Command Manager il ${new Date().toISOString()} */\n` +
-      `const COMMANDS = ${JSON.stringify(allCommands.map(stripInternal), null, 2)};\n` +
-      `window.COMMANDS = COMMANDS;\n`;
-    downloadFile('data.js', js, 'text/javascript');
-    showToast(`data.js esportato (${allCommands.length} comandi)`);
+    const items = allCommands.filter(c => disciplineCatIds.has(c.category));
+    const { fname, js } = buildSource('COMMANDS', items);
+    downloadFile(fname, js, 'text/javascript');
+    showToast(`${fname} esportato (${items.length} comandi)`);
   };
   const exportSourceChains = () => {
     setAddMenuOpen(false);
-    const js = `/* chains.js — generato da Command Manager il ${new Date().toISOString()} */\n` +
-      `const CHAINS = ${JSON.stringify(allChains.map(stripInternal), null, 2)};\n` +
-      `window.CHAINS = CHAINS;\n`;
-    downloadFile('chains.js', js, 'text/javascript');
-    showToast(`chains.js esportato (${allChains.length} playbook)`);
+    const items = allChains.filter(c => disciplineCatIds.has(c.category));
+    const { fname, js } = buildSource('CHAINS', items);
+    downloadFile(fname, js, 'text/javascript');
+    showToast(`${fname} esportato (${items.length} playbook)`);
   };
 
   const importData = () => {
@@ -3954,7 +3864,6 @@ function App() {
               activeChainId={activeChainId} setActiveChainId={setActiveChainId}
               progress={progress} setProgress={setProgress}
               ctx={ctx} setCtx={setCtx}
-              chainCaptures={chainCaptures}
               onToast={showToast}
               commandsMap={commandsMap}
               dialog={dialog}
