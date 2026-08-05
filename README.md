@@ -13,6 +13,7 @@
 7. [Keyboard shortcuts](#keyboard-shortcuts)
 8. [Data model](#data-model)
 9. [License](#license)
+10. [Disclaimer](#disclaimer)
 
 
 ## What it is
@@ -115,12 +116,16 @@ Switch between the two from the TopBar or with keys `1` and `2`.
 - Split view with the list on the left and the detail on the right, or detail only from the layout toggle.
 - One click copy, and what lands in the clipboard is already filled in with the Target values.
 
+![Library view with the Command Builder](assets/WannaHack_dashboard_2.png)
+
 ### Attack Chains
 
 - Every chain carries an objective, expected outcome, prerequisites, difficulty, estimated time and MITRE ATT&CK tags.
 - It is a sequence of steps. Each step points at a Library command (`cmdRef`) and says why that step is there (`rationale`).
 - Progress is per step: `todo`, `active`, `done`, or skipped, with a notes field for output and observations.
 - Captures are the values you grab in a step (a hash, a host list) highlighted as output to reuse later on.
+
+![Attack Chains view with a playbook open](assets/WannaHack_dashboard.png)
 
 ## AI Search
 
@@ -244,3 +249,11 @@ A discipline is one object in `DISCIPLINES`: id, name, icon, blurb, `showPlatfor
 ## License
 
 Licensed under the MIT License. See [LICENSE](LICENSE). The MIT license covers WannaHack's own code only. The library content is written from personal notes and field experience, with parts reworked from third party sources (HTB Academy CPTS and CWPE, HackTricks, tool documentation) that remain with their respective authors.
+
+## Disclaimer
+
+WannaHack is a reference tool for authorized security testing, training labs and CTFs. It stores and formats commands, it does not run them: what you type into a terminal is on you.
+
+Run these techniques only against systems you own or that you have explicit written permission to test. Unauthorized access to computer systems and networks is a crime in most countries, and scanning or attacking third party infrastructure without a mandate can get you prosecuted regardless of intent.
+
+The software comes with no warranty. The author takes no responsibility for damage, data loss, service disruption or legal consequences from using it. Check the commands before running them, some are destructive by design.
