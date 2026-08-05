@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────────
-   Command Manager — eye-friendly dark redesign
+   WannaHack — eye-friendly dark redesign
    ───────────────────────────────────────────────────────────── */
 
 :root {
@@ -107,8 +107,6 @@ input, select, textarea { font: inherit; color: inherit; }
   display: flex;
   align-items: center;
   gap: 10px;
-  transition: padding 0.24s cubic-bezier(0.4, 0, 0.2, 1),
-              gap 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .logo-mark {
   width: 32px; height: 32px;
@@ -518,13 +516,17 @@ input, select, textarea { font: inherit; color: inherit; }
 /* ── Command Cards (list) ───────────────────────────────── */
 .cmd-card {
   background: var(--bg-1);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: var(--radius-lg);
   padding: 14px 16px;
   margin-bottom: 8px;
   cursor: pointer;
   position: relative;
-  transition: all 0.15s ease;
+  /* Only animate the hover/selected visuals — NOT 'all'. With 'all', every card
+     tries to animate its width change when the sidebar resizes → style/layout
+     storm across the whole list. These props never trigger layout. */
+  transition: border-color 0.15s ease, background 0.15s ease,
+              transform 0.15s ease, box-shadow 0.15s ease;
   display: grid;
   grid-template-columns: 4px 1fr auto;
   gap: 14px;
@@ -555,6 +557,14 @@ input, select, textarea { font: inherit; color: inherit; }
   box-shadow: 0 0 0 1px var(--cat-color, var(--phase-color)) inset;
 }
 .cmd-card.selected::before { opacity: 1; background: var(--cat-color, var(--phase-color)); }
+
+/* Flash when landed on from the search palette (visible even if already on-screen) */
+@keyframes cardFlash {
+  0%   { box-shadow: 0 0 0 0   oklch(from var(--cat-color, var(--accent)) l c h / 0); }
+  15%  { box-shadow: 0 0 0 4px oklch(from var(--cat-color, var(--accent)) l c h / 0.6); }
+  100% { box-shadow: 0 0 0 4px oklch(from var(--cat-color, var(--accent)) l c h / 0); }
+}
+.cmd-card-flash { animation: cardFlash 1.3s ease-out; }
 
 .cmd-card-spacer { width: 4px; }
 
@@ -1198,7 +1208,7 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   padding: 12px 14px;
   cursor: pointer;
   position: relative;
-  transition: all 0.15s;
+  transition: border-color 0.15s, background 0.15s, transform 0.15s, box-shadow 0.15s;
 }
 .chain-card:hover {
   background: var(--bg-2);
@@ -1634,15 +1644,21 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   font-size: 0.9em;
   color: var(--phase-color);
 }
+/* Variant description = what THIS variant does, boxed right under the command
+   description. No label: the variant tab above already names it. */
 .step-variant-desc {
   margin-top: 8px;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--fg-1);
-  padding-left: 11px;
+  background: var(--bg-2);
+  border: 1px solid var(--border);
   border-left: 2px solid var(--phase-color);
+  border-radius: var(--radius);
+  padding: 9px 12px 10px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--fg-1);
 }
-.step-variant-desc p { margin: 0; }
+.step-variant-desc > p { margin: 0 0 5px; }
+.step-variant-desc > p:last-child { margin-bottom: 0; }
 
 /* Chain empty state */
 .chain-empty {
@@ -1739,18 +1755,22 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   grid-template-columns: var(--sidebar-w, 272px) 1fr;
   height: 100vh;
   overflow: hidden;
-  transition: grid-template-columns 0.24s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: grid-template-columns;
+  /* Grid width SNAPS (no transition). The open/close slide is done with a composited
+     transform on .main (a FLIP, see App.jsx): the 250-card list is rasterized once at the
+     new width, then the GPU just translates that layer — so the motion stays 60fps no
+     matter how many cards are mounted, instead of reflowing the list every frame. */
   /* Phase color cascade defaults (override at component level via inline style) */
   --phase-color: var(--accent);
   --phase-color-soft: var(--accent-soft);
   --phase-color-fg: var(--accent-fg);
 }
-body.sidebar-collapsed { --sidebar-w: 64px; }
-/* Allow flyouts to escape sidebar and app bounds when collapsed */
-body.sidebar-collapsed .sidebar { overflow: visible; }
-body.sidebar-collapsed .app     { overflow: visible; }
-body.sidebar-collapsed .nav-tree { overflow: visible; }
+/* Sidebar collapse is scoped to the .sidebar subtree (class lives on <aside>, NOT
+   <body>) and .app width/overflow come from an inline style in App.jsx. Toggling a
+   class on <body> forced a full-document style recalc (~120ms with 250+ cards in the
+   DOM) — that was the "lag". Scoped to .sidebar the recalc only walks ~200 nodes. */
+/* Allow flyouts to escape the sidebar bounds when collapsed */
+.sidebar.collapsed { overflow: visible; }
+.sidebar.collapsed .nav-tree { overflow: visible; }
 
 .sidebar {
   transition: background 0.25s ease;
@@ -1759,22 +1779,22 @@ body.sidebar-collapsed .nav-tree { overflow: visible; }
   transition: opacity 0.18s ease;
 }
 /* Hide everything except header + nav-tree when collapsed — use display: none so they don't take vertical space */
-body.sidebar-collapsed .sidebar > *:not(.sidebar-header):not(.nav-tree) {
+.sidebar.collapsed > *:not(.sidebar-header):not(.nav-tree) {
   display: none;
 }
-body.sidebar-collapsed .logo-mark,
-body.sidebar-collapsed .logo-title,
-body.sidebar-collapsed .logo-sub { display: none; }
+.sidebar.collapsed .logo-mark,
+.sidebar.collapsed .logo-title,
+.sidebar.collapsed .logo-sub { display: none; }
 /* Hide the (now empty) logo blocks so the lone toggle truly centers,
    lining up with the phase icon badges below */
-body.sidebar-collapsed .sidebar-header > div { display: none; }
-body.sidebar-collapsed .sidebar-header {
+.sidebar.collapsed .sidebar-header > div { display: none; }
+.sidebar.collapsed .sidebar-header {
   padding: 12px 6px 8px;
   justify-content: center;
   gap: 0;
 }
-body.sidebar-collapsed .sidebar-toggle { margin: 0; }
-body.sidebar-collapsed .sidebar-toggle {
+.sidebar.collapsed .sidebar-toggle { margin: 0; }
+.sidebar.collapsed .sidebar-toggle {
   margin-left: 0;
   width: 36px;
   height: 36px;
@@ -1782,38 +1802,47 @@ body.sidebar-collapsed .sidebar-toggle {
 }
 
 /* Collapsed sidebar — nav-tree shows only icons, anchored to top */
-body.sidebar-collapsed .nav-tree {
+.sidebar.collapsed .nav-tree {
   padding: 2px 6px 12px;
   overflow: visible;            /* allow flyouts to escape */
   gap: 4px;
 }
-body.sidebar-collapsed .nav-tree-controls,
-body.sidebar-collapsed .nav-all {
+.sidebar.collapsed .nav-tree-controls,
+.sidebar.collapsed .nav-all {
   display: none;
 }
-body.sidebar-collapsed .nav-section {
+.sidebar.collapsed .nav-section {
   position: relative;
   margin-bottom: 2px;
 }
-body.sidebar-collapsed .nav-section-header {
+.sidebar.collapsed .nav-section-header {
   padding: 8px 6px;
   justify-content: center;
   gap: 0;   /* kill the flex gaps around the 0-width labels, else the icon sits left of center */
 }
-body.sidebar-collapsed .nav-section-chevron { display: none; }
+.sidebar.collapsed .nav-section-chevron { display: none; }
 /* Fade + collapse the labels in sync with the width — no abrupt "pop" */
-body.sidebar-collapsed .nav-section-header .nav-cat-name,
-body.sidebar-collapsed .nav-section-header .nav-cat-count {
+.sidebar.collapsed .nav-section-header .nav-cat-name,
+.sidebar.collapsed .nav-section-header .nav-cat-count {
   opacity: 0;
   max-width: 0;
   min-width: 0;
   margin: 0;
   pointer-events: none;
 }
-body.sidebar-collapsed .nav-section-body {
+/* During a search the .search-hit count becomes a padded pill (higher specificity
+   than the rule above), which reserves ~16px even while invisible and shoves the
+   collapsed icon off-centre. Kill the pill's box in collapsed mode. */
+.sidebar.collapsed .nav-section.search-hit > .nav-section-header .nav-cat-count {
+  padding: 0;
+  max-width: 0;
+  min-width: 0;
+  background: transparent;
+}
+.sidebar.collapsed .nav-section-body {
   display: none;
 }
-body.sidebar-collapsed .nav-cat-icon {
+.sidebar.collapsed .nav-cat-icon {
   width: 36px;
   height: 36px;
   border-radius: 9px;
@@ -1827,12 +1856,12 @@ body.sidebar-collapsed .nav-cat-icon {
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
-body.sidebar-collapsed .nav-section-header:hover .nav-cat-icon {
+.sidebar.collapsed .nav-section-header:hover .nav-cat-icon {
   background: oklch(from var(--cat-color, var(--accent)) l c h / 0.14);
   border-color: oklch(from var(--cat-color, var(--accent)) l c h / 0.8);
   transform: scale(1.06);
 }
-body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon {
+.sidebar.collapsed .nav-section.active > .nav-section-header .nav-cat-icon {
   /* Background tinted with cat-color but transparent enough that icon strokes stay visible.
      Border full cat-color frames the badge. Icon stays cat-color so phase identity is clear. */
   background: oklch(from var(--cat-color, var(--accent)) l c h / 0.22);
@@ -1840,8 +1869,23 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon {
   color: var(--cat-color, var(--accent));
   box-shadow: 0 0 0 3px oklch(from var(--cat-color, var(--accent)) l c h / 0.18);
 }
-body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon svg {
+.sidebar.collapsed .nav-section.active > .nav-section-header .nav-cat-icon svg {
   stroke-width: 2.2;
+}
+/* During a search the collapsed sidebar can't fit the match-count pill, so mark
+   phases that HAVE matches with a small cat-coloured dot (non-matches stay dimmed
+   by .search-dim) — same "where are the results" signal as the open sidebar. */
+.sidebar.collapsed .nav-section.search-hit > .nav-section-header .nav-cat-icon {
+  position: relative;
+}
+.sidebar.collapsed .nav-section.search-hit > .nav-section-header .nav-cat-icon::after {
+  content: "";
+  position: absolute;
+  top: -3px; right: -3px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--cat-color, var(--accent));
+  box-shadow: 0 0 0 2px var(--bg-1);
 }
 
 .sidebar-toggle {
@@ -1855,7 +1899,7 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
   place-items: center;
   margin-left: auto;
   flex-shrink: 0;
-  transition: background 0.18s, color 0.18s, transform 0.18s, width 0.25s, height 0.25s;
+  transition: background 0.18s, color 0.18s, transform 0.18s;
 }
 .sidebar-toggle:hover {
   color: var(--fg);
@@ -1870,8 +1914,8 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
   padding: 4px 8px 14px;
   display: flex; flex-direction: column;
   gap: 2px;
-  transition: padding 0.24s cubic-bezier(0.4, 0, 0.2, 1),
-              gap 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  /* padding/gap snap (not animated) — animating them relayouts the whole tree
+     each frame and compounds the sidebar-slide jank. */
 }
 
 /* Expand/Collapse All bar */
@@ -1922,8 +1966,7 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
   font-size: 13px;
   text-align: left;
   position: relative;
-  transition: background 0.16s ease, color 0.16s ease,
-              padding 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background 0.16s ease, color 0.16s ease;
 }
 .nav-section-header:hover {
   background: oklch(from var(--cat-color, var(--fg-1)) l c h / 0.08);
@@ -1971,7 +2014,9 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
 .nav-cat-name {
   flex: 1; min-width: 0; max-width: 200px;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  transition: opacity 0.18s ease, max-width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  /* opacity only — animating max-width here relayouts every label each frame and
+     makes the collapse feel heavy; the sliding column already clips the labels. */
+  transition: opacity 0.18s ease;
 }
 .nav-cat-count {
   font-size: 11px;
@@ -1982,7 +2027,7 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
   overflow: hidden;
   white-space: nowrap;
   text-align: right;
-  transition: opacity 0.18s ease, max-width 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.18s ease;
 }
 .nav-section.active > .nav-section-header .nav-cat-count {
   color: var(--cat-color, var(--accent));
@@ -2140,6 +2185,12 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
 .cmd-group {
   padding: 20px 28px 8px;
   animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  /* Skip whole off-screen groups (header + grid + cards) so the sidebar-resize
+     reflow only touches the 2-3 visible groups instead of all 253 cards. This is
+     what makes "Tutte le fasi" as smooth as a small phase. auto = remembers real
+     height for an accurate scrollbar. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 500px;
 }
 .cmd-group:nth-child(2) { animation-delay: 0.05s; }
 .cmd-group:nth-child(3) { animation-delay: 0.10s; }
@@ -2405,7 +2456,7 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
   font-family: var(--font-mono);
   font-size: 13px;
 }
-.modal-row textarea { min-height: 64px; resize: vertical; }
+.modal-row textarea { min-height: 132px; line-height: 1.55; resize: vertical; }
 .modal-row-pair {
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 12px;
@@ -2428,7 +2479,7 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
 }
 .params-editor-row {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 30px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 1fr);
   gap: 6px;
   align-items: center;
 }
@@ -2842,7 +2893,7 @@ body.sidebar-collapsed .nav-section.active > .nav-section-header .nav-cat-icon s
 .nav-sub-flyout {
   display: none;
 }
-body.sidebar-collapsed .nav-sub-flyout {
+.sidebar.collapsed .nav-sub-flyout {
   display: block;
   position: absolute;
   left: calc(100% + 6px);
@@ -2866,7 +2917,7 @@ body.sidebar-collapsed .nav-sub-flyout {
   pointer-events: none;
 }
 /* Bridge to keep hover state when crossing the gap */
-body.sidebar-collapsed .nav-sub-flyout::before {
+.sidebar.collapsed .nav-sub-flyout::before {
   content: '';
   position: absolute;
   left: -10px;
@@ -2874,8 +2925,8 @@ body.sidebar-collapsed .nav-sub-flyout::before {
   bottom: 0;
   width: 12px;
 }
-body.sidebar-collapsed .nav-section:hover .nav-sub-flyout,
-body.sidebar-collapsed .nav-sub-flyout:hover {
+.sidebar.collapsed .nav-section:hover .nav-sub-flyout,
+.sidebar.collapsed .nav-sub-flyout:hover {
   opacity: 1;
   visibility: visible;
   transform: translateX(0) scale(1);
@@ -2913,7 +2964,7 @@ body.sidebar-collapsed .nav-sub-flyout:hover {
    ───────────────────────────────────────────────────────────── */
 .params-editor-header {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr 30px;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.1fr) minmax(0, 0.8fr) minmax(0, 1fr);
   gap: 6px;
   padding: 2px 2px 8px;
   font-size: 10.5px;
@@ -3709,3 +3760,114 @@ body.sidebar-collapsed .nav-sub-flyout:hover {
 }
 .ai-hit svg { flex-shrink: 0; color: var(--fg-3); }
 .ai-empty { font-size: 13px; color: var(--fg-3); text-align: center; padding: 16px; }
+
+/* ─────────────────────────────────────────────────────────────
+   Search palette — Ctrl+K when the sidebar is collapsed
+   ───────────────────────────────────────────────────────────── */
+.palette-overlay {
+  position: fixed; inset: 0;
+  background: oklch(0 0 0 / 0.55);
+  backdrop-filter: blur(6px);
+  display: flex; justify-content: center; align-items: flex-start;
+  padding: 12vh 16px 16px;
+  z-index: 1100;
+  animation: fadeIn 0.18s ease-out;
+}
+.palette {
+  width: min(640px, 94vw);
+  max-height: 72vh;
+  background: var(--bg-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-2);
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  animation: scaleIn 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.palette-search {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.palette-search-icon { color: var(--fg-3); flex-shrink: 0; }
+.palette-input {
+  flex: 1; min-width: 0;
+  background: transparent; border: none; outline: none;
+  color: var(--fg);
+  font-size: 15px;
+  font-family: inherit;
+}
+.palette-input::placeholder { color: var(--fg-3); }
+.palette-kbd {
+  font-size: 10px; letter-spacing: 0.03em;
+  color: var(--fg-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 2px 6px;
+  flex-shrink: 0;
+}
+.palette-results {
+  overflow-y: auto;
+  padding: 6px;
+}
+.palette-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: var(--fg-3);
+  font-size: 13px;
+}
+.palette-row {
+  display: block; width: 100%;
+  text-align: left;
+  background: transparent; border: none;
+  border-left: 2px solid transparent;
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  cursor: pointer;
+}
+.palette-row.active {
+  background: var(--bg-2);
+  border-left-color: var(--cat-color, var(--accent));
+}
+.palette-row-top {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+}
+.palette-row-name {
+  color: var(--fg); font-size: 13.5px; font-weight: 600;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.palette-row-phase {
+  flex-shrink: 0;
+  font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.04em;
+  color: var(--cat-color, var(--fg-3));
+}
+.palette-row-tpl {
+  display: block;
+  margin-top: 3px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--fg-3);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.palette-hint {
+  display: flex; gap: 16px; justify-content: center;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+  color: var(--fg-3); font-size: 11px;
+  flex-shrink: 0;
+}
+.palette-hint kbd {
+  font-family: inherit;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 4px;
+  margin-right: 3px;
+}
+
+
+/* Firefox scrollbar gutter fix — reserve the (space-taking) scrollbar so a card's
+   right border is never clipped under it. */
+.subsection-view,
+.panel-body,
+.chain-list-body { scrollbar-gutter: stable; }

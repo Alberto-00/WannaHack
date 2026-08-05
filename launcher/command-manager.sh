@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # ============================================================================
-#  WannaHack — Command Manager launcher  (Linux / macOS)
-#  toolmap-style: put a Desktop icon (from icon.png) that serves the app over
+#  WannaHack launcher  (Linux / macOS)
+#  toolmap-style: put a Desktop icon (from assets/) that serves the app over
 #  localhost and opens it in the browser, after every sanity check.
 #  Only the launcher goes on the Desktop; every other file stays in the repo.
 #
@@ -22,8 +22,10 @@
 set -euo pipefail
 
 # ---- identity --------------------------------------------------------------
-APP_NAME="WannaHack Command Manager"
-APP_ID="wannahack-command-manager"
+APP_NAME="WannaHack"
+APP_ID="wannahack"
+# Desktop entries written by older versions, cleaned up on install/uninstall.
+APP_NAME_LEGACY="WannaHack Command Manager"
 HTML_FILE="index.html"
 PORT_DEFAULT="${CM_PORT:-8787}"
 
@@ -124,7 +126,7 @@ browser_cmd() {
 }
 
 cmd_status() {
-  info "Command Manager — environment check"
+  info "WannaHack — environment check"
   ok "repo: $REPO_DIR"
   [[ -f "$REPO_DIR/$HTML_FILE" ]] && ok "found: $HTML_FILE" || die "missing $HTML_FILE"
   local f
@@ -144,7 +146,7 @@ cmd_status() {
   [[ -n "$bc" ]] && ok "browser opener: $bc" || warn "no browser opener found (you'll open the URL by hand)"
   local p; p="$(free_port)"
   ok "free port: $p"
-  [[ -f "$(icon_path)" ]] && ok "icon: $(icon_path)" || warn "icon.png missing at $(icon_path)"
+  [[ -f "$(icon_path)" ]] && ok "icon: $(icon_path)" || warn "icon missing at $(icon_path)"
   ok "desktop target: $(desktop_path)"
 }
 
@@ -185,7 +187,7 @@ cmd_launch() {
 
   local cl; cl="$(conda_label "$py")"
   printf "\n"; hr
-  printf "${CYAN}${BOLD}                  WANNAHACK — COMMAND MANAGER${NC}\n"
+  printf "${CYAN}${BOLD}                          WANNAHACK${NC}\n"
   hr
   printf "\n"
   if [[ -n "$cl" ]]; then
@@ -206,24 +208,25 @@ cmd_launch() {
 }
 
 # ---- install ---------------------------------------------------------------
-# Only the launcher (the "icon") goes onto the Desktop. icon.png stays in the
+# Only the launcher (the "icon") goes onto the Desktop. The logo stays in the
 # repo and is the single source for both the desktop icon and the program icon.
-#   <repo>/icon.png                              icon image
-#   ~/Desktop/WannaHack Command Manager.desktop  the clickable launcher
-icon_path() { echo "$REPO_DIR/img/icon.png"; }
+#   <repo>/assets/wannahack-icon.png  icon image
+#   ~/Desktop/WannaHack.desktop       the clickable launcher
+icon_path() { echo "$REPO_DIR/assets/wannahack-icon.png"; }
 desktop_dir() {
   local d=""
   have xdg-user-dir && d="$(xdg-user-dir DESKTOP 2>/dev/null)"
   [[ -n "$d" ]] || d="$HOME/Desktop"
   echo "$d"
 }
-desktop_path() { echo "$(desktop_dir)/$APP_NAME.desktop"; }
+desktop_path()        { echo "$(desktop_dir)/$APP_NAME.desktop"; }
+desktop_path_legacy() { echo "$(desktop_dir)/$APP_NAME_LEGACY.desktop"; }
 
 cmd_install() {
   info "Placing the launcher icon on the Desktop"
   local icon entry deskdir pybin exec_line
   icon="$(icon_path)"
-  [[ -f "$icon" ]] || warn "icon.png not found at $icon — the icon may show blank"
+  [[ -f "$icon" ]] || warn "logo not found at $icon, the icon may show blank"
   deskdir="$(desktop_dir)"; mkdir -p "$deskdir"
   entry="$(desktop_path)"
 
@@ -247,7 +250,7 @@ cmd_install() {
 Version=1.0
 Type=Application
 Name=$APP_NAME
-Comment=Serve the WannaHack Command Manager on localhost and open it
+Comment=Serve WannaHack on localhost and open it
 Exec=$exec_line
 Path=$REPO_DIR
 Icon=$icon
@@ -258,19 +261,24 @@ StartupNotify=true
 DESKTOP
   chmod +x "$entry"
   gio set "$entry" metadata::trusted true 2>/dev/null || true
+  # Drop the icon left behind by the old "WannaHack Command Manager" name.
+  if [[ -f "$(desktop_path_legacy)" ]]; then
+    rm -f "$(desktop_path_legacy)" && ok "removed old '$APP_NAME_LEGACY' icon"
+  fi
   ok "icon on desktop: $entry"
   ok "icon image:      $icon"
   info "Done. Double-click \"$APP_NAME\" on your Desktop."
 }
 
 cmd_uninstall() {
-  info "Removing the Desktop launcher (icon.png is kept)"
+  info "Removing the Desktop launcher (the logo in assets/ is kept)"
   rm -f "$(desktop_path)" 2>/dev/null && ok "removed desktop launcher" || true
+  rm -f "$(desktop_path_legacy)" 2>/dev/null || true
   info "Done."
 }
 
 cmd_help() {
-  info "WannaHack — Command Manager launcher (Linux/macOS)"
+  info "WannaHack launcher (Linux/macOS)"
   cat <<EOF
 
 Uso:
@@ -278,8 +286,8 @@ Uso:
 
 Comandi:
   launch       Avvia il server Python e apre il browser (default se ometti il comando)
-  install      Mette l'icona sul Desktop (usa icon.png)
-  uninstall    Rimuove l'icona dal Desktop (icon.png resta)
+  install      Mette l'icona sul Desktop (usa assets/wannahack-icon.png)
+  uninstall    Rimuove l'icona dal Desktop (il logo in assets/ resta)
   status       Controlla l'ambiente (file, python, porta) — non scrive nulla
   help         Mostra questo aiuto (anche -h, --help)
 

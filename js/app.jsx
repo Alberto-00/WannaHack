@@ -306,13 +306,13 @@ const Sidebar = ({ query, setQuery, searching,
                    categories, disciplineCfg,
                    expandedCats, toggleCatExpand, expandAll, collapseAll,
                    sidebarCollapsed, setSidebarCollapsed }) => (
-  <aside className="sidebar">
+  <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
     <div className="sidebar-header">
       <div className="logo-mark">
-        <img src="img/icon.png" alt="WannaHack" />
+        <img src="assets/wannahack-icon.png" alt="WannaHack" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div className="logo-title">Command Manager</div>
+        <div className="logo-title">WannaHack</div>
         <div className="logo-sub">{disciplineCfg?.blurb || 'Pentest Cheatsheet'}</div>
       </div>
       <button className="sidebar-toggle"
@@ -699,7 +699,7 @@ const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields }) => {
 /* ─────────────────────────────────────────────────────────────
    Command card
    ───────────────────────────────────────────────────────────── */
-const CommandCard = ({ cmd, selected, onSelect, isFav, onToggleFav,
+const CommandCard = React.memo(({ cmd, selected, onSelect, isFav, onToggleFav,
                        showProtocols, showTags, onEdit, onCopy, onReorder }) => {
   const cat = CAT_MAP[cmd.category];
   const [dragOver, setDragOver] = useState(null);   // 'top' | 'bottom'
@@ -710,8 +710,9 @@ const CommandCard = ({ cmd, selected, onSelect, isFav, onToggleFav,
   };
   return (
     <div className={`cmd-card ${selected ? 'selected' : ''} ${dragging ? 'dragging' : ''} ${dragOver ? 'drag-over-' + dragOver : ''}`}
+         data-cmd-id={cmd.id}
          style={{ '--cat-color': catColor(cat?.hue || 200) }}
-         onClick={onSelect}
+         onClick={() => onSelect(cmd.id)}
          draggable
          onDragStart={e => { e.dataTransfer.setData('text/plain', cmd.id); e.dataTransfer.effectAllowed = 'move'; setDragging(true); }}
          onDragOver={e => { if (onReorder) { e.preventDefault(); setDragOver(dropPos(e)); } }}
@@ -743,29 +744,32 @@ const CommandCard = ({ cmd, selected, onSelect, isFav, onToggleFav,
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         <button className={`cmd-card-star ${isFav ? 'active' : ''}`}
-                onClick={e => { e.stopPropagation(); onToggleFav(); }}
+                onClick={e => { e.stopPropagation(); onToggleFav(cmd.id); }}
                 title={isFav ? 'Rimuovi dai preferiti' : 'Aggiungi ai preferiti'}>
           <Icon name={isFav ? 'star-fill' : 'star'} size={14} />
         </button>
         <button className="cmd-card-copy"
-                onClick={e => { e.stopPropagation(); onCopy(); }}
+                onClick={e => { e.stopPropagation(); onCopy(cmd); }}
                 title="Copia comando (valori dal Target)">
           <Icon name="copy" size={13} />
         </button>
         <button className="cmd-card-edit"
-                onClick={e => { e.stopPropagation(); onEdit(); }}
+                onClick={e => { e.stopPropagation(); onEdit(cmd); }}
                 title="Modifica comando">
           <Icon name="edit" size={13} />
         </button>
       </div>
     </div>
   );
-};
+});
 
 /* ─────────────────────────────────────────────────────────────
    Library subsection view — grouped commands
    ───────────────────────────────────────────────────────────── */
-const LibraryContent = ({ commands, activeCat, activeSub, chains,
+// Memoized: its props are all referentially stable except when the library view truly
+// changes, so this no longer re-renders (253 cards) on a sidebar toggle or while typing
+// in the Target bar / editing a command — removing the reconciliation hitch on frame 1.
+const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
                           selectedId, setSelectedId, favs, toggleFav,
                           onEdit, onCopy, onReorder, setMode, setActiveChainId, query,
                           collapsedGroups, toggleGroup, expandAllGroups, collapseAllGroups }) => {
@@ -893,18 +897,18 @@ const LibraryContent = ({ commands, activeCat, activeSub, chains,
                 </div>
                 <div className="cmd-group-body">
                   <div>
-                    <div className="cmd-group-grid" key={query || '∅'}>
+                    <div className="cmd-group-grid">
                       {list.map(c => (
                         <CommandCard key={c.id}
                                      cmd={c}
                                      selected={c.id === selectedId}
-                                     onSelect={() => setSelectedId(c.id)}
+                                     onSelect={setSelectedId}
                                      isFav={favs.includes(c.id)}
-                                     onToggleFav={() => toggleFav(c.id)}
+                                     onToggleFav={toggleFav}
                                      showProtocols={true}
                                      showTags={false}
-                                     onEdit={() => onEdit(c)}
-                                     onCopy={() => onCopy(c)}
+                                     onEdit={onEdit}
+                                     onCopy={onCopy}
                                      onReorder={onReorder} />
                       ))}
                     </div>
@@ -917,7 +921,7 @@ const LibraryContent = ({ commands, activeCat, activeSub, chains,
       )}
     </div>
   );
-};
+});
 
 /* ─────────────────────────────────────────────────────────────
    Builder
@@ -1900,7 +1904,10 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
                     ctx
                     <span className="hint-mark" title="Collega a Target: ip/user/password/domain/hash">?</span>
                   </span>
-                  <span />
+                  <span title="Testo di suggerimento (grigio) mostrato nel campo del Builder quando è vuoto. Es. il percorso di una wordlist.">
+                    Placeholder
+                    <span className="hint-mark" title="Hint grigio nel Builder. Non finisce nel comando finché non lo digiti/incolli.">?</span>
+                  </span>
                 </div>
                 {form.params.map((p, i) => (
                   <div key={p.key} className="params-editor-row">
@@ -1909,7 +1916,8 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
                            onChange={e => updateParam(i, { label: e.target.value })} />
                     <input value={p.ctx || ''} placeholder="ip / user / password / domain / hash"
                            onChange={e => updateParam(i, { ctx: e.target.value || undefined })} />
-                    <span />
+                    <input value={p.placeholder || ''} placeholder=""
+                           onChange={e => updateParam(i, { placeholder: e.target.value })} />
                   </div>
                 ))}
               </div>
@@ -2152,7 +2160,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
         ? Object.entries(s.overrides).map(([k, v]) => ({ key: k, value: v }))
         : [],
     })) || [
-      { id: 's1', title: '', cmdRef: '', rationale: '', verify: '', overrides: [] },
+      { id: 's1', title: '', cmdRef: '', verify: '', overrides: [] },
     ],
   }));
 
@@ -2178,7 +2186,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
       ...f,
       steps: [
         ...f.steps,
-        { id: `s${f.steps.length + 1}`, title: '', cmdRef: '', rationale: '',
+        { id: `s${f.steps.length + 1}`, title: '', cmdRef: '',
           verify: '', overrides: [] },
       ],
     }));
@@ -2259,7 +2267,6 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
           ...(s.cmdRef ? { cmdRef: s.cmdRef } : {}),
           ...(inlineCmd ? { cmd: inlineCmd } : {}),
           ...(s.variant ? { variant: s.variant } : {}),
-          ...(s.rationale?.trim() ? { rationale: s.rationale.trim() } : {}),
           ...(s.verify?.trim() ? { verify: s.verify.trim() } : {}),
           ...(hasOverrides ? { overrides: overridesObj } : {}),
         };
@@ -2507,7 +2514,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
     cmdRef: step.cmdRef || '',
     cmd: step.cmd ? cloneCmd(step.cmd) : undefined, // inline copy, decoupled from library
     variant: step.variant || '',
-    rationale: step.rationale || '',
     verify: step.verify || '',
     overrides: step.overrides && typeof step.overrides === 'object'
       ? Object.entries(step.overrides).map(([k, v]) => ({ key: k, value: v })) : [],
@@ -2550,7 +2556,6 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
       ...(form.cmdRef ? { cmdRef: form.cmdRef } : {}),
       ...(cmd ? { cmd } : {}),
       ...(form.variant ? { variant: form.variant } : {}),
-      ...(form.rationale.trim() ? { rationale: form.rationale.trim() } : {}),
       ...(form.verify.trim() ? { verify: form.verify.trim() } : {}),
       ...(Object.keys(ov).length ? { overrides: ov } : {}),
     });
@@ -2663,15 +2668,15 @@ Schema esatto:
 {"commandIds": string[], "chainIds": string[], "explanation": string, "suggestedCommand": {"name": string, "template": string, "note": string} | null}
 
 Come scegliere:
-- Interpreta l'INTENTO, non solo le parole: gestisci sinonimi, termini IT/EN, nomi di tool e abbreviazioni (es. "scalare privilegi su windows" -> privesc Windows; "catturare hash di rete" -> responder/ntlm relay).
+- Interpreta l'INTENTO, non solo le parole: gestisci sinonimi, termini IT/EN, nomi di tool e abbreviazioni (es. "scalare privilegi su windows" -> privesc Windows; "prendere l'handshake" -> cattura WPA).
 - Valuta ogni voce su nome + fase + tag + descrizione. Preferisci i comandi piu' specifici e direttamente azionabili per l'obiettivo dell'utente; scarta i match solo vagamente correlati.
-- Resta nella disciplina "{{DISCIPLINE}}" e nelle fasi coerenti con la richiesta (recon, enum, vuln, exploit, post, privesc, lateral, AD...).
+- Resta nella disciplina "{{DISCIPLINE}}". Le uniche fasi disponibili sono: {{PHASES}}. Non proporre attivita' fuori da queste.
 
 Campi:
 - commandIds: id dei comandi piu' pertinenti, dal piu' rilevante, massimo {{MAX_RESULTS}}, senza duplicati.
 - chainIds: id dei playbook adatti allo scenario, massimo 3, per rilevanza.
 - explanation: SOLO se l'utente chiede esplicitamente di spiegare/capire (es. "spiega", "perche'", "come funziona") -> massimo 3 frasi, in italiano, concettuali, senza sintassi di comandi. Altrimenti "".
-- suggestedCommand: SOLO se l'utente chiede esplicitamente un comando assente o una variante con flag diversi E nessuna voce dell'indice lo copre gia'; altrimenti null. In esso: name = nome breve; template = una riga, con i segnaposto <ip> <user> <password> <domain> <hash> dove servono; note = una frase in italiano.
+- suggestedCommand: SOLO se l'utente chiede esplicitamente un comando assente o una variante con flag diversi E nessuna voce dell'indice lo copre gia'; altrimenti null. In esso: name = nome breve; template = una riga, con i segnaposto del Target di questa disciplina ({{TARGET_KEYS}}) dove servono, e nessun altro; note = una frase in italiano.
 
 Vincoli:
 - Usa SOLO id presenti nell'indice, copiati ESATTAMENTE (case-sensitive): non inventarli, non modificarli, non tradurli.
@@ -2731,7 +2736,9 @@ const aiDownload = (name, text, mime) => {
 const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
                          onOpenCommand, onOpenChain }) => {
   const lsGet = (k) => { const v = localStorage.getItem(k); return v === null ? null : v; };
-  const lastSaved = (() => { try { return JSON.parse(localStorage.getItem('cm-ai-last') || 'null'); } catch { return null; } })();
+  // The saved search is per discipline: ids from Pentest mean nothing in WiFi.
+  const lastKey = `cm-ai-last-${disciplineCfg?.id || 'pt'}`;
+  const lastSaved = (() => { try { return JSON.parse(localStorage.getItem(lastKey) || 'null'); } catch { return null; } })();
   const [apiKey, setApiKey]           = useState(() => lsGet('cm-openai-key') ?? '');
   const [model, setModel]             = useState(() => lsGet('cm-openai-model'));
   const [temperature, setTemperature] = useState(() => lsGet('cm-openai-temp'));
@@ -2843,7 +2850,7 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
   // The last search persists in localStorage; this wipes it for good.
   const clearLast = () => {
     setResult(null); setPrompt(''); setError(null);
-    try { localStorage.removeItem('cm-ai-last'); } catch {}
+    try { localStorage.removeItem(lastKey); } catch {}
     inputRef.current?.focus();
   };
 
@@ -2881,9 +2888,16 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
     const useWeb = webSearch === '1';
     const wantExplain = alwaysExplain === '1';
     const tpl = promptTpl || AI_DEFAULT_PROMPT;
+    // Discipline-specific bits: the Target placeholders a suggested command may
+    // use (<ip>… for Pentest, <iface>… for WiFi) and the phases really indexed.
+    const targetKeys = (disciplineCfg?.targetFields || []).map(f => `<${f.key}>`).join(' ')
+      || '<ip> <user> <password> <domain> <hash>';
+    const phaseNames = [...new Set(commands.map(c => CAT_MAP[c.category]?.name || c.category))].join(', ');
     // function replacements so $ in command templates is never treated specially
     let system = tpl
       .replace(/\{\{DISCIPLINE\}\}/g, () => disciplineCfg?.name || 'Pentest')
+      .replace(/\{\{TARGET_KEYS\}\}/g, () => targetKeys)
+      .replace(/\{\{PHASES\}\}/g, () => phaseNames || '(nessuna)')
       .replace(/\{\{MAX_RESULTS\}\}/g, () => String(nMax))
       .replace(/\{\{COMMAND_INDEX\}\}/g, () => cmdLines)
       .replace(/\{\{CHAIN_INDEX\}\}/g, () => chainLines || '(nessuno)');
@@ -2929,7 +2943,7 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
         suggestedCommand: parsed.suggestedCommand || null,
       };
       setResult(out);
-      try { localStorage.setItem('cm-ai-last', JSON.stringify({ q, result: out, ts: Date.now() })); } catch {}
+      try { localStorage.setItem(lastKey, JSON.stringify({ q, result: out, ts: Date.now() })); } catch {}
     } catch (err) {
       setError(err.message || String(err));
     } finally {
@@ -3051,7 +3065,7 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
               </div>
               <textarea className="ai-prompt-edit" rows={8} value={promptTpl || ''}
                         onChange={e => setPromptTpl(e.target.value)} />
-              <div className="ai-hint">{'Placeholder: {{DISCIPLINE}}, {{MAX_RESULTS}}, {{COMMAND_INDEX}}, {{CHAIN_INDEX}}.'}</div>
+              <div className="ai-hint">{'Placeholder: {{DISCIPLINE}}, {{PHASES}}, {{TARGET_KEYS}}, {{MAX_RESULTS}}, {{COMMAND_INDEX}}, {{CHAIN_INDEX}}. Vengono riempiti con i dati della disciplina attiva.'}</div>
             </div>
           )}
 
@@ -3111,6 +3125,7 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
                   <span className="ai-block-label"><Icon name="list" size={11} /> Comandi pertinenti</span>
                   {result.commandIds.map(id => {
                     const c = cmdById[id];
+                    if (!c) return null;   // id da un'altra disciplina o comando cancellato
                     return (
                       <button key={id} className="ai-hit" onClick={() => onOpenCommand(id)}>
                         <div className="ai-hit-main">
@@ -3132,6 +3147,7 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
                   <span className="ai-block-label"><Icon name="link" size={11} /> Playbook suggeriti</span>
                   {result.chainIds.map(id => {
                     const c = chainById[id];
+                    if (!c) return null;
                     return (
                       <button key={id} className="ai-hit" onClick={() => onOpenChain(id)}>
                         <div className="ai-hit-main">
@@ -3154,6 +3170,87 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
           </div>
           )}
         </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─────────────────────────────────────────────────────────────
+   Search palette — centered command finder (Ctrl+K, sidebar collapsed)
+   ───────────────────────────────────────────────────────────── */
+const SearchPalette = ({ query, setQuery, results, categories, onPick, onClose }) => {
+  const inputRef = useRef(null);
+  const listRef  = useRef(null);
+  const [sel, setSel] = useState(0);
+
+  const catMap = useMemo(() => {
+    const m = {};
+    (categories || []).forEach(c => { m[c.id] = c; });
+    return m;
+  }, [categories]);
+
+  useEffect(() => { inputRef.current?.focus(); }, []);
+  // reset highlight to the top whenever the result set changes
+  useEffect(() => { setSel(0); }, [query]);
+  // keep the highlighted row in view
+  useEffect(() => {
+    listRef.current?.querySelector('.palette-row.active')?.scrollIntoView({ block: 'nearest' });
+  }, [sel, results]);
+
+  const onKeyDown = (e) => {
+    if (e.key === 'ArrowDown')      { e.preventDefault(); setSel(i => Math.min(i + 1, results.length - 1)); }
+    else if (e.key === 'ArrowUp')   { e.preventDefault(); setSel(i => Math.max(i - 1, 0)); }
+    else if (e.key === 'Enter')     { e.preventDefault(); const c = results[sel]; if (c) onPick(c.id); }
+    // Escape is handled by the global keydown listener (clear + close)
+  };
+
+  const q = query.trim();
+  return (
+    <div className="palette-overlay" onMouseDown={onClose}>
+      <div className="palette" onMouseDown={e => e.stopPropagation()}>
+        <div className="palette-search">
+          <Icon name="search" size={16} className="palette-search-icon" />
+          <input
+            ref={inputRef}
+            className="palette-input"
+            placeholder="Cerca comandi in tutte le fasi…"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={onKeyDown}
+          />
+          <span className="palette-kbd">Esc</span>
+        </div>
+        <div className="palette-results" ref={listRef}>
+          {q === '' ? (
+            <div className="palette-empty">Scrivi per cercare fra tutti i comandi.</div>
+          ) : results.length === 0 ? (
+            <div className="palette-empty">Nessun comando per «{q}».</div>
+          ) : (
+            results.map((c, i) => {
+              const cat = catMap[c.category];
+              return (
+                <button key={c.id}
+                        className={`palette-row ${i === sel ? 'active' : ''}`}
+                        style={{ '--cat-color': cat ? catColor(cat.hue) : 'var(--accent)' }}
+                        onMouseEnter={() => setSel(i)}
+                        onClick={() => onPick(c.id)}>
+                  <div className="palette-row-top">
+                    <span className="palette-row-name">{c.name}</span>
+                    <span className="palette-row-phase">{cat ? cat.name : c.category}</span>
+                  </div>
+                  <code className="palette-row-tpl">{c.template}</code>
+                </button>
+              );
+            })
+          )}
+        </div>
+        {results.length > 0 && (
+          <div className="palette-hint">
+            <span><kbd>↑</kbd><kbd>↓</kbd> naviga</span>
+            <span><kbd>↵</kbd> apri</span>
+            <span><kbd>Esc</kbd> chiudi</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -3205,6 +3302,33 @@ function App() {
   const collapseAll = () => setExpandedCats(new Set());
 
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // FLIP slide for open/close: the grid width snaps to its final value (one reflow), then
+  // .main is animated into place with a GPU-composited transform. The command list paints
+  // once and the compositor translates the whole layer, so the slide is 60fps even in
+  // "Tutte le fasi" (~250 cards) — no per-frame reflow/repaint of the list.
+  const mainRef = useRef(null);
+  const sidebarFirst = useRef(false);
+  React.useLayoutEffect(() => {
+    if (!sidebarFirst.current) { sidebarFirst.current = true; return; }
+    const main = mainRef.current;
+    if (!main) return;
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const dx = sidebarCollapsed ? 208 : -208;   // 272 - 64 = px the rail width changed by
+    // Start from the OLD position (set before paint so there's no one-frame flash of the
+    // snapped layout), then release to 0 on the next frame.
+    // Reliable FLIP: set the start offset, FORCE A REFLOW to commit it (a single rAF can
+    // fire before the browser paints the start state, coalescing the transition away — that
+    // was the "animation disappeared" bug), then release to 0 with the transition on. Pure
+    // composited transform, so 60fps regardless of how many cards are mounted.
+    main.style.transition = 'none';
+    main.style.transform = `translateX(${dx}px)`;
+    void main.offsetWidth;
+    main.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+    main.style.transform = 'translateX(0)';
+    const clear = () => { main.style.transition = ''; main.style.transform = ''; };
+    const t = setTimeout(clear, 340);
+    return () => { clearTimeout(t); };
+  }, [sidebarCollapsed]);
 
   // Panel layout: 'list' | 'split' | 'detail' (persisted per mode)
   const [layoutByMode, setLayoutByMode] = useState(() => {
@@ -3244,15 +3368,23 @@ function App() {
   });
   const [showFavs, setShowFavs] = useState(false);
   useEffect(() => { localStorage.setItem('cm-favs', JSON.stringify(favs)); }, [favs]);
-  const toggleFav = (id) => setFavs(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]);
+  const toggleFav = useCallback(
+    (id) => setFavs(f => f.includes(id) ? f.filter(x => x !== id) : [...f, id]),
+    []
+  );
 
-  // Copy a command straight from its card — resolve <placeholders> from the Target context
-  const copyCommand = (cmd) => {
+  // Latest Target context, kept in a ref so copyCommand stays a STABLE callback
+  // (required for React.memo on CommandCard) without ever copying stale values.
+  const ctxRef = useRef(null);
+
+  // Copy a command straight from its card — resolve <placeholders> from the latest Target context
+  const copyCommand = useCallback((cmd) => {
+    const cur = ctxRef.current || {};
     const values = {};
-    (cmd.params || []).forEach(p => { values[p.key] = (p.ctx ? ctx[p.ctx] : '') || ''; });
+    (cmd.params || []).forEach(p => { values[p.key] = (p.ctx ? cur[p.ctx] : '') || ''; });
     const str = renderTemplateString(cmd.template, values);
     if (navigator.clipboard) navigator.clipboard.writeText(str).then(() => showToast('Comando copiato'));
-  };
+  }, []);
 
   // Custom commands (added/edited)
   const [customCmds, setCustomCmds] = useState(() => {
@@ -3293,6 +3425,24 @@ function App() {
     if (selectedId) localStorage.setItem('cm-selected', selectedId);
   }, [selectedId]);
 
+  // Picking a palette result scrolls its card into view and flashes it — so the
+  // click clearly "lands" on that card even when it was already visible.
+  const [scrollToId, setScrollToId] = useState(null);
+  useEffect(() => {
+    if (!scrollToId) return;
+    const id = scrollToId;
+    setScrollToId(null);
+    requestAnimationFrame(() => {
+      const el = document.querySelector(`[data-cmd-id="${id}"]`);
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.remove('cmd-card-flash');
+      void el.offsetWidth;                 // reflow so the animation restarts on re-pick
+      el.classList.add('cmd-card-flash');
+      setTimeout(() => el.classList.remove('cmd-card-flash'), 1300);
+    });
+  }, [scrollToId]);
+
   // Active chain
   const [activeChainId, setActiveChainId] = useState(() => localStorage.getItem('cm-chain') || CHAINS[0].id);
   useEffect(() => { localStorage.setItem('cm-chain', activeChainId); }, [activeChainId]);
@@ -3309,6 +3459,7 @@ function App() {
     catch { return { ip: '10.10.10.11', user: '', password: '', domain: '', hash: '' }; }
   });
   useEffect(() => { localStorage.setItem('cm-ctx', JSON.stringify(ctx)); }, [ctx]);
+  ctxRef.current = ctx;   // keep the ref fresh so the stable copyCommand reads live values
   // Target context bar — collapsed by default; remembers user's choice
   const [ctxCollapsed, setCtxCollapsed] = useState(() => {
     const v = localStorage.getItem('cm-ctx-collapsed');
@@ -3333,6 +3484,7 @@ function App() {
   const [showAddChainModal, setShowAddChainModal] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const [showAI, setShowAI] = useState(false);
 
   // Dialog popup
@@ -3388,6 +3540,8 @@ function App() {
     });
     return applyOrder(merged.filter(c => !hidden.has(c.id)), cmdOrder);
   }, [customCmds, hiddenCmds, cmdOrder]);
+  const allCommandsRef = useRef(allCommands);
+  allCommandsRef.current = allCommands;   // fresh list for the stable reorderCommand
 
   const commandsMap = useMemo(() => CMD_MAP_BUILD(allCommands), [allCommands]);
 
@@ -3453,6 +3607,22 @@ function App() {
     return out;
   }, [allCommands, query, platform, access, protocol, showFavs, favs, disciplineCats, disciplineCatIds]);
 
+  // === Palette results — a GLOBAL command finder (ignores the active phase and
+  //     favourites, keeps the platform/access/protocol context filters). ===
+  const paletteResults = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return [];
+    return allCommands.filter(c => {
+      if (!disciplineCatIds.has(c.category)) return false;
+      if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
+      if (access !== 'all' && !c.requires.includes(access)) return false;
+      if (protocol !== 'all' && !c.protocols.includes(protocol)) return false;
+      const hay = [c.name, c.template, c.description, ...(c.tags || []),
+                   c.subcategory, c.group].join(' ').toLowerCase();
+      return hay.includes(q);
+    }).slice(0, 60);
+  }, [allCommands, query, platform, access, protocol, disciplineCatIds]);
+
   // Categories that should be visible in sidebar (have at least one matching command)
   const visibleCats = useMemo(() => {
     const filtersActive = platform !== 'all' || access !== 'all' || protocol !== 'all' || showFavs;
@@ -3509,12 +3679,12 @@ function App() {
     }
   }, [activeCat, activeSub, mode]);
 
-  // === Body class management ===
+  // === Body class management (static). The sidebar-collapsed state now lives as a
+  //     class on the .sidebar element, not <body>, so toggling it invalidates only the
+  //     sidebar subtree instead of forcing a whole-document style recalc. ===
   useEffect(() => {
-    document.body.className =
-      'accent-mint bg-cool density-comfortable' +
-      (sidebarCollapsed ? ' sidebar-collapsed' : '');
-  }, [sidebarCollapsed]);
+    document.body.className = 'accent-mint bg-cool density-comfortable';
+  }, []);
 
   // === Keyboard shortcuts (Windows-style) ===
   useEffect(() => {
@@ -3524,10 +3694,11 @@ function App() {
       return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
     };
     const onKey = (e) => {
-      // Ctrl+K — always works (focus search)
+      // Ctrl+K — sidebar open: focus its search; sidebar collapsed: open the palette
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
-        document.querySelector('.search-input')?.focus();
+        if (sidebarCollapsed) setPaletteOpen(true);
+        else document.querySelector('.search-input')?.focus();
         return;
       }
       // Ctrl+B — toggle sidebar (always)
@@ -3536,14 +3707,19 @@ function App() {
         setSidebarCollapsed(c => !c);
         return;
       }
-      // Escape — close modals/popups (always)
+      // Escape — palette first (clear + close, one press), then modals, then wipe the search
       if (e.key === 'Escape') {
+        if (paletteOpen) { setPaletteOpen(false); setQuery(''); return; }
+        const modalWasOpen = editingCmd || showAddModal || editingChain || editingStep ||
+                             showAddChainModal || showShortcutsModal || addMenuOpen || dialogState;
         setEditingCmd(null);
         setShowAddModal(false);
         setEditingChain(null);
         setShowAddChainModal(false);
         setShowShortcutsModal(false);
         setAddMenuOpen(false);
+        if (modalWasOpen) return;
+        if (query.trim()) setQuery('');   // nothing else open → cancel the active search
         return;
       }
       // Other shortcuts: skip while typing or when a modal/popup is open
@@ -3686,7 +3862,10 @@ function App() {
     order.splice(before ? to : to + 1, 0, draggedId);
     setOrder(order);
   };
-  const reorderCommand = reorder(allCommands, setCmdOrder);
+  const reorderCommand = useCallback(
+    (draggedId, targetId, before) => reorder(allCommandsRef.current, setCmdOrder)(draggedId, targetId, before),
+    []
+  );
   const reorderChain = reorder(allChains, setChainOrder);
 
   // === Export / Import (no backend) ===
@@ -3710,7 +3889,7 @@ function App() {
       cmdOrder, chainOrder, hiddenCmds, hiddenChains,
     };
     const stamp = new Date().toISOString().slice(0, 10);
-    downloadFile(`command-manager-${stamp}.json`, JSON.stringify(data, null, 2), 'application/json');
+    downloadFile(`wannahack-${stamp}.json`, JSON.stringify(data, null, 2), 'application/json');
     showToast('Esportato come file JSON');
   };
 
@@ -3736,7 +3915,7 @@ function App() {
         `} else {\n` +
         `  window.${kind} = ${varName}.slice();\n` +
         `}\n`;
-    const js = `/* ${fname} — generato da Command Manager il ${new Date().toISOString()} */\n` +
+    const js = `/* ${fname} — generato da WannaHack il ${new Date().toISOString()} */\n` +
       decl + footer;
     return { fname, js };
   };
@@ -3815,12 +3994,37 @@ function App() {
     showToast('Playbook aperto');
   };
 
+  // Palette → keep the query ACTIVE so the main view stays in "global results" mode
+  // (all matching cards across phases + sidebar highlighting, exactly like a normal
+  // open-sidebar search). Just highlight and scroll to the chosen card — never clear
+  // the search or restrict to a single phase.
+  const palettePick = (id) => {
+    setMode('library');
+    // Force the main view back to GLOBAL results. A prior sidebar-phase click can
+    // leave activeCat pinned to one phase while the query is still active; the
+    // palette is global, so the picked card may live in another phase and wouldn't
+    // be rendered (→ no scroll target). 'all' guarantees the card is on screen.
+    setActive('all', null);
+    setSelectedId(id);
+    setPaletteOpen(false);
+    setScrollToId(id);       // effect scrolls + flashes the card after render
+  };
+
   // Phase color cascade: derive --phase-color from active phase (fallback: accent)
   const activePhase = activeCat !== 'all' ? CAT_MAP[activeCat] : null;
-  const appStyle = activePhase ? {
-    '--phase-color': catColor(activePhase.hue),
-    '--phase-color-soft': catColorSoft(activePhase.hue),
-  } : undefined;
+  // Sidebar width + overflow are driven from here (inline on .app) rather than a body
+  // class: collapsing now only re-lays-out .app (~7ms) with no document-wide recalc.
+  // Only the grid width is toggled — .app keeps its constant `overflow: hidden` (from
+  // CSS). Toggling overflow on .app was a ~50ms hit because it re-homed every
+  // content-visibility card's viewport intersection; the collapsed flyouts escape the
+  // 64px rail via `.sidebar.collapsed { overflow: visible }` instead.
+  const appStyle = {
+    gridTemplateColumns: sidebarCollapsed ? '64px 1fr' : '272px 1fr',
+    ...(activePhase ? {
+      '--phase-color': catColor(activePhase.hue),
+      '--phase-color-soft': catColorSoft(activePhase.hue),
+    } : {}),
+  };
 
   return (
     <>
@@ -3839,7 +4043,7 @@ function App() {
           expandAll={expandAll} collapseAll={collapseAll}
           sidebarCollapsed={sidebarCollapsed} setSidebarCollapsed={setSidebarCollapsed}
         />
-        <main className="main">
+        <main className="main" ref={mainRef}>
           <TopBar mode={mode} setMode={setMode}
                   activeCat={activeCat} activeSub={activeSub}
                   addMenuOpen={addMenuOpen} setAddMenuOpen={setAddMenuOpen}
@@ -3882,7 +4086,7 @@ function App() {
                   chains={allChains}
                   selectedId={selectedId} setSelectedId={setSelectedId}
                   favs={favs} toggleFav={toggleFav}
-                  onEdit={(c) => setEditingCmd(c)}
+                  onEdit={setEditingCmd}
                   onCopy={copyCommand}
                   onReorder={reorderCommand}
                   setMode={setMode}
@@ -3965,6 +4169,17 @@ function App() {
           disciplineCfg={disciplineCfg}
           onOpenCommand={aiOpenCommand}
           onOpenChain={aiOpenChain}
+        />
+      )}
+
+      {paletteOpen && (
+        <SearchPalette
+          query={query}
+          setQuery={setQuery}
+          results={paletteResults}
+          categories={disciplineCats}
+          onPick={palettePick}
+          onClose={() => setPaletteOpen(false)}
         />
       )}
     </>

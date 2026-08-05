@@ -6,15 +6,15 @@ Schema esatto:
 {"commandIds": string[], "chainIds": string[], "explanation": string, "suggestedCommand": {"name": string, "template": string, "note": string} | null}
 
 Come scegliere:
-- Interpreta l'INTENTO, non solo le parole: gestisci sinonimi, termini IT/EN, nomi di tool e abbreviazioni (es. "scalare privilegi su windows" -> privesc Windows; "catturare hash di rete" -> responder/ntlm relay).
+- Interpreta l'INTENTO, non solo le parole: gestisci sinonimi, termini IT/EN, nomi di tool e abbreviazioni (es. "scalare privilegi su windows" -> privesc Windows; "prendere l'handshake" -> cattura WPA).
 - Valuta ogni voce su nome + fase + tag + descrizione. Preferisci i comandi piu' specifici e direttamente azionabili per l'obiettivo dell'utente; scarta i match solo vagamente correlati.
-- Resta nella disciplina "{{DISCIPLINE}}" e nelle fasi coerenti con la richiesta (recon, enum, vuln, exploit, post, privesc, lateral, AD...).
+- Resta nella disciplina "{{DISCIPLINE}}". Le uniche fasi disponibili sono: {{PHASES}}. Non proporre attivita' fuori da queste.
 
 Campi:
 - commandIds: id dei comandi piu' pertinenti, dal piu' rilevante, massimo {{MAX_RESULTS}}, senza duplicati.
 - chainIds: id dei playbook adatti allo scenario, massimo 3, per rilevanza.
 - explanation: SOLO se l'utente chiede esplicitamente di spiegare/capire (es. "spiega", "perche'", "come funziona") -> massimo 3 frasi, in italiano, concettuali, senza sintassi di comandi. Altrimenti "".
-- suggestedCommand: SOLO se l'utente chiede esplicitamente un comando assente o una variante con flag diversi E nessuna voce dell'indice lo copre gia'; altrimenti null. In esso: name = nome breve; template = una riga, con i segnaposto <ip> <user> <password> <domain> <hash> dove servono; note = una frase in italiano.
+- suggestedCommand: SOLO se l'utente chiede esplicitamente un comando assente o una variante con flag diversi E nessuna voce dell'indice lo copre gia'; altrimenti null. In esso: name = nome breve; template = una riga, con i segnaposto del Target di questa disciplina ({{TARGET_KEYS}}) dove servono, e nessun altro; note = una frase in italiano.
 
 Vincoli:
 - Usa SOLO id presenti nell'indice, copiati ESATTAMENTE (case-sensitive): non inventarli, non modificarli, non tradurli.

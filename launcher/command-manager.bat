@@ -1,12 +1,12 @@
 @echo off
 setlocal EnableDelayedExpansion
-title WannaHack - Command Manager
+title WannaHack
 
 REM ====================================================================
-REM  WannaHack - Command Manager launcher (Windows / cmd)
+REM  WannaHack launcher (Windows / cmd)
 REM  Un solo file, come command-manager.sh su Linux. Comandi:
 REM    (nessuno)/launch  avvia il server Python e apre il browser
-REM    install           mette l'icona sul Desktop (icon.ico)
+REM    install           mette l'icona sul Desktop (assets\wannahack.ico)
 REM    uninstall         rimuove l'icona dal Desktop
 REM    status            controlla ambiente (python, porta, icona)
 REM    help / -h / --help
@@ -28,7 +28,9 @@ set "GRAY=!ESC![90m"
 set "RESET=!ESC![0m"
 set "BOLD=!ESC![1m"
 
-set "APP=WannaHack Command Manager"
+set "APP=WannaHack"
+REM shortcut scritto dalle versioni precedenti, ripulito da install/uninstall
+set "APP_LEGACY=WannaHack Command Manager"
 set "SCRIPT_DIR=%~dp0"
 pushd "%SCRIPT_DIR%.."
 set "PROJECT_DIR=%CD%"
@@ -58,7 +60,7 @@ if not exist "index.html" (
 )
 echo.
 echo !CYAN!==========================================================!RESET!
-echo !CYAN!!BOLD!                  WANNAHACK - COMMAND MANAGER!RESET!
+echo !CYAN!!BOLD!                         WANNAHACK!RESET!
 echo !CYAN!==========================================================!RESET!
 echo.
 
@@ -115,7 +117,7 @@ REM ====================================================================
 :install
 cls
 set "TARGET=%SCRIPT_DIR%command-manager.bat"
-set "ICON=%PROJECT_DIR%\img\icon.ico"
+set "ICON=%PROJECT_DIR%\assets\wannahack.ico"
 for /f "tokens=2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Shell Folders" /v Desktop 2^>nul') do set "DESKTOP_PATH=%%b"
 if not defined DESKTOP_PATH set "DESKTOP_PATH=%USERPROFILE%\Desktop"
 set "SHORTCUT=%DESKTOP_PATH%\%APP%.lnk"
@@ -125,7 +127,7 @@ echo   !CYAN!!BOLD!WannaHack - icona sul Desktop!RESET!
 echo   !GRAY!Icona:   %ICON%!RESET!
 echo   !GRAY!Desktop: %DESKTOP_PATH%!RESET!
 echo.
-if not exist "%ICON%" echo   !YELLOW![INFO]!RESET! icon.ico non trovato: verra' usata l'icona di default.
+if not exist "%ICON%" echo   !YELLOW![INFO]!RESET! wannahack.ico non trovato: verra' usata l'icona di default.
 
 REM crea lo shortcut .lnk via VBScript (niente PowerShell)
 set "VBS=%TEMP%\wh_shortcut.vbs"
@@ -135,10 +137,13 @@ set "VBS=%TEMP%\wh_shortcut.vbs"
 >> "%VBS%" echo lnk.Arguments = "/c ""%TARGET%"""
 >> "%VBS%" echo lnk.WorkingDirectory = "%PROJECT_DIR%"
 >> "%VBS%" echo lnk.IconLocation = "%ICON%"
->> "%VBS%" echo lnk.Description = "Avvia WannaHack Command Manager"
+>> "%VBS%" echo lnk.Description = "Avvia WannaHack"
 >> "%VBS%" echo lnk.Save
 cscript //nologo "%VBS%" >nul 2>&1
 del "%VBS%" >nul 2>&1
+
+REM rimuove l'icona lasciata dal vecchio nome "WannaHack Command Manager"
+if exist "%DESKTOP_PATH%\%APP_LEGACY%.lnk" del "%DESKTOP_PATH%\%APP_LEGACY%.lnk" >nul 2>&1
 
 if exist "%SHORTCUT%" (
     echo   !GREEN![OK]!RESET! !WHITE!Icona creata sul Desktop:!RESET!
@@ -157,9 +162,10 @@ for /f "tokens=2*" %%a in ('reg query "HKCU\Software\Microsoft\Windows\CurrentVe
 if not defined DESKTOP_PATH set "DESKTOP_PATH=%USERPROFILE%\Desktop"
 set "SHORTCUT=%DESKTOP_PATH%\%APP%.lnk"
 echo.
+if exist "%DESKTOP_PATH%\%APP_LEGACY%.lnk" del "%DESKTOP_PATH%\%APP_LEGACY%.lnk" >nul 2>&1
 if exist "%SHORTCUT%" (
     del "%SHORTCUT%"
-    echo   !GREEN![OK]!RESET! !WHITE!Icona rimossa dal Desktop ^(icon.png/icon.ico restano^).!RESET!
+    echo   !GREEN![OK]!RESET! !WHITE!Icona rimossa dal Desktop ^(i loghi in assets\ restano^).!RESET!
 ) else (
     echo   !YELLOW![INFO]!RESET! !WHITE!Nessuna icona da rimuovere.!RESET!
 )
@@ -183,8 +189,8 @@ if not "!PYTHON_CMD!"=="" (
 ) else (
     echo   !RED![X]!RESET! Python non trovato ^(installa Python 3 / conda^)
 )
-if exist "%PROJECT_DIR%\img\icon.ico" ( echo   !GREEN![OK]!RESET! icon.ico ) else ( echo   !YELLOW![!]!RESET! icon.ico mancante )
-if exist "%PROJECT_DIR%\img\icon.png" ( echo   !GREEN![OK]!RESET! icon.png ) else ( echo   !YELLOW![!]!RESET! icon.png mancante )
+if exist "%PROJECT_DIR%\assets\wannahack.ico" ( echo   !GREEN![OK]!RESET! wannahack.ico ) else ( echo   !YELLOW![!]!RESET! wannahack.ico mancante )
+if exist "%PROJECT_DIR%\assets\wannahack-icon.png" ( echo   !GREEN![OK]!RESET! wannahack-icon.png ) else ( echo   !YELLOW![!]!RESET! wannahack-icon.png mancante )
 call :find_port
 echo   !GREEN![OK]!RESET! porta libera: !PORT!
 echo. & pause & exit /b 0
@@ -193,13 +199,13 @@ echo. & pause & exit /b 0
 REM ====================================================================
 :help
 echo.
-echo   !CYAN!!BOLD!WannaHack - Command Manager ^(Windows^)!RESET!
+echo   !CYAN!!BOLD!WannaHack ^(Windows^)!RESET!
 echo.
 echo   !WHITE!Uso:!RESET! command-manager.bat [comando]
 echo.
 echo   !WHITE!Comandi:!RESET!
 echo     launch      Avvia il server e apre il browser ^(default: doppio click^)
-echo     install     Mette l'icona sul Desktop ^(usa icon.ico^)
+echo     install     Mette l'icona sul Desktop ^(usa assets\wannahack.ico^)
 echo     uninstall   Rimuove l'icona dal Desktop
 echo     status      Controlla ambiente ^(python, porta, icone^)
 echo     help        Questo aiuto ^(anche -h, --help^)

