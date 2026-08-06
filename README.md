@@ -2,6 +2,20 @@
   <img src="assets/wannahack-lockup-transparent.png" alt="WannaHack" width="620">
 </p>
 
+<p align="center">
+  Command reference and attack playbooks for authorized penetration testing and wireless assessments.<br>
+  Every command comes out already filled in with your target, ready to copy. Runs locally, no build step, no backend.
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License">
+  <img src="https://img.shields.io/badge/commands-364-4fd1ab" alt="364 commands">
+  <img src="https://img.shields.io/badge/playbooks-53-4fd1ab" alt="53 playbooks">
+  <img src="https://img.shields.io/badge/disciplines-Pentest%20%7C%20WiFi-4fd1ab" alt="Pentest and WiFi disciplines">
+  <img src="https://img.shields.io/badge/MITRE%20ATT%26CK-mapped-c77dff" alt="MITRE ATT&CK mapped">
+  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey" alt="Linux, macOS and Windows">
+</p>
+
 ## Contents
 
 1. [What it is](#what-it-is)
@@ -29,6 +43,14 @@ Both sit on a shared **Target** context. You type the IP, domain and user once, 
 The app is static: plain HTML, CSS and one React file that Babel compiles in the browser. No build step and no backend, just a local HTTP server on the folder. React, Babel and the fonts come from a CDN, so the first load needs internet. Everything you do (favourites, custom entries, playbook progress, Target) is saved in the browser localStorage.
 
 ## Quick start
+
+### Prerequisites
+
+- **Python 3**, it runs the local server (`launcher/serve.py`). Conda installs are picked up first, a system `python3` works too
+- A modern browser
+- Internet on the first load, React, Babel and the fonts come from a CDN
+
+### Launchers
 
 `launcher/` has two scripts that put an icon on the Desktop and start the app after checking the environment.
 
