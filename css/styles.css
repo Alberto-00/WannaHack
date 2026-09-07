@@ -736,9 +736,14 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .builder-refs { animation: fadeInUp 0.3s ease both; }
 .builder-refs .builder-section-title { color: var(--phase-color); }
-.builder-refs-list { display: flex; flex-direction: column; gap: 6px; }
+.builder-refs-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 6px;
+}
 .builder-ref {
   display: flex; align-items: center; gap: 9px;
+  min-width: 0;
   padding: 9px 12px;
   border: 1px solid var(--border);
   border-left: 2px solid var(--phase-color);
@@ -756,7 +761,7 @@ input, select, textarea { font: inherit; color: inherit; }
   transform: translateX(2px);
 }
 .builder-ref svg { color: var(--phase-color); flex-shrink: 0; }
-.builder-ref-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.builder-ref-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 
 .builder-head {
   display: flex; align-items: flex-start; gap: 12px;
@@ -2461,6 +2466,87 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   display: grid; grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
+
+/* ── Command editor: sezione "Filtri", chip, bottone Suggerisci ── */
+.form-section {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  padding: 12px 14px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.form-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.form-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-2);
+}
+.btn-suggest {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.12s;
+}
+.btn-suggest:hover:not(:disabled) { background: var(--accent); color: var(--accent-fg); }
+.btn-suggest:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-suggest.done { background: var(--accent); color: var(--accent-fg); border-color: transparent; }
+
+/* Variante sottile (solo testo) per azioni distruttive secondarie, es. "Elimina"
+   nei footer accanto a Salva. Il .btn-danger pieno resta per il confirm dei dialog. */
+.btn-danger-ghost { color: var(--rose); }
+.btn-danger-ghost:hover { background: var(--rose-soft); border-color: var(--rose); color: var(--rose); }
+
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.chip-row-label { font-size: 11px; color: var(--fg-2); }
+.chip {
+  background: var(--bg-2);
+  border: 1px solid var(--border);
+  color: var(--fg-1);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.chip:hover { border-color: var(--border-strong); color: var(--fg); }
+.chip.on {
+  background: var(--accent);
+  color: var(--accent-fg);
+  border-color: transparent;
+  font-weight: 600;
+}
+.chip.mono { font-family: var(--font-mono); font-size: 11px; padding: 2px 8px; border-radius: var(--radius-sm); }
+
+.form-hint { font-weight: 400; font-size: 11px; color: var(--fg-3); }
+
+.filter-lint {
+  background: var(--amber-soft);
+  border: 1px solid var(--amber);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+}
+.filter-lint strong { font-size: 12px; color: var(--amber); }
+.filter-lint ul { margin: 6px 0 0; padding-left: 18px; font-size: 12px; line-height: 1.5; color: var(--fg-1); }
+
 .modal-footer {
   padding: 14px 22px;
   border-top: 1px solid var(--border);
@@ -3098,6 +3184,16 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   gap: 9px;
   padding-left: 32px;
 }
+/* Apertura/chiusura fluida degli step nell'editor playbook: il wrapper anima
+   grid-template-rows 0fr→1fr, il corpo interno resta clippato (overflow hidden).
+   Anima sia l'apertura sia la chiusura, senza misurare l'altezza in JS. */
+.step-editor-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.step-editor-collapse.open { grid-template-rows: 1fr; }
+.step-editor-collapse > .step-editor-body { overflow: hidden; min-height: 0; }
 .step-editor-label {
   font-size: 10px;
   font-weight: 700;
@@ -3871,3 +3967,11 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
 .subsection-view,
 .panel-body,
 .chain-list-body { scrollbar-gutter: stable; }
+
+/* Token: placeholder → valore cambia solo classe, quindi transizione (non keyframe) */
+.tok-placeholder, .tok-value {
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+}
+.capture input {
+  transition: border-color 0.18s ease, background 0.18s ease;
+}

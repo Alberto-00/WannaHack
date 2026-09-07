@@ -82,6 +82,156 @@ const DISCS = window.DISCIPLINES || [
 ];
 const DISC_MAP = Object.fromEntries(DISCS.map(d => [d.id, d]));
 const catsForDiscipline = (id) => CATEGORIES.filter(c => (c.domain || 'pt') === id);
+
+/* ─────────────────────────────────────────────────────────────
+   Suggerimento automatico dei filtri dal template.
+   Legge template + varianti e propone platform / requires / protocols.
+   È un SUGGERIMENTO: i campi restano editabili a mano. I casi ambigui
+   (brute-force dove la password è il bersaglio; ticket/cert generati
+   dentro la card e non posseduti) usano il default più comune e vanno
+   riletti dall'operatore. lintFilters segnala le incoerenze al salvataggio.
+   ───────────────────────────────────────────────────────────── */
+const _joinTmpl = (template, variants) =>
+  [template, ...(variants || []).map(v => v.template)].filter(Boolean).join('\n');
+const _disciplineOfCat = (catId) => {
+  const c = CATEGORIES.find(x => x.id === catId);
+  return (c && c.domain) || 'pt';
+};
+
+const _WIN_RE = /(^|\n|\|)\s*(reg |reg\.exe|powershell|Get-[A-Z]|Set-[A-Z]|Add-[A-Z]|New-[A-Z]|Remove-[A-Z]|Import-Module|Invoke-[A-Z]|cmd\.exe|cmd \/|dir \/|findstr|net user|net localgroup|net group|nltest|sc\.exe|sc config|wmic|schtasks|certutil|bitsadmin|icacls|takeown|robocopy|cmdkey|runas|systeminfo|netsh|msiexec|regsvr32|whoami \/)/;
+const _NIX_RE = /(^|\n)\s*(iw |iwconfig|iwlist|airmon|airodump|aireplay|aircrack|apt |apt-get|ip a|ip route|ip -|ifconfig|nmcli|hostapd|reaver|bully|mdk[34]|macchanger|dhclient|wpa_|systemctl|getcap|chmod |bash -i|sudo )/;
+const _XPLAT_RE = /^(curl|nmap|python3?|openssl|sqlmap|whois|dig|host|nslookup|nc |ncat|wget|ssh |scp |sftp |ftp )/;
+
+const _derivePlatform = (text) => {
+  const win = _WIN_RE.test(text), nix = _NIX_RE.test(text);
+  if (win && nix) return 'cross-platform';
+  if (win) return 'windows';
+  if (_XPLAT_RE.test(text.trim())) return 'cross-platform';
+  return 'linux';
+};
+
+const _deriveRequiresPT = (text, tags, category) => {
+  // brute/spray: le credenziali sono il bersaglio, non un possesso → no-creds
+  const isBrute =
+    /rockyou|passwords?\.txt|PASS_FILE|passwordspray|password ?spray|--continue-on-success|http-(get|post)-form|-P (\/usr|<wordlist>|passwords)|--usernames|--passwords/i.test(text) ||
+    (tags || []).some(x => /brute|spray/i.test(x));
+  // Segnale principale = il PLACEHOLDER nel template (<password>, <hash>, <pfx>…):
+  // la sua presenza significa "quella credenziale ti serve". In più qualche flag
+  // per i casi senza placeholder esplicito (-hashes, /pth:, KRB5CCNAME).
+  const hasHash = /<hash>|<nthash>|<ntlmhash>|<rc4>|<aeskey>|<krbtgt>|-hashes|\/pth:|--hashes/i.test(text);
+  const hasPw   = /<password>|<newpass>|<pass>|<community>/i.test(text);
+  const usesPfx = /<pfx>|-pfx |auth -pfx/i.test(text);
+  const producesPfx = /certipy-ad req\b|-out [^\s]*\.pfx|-on-behalf-of/.test(text);
+  const usesTicket = /<ticket>|<tgt>|<tgs>|\.ccache|KRB5CCNAME|-k -no-pass/i.test(text);
+  const producesTicket = /getST|getTGT|ticketer|asktgt|golden|silver|s4u/i.test(text);
+
+  if (isBrute) {
+    const r = ['no-creds'];
+    if (hasHash) r.push('hash'); // es. pass-the-hash spray
+    return r;
+  }
+  const req = [];
+  if (hasPw) req.push('password');
+  if (hasHash) req.push('hash');
+  if (usesTicket && !producesTicket) req.push('ticket'); // ticket in input, non generato qui
+  if (usesPfx && !producesPfx && !hasPw) req.push('cert'); // pfx come unico input
+  if (req.length) return req;
+  // senza credenziali: privesc e post-exploitation girano con una shell già ottenuta
+  if (category === 'privesc' || category === 'post-exp') return ['shell'];
+  return ['no-creds'];
+};
+
+const _deriveRequiresWifi = (text) => {
+  const req = [];
+  if (/aircrack-ng .*-w|cowpatty .*-f|hashcat -m ?2200|hashcat -m ?22000|-m 2500/i.test(text)) req.push('handshake');
+  if (/hashcat -m ?16800|-m 16800/i.test(text)) req.push('pmkid');
+  if (/hashcat -m ?5500|eapmd5pass|asleap/i.test(text)) req.push('eap-hash');
+  if (/airdecap-ng .*-p|wpa_passphrase|pbkdf2_hmac/i.test(text)) req.push('psk');
+  if (/wpa_supplicant|nmcli .*connect|dhclient/i.test(text)) { req.push('psk'); req.push('eap-creds'); }
+  return req.length ? [...new Set(req)] : ['no-creds'];
+};
+
+const _PROTO_RULES = [
+  [/nxc smb|smbclient|smbmap|smbexec|psexec\.py|impacket-psexec|:445|smbserver/, 'smb'],
+  [/ldapsearch|ldap:\/\/|nxc ldap|windapsearch|ldapdomaindump|bloodhound|rusthound|adidnsdump/, 'ldap'],
+  [/GetNPUsers|GetUserSPNs|getTGT|getST|kerbrute|\.ccache|-k -no-pass|certipy-ad auth|ticketer|KRB5CCNAME|kerberoast/i, 'kerberos'],
+  [/winrm|evil-winrm/, 'winrm'],
+  [/xfreerdp|:3389|nxc rdp|rdp-/, 'rdp'],
+  [/rpcdump|impacket-rbcd|coercer|petitpotam|printerbug|dcomexec|wmiexec|atexec/i, 'rpc'],
+  [/wmiexec|dcomexec|Get-CimInstance|wmic/, 'wmi'],
+  [/\bdig\b|dnsrecon|dnsenum|dnsx|:53\b|axfr|nslookup|dnscmd/, 'dns'],
+  [/mssql|:1433|impacket-mssqlclient|xp_cmdshell/i, 'mssql'],
+  [/\bmysql\b|:3306/, 'mysql'],
+  [/curl |https?:\/\/|wpscan|nikto|ffuf|gobuster|whatweb|nuclei|droopescan|:80\b|:443\b/, 'http'],
+  [/ftp:\/\/|\bftp \b|lftp|:21\b/, 'ftp'],
+  [/\bssh \b|\bscp \b|\bsftp \b|ssh -|:22\b/, 'ssh'],
+  [/snmpwalk|snmpbulk|snmp-check|onesixtyone|braa|:161/, 'snmp'],
+  [/swaks|smtp-user-enum|:25\b/, 'smtp'],
+  [/showmount|mount -t nfs|:2049|\bnfs\b/, 'nfs'],
+  [/redis-cli|:6379/, 'redis'],
+  [/\bpsql\b|postgres|:5432/, 'postgresql'],
+  [/mongosh|mongodb|:27017/, 'mongodb'],
+  [/:9200|elasticsearch|_cat\/indices/, 'elastic'],
+  [/memcached|memcstat|:11211/, 'memcached'],
+  [/ipmitool|\bipmi\b/i, 'ipmi'],
+  [/rsync/, 'rsync'],
+  [/rtsp|:554/, 'rtsp'],
+  [/vncviewer|:5900|vnc_/, 'vnc'],
+  [/dcsync|secretsdump/i, 'dcsync'],
+];
+const _WIFI_PROTO_RULES = [
+  [/wpa3|\bsae\b/i, 'wpa3'],
+  [/wpa2|-m 22000/i, 'wpa2'],
+  [/\bwpa\b/i, 'wpa'],
+  [/\bwep\b|airdecap|arpreplay|chopchop|fragment|fakeauth|\.ivs/i, 'wep'],
+  [/\bwps\b|reaver|bully|\bwash\b|pixie|wpspin/i, 'wps'],
+  [/\beap\b|802\.1x|hostapd-wpe|eaphammer|radius|mschap/i, 'eap'],
+  [/eapol|4-way|handshake/i, 'eapol'],
+  [/pmkid/i, 'pmkid'],
+  [/open\.conf|captive|--open/i, 'open'],
+];
+const _deriveProtocols = (text, disc) => {
+  const rules = disc === 'wifi' ? _WIFI_PROTO_RULES : _PROTO_RULES;
+  const out = [];
+  for (const [re, p] of rules) if (re.test(text) && !out.includes(p)) out.push(p);
+  if (disc === 'wifi' && !out.includes('802.11')) out.push('802.11');
+  return out.slice(0, 4);
+};
+
+// Suggerimento completo per un comando in bozza.
+const suggestFilters = ({ template, variants, category, tags }) => {
+  const text = _joinTmpl(template, variants);
+  const disc = _disciplineOfCat(category);
+  return {
+    platform: _derivePlatform(text),
+    requires: disc === 'wifi' ? _deriveRequiresWifi(text) : _deriveRequiresPT(text, tags, category),
+    protocols: _deriveProtocols(text, disc),
+  };
+};
+
+// Controllo di coerenza (warning non bloccanti) su una bozza già compilata.
+const lintFilters = ({ template, variants, category, platform, requires }) => {
+  const text = _joinTmpl(template, variants);
+  const disc = _disciplineOfCat(category);
+  const req = (requires || []).map(s => s.trim()).filter(Boolean);
+  const w = [];
+  req.forEach(r => { if (!REQUIRES_META[r]) w.push(`"${r}" non è un valore di "Cosa hai" riconosciuto`); });
+  const producesTicket = /getST|getTGT|ticketer|asktgt|golden|silver|s4u/i.test(text);
+  const producesPfx = /certipy-ad req\b|-out [^\s]*\.pfx|-on-behalf-of/.test(text);
+  if (/-H '?<hash>|-hashes|\/pth:|:<hash>@/.test(text) && !req.includes('hash'))
+    w.push('il template usa un hash: aggiungere "hash" a "Cosa hai"?');
+  if (/KRB5CCNAME|-k -no-pass/.test(text) && !producesTicket && !req.includes('ticket'))
+    w.push('il template consuma un ticket Kerberos: aggiungere "ticket"?');
+  if (/-pfx <|auth -pfx/.test(text) && !producesPfx && !req.includes('cert'))
+    w.push('il template usa un certificato .pfx: aggiungere "cert"?');
+  if (_WIN_RE.test(text) && !_NIX_RE.test(text) && platform !== 'windows')
+    w.push('comandi Windows nel template ma piattaforma non impostata su "windows"');
+  const acc = (DISC_MAP[disc] && DISC_MAP[disc].accessOptions || []).map(o => o.value);
+  if (req.length && acc.length && !req.some(r => acc.includes(r)))
+    w.push('nessun valore di "Cosa hai" è filtrabile in questa disciplina');
+  return w;
+};
+
 const catColor = (hue) => `oklch(0.72 0.12 ${hue})`;
 const catColorSoft = (hue) => `oklch(0.72 0.12 ${hue} / 0.14)`;
 
@@ -301,7 +451,7 @@ const DisciplineSwitch = ({ discipline, setDiscipline }) => {
    ───────────────────────────────────────────────────────────── */
 const Sidebar = ({ query, setQuery, searching,
                    activeCat, activeSub, setActive,
-                   platform, setPlatform, access, setAccess, protocol, setProtocol,
+                   platform, setPlatform, access, setAccess,
                    counts, visibleCats,
                    categories, disciplineCfg,
                    expandedCats, toggleCatExpand, expandAll, collapseAll,
@@ -1201,16 +1351,20 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
     return (activeVariant && activeVariant.template) || cmd.template;
   }, [cmd, activeVariant]);
 
-  // Fillable keys: command params + any <token> that only appears in the template
+  // Mostra SOLO i parametri usati dal template attivo (variante), nell'ordine in cui compaiono.
+  // Cambiando variante il template cambia → i campi si aggiornano da soli.
   const paramList = useMemo(() => {
-    if (!cmd) return [];
-    const list = (cmd.params || []).map(p => ({ ...p }));
-    const seen = new Set(list.map(p => p.key));
-    if (template) {
-      const re = /<(\w+)>/g; let m;
-      while ((m = re.exec(template))) {
-        if (!seen.has(m[1])) { seen.add(m[1]); list.push({ key: m[1], label: m[1] }); }
-      }
+    if (!cmd || !template) return [];
+    const paramMap = new Map((cmd.params || []).map(p => [p.key, p]));
+    const re = /<(\w+)>/g;
+    const seen = new Set();
+    const list = [];
+    let m;
+    while ((m = re.exec(template))) {
+      const k = m[1];
+      if (seen.has(k)) continue;
+      seen.add(k);
+      list.push(paramMap.get(k) || { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) });
     }
     return list;
   }, [cmd, template]);
@@ -1289,16 +1443,6 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
                 </div>
               )}
 
-              {template && (
-                <div className="step-command-preview">
-                  <RenderedCommand template={template} values={values} />
-                  <button className="copy-btn copy-btn-icon" onClick={handleCopy}
-                          title="Copia comando">
-                    <Icon name="copy" size={13}/>
-                  </button>
-                </div>
-              )}
-
               {paramList.length > 0 && (
                 <div className="captures">
                   <h5 className="captures-title">
@@ -1323,6 +1467,16 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {template && (
+                <div className="step-command-preview">
+                  <RenderedCommand template={template} values={values} />
+                  <button className="copy-btn copy-btn-icon" onClick={handleCopy}
+                          title="Copia comando">
+                    <Icon name="copy" size={13}/>
+                  </button>
                 </div>
               )}
 
@@ -1388,6 +1542,12 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
       const prev = c.steps[stepId] || {};
       return { ...p, [chain.id]: { ...c, steps: { ...c.steps, [stepId]: { ...prev, ...patch } } } };
     });
+    // Step completato → si chiude da solo; se torna todo/active riprende il default di apertura
+    if (patch.status === 'done') {
+      setOpenSteps(m => ({ ...m, [stepId]: false }));
+    } else if (patch.status) {
+      setOpenSteps(m => { const { [stepId]: _drop, ...rest } = m; return rest; });
+    }
   };
 
   const cycleStatus = (stepId) => {
@@ -1483,6 +1643,27 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
                 {chain.prereqs.map((p, i) => <li key={i}>{p}</li>)}
               </ul>
+            </div>
+          )}
+          {chain.refs && chain.refs.length > 0 && (
+            <div style={{ marginTop: 16 }}>
+              <strong style={{ color: 'var(--fg-3)', fontSize: 10, letterSpacing: '0.08em',
+                              textTransform: 'uppercase', display: 'block', marginBottom: 6 }}>
+                Riferimenti
+              </strong>
+              <div className="builder-refs-list">
+                {chain.refs.map((r, i) => {
+                  const url   = typeof r === 'string' ? r : r.url;
+                  const label = typeof r === 'string' ? r : (r.label || r.url);
+                  return (
+                    <a key={i} className="builder-ref" href={url}
+                       target="_blank" rel="noopener noreferrer" title={url}>
+                      <Icon name="external" size={13} />
+                      <span className="builder-ref-label">{label}</span>
+                    </a>
+                  );
+                })}
+              </div>
             </div>
           )}
           <div className="chain-hero-actions">
@@ -1798,6 +1979,52 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
     });
   };
 
+  // Precompila Piattaforma + Cosa hai (e, dietro le quinte, i protocolli per i badge)
+  // leggendo il template. I protocolli non hanno più un campo: senza filtro protocollo
+  // la cura manuale non serve, restano nel dato solo per le pill sulle card.
+  const [suggested, setSuggested] = useState(false);
+  const applySuggestion = () => {
+    const s = suggestFilters({
+      template: form.template,
+      variants: form.variants,
+      category: form.category,
+      tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
+    });
+    setForm(f => ({
+      ...f,
+      platform: s.platform,
+      requires: s.requires.join(','),
+      protocols: s.protocols.join(','),
+    }));
+    setSuggested(true);
+    setTimeout(() => setSuggested(false), 1600);
+  };
+  // Warning di coerenza mostrati sotto i campi filtro (non bloccano il salvataggio).
+  const filterWarnings = lintFilters({
+    template: form.template,
+    variants: form.variants,
+    category: form.category,
+    platform: form.platform,
+    requires: form.requires.split(',').map(s => s.trim()).filter(Boolean),
+  });
+
+  // Vocabolario cliccabile (disciplina della categoria selezionata): così non serve
+  // ricordare a memoria i valori di "Cosa hai" né i placeholder del Target.
+  const _disc = _disciplineOfCat(form.category);
+  const accessOpts = ((DISC_MAP[_disc] && DISC_MAP[_disc].accessOptions) || []).filter(o => o.value !== 'all');
+  const targetFields = (DISC_MAP[_disc] && DISC_MAP[_disc].targetFields) || [];
+  const reqSet = new Set(form.requires.split(',').map(s => s.trim()).filter(Boolean));
+  const toggleReq = (val) => {
+    const s = new Set(form.requires.split(',').map(x => x.trim()).filter(Boolean));
+    s.has(val) ? s.delete(val) : s.add(val);
+    setForm(f => ({ ...f, requires: [...s].join(',') }));
+  };
+  const insertPlaceholder = (key) => setForm(f => {
+    const t = f.template;
+    const sep = t && !/\s$/.test(t) ? ' ' : '';
+    return { ...f, template: t + sep + '<' + key + '>' };
+  });
+
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="modal" style={{ width: 'min(760px, 94vw)' }}>
@@ -1827,28 +2054,76 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
               </select>
             </div>
           </div>
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Gruppo (nella sotto-sezione)</label>
-              <input value={form.group} onChange={e => setForm({ ...form, group: e.target.value })}
-                     placeholder="es. Null Session, Pillaging" />
-            </div>
-            <div className="modal-row">
-              <label>Piattaforma</label>
-              <select value={form.platform}
-                      onChange={e => setForm({ ...form, platform: e.target.value })}>
-                <option value="linux">linux</option>
-                <option value="windows">windows</option>
-                <option value="cross-platform">cross-platform</option>
-              </select>
-            </div>
+          <div className="modal-row">
+            <label>Gruppo (nella sotto-sezione)</label>
+            <input value={form.group} onChange={e => setForm({ ...form, group: e.target.value })}
+                   placeholder="es. Null Session, Pillaging" />
           </div>
           <div className="modal-row mono">
             <label>Template — usa &lt;placeholder&gt; per i parametri</label>
             <textarea value={form.template}
                       onChange={e => setForm({ ...form, template: e.target.value })}
                       placeholder="netexec smb <ip> -u '<user>' -p '<password>' --shares" />
+            {targetFields.length > 0 && (
+              <div className="chip-row" style={{ marginTop: 8 }}>
+                <span className="chip-row-label">Placeholder (clic per inserire):</span>
+                {targetFields.map(f => (
+                  <button key={f.key} type="button" className="chip mono"
+                          onClick={() => insertPlaceholder(f.key)} title={f.label}>
+                    &lt;{f.key}&gt;
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
+
+          <div className="form-section">
+            <div className="form-section-head">
+              <span className="form-section-title">Filtri</span>
+              <button type="button" className={`btn-suggest ${suggested ? 'done' : ''}`}
+                      onClick={applySuggestion} disabled={!form.template.trim()}
+                      title="Compila Piattaforma e Cosa hai leggendo il template">
+                {suggested ? '✓ Compilati' : '⚡ Suggerisci dal template'}
+              </button>
+            </div>
+            <div className="modal-row-pair">
+              <div className="modal-row">
+                <label>Piattaforma</label>
+                <select value={form.platform}
+                        onChange={e => setForm({ ...form, platform: e.target.value })}>
+                  <option value="linux">linux</option>
+                  <option value="windows">windows</option>
+                  <option value="cross-platform">cross-platform</option>
+                </select>
+              </div>
+              <div className="modal-row" />
+            </div>
+            <div className="modal-row">
+              <label>Cosa hai — requires <span className="form-hint">(clic per aggiungere/togliere)</span></label>
+              {accessOpts.length > 0 && (
+                <div className="chip-row" style={{ marginBottom: 6 }}>
+                  {accessOpts.map(o => (
+                    <button key={o.value} type="button"
+                            className={`chip ${reqSet.has(o.value) ? 'on' : ''}`}
+                            onClick={() => toggleReq(o.value)} title={o.label}>
+                      {reqSet.has(o.value) ? '✓ ' : ''}{o.value}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <input value={form.requires}
+                     onChange={e => setForm({ ...form, requires: e.target.value })}
+                     placeholder="avanzato: password,hash" />
+            </div>
+            {filterWarnings.length > 0 && (
+              <div className="filter-lint">
+                <strong>⚠ Controllo filtri (non bloccante)</strong>
+                <ul>{filterWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
+              </div>
+            )}
+          </div>
+
+          <br />
           <div className="modal-row">
             <label>Descrizione</label>
             <textarea value={form.description}
@@ -1860,20 +2135,6 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
             <textarea value={form.note}
                       onChange={e => setForm({ ...form, note: e.target.value })}
                       placeholder={'# 🔥 Titolo\nTesto con **grassetto**, `codice` e *corsivo*.\nAnche <kbd>HTML</kbd> inline è ammesso.'} />
-          </div>
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Richiede (separati da virgola)</label>
-              <input value={form.requires}
-                     onChange={e => setForm({ ...form, requires: e.target.value })}
-                     placeholder="password,hash" />
-            </div>
-            <div className="modal-row">
-              <label>Protocolli (separati da virgola)</label>
-              <input value={form.protocols}
-                     onChange={e => setForm({ ...form, protocols: e.target.value })}
-                     placeholder="smb,ldap" />
-            </div>
           </div>
           <div className="modal-row">
             <label>Tag (separati da virgola)</label>
@@ -1979,7 +2240,7 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
         <div className="modal-footer">
           <div>
             {cmd && onDelete && (
-              <button className="btn" onClick={() => {
+              <button className="btn btn-danger-ghost" onClick={() => {
                 dialog({
                   type: 'danger',
                   title: 'Eliminare questo comando?',
@@ -1988,7 +2249,7 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
                   cancelLabel: 'Mantieni',
                   onConfirm: () => onDelete(form.id),
                 });
-              }} style={{ color: 'var(--rose)' }}>
+              }}>
                 <Icon name="x" size={13} /> Elimina comando
               </button>
             )}
@@ -2153,6 +2414,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
     outcome: chain?.outcome || '',
     prereqs: (chain?.prereqs || []).join('\n'),
     mitre: (chain?.mitre || []).join(','),
+    refs: (chain?.refs || []).map(r => (typeof r === 'string' ? r : `${r.label || ''} | ${r.url}`)).join('\n'),
     steps: chain?.steps?.map(s => ({
       ...s,
       // editor keeps overrides as an array {key,value}; serialized back to an object on save
@@ -2241,6 +2503,13 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
       });
       return;
     }
+    // Riferimenti: uno per riga, "Etichetta | https://url" (accettato anche il solo URL)
+    const chainRefs = form.refs.split('\n').map(l => l.trim()).filter(Boolean).map(line => {
+      const bar = line.indexOf('|');
+      return bar !== -1
+        ? { label: line.slice(0, bar).trim(), url: line.slice(bar + 1).trim() }
+        : { label: line, url: line };
+    });
     onSave({
       id: form.id,
       name: form.name.trim(),
@@ -2254,6 +2523,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
       outcome: form.outcome.trim() || '—',
       prereqs: form.prereqs.split('\n').map(s => s.trim()).filter(Boolean),
       mitre: form.mitre.split(',').map(s => s.trim()).filter(Boolean),
+      ...(chainRefs.length > 0 ? { refs: chainRefs } : {}),
       steps: form.steps.filter(s => s.title.trim()).map((s, i) => {
         const overridesObj = {};
         (s.overrides || []).forEach(({ key, value }) => {
@@ -2353,15 +2623,21 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
           <div className="modal-row-pair">
             <div className="modal-row">
               <label>Risultato</label>
-              <input value={form.outcome}
-                     onChange={e => setForm({ ...form, outcome: e.target.value })}
-                     placeholder="NT hash di Administrator" />
+              <textarea value={form.outcome}
+                        onChange={e => setForm({ ...form, outcome: e.target.value })}
+                        placeholder="NT hash di Administrator" />
             </div>
             <div className="modal-row">
               <label>Prerequisiti (uno per riga)</label>
               <textarea value={form.prereqs}
                         onChange={e => setForm({ ...form, prereqs: e.target.value })}
                         placeholder={"Credenziali valide per qualsiasi utente\nAccesso di rete al DC"} />
+            </div>
+            <div className="modal-row mono">
+              <label>Riferimenti — uno per riga: Etichetta | https://url</label>
+              <textarea value={form.refs}
+                        onChange={e => setForm({ ...form, refs: e.target.value })}
+                        placeholder={'Ligolo-ng — guida pivoting | https://medium.com/...'} />
             </div>
           </div>
 
@@ -2406,7 +2682,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
                       </button>
                     </div>
 
-                    {isOpen && (
+                    <div className={`step-editor-collapse ${isOpen ? 'open' : ''}`}>
                     <div className="step-editor-body">
                       <StepCommandEditor step={s} allCommands={allCommands}
                                          onChange={(patch) => updateStep(i, patch)} />
@@ -2464,7 +2740,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
                         )}
                       </div>
                     </div>
-                    )}
+                    </div>
                   </div>
                 );
               })}
@@ -2478,7 +2754,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
         <div className="modal-footer">
           <div>
             {chain && onDelete && (
-              <button className="btn" onClick={() => {
+              <button className="btn btn-danger-ghost" onClick={() => {
                 dialog({
                   type: 'danger',
                   title: 'Eliminare questo playbook?',
@@ -2487,7 +2763,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
                   cancelLabel: 'Mantieni',
                   onConfirm: () => onDelete(form.id),
                 });
-              }} style={{ color: 'var(--rose)' }}>
+              }}>
                 <Icon name="x" size={13} /> Elimina playbook
               </button>
             )}
@@ -2624,7 +2900,7 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
         <div className="modal-footer">
           <div>
             {onDelete && (
-              <button className="btn" style={{ color: 'var(--rose)' }}
+              <button className="btn btn-danger-ghost"
                       onClick={() => dialog
                         ? dialog({ type: 'danger', title: 'Eliminare questo step?',
                                    message: `"${form.title || form.id}" sarà rimosso dal playbook.`,
@@ -3360,7 +3636,6 @@ function App() {
   }, [query, activeCat, activeSub]);
   const [platform, setPlatform] = useState('all');
   const [access, setAccess]     = useState('all');
-  const [protocol, setProtocol] = useState('all');
 
   // Favorites
   const [favs, setFavs] = useState(() => {
@@ -3555,7 +3830,6 @@ function App() {
       if (activeSub && c.subcategory !== activeSub) return false;
       if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
       if (access !== 'all' && !c.requires.includes(access)) return false;
-      if (protocol !== 'all' && !c.protocols.includes(protocol)) return false;
       if (q) {
         const hay = [c.name, c.template, c.description, ...(c.tags || []),
                      c.subcategory, c.group].join(' ').toLowerCase();
@@ -3563,7 +3837,7 @@ function App() {
       }
       return true;
     });
-  }, [allCommands, query, activeCat, activeSub, platform, access, protocol, showFavs, favs, disciplineCatIds]);
+  }, [allCommands, query, activeCat, activeSub, platform, access, showFavs, favs, disciplineCatIds]);
 
   // Group names currently rendered — drives the 'G' shortcut without touching the DOM
   const currentGroupNames = useMemo(() => {
@@ -3587,7 +3861,6 @@ function App() {
       if (!disciplineCatIds.has(c.category)) return false;
       if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
       if (access !== 'all' && !c.requires.includes(access)) return false;
-      if (protocol !== 'all' && !c.protocols.includes(protocol)) return false;
       if (showFavs && !favs.includes(c.id)) return false;
       if (q) {
         const hay = [c.name, c.template, c.description, ...(c.tags || []),
@@ -3605,10 +3878,10 @@ function App() {
       });
     });
     return out;
-  }, [allCommands, query, platform, access, protocol, showFavs, favs, disciplineCats, disciplineCatIds]);
+  }, [allCommands, query, platform, access, showFavs, favs, disciplineCats, disciplineCatIds]);
 
   // === Palette results — a GLOBAL command finder (ignores the active phase and
-  //     favourites, keeps the platform/access/protocol context filters). ===
+  //     favourites, keeps the platform/access context filters). ===
   const paletteResults = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return [];
@@ -3616,21 +3889,20 @@ function App() {
       if (!disciplineCatIds.has(c.category)) return false;
       if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
       if (access !== 'all' && !c.requires.includes(access)) return false;
-      if (protocol !== 'all' && !c.protocols.includes(protocol)) return false;
       const hay = [c.name, c.template, c.description, ...(c.tags || []),
                    c.subcategory, c.group].join(' ').toLowerCase();
       return hay.includes(q);
     }).slice(0, 60);
-  }, [allCommands, query, platform, access, protocol, disciplineCatIds]);
+  }, [allCommands, query, platform, access, disciplineCatIds]);
 
   // Categories that should be visible in sidebar (have at least one matching command)
   const visibleCats = useMemo(() => {
-    const filtersActive = platform !== 'all' || access !== 'all' || protocol !== 'all' || showFavs;
+    const filtersActive = platform !== 'all' || access !== 'all' || showFavs;
     if (!filtersActive) return null; // null = show all
     const set = new Set();
     CATEGORIES.forEach(c => { if ((counts[c.id] || 0) > 0) set.add(c.id); });
     return set;
-  }, [counts, platform, access, protocol, showFavs]);
+  }, [counts, platform, access, showFavs]);
 
   // === Pertinent chains ===
   // Strict filter: if a sub-phase is selected, only show that sub-phase's chains.
@@ -3654,7 +3926,7 @@ function App() {
   useEffect(() => {
     if (!didMountDisc.current) { didMountDisc.current = true; return; }
     setActive('all', null);
-    setAccess('all'); setPlatform('all'); setProtocol('all');
+    setAccess('all'); setPlatform('all');
     setShowFavs(false);
     const firstCmd = allCommands.find(c => disciplineCatIds.has(c.category));
     if (firstCmd) setSelectedId(firstCmd.id);
@@ -3981,7 +4253,7 @@ function App() {
   const aiOpenCommand = (id) => {
     const c = allCommands.find(x => x.id === id);
     if (!c) return;
-    setShowFavs(false); setQueryRaw(''); setAccess('all'); setPlatform('all'); setProtocol('all');
+    setShowFavs(false); setQueryRaw(''); setAccess('all'); setPlatform('all');
     setMode('library'); setActive(c.category, c.subcategory || null); setSelectedId(id);
     setShowAI(false);
     showToast('Comando aperto');
@@ -4034,7 +4306,6 @@ function App() {
           activeCat={activeCat} activeSub={activeSub} setActive={setActive}
           platform={platform} setPlatform={setPlatform}
           access={access} setAccess={setAccess}
-          protocol={protocol} setProtocol={setProtocol}
           counts={counts}
           visibleCats={visibleCats}
           categories={disciplineCats}

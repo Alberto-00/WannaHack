@@ -9,8 +9,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License">
-  <img src="https://img.shields.io/badge/commands-364-4fd1ab" alt="364 commands">
-  <img src="https://img.shields.io/badge/playbooks-53-4fd1ab" alt="53 playbooks">
+  <img src="https://img.shields.io/badge/commands-393-4fd1ab" alt="393 commands">
+  <img src="https://img.shields.io/badge/playbooks-56-4fd1ab" alt="56 playbooks">
   <img src="https://img.shields.io/badge/disciplines-Pentest%20%7C%20WiFi-4fd1ab" alt="Pentest and WiFi disciplines">
   <img src="https://img.shields.io/badge/MITRE%20ATT%26CK-mapped-c77dff" alt="MITRE ATT&CK mapped">
   <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey" alt="Linux, macOS and Windows">
@@ -95,16 +95,16 @@ The dropdown at the top left switches **discipline**. Each one brings its own ph
 
 ### Pentest (infrastructure, Active Directory, Web)
 
-257 commands, 28 playbooks. Target: `ip`, `user`, `password`, `domain`, `hash`.
+286 commands, 31 playbooks. Target: `ip`, `user`, `password`, `domain`, `hash`.
 
 | # | Phase | Content |
 |---|-------|---------|
 | 1 | **Information Gathering** | Passive recon (OSINT, CT logs, DNS) and active recon (port scan, web/DNS discovery) |
-| 2 | **Service Enumeration** | Per service: FTP, SSH, SMTP, DNS, Web, SNMP, LDAP, SMB, RTSP, MSSQL, NFS, MySQL, RDP, VNC, WinRM |
-| 3 | **Vulnerability Analysis** | SQLi, LFI, XXE, SSRF, file upload, command injection, CVE hunting |
-| 4 | **Exploitation & Initial Access** | Payloads, listeners, web shells, credential attacks, shell stabilization, AV bypass |
+| 2 | **Service Enumeration** | Per service: FTP, SSH, SMTP, DNS, Web (incl. Odoo, Jira, Liferay), SNMP, LDAP, SMB, RTSP, MSSQL, PostgreSQL, Redis, MongoDB, Elasticsearch, Memcached, NFS, MySQL, IPMI, rsync, RDP, VNC, WinRM |
+| 3 | **Vulnerability Analysis** | SQLi, LFI, XXE, SSRF, file upload, command injection, SSTI, JWT, deserialization, GraphQL, exposed .git, CVE hunting |
+| 4 | **Exploitation & Initial Access** | Payloads, listeners, web shells, credential attacks, client-side (Office macro, LNK/Library-ms), shell stabilization, AV bypass |
 | 5 | **Post-Exploitation** | Situational awareness, credential harvesting, pillaging, persistence, file transfer |
-| 6 | **Privilege Escalation** | Sudo, SUID/SGID, capabilities, cron, tokens, kernel, container escape (Linux/Windows filter) |
+| 6 | **Privilege Escalation** | Sudo, SUID/SGID, capabilities, cron, tokens, service and DLL abuse, kernel, container escape (Linux/Windows filter) |
 | 7 | **Lateral Movement & Pivoting** | PsExec/WMI/WinRM, Pass-the-Hash, Pass-the-Ticket, Chisel/Ligolo/Proxychains |
 | 8 | **Active Directory** | Setup, enum (BloodHound/LDAP), AS-REP/Kerberoasting/spraying, ACL/ADCS/DCSync, persistence |
 | 9 | **Utilities** | Reverse shells, GTFOBins, LOLBAS, cheatsheets (hashcat, file transfer, cURL) |
