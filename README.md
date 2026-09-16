@@ -133,7 +133,7 @@ Switch between the two from the TopBar or with keys `1` and `2`.
 
 ### Library
 
-- Commands grouped by phase, subphase and group (Information Gathering, then Passive Recon, then DNS Records).
+- Commands grouped by phase, subphase and group (Information Gathering, then Passive Recon, then DNS Records). Phases and subphases are declared in `categories.js`, groups are a free text field on the command, suggested from the ones already in use so a typo does not silently create a new one.
 - Every command is a card: name, description of when and why to use it, the command template, tags, any variants, and reference links (HackTricks, RFCs, official docs).
 - Split view with the list on the left and the detail on the right, or detail only from the layout toggle.
 - One click copy, and what lands in the clipboard is already filled in with the Target values.
@@ -143,9 +143,9 @@ Switch between the two from the TopBar or with keys `1` and `2`.
 ### Attack Chains
 
 - Every chain carries an objective, expected outcome, prerequisites, difficulty, estimated time and MITRE ATT&CK tags.
-- It is a sequence of steps. Each step points at a Library command (`cmdRef`) and says why that step is there (`rationale`).
+- It is a sequence of steps. Each step points at a Library command (`cmdRef`), optionally pinned to one of its variants, and can override single parameters.
 - Progress is per step: `todo`, `active`, `done`, or skipped, with a notes field for output and observations.
-- Captures are the values you grab in a step (a hash, a host list) highlighted as output to reuse later on.
+- Each step has a `verify` line: the observable signal that tells you it worked.
 
 ![Attack Chains view with a playbook open](assets/WannaHack_dashboard.png)
 
@@ -175,19 +175,22 @@ The settings, on the other hand, are shared by both disciplines: one API key, on
 
 ## Features
 
-- Instant search on names, descriptions and tags (`Ctrl+K`).
+- Instant search on names, descriptions, tags and variants (`Ctrl+K`). Searching a flag that only lives in a variant finds the command that carries it.
 - AI search in natural language over commands and playbooks.
-- Sidebar filters by phase, subphase, platform, access level and protocol.
+- Sidebar filters by phase, subphase, platform, access level, protocol and tag. Protocol and tag lists are built from the data of the active discipline, so there are no dead options.
+- Playbooks have their own search plus filters by difficulty and tactic, shown in place of the command filters when you are in the Attack Chains view.
 - Favourites, to mark what you use most and show only that (`F`).
 - Shared Target, filled once and used everywhere.
 - Custom commands, added or edited from the UI.
 - Custom playbooks, built step by step.
+- Phases, subphases and groups editable from the UI (Add menu, "Fasi e gruppi…"): create, rename, recolour, pick an icon, reorder by dragging. Renaming an id reassigns every command and playbook that points at it, after a confirmation that tells you how many.
+- Deleting a phase removes its subphases, commands, playbooks and groups in cascade. Deleting a subphase removes only its own. Built-in entries are hidden rather than erased from the files.
 - Hide the commands and chains you do not need, reorder lists and steps.
 - Collapsible groups and phases to cut the noise (`E`/`C`/`G`).
 - Playbook progress with statuses, skip and per step notes.
-- JSON backup: export everything (favourites, custom entries, progress, Target) to a file and import it back later. The import overwrites the current state.
-- Source export: regenerate `data.js` and `chains.js` for the active discipline, built-in and custom merged, ready to drop back into the repo.
-- Clear cache: back to the original file data, dropping every local change.
+- JSON backup: export everything (favourites, custom entries, custom taxonomy, progress, Target) to a file and import it back later. The import overwrites the current state. Note that the Target values, password and hash included, are written in clear.
+- Source export: regenerate `data.js`, `chains.js` and `categories.js`, built-in and custom merged, ready to drop back into the repo. The first two are scoped to the active discipline, `categories.js` carries every discipline.
+- Clear cache: back to the original file data, dropping every local change, the custom taxonomy and the OpenAI key included.
 - Keyboard shortcuts (below, or `?` in the app).
 - Mint and dark theme with a comfortable density, all in `styles.css`.
 
@@ -256,9 +259,9 @@ The data are plain JavaScript objects. To add things by hand edit `data.js` and 
     {
       id: 's1', title: 'Find vulnerable templates',
       cmdRef: 'certipy-find',         // id of a command in data.js
-      rationale: 'Why this step is here.',
-      captures: [{ key: 'template', label: 'ESC1 template' }],  // reusable output
-      verify: 'The observable signal that it worked.',          // optional
+      variant: 'default',             // optional: pin one variant of that command
+      overrides: { ca: 'CORP-CA' },   // optional: fixed values for single params
+      verify: 'The observable signal that it worked.',
     },
   ],
 }
@@ -267,6 +270,8 @@ The data are plain JavaScript objects. To add things by hand edit `data.js` and 
 ### Discipline (`categories.js`)
 
 A discipline is one object in `DISCIPLINES`: id, name, icon, blurb, `showPlatform`, its `targetFields` (the Target bar) and its `accessOptions` (the access filter). Categories join a discipline through `domain: '<discipline id>'`, and if it is missing they count as `pt`. To add a discipline you append an object here, its categories, and its data files loaded from `index.html`.
+
+Categories and subcategories can also be edited from the UI and written back with "Esporta categories.js". Ids are what commands and playbooks reference, so changing one rewrites them: the app asks first and says how many are affected. A subphase id only has to be unique inside its own phase, which is why `persistence` can exist under both Post-Exploitation and Active Directory.
 
 ## License
 

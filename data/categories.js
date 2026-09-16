@@ -205,9 +205,9 @@ const CATEGORIES = [
         description: 'Mappa il dominio: utenti, gruppi, ACL, sessioni e percorsi d’attacco (BloodHound, ldapsearch, nxc).' },
       { id: 'initial-access', name: 'Initial Access',
         description: 'Primo punto d’appoggio nel dominio: AS-REP roasting, Kerberoasting, password spray e creds anonime.' },
-      { id: 'priv-esc',       name: 'Privilege Escalation',
+      { id: 'priv-esc',       name: 'Privilege Escalation (dominio)',
         description: 'Scala nel dominio: abusi ACL, ADCS (ESC1-8), DCSync e Kerberos delegation.' },
-      { id: 'persistence',    name: 'Persistence',
+      { id: 'persistence',    name: 'Persistence (dominio)',
         description: 'Persistenza nel dominio: Golden/Silver ticket, DCSync, ACL backdoor e Skeleton Key.' },
     ],
   },
@@ -439,19 +439,18 @@ const REQUIRES_META = {
   'eap-hash':  { label: 'eap-hash',  tone: 'rose' },
   'eap-creds': { label: 'eap-creds', tone: 'sky' },
   'psk':       { label: 'psk',       tone: 'mint' },
-  'wordlist':  { label: 'wordlist',  tone: 'slate' },
 };
 
 const PROTOCOL_META = {
   smb: 'cyan', ldap: 'indigo', kerberos: 'rose', winrm: 'teal',
   rdp: 'orange', rpc: 'purple', dns: 'lime', ntlm: 'pink',
   mssql: 'red', mysql: 'red', http: 'yellow', tcp: 'slate', udp: 'slate',
-  ntp: 'slate', dcsync: 'rose', wmi: 'teal', ftp: 'cyan', ssh: 'teal',
+  dcsync: 'rose', wmi: 'teal', ftp: 'cyan', ssh: 'teal',
   snmp: 'lime', smtp: 'pink', nfs: 'cyan', redis: 'red', ipmi: 'orange',
   postgresql: 'red', mongodb: 'red', elastic: 'yellow', memcached: 'red', rsync: 'cyan',
   icmp: 'slate', rtsp: 'orange', vnc: 'purple', arp: 'slate',
   // WiFi
-  wpa2: 'teal', wpa: 'teal', wpa3: 'cyan', wep: 'orange', wps: 'pink',
+  wpa2: 'teal', wpa3: 'cyan', wep: 'orange', wps: 'pink',
   eap: 'indigo', '802.11': 'slate', pmkid: 'violet', eapol: 'rose',
   open: 'slate',
 };

