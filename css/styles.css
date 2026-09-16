@@ -174,6 +174,20 @@ input, select, textarea { font: inherit; color: inherit; }
   display: flex; flex-direction: column; gap: 10px;
   padding: 12px;
 }
+/* Il wrapper anima, il contenuto non si tocca: così l'altezza misurata resta la
+   stessa aperto o chiuso, e la transizione va da 0 all'altezza vera senza scatti.
+   max-height la imposta il JS con il valore misurato. */
+.filters-wrap {
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    max-height 0.28s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.filters-wrap.collapsed {
+  opacity: 0;
+  pointer-events: none;
+}
 .filter-label {
   font-size: 10px;
   font-weight: 600;
@@ -197,15 +211,19 @@ input, select, textarea { font: inherit; color: inherit; }
     url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23777' stroke-width='2'><polyline points='6 9 12 15 18 9'/></svg>");
   background-repeat: no-repeat;
   background-position: right 10px center;
+  transition: border-color 0.15s ease, background-color 0.2s ease, color 0.2s ease;
 }
 .select:hover { border-color: var(--border-strong); }
 .select:focus { border-color: var(--accent); }
 
-.divider {
-  height: 1px;
-  background: var(--border);
-  margin: 4px 12px;
-}
+/* .nav-tree e' l'unico figlio che deve cedere spazio: ha flex:1 e scrolla.
+   Tutti gli altri hanno un'altezza propria, e senza questo il flex li comprime
+   quando la colonna trabocca: il divider da 1px finisce a 0 e la riga sparisce
+   (si vedeva aprendo i filtri, che allungano la colonna). */
+.sidebar > *:not(.nav-tree) { flex-shrink: 0; }
+/* min-height:0 e' il compagno obbligato di overflow-y:auto in un flex column:
+   con il default `auto` il figlio non scende sotto l'altezza del contenuto. */
+.nav-tree { min-height: 0; }
 
 /* ── Main column ────────────────────────────────────────── */
 .main {
@@ -1924,7 +1942,10 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
 .nav-tree-controls {
   display: flex;
   gap: 6px;
-  padding: 6px 12px 4px;
+  padding: 8px 12px 4px;
+  /* separatore come bordo, vedi la nota su .filters-head */
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
 }
 .nav-tree-btn {
   flex: 1;
@@ -4141,3 +4162,91 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   from { opacity: 1; transform: scale(1); }
   to   { opacity: 0; transform: scale(0.96); }
 }
+
+/* Filtri collassabili sotto la ricerca. Stesso meccanismo della Target bar:
+   max-height piu' opacity, cosi' il collasso e' fluido senza misurare l'altezza. */
+/* I separatori della sidebar sono BORDI, non elementi da 1px: un figlio alto 1px
+   in un flex column viene compresso a zero quando la colonna trabocca, e la riga
+   spariva (succedeva coi filtri aperti, e in WiFi). Un border non si comprime.
+   Niente user-select: cliccando ripetutamente per aprire e chiudere, il doppio
+   clic selezionava una lettera dell'etichetta e sembrava evidenziata. */
+.filters-head {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px 12px 2px;
+  border-top: 1px solid var(--border);
+  margin-top: 4px;
+  user-select: none;
+}
+.filters-toggle {
+  display: flex; align-items: center; gap: 6px;
+  flex: 1; min-width: 0;
+  background: none; border: none; padding: 0;
+  color: var(--fg-3);
+  font-family: inherit;
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.filters-toggle:hover { color: var(--fg-1); }
+
+/* Badge e tasto reset sono sempre montati e si rivelano con una transizione:
+   montarli e smontarli li farebbe comparire di scatto. */
+.filters-badge {
+  min-width: 16px; padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-soft); color: var(--accent);
+  font-size: 10px; line-height: 16px; text-align: center;
+  font-variant-numeric: tabular-nums;
+  opacity: 0; transform: scale(0.7);
+  max-width: 0; padding-inline: 0; overflow: hidden;
+  transition:
+    opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1),
+    max-width 0.2s ease, padding 0.2s ease;
+}
+.filters-badge.show {
+  opacity: 1; transform: none;
+  max-width: 40px; padding-inline: 5px;
+}
+
+/* Il bottone tiene sempre il suo spazio e si rivela solo con opacita' e scala:
+   animare anche la larghezza significherebbe indovinare quanto e' largo il testo,
+   e la transizione girerebbe a vuoto per la differenza. Lo spazio riservato non
+   si nota perche' .filters-toggle ha flex:1 e il testo e' allineato a sinistra. */
+.filters-reset {
+  display: flex; align-items: center; gap: 4px;
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border-radius: var(--radius-sm);
+  background: none;
+  border: 1px solid transparent;
+  color: var(--rose);
+  font-family: inherit;
+  font-size: 9.5px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  opacity: 0; transform: scale(0.92);
+  pointer-events: none;
+  transition:
+    opacity 0.18s ease, transform 0.18s cubic-bezier(0.34, 1.4, 0.64, 1),
+    background 0.15s ease, border-color 0.15s ease;
+}
+.filters-reset.show {
+  opacity: 1; transform: none;
+  pointer-events: auto;
+}
+.filters-reset:hover {
+  background: var(--rose-soft);
+  border-color: var(--rose);
+  color: var(--rose);
+}
+.filters-reset:active { transform: scale(0.9); }
+
+/* Filtro fuori dal valore di default. background-COLOR, non la shorthand:
+   .select usa background-image per la freccetta e la shorthand la cancellerebbe. */
+.select.filter-on {
+  border-color: var(--accent);
+  color: var(--accent);
+  background-color: var(--accent-soft);
+  font-weight: 600;
+}
+.select.filter-on:hover { border-color: var(--accent); }

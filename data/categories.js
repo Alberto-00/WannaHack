@@ -378,11 +378,11 @@ const DISCIPLINES = [
     blurb: 'Infrastruttura, Active Directory e Web',
     showPlatform: true,
     targetFields: [
-      { key: 'ip',       label: 'IP',       placeholder: '10.10.10.11' },
-      { key: 'user',     label: 'Utente',   placeholder: 'jdoe' },
-      { key: 'password', label: 'Password', placeholder: '••••••', secret: true },
-      { key: 'domain',   label: 'Dominio',  placeholder: 'corp.local' },
-      { key: 'hash',     label: 'Hash',     placeholder: 'aad3b…', secret: true },
+      { key: 'ip',       label: 'IP',           placeholder: '10.10.10.11' },
+      { key: 'domain',   label: 'Dominio / FQDN', placeholder: 'corp.local' },
+      { key: 'user',     label: 'Utente',       placeholder: 'jdoe' },
+      { key: 'password', label: 'Password',     placeholder: '••••••', secret: true },
+      { key: 'hash',     label: 'Hash',         placeholder: 'aad3b…', secret: true },
     ],
     accessOptions: [
       { value: 'all',      label: 'Qualsiasi accesso' },

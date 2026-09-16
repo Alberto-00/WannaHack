@@ -354,6 +354,11 @@ const normalizeCmd = (c) => ({
 // Alias di tag: stesso tool scritto in due modi. Solo sinonimi veri — mdk3 e mdk4
 // NON stanno qui, sono due tool diversi.
 const TAG_MIN_USES = 3;   // soglia per entrare nella tendina dei tag
+// Valori di default dei filtri, uno stato per disciplina.
+const FILTER_DEFAULTS = {
+  platform: 'all', access: 'all', proto: 'all', tag: 'all',
+  chainDiff: 'all', chainTactic: 'all',
+};
 const TAG_ALIASES = { netexec: 'nxc', elasticsearch: 'elastic' };
 const canonTag = (t) => {
   const k = String(t || '').trim().toLowerCase();
@@ -599,10 +604,35 @@ const Sidebar = ({ query, setQuery, searching,
                    platform, setPlatform, access, setAccess,
                    proto, setProto, protoVocab, tag, setTag, tagVocab,
                    mode, chainDiff, setChainDiff, chainTactic, setChainTactic, tacticVocab,
+                   filtersOpen, setFiltersOpen,
                    counts, visibleCats,
                    categories, disciplineCfg,
                    expandedCats, toggleCatExpand, expandAll, collapseAll,
-                   sidebarCollapsed, setSidebarCollapsed }) => (
+                   sidebarCollapsed, setSidebarCollapsed }) => {
+  // L'animazione dei filtri usa l'altezza REALE del contenuto, non un max-height
+  // fisso: con un valore di comodo la transizione parte o finisce a vuoto per la
+  // differenza, e si vede come uno scatto. Il set di filtri cambia con modalità e
+  // disciplina, quindi si rimisura a ogni render.
+  const filtersRef = useRef(null);
+  const [filtersH, setFiltersH] = useState(0);
+
+  // Quali filtri sono fuori dal default, e come riportarli tutti a 'all'.
+  const activeFilters = mode === 'chains'
+    ? [chainDiff, chainTactic]
+    : [platform, access, proto, tag];
+  const activeCount = activeFilters.filter(v => v !== 'all').length;
+  const resetFilters = () => {
+    if (mode === 'chains') { setChainDiff('all'); setChainTactic('all'); }
+    else { setPlatform('all'); setAccess('all'); setProto('all'); setTag('all'); }
+  };
+  React.useLayoutEffect(() => {
+    const el = filtersRef.current;
+    if (!el) return;
+    const h = el.scrollHeight;
+    if (h !== filtersH) setFiltersH(h);
+  });
+
+  return (
   <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
     <div className="sidebar-header">
       <div className="logo-mark">
@@ -632,14 +662,38 @@ const Sidebar = ({ query, setQuery, searching,
         : <span className="search-kbd">Ctrl K</span>}
     </div>
 
+    {/* Contatore dei filtri attivi: da chiuso il pannello nasconderebbe un filtro
+        acceso e la lista sembrerebbe sbagliata senza una ragione visibile.
+        Il tasto di azzeramento è sempre montato e si rivela con una transizione:
+        renderlo condizionalmente lo farebbe comparire di scatto. */}
+    <div className="filters-head">
+      <button className="filters-toggle" onClick={() => setFiltersOpen(o => !o)}
+              title={filtersOpen ? 'Comprimi i filtri' : 'Espandi i filtri'}>
+        <Icon name="chevron" size={12}
+              style={{ transform: filtersOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }} />
+        <span>Filtri</span>
+      </button>
+      <span className={`filters-badge ${activeCount ? 'show' : ''}`}>{activeCount || ''}</span>
+      <button className={`filters-reset ${activeCount ? 'show' : ''}`}
+              onClick={resetFilters}
+              tabIndex={activeCount ? 0 : -1}
+              aria-hidden={activeCount ? undefined : true}
+              title="Riporta tutti i filtri al valore di default">
+        <Icon name="x" size={11} />
+        <span>Elimina filtri</span>
+      </button>
+    </div>
+
     {/* In modalità chains i filtri dei comandi non toccano la lista playbook:
         si mostrano quelli delle chain, che prima non esistevano affatto. */}
-    <div className="filters">
+    <div className={`filters-wrap ${filtersOpen ? '' : 'collapsed'}`}
+         style={{ maxHeight: filtersOpen ? filtersH : 0 }}>
+    <div className="filters" ref={filtersRef}>
       {mode === 'chains' ? (
         <>
           <div>
             <label className="filter-label">Difficoltà</label>
-            <select className="select" value={chainDiff} onChange={e => setChainDiff(e.target.value)}>
+            <select className={`select ${chainDiff !== 'all' ? 'filter-on' : ''}`} value={chainDiff} onChange={e => setChainDiff(e.target.value)}>
               <option value="all">Tutte</option>
               <option value="easy">easy</option>
               <option value="medium">medium</option>
@@ -649,7 +703,7 @@ const Sidebar = ({ query, setQuery, searching,
           {tacticVocab.length > 1 && (
             <div>
               <label className="filter-label">Tattica</label>
-              <select className="select" value={chainTactic} onChange={e => setChainTactic(e.target.value)}>
+              <select className={`select ${chainTactic !== 'all' ? 'filter-on' : ''}`} value={chainTactic} onChange={e => setChainTactic(e.target.value)}>
                 <option value="all">Tutte</option>
                 {tacticVocab.map(t => <option key={t} value={t}>{t}</option>)}
               </select>
@@ -661,7 +715,7 @@ const Sidebar = ({ query, setQuery, searching,
           {disciplineCfg?.showPlatform && (
             <div>
               <label className="filter-label">Piattaforma</label>
-              <select className="select" value={platform} onChange={e => setPlatform(e.target.value)}>
+              <select className={`select ${platform !== 'all' ? 'filter-on' : ''}`} value={platform} onChange={e => setPlatform(e.target.value)}>
                 <option value="all">Tutte</option>
                 <option value="linux">Linux</option>
                 <option value="windows">Windows</option>
@@ -671,7 +725,7 @@ const Sidebar = ({ query, setQuery, searching,
           )}
           <div>
             <label className="filter-label">Cosa hai</label>
-            <select className="select" value={access} onChange={e => setAccess(e.target.value)}>
+            <select className={`select ${access !== 'all' ? 'filter-on' : ''}`} value={access} onChange={e => setAccess(e.target.value)}>
               {(disciplineCfg?.accessOptions || [{ value: 'all', label: 'Qualsiasi' }]).map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
               ))}
@@ -680,7 +734,7 @@ const Sidebar = ({ query, setQuery, searching,
           {protoVocab.length > 1 && (
             <div>
               <label className="filter-label">Protocollo</label>
-              <select className="select" value={proto} onChange={e => setProto(e.target.value)}>
+              <select className={`select ${proto !== 'all' ? 'filter-on' : ''}`} value={proto} onChange={e => setProto(e.target.value)}>
                 <option value="all">Tutti</option>
                 {protoVocab.map(x => <option key={x} value={x}>{x}</option>)}
               </select>
@@ -689,7 +743,7 @@ const Sidebar = ({ query, setQuery, searching,
           {tagVocab.length > 1 && (
             <div>
               <label className="filter-label">Tag</label>
-              <select className="select" value={tag} onChange={e => setTag(e.target.value)}>
+              <select className={`select ${tag !== 'all' ? 'filter-on' : ''}`} value={tag} onChange={e => setTag(e.target.value)}>
                 <option value="all">Tutti</option>
                 {tagVocab.map(([t, n]) => <option key={t} value={t}>{t} ({n})</option>)}
               </select>
@@ -698,8 +752,7 @@ const Sidebar = ({ query, setQuery, searching,
         </>
       )}
     </div>
-
-    <div className="divider"></div>
+    </div>
 
     <div className="nav-tree-controls">
       <button className="nav-tree-btn" onClick={expandAll} title="Espandi tutte le fasi (E)">
@@ -798,7 +851,8 @@ const Sidebar = ({ query, setQuery, searching,
       })}
     </nav>
   </aside>
-);
+  );
+};
 
 /* ─────────────────────────────────────────────────────────────
    Top bar — mode switch with sliding indicator
@@ -4373,7 +4427,14 @@ function App() {
   const expandAll = () => setExpandedCats(new Set(CATEGORIES.map(c => c.id)));
   const collapseAll = () => setExpandedCats(new Set());
 
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  // Chiusa all'avvio: si apre con Ctrl+B. Lo stato non è persistito, quindi ogni
+  // sessione riparte dal rail compatto.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [filtersOpen, setFiltersOpen] = useState(
+    () => localStorage.getItem('cm-filters-open') !== '0');
+  useEffect(() => {
+    localStorage.setItem('cm-filters-open', filtersOpen ? '1' : '0');
+  }, [filtersOpen]);
   // FLIP slide for open/close: the grid width snaps to its final value (one reflow), then
   // .main is animated into place with a GPU-composited transform. The command list paints
   // once and the compositor translates the whole layer, so the slide is 60fps even in
@@ -4430,18 +4491,28 @@ function App() {
     }
     setQueryRaw(v);
   }, [query, activeCat, activeSub]);
-  // Filtri persistiti come cm-cat/cm-sub: ritrovare la libreria com'era lasciata.
-  // Si azzerano comunque al cambio disciplina — i vocabolari non coincidono.
-  const [platform, setPlatform] = useState(() => localStorage.getItem('cm-platform') || 'all');
-  const [access, setAccess]     = useState(() => localStorage.getItem('cm-access') || 'all');
-  const [proto, setProto]       = useState(() => localStorage.getItem('cm-proto') || 'all');
-  const [tag, setTag]           = useState(() => localStorage.getItem('cm-tag') || 'all');
-  useEffect(() => { localStorage.setItem('cm-platform', platform); }, [platform]);
-  useEffect(() => { localStorage.setItem('cm-access', access); }, [access]);
-  useEffect(() => { localStorage.setItem('cm-proto', proto); }, [proto]);
-  useEffect(() => { localStorage.setItem('cm-tag', tag); }, [tag]);
-  const [chainDiff, setChainDiff]     = useState('all');
-  const [chainTactic, setChainTactic] = useState('all');
+  // I filtri sono PER DISCIPLINA: i vocabolari non coincidono (in WiFi non esiste
+  // la piattaforma, i protocolli sono altri) e tenerli in variabili condivise
+  // significava che impostarne uno in WiFi lo cambiava anche in Pentest.
+  // Stesso schema di layoutByMode: una mappa persistita, chiave = disciplina.
+  const [filtersByDisc, setFiltersByDisc] = useState(() => {
+    try { return JSON.parse(localStorage.getItem('cm-filters') || '{}'); } catch { return {}; }
+  });
+  useEffect(() => {
+    localStorage.setItem('cm-filters', JSON.stringify(filtersByDisc));
+  }, [filtersByDisc]);
+  const curFilters = { ...FILTER_DEFAULTS, ...(filtersByDisc[discipline] || {}) };
+  const setFilter = (key) => (value) => setFiltersByDisc(m => ({
+    ...m,
+    [discipline]: { ...FILTER_DEFAULTS, ...(m[discipline] || {}), [key]: value },
+  }));
+  const { platform, access, proto, tag, chainDiff, chainTactic } = curFilters;
+  const setPlatform    = setFilter('platform');
+  const setAccess      = setFilter('access');
+  const setProto       = setFilter('proto');
+  const setTag         = setFilter('tag');
+  const setChainDiff   = setFilter('chainDiff');
+  const setChainTactic = setFilter('chainTactic');
 
   // Favorites
   const [favs, setFavs] = useState(() => {
@@ -4768,8 +4839,7 @@ function App() {
   useEffect(() => {
     if (!didMountDisc.current) { didMountDisc.current = true; return; }
     setActive('all', null);
-    setAccess('all'); setPlatform('all'); setProto('all'); setTag('all');
-    setChainDiff('all'); setChainTactic('all');
+    // I filtri non si azzerano più: ogni disciplina conserva i suoi.
     setShowFavs(false);
     const firstCmd = allCommands.find(c => disciplineCatIds.has(c.category));
     if (firstCmd) setSelectedId(firstCmd.id);
@@ -5245,6 +5315,7 @@ function App() {
           chainDiff={chainDiff} setChainDiff={setChainDiff}
           chainTactic={chainTactic} setChainTactic={setChainTactic}
           tacticVocab={tacticVocab}
+          filtersOpen={filtersOpen} setFiltersOpen={setFiltersOpen}
           counts={counts}
           visibleCats={visibleCats}
           categories={disciplineCats}
