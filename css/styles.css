@@ -370,6 +370,35 @@ input, select, textarea { font: inherit; color: inherit; }
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* Valori del Target cliccabili → copia in clipboard. Host e chip sono <button>,
+   quindi raggiungibili anche da tastiera; gli input restano editabili. */
+.ctx-copy {
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.context-chip.ctx-copy:hover { background: var(--bg-3); border-color: var(--border-strong); }
+.context-label .target-host.ctx-copy {
+  border: 1px solid transparent;
+}
+.context-label .target-host.ctx-copy:hover {
+  background: oklch(from var(--phase-color) l c h / 0.26);
+  border-color: var(--phase-color);
+}
+.ctx-copy:focus-visible { outline: 2px solid var(--phase-color); outline-offset: 2px; }
+/* Flash di conferma: colore della fase attiva, non il mint fisso. L'anello è quello
+   che lo distingue dall'hover (anche lui in fase), non la profondità del fill. Il
+   testo resta chiaro: in colore fase su fondo fase scenderebbe a 2.9:1. */
+.context-chip.ctx-copy.copied {
+  background: oklch(from var(--phase-color) l c h / 0.26);
+  border-color: var(--phase-color);
+  box-shadow: 0 0 0 3px oklch(from var(--phase-color) l c h / 0.16);
+}
+.context-chip.ctx-copy.copied .context-chip-val { color: var(--fg); }
+.context-label .target-host.ctx-copy.copied {
+  background: oklch(from var(--phase-color) l c h / 0.30);
+  border-color: var(--phase-color);
+  color: var(--fg);
+  box-shadow: 0 0 0 3px oklch(from var(--phase-color) l c h / 0.16);
+}
 .context-fields-wrap {
   grid-column: 1 / -1;
   grid-row: 2;
@@ -1055,9 +1084,9 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .copy-btn:hover { background: var(--bg-3); color: var(--fg); }
 .copy-btn.copied {
-  background: var(--accent-soft);
-  color: var(--accent);
-  border-color: var(--accent);
+  background: oklch(from var(--phase-color) l c h / 0.26);
+  color: var(--fg);
+  border-color: var(--phase-color);
 }
 .generated-body {
   padding: 14px 16px;
@@ -1092,6 +1121,12 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 .tok-flag {
   color: var(--sky);
+}
+/* Commenti nei template: --fg-2 fa 5.21:1 su --bg-code (AA) e resta ben sotto i
+   9.48:1 del --fg-1 dei comandi. Il corsivo è il secondo indizio, non solo colore. */
+.tok-comment {
+  color: var(--fg-2);
+  font-style: italic;
 }
 
 .toast {

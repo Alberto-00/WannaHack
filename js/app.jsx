@@ -507,31 +507,47 @@ const Proto = ({ name }) => (
   <span className={`proto proto-${PROTOCOL_META[name] || 'slate'}`}>{name}</span>
 );
 
-const RenderedCommand = ({ template, values }) => {
-  const tokens = renderTemplate(template, values);
-  return (
-    <code>
-      {tokens.map((t, i) => {
+// Evidenzia variabili d'ambiente e flag dentro una porzione di testo già ripulita
+// dai segnaposto.
+const highlightShell = (text, kp) => {
+  const out = [];
+  const re = /(\b[A-Z_]{3,}=)|(\s-\-?[\w-]+)/g;
+  let m, last = 0;
+  while ((m = re.exec(text))) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    if (m[1]) out.push(<span key={`${kp}-${m.index}`} className="tok-env">{m[1]}</span>);
+    else      out.push(<span key={`${kp}-${m.index}`} className="tok-flag">{m[2]}</span>);
+    last = re.lastIndex;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+};
+
+// Riga per riga, così le righe di commento ("# …") si distinguono dai comandi.
+// Nei commenti i segnaposto vengono comunque sostituiti — qualche hint cita
+// LHOST/LPORT — ma flag ed env non si evidenziano: competerebbero col grigio.
+const RenderedCommand = ({ template, values }) => (
+  <code>
+    {String(template).split('\n').map((line, li) => {
+      const isComment = line.trimStart().startsWith('#');
+      const body = renderTemplate(line, values).map((t, i) => {
         if (t.type === 'placeholder')
           return <span key={i} className="tok-placeholder">{t.text}</span>;
         if (t.type === 'value')
           return <span key={i} className="tok-value">{t.text}</span>;
-        const text = t.text;
-        const out = [];
-        const re = /(\b[A-Z_]{3,}=)|(\s-\-?[\w-]+)/g;
-        let m, last = 0;
-        while ((m = re.exec(text))) {
-          if (m.index > last) out.push(text.slice(last, m.index));
-          if (m[1]) out.push(<span key={`${i}-${m.index}`} className="tok-env">{m[1]}</span>);
-          else      out.push(<span key={`${i}-${m.index}`} className="tok-flag">{m[2]}</span>);
-          last = re.lastIndex;
-        }
-        if (last < text.length) out.push(text.slice(last));
-        return <React.Fragment key={i}>{out}</React.Fragment>;
-      })}
-    </code>
-  );
-};
+        if (isComment)
+          return <React.Fragment key={i}>{t.text}</React.Fragment>;
+        return <React.Fragment key={i}>{highlightShell(t.text, `${li}-${i}`)}</React.Fragment>;
+      });
+      return (
+        <React.Fragment key={li}>
+          {li > 0 && '\n'}
+          {isComment ? <span className="tok-comment">{body}</span> : body}
+        </React.Fragment>
+      );
+    })}
+  </code>
+);
 
 /* ─────────────────────────────────────────────────────────────
    Discipline switch — top-level mode (PT/Web · WiFi · …)
@@ -1052,27 +1068,50 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
 /* ─────────────────────────────────────────────────────────────
    Target context bar
    ───────────────────────────────────────────────────────────── */
-const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields }) => {
+const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields, onToast }) => {
   const flds = fields || [];
   const primary = flds[0];
   const isSecret = (f) => f.secret || f.key === 'password' || f.key === 'hash';
+  // Click su un valore → clipboard. I secret si copiano in chiaro anche se
+  // mostrati come pallini: è il valore che serve incollare altrove.
+  const [copied, setCopied] = useState(null);
+  const copyTimer = useRef(null);
+  useEffect(() => () => clearTimeout(copyTimer.current), []);
+  const copyValue = (f) => {
+    const val = ctx[f.key];
+    if (!val || !navigator.clipboard) return;
+    navigator.clipboard.writeText(String(val)).then(() => {
+      setCopied(f.key);
+      clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setCopied(null), 1200);
+      onToast && onToast(`${f.label} copiato`);
+    });
+  };
   return (
     <div className={`context-bar ${collapsed ? 'collapsed' : ''}`}>
       <div className="context-label">
         <Icon name="target" size={12} />
         Target
-        {primary && ctx[primary.key] && <span className="target-host">{ctx[primary.key]}</span>}
+        {primary && ctx[primary.key] && (
+          <button type="button" title={`Copia ${primary.label}`}
+                  className={`target-host ctx-copy ${copied === primary.key ? 'copied' : ''}`}
+                  onClick={() => copyValue(primary)}>
+            {ctx[primary.key]}
+          </button>
+        )}
         {collapsed && (
           <span className="context-chips">
             {flds.filter(f => f.key !== primary?.key && ctx[f.key]).map(f => (
-              <span key={f.key} className="context-chip">
+              <button key={f.key} type="button" title={`Copia ${f.label}`}
+                      className={`context-chip ctx-copy ${copied === f.key ? 'copied' : ''}`}
+                      onClick={() => copyValue(f)}>
                 <span className="context-chip-key">{f.label}</span>
                 <span className="context-chip-val">
                   {isSecret(f)
                     ? '•'.repeat(Math.min(8, String(ctx[f.key]).length))
                     : ctx[f.key]}
                 </span>
-              </span>
+              </button>
             ))}
           </span>
         )}
@@ -5344,6 +5383,7 @@ function App() {
                   layout={layout} setLayout={setLayout} />
           <TargetContext ctx={ctx} setCtx={setCtx}
                          fields={disciplineCfg?.targetFields}
+                         onToast={showToast}
                          collapsed={ctxCollapsed} setCollapsed={setCtxCollapsed} />
           {mode === 'chains' ? (
             <ChainsView

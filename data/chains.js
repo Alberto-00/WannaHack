@@ -2035,6 +2035,48 @@ const CHAINS = [
         "verify": "La sessione regge Ctrl+C e gli editor. `id` conferma www-data."
       }
     ]
+  },
+  {
+    "id": "shadow-credentials",
+    "name": "Shadow Credentials → NT hash",
+    "short": "shadow",
+    "category": "active-directory",
+    "subcategory": "priv-esc",
+    "tactic": "Privilege Escalation",
+    "difficulty": "medium",
+    "estTime": "10 min",
+    "objective": "Abusi la scrittura su `msDS-KeyCredentialLink` del target: aggiungi una chiave tua, autentichi via PKINIT e con UnPAC-the-hash ne ricavi l'NT hash, senza resettare la password. Se il DC non supporta PKINIT la tecnica non si applica e si ripiega sul targeted Kerberoast.",
+    "outcome": "NT hash del target, riusabile in Pass-the-Hash o evil-winrm",
+    "prereqs": [
+      "Scrittura su `msDS-KeyCredentialLink` del target: `GenericWrite`, `GenericAll` o `WriteProperty` (in BloodHound l'arco `AddKeyCredentialLink`)",
+      "Il DC supporta PKINIT: certificato KDC presente, tipico dove c'è AD CS. Senza, certipy/pywhisker falliscono al login PKINIT e la tecnica non è applicabile",
+      "Livello di dominio Windows Server 2016 o superiore"
+    ],
+    "mitre": [
+      "T1098",
+      "T1558",
+      "T1550.003"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Conferma l'arco in BloodHound",
+        "cmdRef": "bloodhound-py",
+        "verify": "Caricato lo zip, un arco `AddKeyCredentialLink` (oppure `GenericWrite`/`GenericAll`) da `<utente>` verso `<target>` conferma la fattibilità."
+      },
+      {
+        "id": "s2",
+        "title": "Aggiungi la key, PKINIT e UnPAC-the-hash",
+        "cmdRef": "shadow-creds",
+        "verify": "`certipy` stampa `Got hash for <target>`: l'NT hash è nel formato `aad3b...:<nthash>`. `shadow auto` rimuove da solo la key aggiunta.\n\nVarianti: NTLM disabilitato → variante Kerberos (`-k`); solo token Windows e nessuna password → variante Whisker con `Rubeus /getcredentials`; da Kali senza password → esporta prima il TGT con `Rubeus tgtdeleg` e usa `-k`."
+      },
+      {
+        "id": "s3",
+        "title": "Riusa l'NT hash",
+        "cmdRef": "evil-winrm",
+        "verify": "Pass-the-Hash: `evil-winrm -i <dc> -u <target> -H <nthash>` apre una shell se il target è in Remote Management Users. In alternativa `secretsdump -hashes :<nthash>` per dumpare altri segreti."
+      }
+    ]
   }
 ];
 window.CHAINS = CHAINS;

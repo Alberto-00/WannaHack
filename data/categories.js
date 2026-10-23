@@ -97,8 +97,10 @@ const CATEGORIES = [
     short: 'EX',
     hue: 25,
     icon: 'crosshair',
-    description: 'Payload generation, listeners, web shells, credential attacks, shell stabilization, AV bypass.',
+    description: 'Exploit dei servizi di infrastruttura, payload generation, listeners, web shells, credential attacks, shell stabilization, AV bypass.',
     subcategories: [
+      { id: 'infrastructure', name: 'Infrastructure',
+        description: 'Exploit dei servizi di infrastruttura, raggruppati per porta come in Service Enumeration. Qui si passa dall’enumerazione all’esecuzione di codice o alla lettura di file sul servizio: xp_cmdshell su MSSQL, UDF e OUTFILE su MySQL, CONFIG SET su Redis, COPY TO PROGRAM su PostgreSQL, stream RTSP, hash IPMI. L’enumerazione resta in Service Enumeration.' },
       { id: 'payloads',     name: 'Payload Generation',
         description: 'Genera payload per il target: msfvenom, shellcode, eseguibili e one-liner per ogni OS e architettura.' },
       { id: 'listeners',    name: 'Listeners',
