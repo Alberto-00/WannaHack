@@ -241,7 +241,7 @@ const _deriveRequiresPT = (text, tags, category) => {
   if (usesPfx && !producesPfx && !hasPw) req.push('cert'); // pfx come unico input
   if (req.length) return req;
   // senza credenziali: privesc e post-exploitation girano con una shell già ottenuta
-  if (category === 'privesc' || category === 'post-exp') return ['shell'];
+  if (category === 'privesc-linux' || category === 'privesc-windows' || category === 'post-exp') return ['shell'];
   return ['no-creds'];
 };
 
@@ -393,14 +393,26 @@ const applyOrder = (list, order) => {
     (pos.has(a.id) ? pos.get(a.id) : Infinity) - (pos.has(b.id) ? pos.get(b.id) : Infinity));
 };
 
+// Identità di un gruppo = (category, subcategory, group). I nomi di gruppo si
+// ripetono tra sottofasi ("Pillaging", "Enumeration", "Connection"...): vanno
+// tenuti distinti, altrimenti nella vista "tutta la fase" i comandi di subcat
+// diverse finiscono sotto lo stesso header. Il nome mostrato resta il solo group.
+const GROUP_SEP = '\u0000';
+const groupKeyOf  = (c)   => `${c.category || ''}${GROUP_SEP}${c.subcategory || ''}${GROUP_SEP}${c.group || 'Altro'}`;
+const groupNameOf = (key) => key.slice(key.lastIndexOf(GROUP_SEP) + 1);
+
+// Tag HTML che possono comparire nei payload (es. XSS): NON sono segnaposto,
+// vanno lasciati come testo letterale anche se hanno la forma <parola>.
+const HTML_TAGS = new Set(['script', 'br', 'hr', 'img', 'svg', 'form', 'input', 'button', 'iframe', 'body', 'html', 'head', 'style', 'link', 'meta', 'title', 'textarea', 'canvas', 'video', 'audio', 'source', 'embed', 'object', 'details', 'marquee', 'div', 'span', 'pre', 'code', 'plaintext', 'xmp']);
 const renderTemplate = (tmpl, values) => {
   const parts = [];
   const re = /<(\w+)>/g;
   let lastIndex = 0;
   let m;
   while ((m = re.exec(tmpl)) !== null) {
-    if (m.index > lastIndex) parts.push({ type: 'text', text: tmpl.slice(lastIndex, m.index) });
     const key = m[1];
+    if (HTML_TAGS.has(key.toLowerCase())) continue;   // tag HTML del payload, non segnaposto
+    if (m.index > lastIndex) parts.push({ type: 'text', text: tmpl.slice(lastIndex, m.index) });
     const val = values[key];
     if (val && String(val).trim()) parts.push({ type: 'value', text: String(val) });
     else                            parts.push({ type: 'placeholder', text: `<${key}>` });
@@ -411,6 +423,21 @@ const renderTemplate = (tmpl, values) => {
 };
 const renderTemplateString = (tmpl, values) =>
   renderTemplate(tmpl, values).map(t => t.text).join('');
+
+// Chiavi segnaposto <key> di un template: ordine di comparsa, senza duplicati, saltando
+// i tag HTML del payload come fa renderTemplate (<script> non è un parametro). Unico punto
+// per detection e render: prima la detection vedeva "script" come parametro e mostrava un
+// campo che renderTemplate poi ignorava ("ha parametri ma nessun parametro si può inserire").
+const extractParamKeys = (tmpl) => {
+  const re = /<(\w+)>/g;
+  const seen = new Set();
+  let m;
+  while ((m = re.exec(String(tmpl || '')))) {
+    const k = m[1];
+    if (!HTML_TAGS.has(k.toLowerCase())) seen.add(k);
+  }
+  return [...seen];
+};
 
 // Lightweight rich text for descriptions: `code` spans, "- "/"• " bullet lists, line breaks
 // Inline markdown → React nodes: `code`, **bold**, *italic*/_italic_.
@@ -428,21 +455,66 @@ const renderInline = (s, kp = 'i') => {
       return <React.Fragment key={key}>{p}</React.Fragment>;
     });
 };
+// Liste con annidamento per indentazione: 1 tab (o 2 spazi) = un livello.
+const indentDepth = (raw) => Math.floor(((raw.match(/^[\t ]*/) || [''])[0]).replace(/\t/g, '  ').length / 2);
+const listMatch = (t) => {
+  const mo = t.match(/^\d+\.\s+(.*)/);  if (mo) return { type: 'ol', content: mo[1] };
+  const mu = t.match(/^[-•]\s+(.*)/);   if (mu) return { type: 'ul', content: mu[1] };
+  return null;
+};
+// porta il minimo a 0 e limita i salti di profondità a +1 (indentazioni irregolari non rompono)
+const normDepths = (items) => {
+  const min = Math.min(...items.map(x => x.depth));
+  let prev = 0;
+  items.forEach((x, k) => { let d = x.depth - min; if (k === 0) d = 0; else if (d > prev + 1) d = prev + 1; x.depth = d; prev = d; });
+};
+// raccoglie il blocco di voci-lista a partire dalla riga `start`; ritorna [items, nextIndex]
+const collectList = (lines, start) => {
+  const items = []; let i = start;
+  while (i < lines.length) {
+    const tt = lines[i].trim();
+    if (!tt) break;
+    const m = listMatch(tt);
+    if (!m) break;
+    items.push({ depth: indentDepth(lines[i]), type: m.type, content: m.content });
+    i++;
+  }
+  normDepths(items);
+  return [items, i];
+};
+// costruisce liste React annidate da un blocco di voci {depth,type,content}
+const buildListReact = (items, start, depth, kp) => {
+  const nodes = []; let i = start;
+  while (i < items.length && items[i].depth === depth) {
+    const type = items[i].type;
+    const lis = [];
+    while (i < items.length && items[i].depth === depth && items[i].type === type) {
+      const idx = i; const content = renderInline(items[i].content, 'li' + kp + idx); i++;
+      let child = null;
+      if (i < items.length && items[i].depth > depth) { const r = buildListReact(items, i, depth + 1, kp + idx + '_'); child = r[0]; i = r[1]; }
+      lis.push(<li key={'li' + kp + idx}>{content}{child}</li>);
+    }
+    const L = type;
+    nodes.push(<L key={'L' + kp + depth + '_' + i}>{lis}</L>);
+  }
+  return [nodes, i];
+};
 const renderRich = (text) => {
   if (!text) return null;
   const out = [];
-  let list = null;
-  String(text).split('\n').forEach((ln, i) => {
-    const t = ln.trim();
-    const m = t.match(/^[-•]\s+(.*)/);
-    if (m) {
-      (list = list || []).push(<li key={'li' + i}>{renderInline(m[1], 'li' + i)}</li>);
+  const lines = String(text).split('\n');
+  let i = 0;
+  while (i < lines.length) {
+    const t = lines[i].trim();
+    if (!t) { i++; continue; }
+    if (listMatch(t)) {
+      const [items, ni] = collectList(lines, i); i = ni;
+      out.push(...buildListReact(items, 0, 0, 'r' + i + '_')[0]);
     } else {
-      if (list) { out.push(<ul key={'ul' + i}>{list}</ul>); list = null; }
-      if (t) out.push(<p key={'p' + i}>{renderInline(t, 'p' + i)}</p>);
+      out.push(<p key={'p' + i}>{renderInline(t, 'p' + i)}</p>);
+      i++;
     }
-  });
-  if (list) out.push(<ul key="ul-end">{list}</ul>);
+  }
   return out;
 };
 
@@ -466,20 +538,39 @@ const mdInline = (s) =>
 
 // Block-level: "# heading" → header bar, "- "/"• " → list, a line starting with
 // "<" → raw HTML passthrough, anything else → paragraph. Blank line ends a list.
+// costruisce liste HTML annidate da un blocco di voci {depth,type,content}
+const buildListHtml = (items, start, depth) => {
+  let html = ''; let i = start;
+  while (i < items.length && items[i].depth === depth) {
+    const type = items[i].type;
+    html += '<' + type + '>';
+    while (i < items.length && items[i].depth === depth && items[i].type === type) {
+      let inner = mdInline(items[i].content); i++;
+      if (i < items.length && items[i].depth > depth) { const r = buildListHtml(items, i, depth + 1); inner += r[0]; i = r[1]; }
+      html += '<li>' + inner + '</li>';
+    }
+    html += '</' + type + '>';
+  }
+  return [html, i];
+};
 const markdownToHtml = (text) => {
   if (!text) return '';
+  const lines = String(text).split('\n');
   const out = [];
-  let list = null;
-  const flush = () => { if (list) { out.push(`<ul>${list.join('')}</ul>`); list = null; } };
-  String(text).split('\n').forEach((ln) => {
-    const t = ln.trim();
-    if (!t)                        { flush(); }
-    else if (/^#{1,6}\s+/.test(t)) { flush(); out.push(`<h4>${mdInline(t.replace(/^#{1,6}\s+/, ''))}</h4>`); }
-    else if (/^[-•]\s+/.test(t))   { (list = list || []).push(`<li>${mdInline(t.replace(/^[-•]\s+/, ''))}</li>`); }
-    else if (t.startsWith('<'))    { flush(); out.push(t); }              // raw HTML block/line
-    else                           { flush(); out.push(`<p>${mdInline(t)}</p>`); }
-  });
-  flush();
+  let i = 0;
+  while (i < lines.length) {
+    const t = lines[i].trim();
+    if (!t) { i++; continue; }
+    if (/^#{1,6}\s+/.test(t)) { out.push(`<h4>${mdInline(t.replace(/^#{1,6}\s+/, ''))}</h4>`); i++; continue; }
+    if (listMatch(t)) {
+      const [items, ni] = collectList(lines, i); i = ni;
+      out.push(buildListHtml(items, 0, 0)[0]);
+      continue;
+    }
+    if (t.startsWith('<')) { out.push(t); i++; continue; }   // raw HTML block/line
+    out.push(`<p>${mdInline(t)}</p>`);
+    i++;
+  }
   return out.join('');
 };
 
@@ -498,6 +589,15 @@ const splitNote = (text) => {
   });
   if (cur.some(l => l.trim())) out.push(cur.join('\n'));
   return out;
+};
+
+// Tono del callout dal TITOLO della sezione (non dal corpo), condiviso tra builder e step.
+const noteTone = (sec) => {
+  const first = String(sec).split('\n')[0] || '';
+  const h = /^#{1,6}\s+/.test(first) ? first.replace(/^#+\s*/, '').toLowerCase() : '';
+  // Prossimo passo e Opzioni restano sul colore della fase (default); fissi solo warn e info.
+  return /errori comuni|attenzione/.test(h) ? 'warn'
+    : /output atteso|cosa osservare/.test(h) ? 'info' : '';
 };
 
 const Pill = ({ tone, children }) => (
@@ -1225,7 +1325,7 @@ const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
   const groups = useMemo(() => {
     const g = {};
     commands.forEach(c => {
-      const key = c.group || 'Altro';
+      const key = groupKeyOf(c);
       if (!g[key]) g[key] = [];
       g[key].push(c);
     });
@@ -1263,7 +1363,17 @@ const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
 
   // "Cerca gruppi" (in-phase): narrows which groups are shown
   const gq = groupQuery.trim().toLowerCase();
-  const matchedGroups = gq ? groupNames.filter(n => n.toLowerCase().includes(gq)) : groupNames;
+  const matchedGroups = gq ? groupNames.filter(n => groupNameOf(n).toLowerCase().includes(gq)) : groupNames;
+
+  // Nella vista "tutta la fase" (una categoria, nessuna sottofase, no ricerca) ordina i gruppi
+  // per sottofase nell'ordine della sidebar (categories.js), così escono raggruppati per sottofase.
+  let groupEntries = Object.entries(groups).filter(([groupName]) => matchedGroups.includes(groupName));
+  if (cat && !sub && !searching) {
+    const subIdx = {};
+    (cat.subcategories || []).forEach((s, i) => { subIdx[s.id] = i; });
+    groupEntries = groupEntries.slice().sort((a, b) =>
+      (subIdx[a[1][0] && a[1][0].subcategory] ?? 99) - (subIdx[b[1][0] && b[1][0].subcategory] ?? 99));
+  }
 
   return (
     <div className="subsection-view" style={{ '--cat-color': catColor(hue), '--cat-color-soft': catColorSoft(hue) }}>
@@ -1331,15 +1441,22 @@ const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
             <div className="no-results" style={{ padding: '40px 20px' }}>
               Nessun gruppo per «{groupQuery.trim()}».
             </div>
-          ) : Object.entries(groups).filter(([groupName]) => matchedGroups.includes(groupName)).map(([groupName, list]) => {
+          ) : groupEntries.map(([groupName, list], gi, arr) => {
             const isCollapsed = searching ? false : collapsedGroups.has(groupName);
+            // Divisore di sotto-fase: solo nella vista "tutta la fase" (nessuna sottofase selezionata, non in ricerca)
+            const subId = list[0] && list[0].subcategory;
+            const prevSubId = gi > 0 ? (arr[gi - 1][1][0] && arr[gi - 1][1][0].subcategory) : null;
+            const showSubHeader = !searching && !sub && cat && subId && subId !== prevSubId;
+            const subName = showSubHeader ? (SUB_MAP[subKey(activeCat, subId)]?.name || subId) : null;
             return (
-              <div key={groupName} className={`cmd-group ${isCollapsed ? 'collapsed' : ''}`}>
+              <React.Fragment key={groupName}>
+                {showSubHeader && <div className="subphase-divider"><span>{subName}</span></div>}
+              <div className={`cmd-group ${isCollapsed ? 'collapsed' : ''}`}>
                 <div className="cmd-group-header" onClick={() => toggleGroup(groupName)}>
                   <span className="group-chevron">
                     <Icon name="chevron" size={12}/>
                   </span>
-                  <h3>{groupName}</h3>
+                  <h3>{groupNameOf(groupName)}</h3>
                   <div className="line"></div>
                   <span className="count">{list.length}</span>
                 </div>
@@ -1363,6 +1480,7 @@ const LibraryContent = React.memo(({ commands, activeCat, activeSub, chains,
                   </div>
                 </div>
               </div>
+              </React.Fragment>
             );
           })}
         </>
@@ -1409,12 +1527,9 @@ const Builder = ({ cmd, ctx, onToast }) => {
     (cmd.params || []).forEach(p => {
       v[p.key] = localValues[p.key] ?? (p.ctx ? ctx[p.ctx] : '') ?? '';
     });
-    const re = /<(\w+)>/g;
-    let m;
-    while ((m = re.exec(template))) {
-      const k = m[1];
+    extractParamKeys(template).forEach(k => {
       if (!(k in v)) v[k] = localValues[k] ?? '';
-    }
+    });
     return v;
   }, [cmd, localValues, ctx, template]);
 
@@ -1432,16 +1547,9 @@ const Builder = ({ cmd, ctx, onToast }) => {
   // Mostra SOLO i parametri usati dal template attivo (variante), nell'ordine in cui compaiono.
   // Cambiando variante il template cambia → i campi si aggiornano da soli.
   const paramMap = new Map((cmd.params || []).map(p => [p.key, p]));
-  const re = /<(\w+)>/g;
-  const seenKeys = new Set();
-  const params = [];
-  let m;
-  while ((m = re.exec(template))) {
-    const k = m[1];
-    if (seenKeys.has(k)) continue;
-    seenKeys.add(k);
-    params.push(paramMap.get(k) || { key: k, label: k.charAt(0).toUpperCase() + k.slice(1), placeholder: `Enter ${k}…` });
-  }
+  const params = extractParamKeys(template).map(k =>
+    paramMap.get(k) || { key: k, label: k.charAt(0).toUpperCase() + k.slice(1), placeholder: `Enter ${k}…` }
+  );
 
   const platformIcon = cmd.platform === 'windows' ? 'windows' : (cmd.platform === 'linux' ? 'linux' : 'box');
 
@@ -1557,14 +1665,16 @@ const Builder = ({ cmd, ctx, onToast }) => {
           </button>
         </div>
         <div className="generated-body">
-          <RenderedCommand template={template} values={values} />
+          <div className="gen-anim" key={variantId}>
+            <RenderedCommand template={template} values={values} />
+          </div>
         </div>
       </div>
 
-      {cmd.note && (
-        <div className="builder-callouts">
-          {splitNote(cmd.note).map((sec, i) => (
-            <div key={i} className="builder-callout"
+      {(variant?.note || cmd.note) && (
+        <div className="builder-callouts" key={variant?.note || cmd.note}>
+          {splitNote(variant?.note || cmd.note).map((sec, i) => (
+            <div key={i} className={`builder-callout ${noteTone(sec)}`}
                  dangerouslySetInnerHTML={{ __html: markdownToHtml(sec) }} />
           ))}
         </div>
@@ -1661,17 +1771,9 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
   const paramList = useMemo(() => {
     if (!cmd || !template) return [];
     const paramMap = new Map((cmd.params || []).map(p => [p.key, p]));
-    const re = /<(\w+)>/g;
-    const seen = new Set();
-    const list = [];
-    let m;
-    while ((m = re.exec(template))) {
-      const k = m[1];
-      if (seen.has(k)) continue;
-      seen.add(k);
-      list.push(paramMap.get(k) || { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) });
-    }
-    return list;
+    return extractParamKeys(template).map(k =>
+      paramMap.get(k) || { key: k, label: k.charAt(0).toUpperCase() + k.slice(1) }
+    );
   }, [cmd, template]);
 
   const stepValues = stepState.values || {};
@@ -1698,12 +1800,12 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
 
   return (
     <div className={`step ${status}`}>
-      <div className="step-node" onClick={onToggleStatus} title="Cambia stato (todo → active → done)">
+      <div className="step-node" onClick={onToggleStatus} title="Cambia stato: todo, active, done">
         {status === 'done' ? <Icon name="check" size={16}/> : idx + 1}
       </div>
       <div className="step-body">
         <div className="step-head" onClick={onToggleExpand}>
-          <h4 className="step-title">{step.title}</h4>
+          <h4 className="step-title">{renderInline(step.title, 'st-' + step.id)}</h4>
           {cmd && (
             <span className="cmd-card-subcat" style={{ marginRight: 4 }}>
               {cmd.name}
@@ -1736,7 +1838,9 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
                 </div>
               )}
 
-              {variantList.length > 0 && (
+              {/* Variante fissata dalla chain → nessun selettore: lo step è un comando singolo.
+                  Variante non fissata → step generico, mostra il selettore. */}
+              {variantList.length > 0 && !step.variant && (
                 <div className="variant-tabs">
                   {variantList.map(v => (
                     <button key={v.id}
@@ -1785,18 +1889,23 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
                 </div>
               )}
 
-              {step.verify && (
-                <div className="step-verify">
-                  <span style={{ marginLeft: 4 }}>{renderInline(step.verify, 'verify')}</span>
+              {(activeVariant?.note || cmd?.note) && (
+                <div className="builder-callouts" key={activeVariant?.note || cmd.note}>
+                  {splitNote(activeVariant?.note || cmd.note)
+                    .filter(sec => !(step.verify && /output atteso|cosa osservare/i.test(sec)))
+                    .map((sec, i) => (
+                      <div key={i} className={`builder-callout ${noteTone(sec)}`}
+                           dangerouslySetInnerHTML={{ __html: markdownToHtml(sec) }} />
+                    ))}
                 </div>
               )}
 
-              <textarea
-                className="step-notes"
-                placeholder="// Note — output, osservazioni, gotchas…"
-                value={stepState.notes || ''}
-                onChange={e => onUpdate({ notes: e.target.value })}
-              />
+              {step.verify && (
+                <div className="builder-callouts">
+                  <div className="builder-callout info"
+                       dangerouslySetInnerHTML={{ __html: markdownToHtml('# Output atteso\n' + step.verify) }} />
+                </div>
+              )}
 
               <div style={{ display: 'flex', gap: 8 }}>
                 <button
@@ -1921,9 +2030,9 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
             PLAYBOOK ATTIVO · {chain.tactic}
           </div>
           <h1>{chain.name}</h1>
-          <p className="chain-hero-objective">{chain.objective}</p>
+          <p className="chain-hero-objective">{renderInline(chain.objective, 'obj')}</p>
           <div className="chain-hero-meta">
-            <div><strong>Risultato</strong><span>{chain.outcome}</span></div>
+            <div><strong>Risultato</strong><span>{renderInline(chain.outcome, 'out')}</span></div>
             <div>
               <strong>Difficoltà</strong>
               <span className={`diff-pill diff-${chain.difficulty}`} style={{ marginTop: 2 }}>
@@ -1946,7 +2055,7 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
                 Prerequisiti
               </strong>
               <ul style={{ margin: 0, paddingLeft: 18, lineHeight: 1.7 }}>
-                {chain.prereqs.map((p, i) => <li key={i}>{p}</li>)}
+                {chain.prereqs.map((p, i) => <li key={i}>{renderInline(p, 'pre-' + i)}</li>)}
               </ul>
             </div>
           )}
@@ -2194,11 +2303,9 @@ const EditModal = ({ cmd, categories, groupVocab, defaultCat, defaultSub, onClos
   // auto-detect params from base template + ogni variante (una variante può usare
   // parametri non presenti nel template base: vanno comunque tenuti ed editabili).
   const detectedParams = useMemo(() => {
-    const re = /<(\w+)>/g;
     const out = new Set();
-    const scan = (t) => { let m; re.lastIndex = 0; while ((m = re.exec(t || ''))) out.add(m[1]); };
-    scan(form.template);
-    form.variants.forEach(v => scan(v.template));
+    extractParamKeys(form.template).forEach(k => out.add(k));
+    form.variants.forEach(v => extractParamKeys(v.template).forEach(k => out.add(k)));
     return [...out];
   }, [form.template, form.variants]);
 
@@ -2536,8 +2643,9 @@ const EditModal = ({ cmd, categories, groupVocab, defaultCat, defaultSub, onClos
                         <Icon name="x" size={11}/>
                       </button>
                     </div>
-                    <input className="variant-desc-input"
+                    <textarea className="variant-desc-input"
                            value={v.description || ''}
+                           rows={2}
                            placeholder="Descrizione variante (opzionale — sostituisce quella del comando)"
                            onChange={e => updateVariant(i, { description: e.target.value })}/>
                   </div>
@@ -2596,7 +2704,7 @@ const nextStepId = (steps) => {
 };
 
 const stepSyncParams = (tmpl, prev) => {
-  const keys = [...new Set([...String(tmpl).matchAll(/<(\w+)>/g)].map(m => m[1]))];
+  const keys = extractParamKeys(tmpl);
   const map = new Map((prev || []).map(p => [p.key, p]));
   return keys.map(k => map.get(k) || { key: k, label: k.charAt(0).toUpperCase() + k.slice(1), placeholder: '' });
 };
@@ -2700,7 +2808,7 @@ const StepCommandEditor = ({ step, allCommands, catIds, onChange }) => {
                            onChange={e => vUpd(vi, { label: e.target.value })} className="step-editor-input"/>
                     <textarea value={v.template || ''} placeholder="template" rows={1}
                            onChange={e => vUpd(vi, { template: e.target.value })} className="step-editor-input mono"/>
-                    <input value={v.description || ''} placeholder="descrizione (opzionale)"
+                    <textarea value={v.description || ''} placeholder="descrizione (opzionale)" rows={2}
                            onChange={e => vUpd(vi, { description: e.target.value })} className="step-editor-input"/>
                     <button type="button" onClick={() => vRm(vi)} className="step-editor-remove" title="Rimuovi">
                       <Icon name="x" size={10}/>
@@ -2808,7 +2916,7 @@ const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
     const cmd = st.cmd || (st.cmdRef ? allCommands.find(c => c.id === st.cmdRef) : null);
     if (!cmd) return [];
     const tmpl = (st.variant && cmd.variants?.find(v => v.id === st.variant)?.template) || cmd.template || '';
-    return [...new Set([...String(tmpl).matchAll(/<(\w+)>/g)].map(m => m[1]))];
+    return extractParamKeys(tmpl);
   };
   const addOverride = (stepIdx) => {
     const st = form.steps[stepIdx];
@@ -2994,7 +3102,7 @@ const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
                 const stepTmpl = stepCmd
                   ? ((s.variant && stepCmd.variants?.find(v => v.id === s.variant)?.template) || stepCmd.template || '')
                   : '';
-                const overrideKeys = [...new Set([...String(stepTmpl).matchAll(/<(\w+)>/g)].map(m => m[1]))];
+                const overrideKeys = extractParamKeys(stepTmpl);
                 return (
                   <div key={i} className={`step-editor-block ${isOpen ? '' : 'collapsed'}`}>
                     <div className="step-editor-head">
@@ -3022,9 +3130,10 @@ const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
                                          onChange={(patch) => updateStep(i, patch)} />
 
                       <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
-                      <input value={s.verify || ''}
+                      <textarea value={s.verify || ''}
                              onChange={e => updateStep(i, { verify: e.target.value })}
                              placeholder="es. `Got hash for administrator@…`"
+                             rows={3}
                              className="step-editor-input mono"/>
 
                       <div className="step-editor-sub">
@@ -3137,7 +3246,7 @@ const StepEditModal = ({ step, allCommands, catIds, onClose, onSave, onDelete, d
   const stepTmpl = effCmd
     ? ((form.variant && variants.find(v => v.id === form.variant)?.template) || effCmd.template || '')
     : '';
-  const overrideKeys = [...new Set([...String(stepTmpl).matchAll(/<(\w+)>/g)].map(m => m[1]))];
+  const overrideKeys = extractParamKeys(stepTmpl);
 
   // a parameter can be overridden once: filter out keys already used by other rows
   const availKeys = (oi) => {
@@ -3188,7 +3297,7 @@ const StepEditModal = ({ step, allCommands, catIds, onClose, onSave, onDelete, d
 
           <div className="modal-row mono">
             <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
-            <input value={form.verify} onChange={e => set({ verify: e.target.value })}
+            <textarea value={form.verify} onChange={e => set({ verify: e.target.value })}
                    placeholder="es. `Got hash for administrator@…`" />
           </div>
 
@@ -3379,9 +3488,9 @@ const TaxonomyModal = ({ discipline, allCommands, allChains,
     const slot = (o, k) => (o[k] = o[k] || { cmd: 0, chain: 0, groups: new Set() });
     allCommands.forEach(c => {
       slot(cat, c.category).cmd++;
-      slot(cat, c.category).groups.add(c.group || 'Altro');
+      slot(cat, c.category).groups.add(groupKeyOf(c));
       slot(sub, subKey(c.category, c.subcategory)).cmd++;
-      slot(sub, subKey(c.category, c.subcategory)).groups.add(c.group || 'Altro');
+      slot(sub, subKey(c.category, c.subcategory)).groups.add(groupKeyOf(c));
     });
     allChains.forEach(c => {
       slot(cat, c.category).chain++;
@@ -4798,7 +4907,7 @@ function App() {
   // Group names currently rendered — drives the 'G' shortcut without touching the DOM
   const currentGroupNames = useMemo(() => {
     const seen = new Set();
-    filteredCommands.forEach(c => seen.add(c.group || 'Altro'));
+    filteredCommands.forEach(c => seen.add(groupKeyOf(c)));
     return [...seen];
   }, [filteredCommands]);
   // 'G' shortcut: if anything is collapsed, expand all; otherwise collapse all

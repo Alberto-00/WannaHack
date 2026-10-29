@@ -171,7 +171,7 @@ input, select, textarea { font: inherit; color: inherit; }
 }
 
 .filters {
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column; gap: 6px;
   padding: 12px;
 }
 /* Il wrapper anima, il contenuto non si tocca: così l'altezza misurata resta la
@@ -858,7 +858,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .builder-description ul {
   margin: 4px 0;
   padding-left: 18px;
-  display: flex; flex-direction: column; gap: 3px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .builder-description li { line-height: 1.45; }
 .builder-description code,
@@ -946,7 +946,7 @@ input, select, textarea { font: inherit; color: inherit; }
 .builder-callout ul {
   margin: 4px 0;
   padding-left: 18px;
-  display: flex; flex-direction: column; gap: 3px;
+  display: flex; flex-direction: column; gap: 10px;
 }
 .builder-callout a {
   color: var(--phase-color);
@@ -1589,16 +1589,6 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
 }
 .copy-btn.copy-btn-icon:active { transform: scale(0.94); }
 
-.step-verify {
-  background: oklch(from var(--phase-color) l c h / 0.10);
-  border-left: 3px solid var(--phase-color);
-  border-radius: 4px;
-  padding: 8px 12px;
-  font-size: 12.5px;
-  color: var(--fg-1);
-  display: flex; align-items: flex-start; gap: 8px;
-}
-.step-verify::before { content: '✓'; color: var(--sky); font-weight: 700; }
 
 /* Captures grid */
 .captures {
@@ -1663,22 +1653,6 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   border-color: var(--phase-color);
   background: var(--phase-color-soft);
 }
-
-.step-notes {
-  background: var(--bg-code);
-  border: 1px dashed oklch(from var(--phase-color) l c h / 0.5);
-  border-radius: var(--radius-sm);
-  padding: 10px 12px;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--fg-1);
-  resize: vertical;
-  min-height: 60px;
-  outline: none;
-  width: 100%;
-}
-.step-notes::placeholder { color: var(--fg-3); }
-.step-notes:focus { border-color: var(--phase-color); border-style: solid; }
 
 /* Step description = what the command does + the active variant's note, merged */
 .step-desc {
@@ -2238,6 +2212,31 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   color: var(--phase-color);
   font-style: normal;
   font-weight: 600;
+}
+
+/* Divisore di sotto-fase: separa i gruppi per sottofase nella vista "tutta la fase" */
+.subphase-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 24px 28px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cat-color, var(--accent));
+}
+.subphase-divider span { white-space: nowrap; }
+.subphase-divider::before {
+  content: '';
+  width: 16px; height: 2px;
+  background: var(--cat-color, var(--accent));
+  border-radius: 2px;
+}
+.subphase-divider::after {
+  content: '';
+  flex: 1; height: 1px;
+  background: linear-gradient(to right, var(--cat-color, var(--accent)), transparent);
 }
 
 .cmd-group {
@@ -3190,6 +3189,14 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
 }
 .step-editor-input:focus { border-color: var(--phase-color, var(--accent)); }
 .step-editor-input.mono { font-family: var(--font-mono); }
+textarea.step-editor-input {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;        /* allargabile verso il basso */
+  overflow-y: auto;        /* scroll quando il testo eccede */
+  line-height: 1.5;
+  /* altezza iniziale dal rows di ciascuna textarea */
+}
 .step-editor-remove {
   background: transparent;
   border: 1px solid var(--border);
@@ -3347,7 +3354,7 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
 }
 .step-custom-toggle input { accent-color: var(--phase-color, var(--accent)); width: 15px; height: 15px; flex-shrink: 0; }
 .step-cmd-edit {
-  display: flex; flex-direction: column; gap: 10px;
+  display: flex; flex-direction: column; gap: 6px;
   background: var(--bg-1);
   border: 1px solid var(--border);
   border-left: 2px solid var(--phase-color, var(--accent));
@@ -3445,13 +3452,19 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
 .variant-edit-block:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
 .variant-desc-input {
   width: 100%;
+  box-sizing: border-box;
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 4px;
   padding: 6px 9px;
   font-size: 11.5px;
+  font-family: inherit;
+  line-height: 1.5;
   color: var(--fg-1);
   outline: none;
+  resize: vertical;        /* allargabile verso il basso */
+  overflow-y: auto;        /* scroll quando il testo eccede */
+  min-height: 38px;
   transition: border-color 0.15s;
 }
 .variant-desc-input:focus { border-color: var(--phase-color, var(--accent)); }
@@ -4285,3 +4298,31 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   font-weight: 600;
 }
 .select.filter-on:hover { border-color: var(--accent); }
+
+/* ─── Transizioni fluide sui cambi di comando/variante + callout colorati ─── */
+@keyframes wh-fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+.builder { animation: wh-fade-in 0.24s ease both; }
+.gen-anim { animation: wh-fade-in 0.18s ease both; }
+.builder-variant-note { animation: wh-fade-in 0.2s ease both; }
+.variant-tab { transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease; }
+/* Opzioni e box senza tipo = colore della fase (base). Errori/Output/Prossimo = colore fisso,
+   con barra del titolo e box della stessa tonalita. */
+.builder-callout { transition: border-color 0.15s ease, background 0.15s ease; }
+.builder-callout.warn  { border-color: oklch(from var(--amber) l c h / 0.45); background: oklch(from var(--amber) l c h / 0.07); }
+.builder-callout.warn h4  { background: oklch(from var(--amber) l c h / 0.16); border-bottom-color: oklch(from var(--amber) l c h / 0.32); color: var(--amber); }
+.builder-callout.info  { border-color: oklch(from var(--sky) l c h / 0.45); background: oklch(from var(--sky) l c h / 0.07); }
+.builder-callout.info h4  { background: oklch(from var(--sky) l c h / 0.16); border-bottom-color: oklch(from var(--sky) l c h / 0.32); color: var(--sky); }
+/* codice, grassetto e link dentro i callout colorati seguono il colore del callout */
+.builder-callout.warn code, .builder-callout.warn strong, .builder-callout.warn b, .builder-callout.warn a { color: var(--amber); }
+.builder-callout.info code, .builder-callout.info strong, .builder-callout.info b, .builder-callout.info a { color: var(--sky); }
+@media (prefers-reduced-motion: reduce) {
+  .builder, .gen-anim, .builder-variant-note { animation: none; }
+}
+
+/* liste numerate nelle descrizioni (renderRich): i marcatori devono essere visibili */
+.builder-description ol, .builder-variant-note ol, .step-desc ol, .step-variant-desc ol, .builder-callout ol {
+  margin: 4px 0; padding-left: 20px; list-style: decimal; display: block;
+}
+.builder-description ol li, .builder-variant-note ol li, .step-desc ol li, .step-variant-desc ol li, .builder-callout ol li {
+  line-height: 1.45; margin-bottom: 10px; display: list-item;
+}
