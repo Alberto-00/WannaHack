@@ -135,8 +135,8 @@ const CHAINS = [
     "id": "jenkins-rce",
     "name": "Jenkins Script Console, RCE",
     "short": "jenkins",
-    "category": "service-enum",
-    "subcategory": "web-apps",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
     "tactic": "Exploitation",
     "difficulty": "easy",
     "estTime": "15 min",
@@ -198,8 +198,8 @@ const CHAINS = [
     "id": "tomcat-rce",
     "name": "Tomcat Manager, WAR, RCE",
     "short": "tomcat",
-    "category": "service-enum",
-    "subcategory": "web-apps",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
     "tactic": "Exploitation",
     "difficulty": "medium",
     "estTime": "20 min",
@@ -275,8 +275,8 @@ const CHAINS = [
     "id": "drupal-drupalgeddon2",
     "name": "Drupal Drupalgeddon2, RCE pre-auth",
     "short": "drupalgeddon",
-    "category": "service-enum",
-    "subcategory": "web-apps",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
     "tactic": "Exploitation",
     "difficulty": "easy",
     "estTime": "10 min",
@@ -347,8 +347,8 @@ const CHAINS = [
     "id": "drupal-rce",
     "name": "Drupal PHP filter, RCE autenticata",
     "short": "drupal",
-    "category": "service-enum",
-    "subcategory": "web-apps",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
     "tactic": "Exploitation",
     "difficulty": "medium",
     "estTime": "20 min",
@@ -455,8 +455,8 @@ const CHAINS = [
     "id": "mssql-rce",
     "name": "MSSQL, RCE",
     "short": "mssql",
-    "category": "service-enum",
-    "subcategory": "mssql",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
     "tactic": "Exploitation",
     "difficulty": "easy",
     "estTime": "10 min",
@@ -527,19 +527,19 @@ const CHAINS = [
   },
   {
     "id": "mysql-rce",
-    "name": "MySQL, RCE",
+    "name": "MySQL, RCE Linux (OUTFILE / UDF)",
     "short": "mysql",
-    "category": "service-enum",
-    "subcategory": "mysql",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
     "tactic": "Exploitation",
     "difficulty": "medium",
     "estTime": "20 min",
-    "objective": "Credenziali MySQL portano all'esecuzione di comandi, ma senza un `xp_cmdshell` pronto come in MSSQL. Si verificano prima il privilegio `FILE` e l'impostazione `secure_file_priv`; se lo consentono, `INTO OUTFILE` scrive una web shell PHP nel webroot. La web shell viene poi richiamata via HTTP e trasformata in una reverse shell. Gira come utente del web server, non del database.",
-    "outcome": "Shell come utente del web server, tipicamente www-data: la web shell PHP è servita dal web server, non da mysqld.",
+    "objective": "Le credenziali MySQL portano all'esecuzione di comandi, ma senza un `xp_cmdshell` pronto come in MSSQL: servono il privilegio `FILE` e un `secure_file_priv` permissivo. Da lì si aprono due strade. Con `INTO OUTFILE` si scrive una web shell PHP in un webroot raggiungibile via HTTP, che gira come utente del web server e si trasforma in reverse shell. In alternativa, caricando `lib_mysqludf_sys.so` nel `plugin_dir` si registra la funzione `sys_eval`, che esegue comandi come l'utente del servizio mysqld e ne ritorna subito l'output; per una shell interattiva si lancia comunque una reverse shell.",
+    "outcome": "Esecuzione di comandi sul target: con OUTFILE una web shell servita dal web server (tipicamente www-data), con UDF comandi come l'utente del servizio mysqld. In entrambi i casi si può passare a una reverse shell interattiva.",
     "prereqs": [
       "Credenziali MySQL valide",
       "Il privilegio FILE e un secure_file_priv permissivo",
-      "Un webroot scrivibile e raggiungibile via HTTP sullo stesso host",
+      "Via OUTFILE: un webroot scrivibile e raggiungibile via HTTP. Via UDF: la libreria lib_mysqludf_sys.so da caricare nel plugin_dir",
       "Connettività in uscita dal target verso la macchina attaccante"
     ],
     "mitre": [
@@ -559,7 +559,7 @@ const CHAINS = [
         "cmdRef": "mysql-privcheck",
         "cmd": {
           "name": "MySQL — check RCE",
-          "description": "Prima di tentare la RCE serve verificarne la fattibilità: MySQL non ha un `xp_cmdshell` pronto, quindi occorrono il privilegio `FILE` e un `secure_file_priv` non bloccato.\n- `secure_file_priv` = `''` (vuoto) consente la scrittura ovunque · `/path` la limita a quella directory · `NULL` la disabilita, e la RCE via file cade\n- il privilegio `FILE` deve comparire nei grant\n- `plugin_dir` indica dove va collocata la libreria per la via UDF",
+          "description": "Prima di tentare la RCE serve verificarne la fattibilità: MySQL non ha un `xp_cmdshell` pronto, quindi occorrono il privilegio `FILE` e un `secure_file_priv` non bloccato.\n- `secure_file_priv` = `''` (vuoto) consente la scrittura ovunque · `/path` la limita a quella directory · `NULL` disabilita le operazioni su file via SQL, ma la UDF resta via CASO A se puoi scrivere nel `plugin_dir` dal filesystem\n- il privilegio `FILE` deve comparire nei grant\n- `plugin_dir` indica dove va collocata la libreria per la via UDF",
           "template": "SELECT @@secure_file_priv, @@plugin_dir, @@version_compile_os;",
           "params": [],
           "variants": [
@@ -567,7 +567,7 @@ const CHAINS = [
               "id": "default",
               "label": "secure_file_priv + plugin_dir",
               "template": "SELECT @@secure_file_priv, @@plugin_dir, @@version_compile_os;",
-              "description": "Un `secure_file_priv` vuoto consente la scrittura di file ovunque, quindi OUTFILE e UDF sono percorribili; con `NULL` la RCE via file è impossibile. `plugin_dir` indica dove caricare la `.so` per l'UDF."
+              "description": "Un `secure_file_priv` vuoto consente la scrittura di file ovunque, quindi OUTFILE e UDF sono percorribili; con `NULL` le operazioni su file via SQL sono disabilitate (CASO B), ma la UDF resta via CASO A se scrivi la libreria nel `plugin_dir` dal filesystem. `plugin_dir` indica dove caricare la `.so` per l'UDF."
             },
             {
               "id": "grants",
@@ -583,14 +583,13 @@ const CHAINS = [
             }
           ]
         },
-        "verify": "Servono il privilegio `FILE` e un `secure_file_priv` permissivo. Se `secure_file_priv` è vuoto la scrittura è libera; se contiene un percorso la limita a quella cartella; se è `NULL` la via OUTFILE è bloccata."
+        "verify": "Servono il privilegio `FILE` e un `secure_file_priv` permissivo. Se `secure_file_priv` è vuoto la scrittura è libera; se contiene un percorso la limita a quella cartella; se è `NULL` sono bloccate OUTFILE/DUMPFILE/LOAD_FILE via SQL, ma puoi ancora caricare la UDF se hai scrittura sul `plugin_dir` (controlla con icacls / ls -ld)."
       },
       {
         "id": "s3",
-        "title": "Web shell via OUTFILE",
-        "cmdRef": "mysql-oscmd",
-        "variant": "outfile",
-        "verify": "`Query OK` e il file `.php` compare nel webroot indicato. Richiede il privilegio `FILE` e una cartella del web server scrivibile dall'utente del database."
+        "title": "Esegui comandi: web shell (OUTFILE) o UDF (sys_eval)",
+        "cmdRef": "mysql-oscmd-linux",
+        "verify": "Due metodi, selezionabili nei tab. OUTFILE: `Query OK` e il `.php` compare nel webroot indicato, che deve essere scrivibile dall'utente del database; poi prosegui con listener e reverse shell. UDF `sys_eval`: ritorna subito l'output dei comandi; per una shell interattiva lancia una reverse shell passando il one-liner a `sys_eval`."
       },
       {
         "id": "s4",
@@ -601,9 +600,8 @@ const CHAINS = [
       },
       {
         "id": "s5",
-        "title": "Reverse shell dalla web shell",
+        "title": "Reverse shell (da web shell o sys_eval)",
         "cmdRef": "revshell",
-        "variant": "default",
         "verify": "Il one-liner bash, url-encoded nel parametro `cmd` della web shell (`curl \"http://<ip>/sh.php?cmd=...\"`), fa arrivare la connessione sul listener."
       },
       {
@@ -1318,22 +1316,22 @@ const CHAINS = [
       {
         "id": "s2",
         "title": "Download su target Linux",
-        "cmdRef": "transfer-http",
-        "variant": "linux",
+        "cmdRef": "ft-wget-curl",
+        "variant": "default",
         "verify": "Il file arriva integro, verificabile confrontando l'hash con `md5sum` sui due lati."
       },
       {
         "id": "s3",
         "title": "Download su target Windows",
-        "cmdRef": "transfer-http",
-        "variant": "windows",
+        "cmdRef": "ft-ps-win",
+        "variant": "default",
         "verify": "`Invoke-WebRequest` funziona ovunque, mentre `certutil` è un LOLBin già presente e spesso meno sospetto."
       },
       {
         "id": "s4",
         "title": "Esecuzione in memoria senza toccare il disco",
-        "cmdRef": "transfer-http",
-        "variant": "memory",
+        "cmdRef": "ft-ps-win",
+        "variant": "iex",
         "verify": "Lo script viene eseguito senza che nessun file compaia sul filesystem, il che aggira i controlli antivirus su scrittura."
       },
       {
@@ -1470,6 +1468,12 @@ const CHAINS = [
         "verify": "`SeImpersonatePrivilege` o `SeAssignPrimaryTokenPrivilege` abilitati portano direttamente alla catena Potato. Anche `SeBackupPrivilege`, `SeDebugPrivilege` e `SeTakeOwnershipPrivilege` sono escalation dirette."
       },
       {
+        "id": "s3b",
+        "title": "SeDebug: dump LSASS o token SYSTEM",
+        "cmdRef": "sedebug",
+        "verify": "Con `SeDebugPrivilege` da primary token: dumpi LSASS per le credenziali, oppure erediti il token di winlogon per SYSTEM diretto. Da impersonation token (shell via Invoke-Command) il privilegio non si abilita."
+      },
+      {
         "id": "s4",
         "title": "Misconfiguration dei servizi",
         "cmdRef": "powerup",
@@ -1494,6 +1498,13 @@ const CHAINS = [
         "id": "s7",
         "title": "Patch mancanti",
         "cmdRef": "wes"
+      },
+      {
+        "id": "s8",
+        "title": "SeriousSAM / HiveNightmare (easy win)",
+        "cmdRef": "kernel-windows",
+        "variant": "serioussam",
+        "verify": "Se `BUILTIN\\Users` ha (RX) su C:\\Windows\\System32\\config\\SAM il sistema è vulnerabile: estrai gli hash locali (incluso Administrator) via shadow copy + secretsdump offline."
       }
     ]
   },
@@ -2582,6 +2593,121 @@ const CHAINS = [
         "verify": "Con il TGT del DC iniettato in `KRB5CCNAME`, il dump degli hash di dominio va a buon fine partendo da `Administrator:500:`.",
         "title": "Inietta il TGT del DC$ e fai `DCSync`",
         "cmdRef": "dcsync"
+      }
+    ]
+  },
+  {
+    "id": "mysql-rce-win",
+    "name": "MySQL UDF, RCE Windows (SYSTEM)",
+    "short": "mysql-rce-win",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "tactic": "Exploitation",
+    "difficulty": "medium",
+    "estTime": "20 min",
+    "objective": "Quando un server MySQL gira su Windows e si dispone di credenziali valide, spesso quelle di `root` recuperate da un file di configurazione dell'applicazione, il privilegio `FILE` apre la strada all'esecuzione di comandi tramite una User Defined Function. Si carica nel `plugin_dir` la libreria `lib_mysqludf_sys_64.dll` e si registra la funzione `sys_exec`, che esegue comandi sul sistema operativo. Poiché il servizio MySQL è avviato di norma come LocalSystem, tutto ciò che passa da `sys_exec` viene eseguito con i privilegi di SYSTEM: si crea così un amministratore locale e si rientra sull'host con una sessione stabile via WinRM.",
+    "outcome": "Esecuzione di comandi come SYSTEM sull'host Windows e accesso stabile come amministratore locale via evil-winrm.",
+    "prereqs": [
+      "Credenziali MySQL valide",
+      "Privilegio FILE e secure_file_priv permissivo",
+      "Target Windows (`@@version_compile_os` = Win64)",
+      "DLL lib_mysqludf_sys_64.dll (da sqlmap, de-cloak con cloak.py -d)"
+    ],
+    "mitre": [
+      "T1190",
+      "T1505.001",
+      "T1136.001"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Connetti al DB (anche da shell senza PTY)",
+        "cmdRef": "mysql-noninteractive",
+        "variant": "default",
+        "verify": "Ottieni i database: credenziali valide. Se MySQL è su 127.0.0.1, usa un port forward o query dalla shell locale."
+      },
+      {
+        "id": "s2",
+        "title": "Verifica prerequisiti (target Windows)",
+        "cmdRef": "mysql-privcheck",
+        "verify": "Utente con FILE privilege, `secure_file_priv` vuoto e `@@version_compile_os` = Win64: la via UDF Windows è aperta."
+      },
+      {
+        "id": "s3",
+        "title": "Carica la UDF .dll ed esegui (sys_exec, blind)",
+        "cmdRef": "mysql-oscmd-win",
+        "verify": "`sys_exec` gira come SYSTEM. Essendo blind (nessun output), aggiungi un admin locale (`net user pwn Pwn123! /add` poi `net localgroup administrators pwn /add`). L'appartenenza ai gruppi di accesso remoto non è automatica: per evil-winrm aggiungi/verifica `Remote Management Users`, per l'RDP `Remote Desktop Users`. In alternativa il tab `sqlmap` automatizza tutto con `--os-shell`."
+      },
+      {
+        "id": "s4",
+        "title": "Entra col nuovo admin via WinRM",
+        "cmdRef": "evil-winrm",
+        "verify": "Sessione PowerShell stabile come amministratore: hai una shell interattiva e upload/download."
+      }
+    ]
+  },
+  {
+    "id": "win-privgroups",
+    "name": "Gruppi privilegiati Windows → SYSTEM/DC",
+    "short": "privgrp",
+    "category": "privesc-windows",
+    "subcategory": "priv-groups",
+    "tactic": "Privilege Escalation",
+    "difficulty": "medium",
+    "estTime": "20-40 min",
+    "objective": "Molti gruppi locali Windows, oltre agli Administrators, concedono privilegi che portano a SYSTEM o alla compromissione del Domain Controller. Il primo passo è scoprire a quali gruppi appartiene l'utente controllato; da lì si abusa il vettore corrispondente. Su un Domain Controller gruppi come DnsAdmins, Server Operators e Backup Operators sono particolarmente pericolosi, perché i loro privilegi agiscono direttamente sul dominio.",
+    "outcome": "Esecuzione come SYSTEM sull'host o sul Domain Controller, oppure estrazione di credenziali e hash dai gruppi con diritti di lettura.",
+    "prereqs": [
+      "Shell come utente locale o di dominio",
+      "L'utente deve appartenere a un gruppo privilegiato (da verificare al passo 1)"
+    ],
+    "mitre": [
+      "T1078.002",
+      "T1134",
+      "T1003.003"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Quali gruppi privilegiati? (enum)",
+        "cmdRef": "sa-win-users",
+        "verify": "`whoami /groups` o `net user <utente>` mostrano le appartenenze. Cerca: DnsAdmins, Backup Operators, Server Operators, Print Operators, Event Log Readers, Hyper-V Administrators. Gli step successivi sono alternativi: usa quello del gruppo di cui fai parte."
+      },
+      {
+        "id": "s2",
+        "title": "DnsAdmins → DLL, SYSTEM su DC",
+        "cmdRef": "dnsadmins-dll",
+        "verify": "Vale se sei in `DnsAdmins`: il servizio DNS (SYSTEM, tipicamente sul DC) carica la tua DLL. Serve poter riavviare il servizio DNS."
+      },
+      {
+        "id": "s3",
+        "title": "Backup Operators → SAM/NTDS",
+        "cmdRef": "backup-operators",
+        "verify": "Vale se sei in `Backup Operators` (SeBackupPrivilege): copi SAM+SYSTEM su un membro, o NTDS.dit su un DC, poi secretsdump offline."
+      },
+      {
+        "id": "s4",
+        "title": "Server Operators → servizio, SYSTEM",
+        "cmdRef": "server-operators",
+        "verify": "Vale se sei in `Server Operators`: riconfiguri un servizio perché esegua il tuo binario come SYSTEM. Gruppo tipico sui DC."
+      },
+      {
+        "id": "s5",
+        "title": "Print Operators → SeLoadDriver, SYSTEM",
+        "cmdRef": "print-operators",
+        "verify": "Vale se sei in `Print Operators` (SeLoadDriverPrivilege): carichi Capcom.sys ed esegui come SYSTEM. Fallisce con HVCI/Driver Blocklist."
+      },
+      {
+        "id": "s6",
+        "title": "Event Log Readers → credenziali",
+        "cmdRef": "event-log-readers",
+        "verify": "Vale se sei in `Event Log Readers`: cerchi credenziali in chiaro nelle command line degli eventi 4688 del Security log."
+      },
+      {
+        "id": "s7",
+        "title": "Hyper-V Administrators → NTDS da VM",
+        "cmdRef": "hyperv-admins",
+        "verify": "Vale se sei in `Hyper-V Administrators` e il DC è virtualizzato: estrai NTDS.dit dal disco della VM, oppure abusi un servizio vulnerabile dell'host."
       }
     ]
   }

@@ -352,8 +352,6 @@ const CATEGORIES = [
         description: 'Gli AP con fast roaming espongono il PMKID nel primo messaggio EAPOL. Si preleva dialogando direttamente con l’AP, senza alcun client e senza deauth, quindi in modo molto più silenzioso.' },
       { id: 'psk-crack', name: 'Cracking offline',
         description: 'La cattura viene convertita nel formato 22000 e attaccata con wordlist, regole o maschere. La GPU cambia l’ordine di grandezza, ma per dizionari piccoli aircrack-ng e cowpatty lavorano già sul .cap.' },
-      { id: 'psk-eviltwin', name: 'Evil Twin & captive portal',
-        description: 'Quando la passphrase resiste al dizionario, la si fa digitare a un utente reale clonando la rete e presentando un captive portal, validando poi la risposta contro l’handshake catturato.' },
     ],
   },
   {
@@ -373,6 +371,21 @@ const CATEGORIES = [
         description: 'Un AP fasullo con RADIUS proprio e certificato clonato raccoglie hash MSCHAPv2, oppure negozia un metodo debole come GTC o TTLS-PAP ottenendo le credenziali in chiaro.' },
       { id: 'eap-relay', name: 'Relay & cracking hash',
         description: 'Quando la password non cade a dizionario, la response del client viene rilanciata in tempo reale verso l’AP legittimo, producendo una sessione valida senza conoscerla.' },
+    ],
+  },
+  {
+    id: 'wifi-eviltwin',
+    domain: 'wifi',
+    name: 'Evil Twin & MiTM',
+    short: 'ET',
+    hue: 350,
+    icon: 'crosshair',
+    description: 'Clonare una rete per ingannare l’utente: un rogue AP che imita quella legittima fa digitare la PSK in un captive portal oppure, quando la vittima è connessa, apre la strada al man-in-the-middle con DNS spoofing e intercettazione del traffico, incluso lo stripping TLS. È la via quando la passphrase resiste al dizionario o quando l’obiettivo è il traffico, non la chiave.',
+    subcategories: [
+      { id: 'et-rogue', name: 'Rogue AP & captive portal',
+        description: 'Si clona SSID, canale e cifratura e si presenta un captive portal che chiede la PSK, validandola contro l’handshake catturato. Deautenticando i client dalla rete vera li si spinge verso il gemello.' },
+      { id: 'et-mitm', name: 'MiTM dal rogue AP',
+        description: 'Con la vittima associata al rogue AP le si dà uscita verso Internet via NAT e si intercetta il traffico: DHCP e DNS controllati per lo spoofing dei nomi, proxy per lo stripping e l’intercettazione TLS, sniffing per catturare credenziali e sessioni.' },
     ],
   },
   {
@@ -412,6 +425,9 @@ const DISCIPLINES = [
       { key: 'user',     label: 'Utente',       placeholder: 'jdoe' },
       { key: 'password', label: 'Password',     placeholder: '••••••', secret: true },
       { key: 'hash',     label: 'Hash',         placeholder: 'aad3b…', secret: true },
+      { key: 'lhost',    label: 'LHOST (tu)',   placeholder: '10.10.14.5', adv: true },
+      { key: 'lport',    label: 'LPORT',        placeholder: '4444',       adv: true },
+      { key: 'iface',    label: 'Interfaccia',  placeholder: 'tun0',       adv: true },
     ],
     accessOptions: [
       { value: 'all',      label: 'Qualsiasi accesso' },

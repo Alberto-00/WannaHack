@@ -439,7 +439,8 @@ const extractParamKeys = (tmpl) => {
   return [...seen];
 };
 
-// Lightweight rich text for descriptions: `code` spans, "- "/"• " bullet lists, line breaks
+// Lightweight rich text for descriptions: `code` spans, "- "/"• " bullet lists,
+// raw HTML passthrough (es. <ul><li>…), line breaks.
 // Inline markdown → React nodes: `code`, **bold**, *italic*/_italic_.
 // Bold is matched before italic so ** non viene letto come due delimitatori *.
 const renderInline = (s, kp = 'i') => {
@@ -510,6 +511,11 @@ const renderRich = (text) => {
     if (listMatch(t)) {
       const [items, ni] = collectList(lines, i); i = ni;
       out.push(...buildListReact(items, 0, 0, 'r' + i + '_')[0]);
+    } else if (t.startsWith('<')) {
+      // HTML grezzo (es. <ul><li>…): righe consecutive unite e passate così come sono
+      let html = ''; const st = i;
+      while (i < lines.length && lines[i].trim().startsWith('<')) { html += lines[i].trim(); i++; }
+      out.push(<div key={'h' + st} dangerouslySetInnerHTML={{ __html: html }} />);
     } else {
       out.push(<p key={'p' + i}>{renderInline(t, 'p' + i)}</p>);
       i++;
@@ -1168,13 +1174,54 @@ const TopBar = ({ mode, setMode, activeCat, activeSub,
 /* ─────────────────────────────────────────────────────────────
    Target context bar
    ───────────────────────────────────────────────────────────── */
+// Popup "Impostazioni avanzate": campi extra (LHOST, LPORT, interfaccia…) che
+// finiscono in ctx e vengono inseriti in automatico nei comandi del sito.
+const AdvancedTargetModal = ({ adv, ctx, setCtx, isSecret, onClose }) => {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+  return (
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="adv-modal" role="dialog" aria-modal="true">
+        <div className="adv-modal-header">
+          <h2><Icon name="settings" size={16}/> Impostazioni avanzate</h2>
+          <button className="btn-icon btn" onClick={onClose} title="Chiudi (Esc)">
+            <Icon name="x" size={14}/>
+          </button>
+        </div>
+        <p className="adv-modal-hint">Inseriti in automatico nei comandi del sito (es. <code>&lt;lhost&gt;</code>, <code>&lt;lport&gt;</code>, <code>&lt;iface&gt;</code>).</p>
+        <div className="adv-modal-body">
+          {adv.map(f => (
+            <div key={f.key} className="field">
+              <label className="field-label">{f.label}</label>
+              <input
+                value={ctx[f.key] || ''}
+                placeholder={f.placeholder}
+                className={ctx[f.key] ? 'has-value' : ''}
+                onChange={e => setCtx({ ...ctx, [f.key]: e.target.value })}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields, onToast }) => {
   const flds = fields || [];
-  const primary = flds[0];
+  // core = sempre visibili (chip + inline); adv = solo nel popup. Tenere i chip
+  // ai soli core evita che la barra sfori quando si riempiono molti campi.
+  const core = flds.filter(f => !f.adv);
+  const adv  = flds.filter(f => f.adv);
+  const primary = core[0];
   const isSecret = (f) => f.secret || f.key === 'password' || f.key === 'hash';
   // Click su un valore → clipboard. I secret si copiano in chiaro anche se
   // mostrati come pallini: è il valore che serve incollare altrove.
   const [copied, setCopied] = useState(null);
+  const [advOpen, setAdvOpen] = useState(false);
   const copyTimer = useRef(null);
   useEffect(() => () => clearTimeout(copyTimer.current), []);
   const copyValue = (f) => {
@@ -1187,6 +1234,7 @@ const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields, onToast }
       onToast && onToast(`${f.label} copiato`);
     });
   };
+  const advSet = adv.filter(f => ctx[f.key]).length;
   return (
     <div className={`context-bar ${collapsed ? 'collapsed' : ''}`}>
       <div className="context-label">
@@ -1201,9 +1249,9 @@ const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields, onToast }
         )}
         {collapsed && (
           <span className="context-chips">
-            {flds.filter(f => f.key !== primary?.key && ctx[f.key]).map(f => (
+            {core.filter(f => f.key !== primary?.key && ctx[f.key]).map(f => (
               <button key={f.key} type="button" title={`Copia ${f.label}`}
-                      className={`context-chip ctx-copy ${copied === f.key ? 'copied' : ''}`}
+                      className={`context-chip ctx-copy chip-${f.key} ${copied === f.key ? 'copied' : ''}`}
                       onClick={() => copyValue(f)}>
                 <span className="context-chip-key">{f.label}</span>
                 <span className="context-chip-val">
@@ -1218,7 +1266,7 @@ const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields, onToast }
       </div>
       <div className={`context-fields-wrap ${collapsed ? 'collapsed' : ''}`}>
         <div className="context-fields">
-          {flds.map(f => (
+          {core.map(f => (
             <div key={f.key} className="field">
               <label className="field-label">{f.label}</label>
               <input
@@ -1231,11 +1279,24 @@ const TargetContext = ({ ctx, setCtx, collapsed, setCollapsed, fields, onToast }
           ))}
         </div>
       </div>
-      <button className="context-collapse" onClick={() => setCollapsed(c => !c)}
-              title={collapsed ? 'Espandi target' : 'Comprimi target'}>
-        <Icon name="chevron" size={14}
-              style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .25s cubic-bezier(0.4, 0, 0.2, 1)' }}/>
-      </button>
+      <div className="context-actions">
+        {adv.length > 0 && (
+          <button className="context-adv-btn" onClick={() => setAdvOpen(true)}
+                  title="Impostazioni avanzate (LHOST, LPORT, interfaccia…)">
+            <Icon name="settings" size={14} />
+            {advSet > 0 && <span className="context-adv-count">{advSet}</span>}
+          </button>
+        )}
+        <button className="context-collapse" onClick={() => setCollapsed(c => !c)}
+                title={collapsed ? 'Espandi target' : 'Comprimi target'}>
+          <Icon name="chevron" size={14}
+                style={{ transform: collapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .25s cubic-bezier(0.4, 0, 0.2, 1)' }}/>
+        </button>
+      </div>
+      {advOpen && (
+        <AdvancedTargetModal adv={adv} ctx={ctx} setCtx={setCtx}
+                             isSecret={isSecret} onClose={() => setAdvOpen(false)} />
+      )}
     </div>
   );
 };
@@ -1525,10 +1586,16 @@ const Builder = ({ cmd, ctx, onToast }) => {
   const values = useMemo(() => {
     const v = {};
     (cmd.params || []).forEach(p => {
-      v[p.key] = localValues[p.key] ?? (p.ctx ? ctx[p.ctx] : '') ?? '';
+      // auto-fill da Target: ctx esplicito (p.ctx) o per chiave omonima (p.key).
+      // Fallback a p.default così un parametro può avere un valore pre-impostato ed editabile.
+      const cKey = p.ctx || p.key;
+      const cVal = ctx[cKey];
+      v[p.key] = (p.key in localValues) ? localValues[p.key]
+               : (cVal != null && cVal !== '') ? cVal
+               : (p.default ?? '');
     });
     extractParamKeys(template).forEach(k => {
-      if (!(k in v)) v[k] = localValues[k] ?? '';
+      if (!(k in v)) v[k] = (k in localValues) ? localValues[k] : (ctx[k] ?? '');
     });
     return v;
   }, [cmd, localValues, ctx, template]);
@@ -1620,9 +1687,12 @@ const Builder = ({ cmd, ctx, onToast }) => {
           </h3>
           <div className="params-grid">
             {params.map(p => {
+              const cKey = p.ctx || p.key;
+              const cBound = ctx[cKey] != null && ctx[cKey] !== '';
+              const showHint = !!p.ctx || cBound;
               const overridden = p.key in localValues;
               const resetToCtx = () => {
-                if (!p.ctx) return;
+                if (!showHint) return;
                 const next = { ...localValues };
                 delete next[p.key];
                 setLocalValues(next);
@@ -1631,21 +1701,22 @@ const Builder = ({ cmd, ctx, onToast }) => {
                 <div key={p.key} className="param">
                   <label className="param-label">
                     {p.label}
-                    {p.ctx && (
+                    {showHint && (
                       <span
                         className={`ctx-hint ${overridden ? 'overridden' : ''}`}
                         onClick={resetToCtx}
                         title={overridden
-                          ? `Click per ripristinare valore Target (${ctx[p.ctx] || 'vuoto'})`
-                          : `Valore proveniente da Target.${p.ctx}`}>
-                        ctx: {p.ctx}
+                          ? `Click per ripristinare valore Target (${ctx[cKey] || 'vuoto'})`
+                          : `Valore proveniente da Target.${cKey}`}>
+                        ctx: {cKey}
                         {overridden && <Icon name="x" size={9} style={{ marginLeft: 2 }}/>}
                       </span>
                     )}
                   </label>
                   <input
                     placeholder={p.placeholder}
-                    value={localValues[p.key] ?? (p.ctx ? ctx[p.ctx] : '') ?? ''}
+                    value={(p.key in localValues) ? localValues[p.key]
+                           : (cBound ? ctx[cKey] : (p.default ?? ''))}
                     onChange={e => setLocalValues({ ...localValues, [p.key]: e.target.value })}
                     className={values[p.key] ? 'has-value' : ''}
                   />
@@ -1782,10 +1853,12 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
   const values = useMemo(() => {
     const v = {};
     paramList.forEach(p => {
+      const cKey = p.ctx || p.key;
+      const cVal = ctx[cKey];
       v[p.key] = stepValues[p.key]
         ?? (step.overrides ? step.overrides[p.key] : undefined)
-        ?? (p.ctx ? ctx[p.ctx] : '')
-        ?? '';
+        ?? ((cVal != null && cVal !== '') ? cVal : undefined)
+        ?? p.default ?? '';
     });
     return v;
   }, [paramList, stepValues, step.overrides, ctx]);
@@ -1798,8 +1871,48 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
 
   const status = stepState.status || 'todo';
 
+  // Quando uno step si apre, portalo in vista (scroll). Salta il primo render
+  // così il caricamento della pagina non scrolla sullo step aperto di default.
+  const rootRef = useRef(null);
+  const didMount = useRef(false);
+  useEffect(() => {
+    if (!didMount.current) { didMount.current = true; return; }
+    if (!expanded || !rootRef.current) return;
+    // Scroll fluido che parte INSIEME all'apertura e insegue la posizione finale del
+    // titolo, ricalcolata a ogni frame: così la crescita del box e la chiusura in
+    // accordion non "spostano" il bersaglio, e a fine corsa c'è lo spazio per portarlo
+    // in cima. Un'unica animazione, niente attese a step.
+    const el = rootRef.current;
+    let scroller = el.parentElement;
+    while (scroller) {
+      const oy = getComputedStyle(scroller).overflowY;
+      if ((oy === 'auto' || oy === 'scroll') && scroller.scrollHeight > scroller.clientHeight + 2) break;
+      scroller = scroller.parentElement;
+    }
+    const margin = 16, DUR = 620, t0 = performance.now();
+    const startTop = scroller ? scroller.scrollTop : window.scrollY;
+    const easeOutCubic = (x) => 1 - Math.pow(1 - x, 3);
+    let raf;
+    const tick = (now) => {
+      const k = Math.min(1, (now - t0) / DUR);
+      const e = easeOutCubic(k);
+      if (scroller) {
+        const top = el.getBoundingClientRect().top - scroller.getBoundingClientRect().top + scroller.scrollTop - margin;
+        const target = Math.max(0, Math.min(top, scroller.scrollHeight - scroller.clientHeight));
+        scroller.scrollTop = startTop + (target - startTop) * e;
+      } else {
+        const top = el.getBoundingClientRect().top + window.scrollY - margin;
+        const target = Math.max(0, Math.min(top, document.documentElement.scrollHeight - window.innerHeight));
+        window.scrollTo(0, startTop + (target - startTop) * e);
+      }
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [expanded]);
+
   return (
-    <div className={`step ${status}`}>
+    <div ref={rootRef} className={`step ${status}`}>
       <div className="step-node" onClick={onToggleStatus} title="Cambia stato: todo, active, done">
         {status === 'done' ? <Icon name="check" size={16}/> : idx + 1}
       </div>
@@ -1931,7 +2044,8 @@ const Step = ({ commandsMap, step, idx, stepState, onToggleStatus, onUpdate,
 const ChainsView = ({ chains, activeChainId, setActiveChainId,
                      progress, setProgress,
                      ctx, setCtx, onToast, commandsMap, dialog,
-                     onEditChain, onEditStep, onNewChain, onReorderChain, layout }) => {
+                     onEditChain, onEditStep, onNewChain, onReorderChain, layout,
+                     stepAccordion, setStepAccordion }) => {
   const chain = chains.find(c => c.id === activeChainId) || chains[0];
 
   // Step expansion is controlled here so we can expand/collapse all at once.
@@ -1956,12 +2070,21 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
       const prev = c.steps[stepId] || {};
       return { ...p, [chain.id]: { ...c, steps: { ...c.steps, [stepId]: { ...prev, ...patch } } } };
     });
-    // Step completato → si chiude da solo; se torna todo/active riprende il default di apertura
+    // "Segna fatto": chiudi questo step e apri il primo successivo ancora da fare
+    // (non 'done' né 'skipped'); se dopo non ce n'è, il primo pendente in assoluto.
     if (patch.status === 'done') {
-      setOpenSteps(m => ({ ...m, [stepId]: false }));
-    } else if (patch.status) {
-      setOpenSteps(m => { const { [stepId]: _drop, ...rest } = m; return rest; });
+      const statusOf = (s) => s.id === stepId ? 'done' : (chainState.steps[s.id]?.status || 'todo');
+      const pending = (s) => statusOf(s) !== 'done' && statusOf(s) !== 'skipped';
+      const idx = chain.steps.findIndex(s => s.id === stepId);
+      const target = chain.steps.slice(idx + 1).find(pending) || chain.steps.find(pending);
+      setOpenSteps(m => {
+        const base = stepAccordion ? Object.fromEntries(chain.steps.map(s => [s.id, false])) : { ...m };
+        base[stepId] = false;
+        if (target) base[target.id] = true;
+        return base;
+      });
     }
+    // Negli altri casi apertura/chiusura resta manuale: non tocca gli altri step.
   };
 
   const cycleStatus = (stepId) => {
@@ -1971,9 +2094,25 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
     updateStep(stepId, { status: next });
   };
 
-  const stepOpen = (s, i) =>
-    openSteps[s.id] ?? (chainState.steps[s.id]?.status === 'active' || i === 0);
-  const toggleStep = (id, cur) => setOpenSteps(m => ({ ...m, [id]: !cur }));
+  // Default (nessuna scelta esplicita): in accordion si apre un solo step (l'attivo, se no il primo);
+  // in modalità libera si aprono l'attivo e il primo.
+  const stepOpen = (s, i) => {
+    if (s.id in openSteps) return openSteps[s.id];
+    if (stepAccordion) {
+      const activeIdx = chain.steps.findIndex(x => chainState.steps[x.id]?.status === 'active');
+      return activeIdx >= 0 ? i === activeIdx : i === 0;
+    }
+    return chainState.steps[s.id]?.status === 'active' || i === 0;
+  };
+  const toggleStep = (id, cur) => setOpenSteps(m => {
+    if (stepAccordion) {
+      // uno alla volta: chiudi tutti, apri solo questo (o chiudi se era aperto)
+      const next = Object.fromEntries(chain.steps.map(s => [s.id, false]));
+      next[id] = !cur;
+      return next;
+    }
+    return { ...m, [id]: !cur };
+  });
   const setAllSteps = (val) =>
     setOpenSteps(Object.fromEntries(chain.steps.map(s => [s.id, val])));
 
@@ -2087,10 +2226,17 @@ const ChainsView = ({ chains, activeChainId, setActiveChainId,
               </button>
             )}
             <button className="btn" onClick={resetChain}>Azzera progresso</button>
+            <button className={`btn ${stepAccordion ? 'active' : ''}`}
+                    onClick={() => setStepAccordion(a => !a)}
+                    title={stepAccordion
+                      ? 'Attivo: si apre uno step alla volta (aprirne uno chiude gli altri). La preferenza resta salvata.'
+                      : 'Disattivo: più step aperti insieme. Clicca per passare a uno alla volta.'}>
+              <Icon name={stepAccordion ? 'check' : 'minus'} size={13} /> Uno step alla volta
+            </button>
           </div>
         </div>
 
-        {chain.steps.length > 1 && (
+        {!stepAccordion && chain.steps.length > 1 && (
           <div className="chain-steps-toolbar">
             <button onClick={() => setAllSteps(true)} title="Espandi tutti gli step">
               <Icon name="plus" size={11}/> Espandi step
@@ -4622,6 +4768,14 @@ function App() {
     setLayoutByMode(m => ({ ...m, [mode]: v }));
   }, [mode]);
 
+  // Modalità apertura step nelle attack chain: accordion (uno alla volta) vs liberi.
+  // Preferenza salvata in locale; default = accordion.
+  const [stepAccordion, setStepAccordion] = useState(() => {
+    const v = localStorage.getItem('cm-step-accordion');
+    return v === null ? true : v === '1';
+  });
+  useEffect(() => { localStorage.setItem('cm-step-accordion', stepAccordion ? '1' : '0'); }, [stepAccordion]);
+
   // Filters
   const [query, setQueryRaw]    = useState('');
   // Search is global: starting a query jumps to "Tutte le fasi" so it spans every phase;
@@ -5508,6 +5662,8 @@ function App() {
               onNewChain={() => setShowAddChainModal(true)}
               onReorderChain={reorderChain}
               layout={layout}
+              stepAccordion={stepAccordion}
+              setStepAccordion={setStepAccordion}
             />
           ) : (
             <div className={`content layout-${layout}`}>

