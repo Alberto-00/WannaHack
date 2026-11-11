@@ -364,12 +364,22 @@ const canonTag = (t) => {
   const k = String(t || '').trim().toLowerCase();
   return TAG_ALIASES[k] || k;
 };
+// Espansione bidirezionale dei sinonimi per la ricerca: da un tag a tutte le sue
+// forme note (nxc <-> netexec, elastic <-> elasticsearch), così "netexec" trova
+// anche i comandi taggati solo "nxc".
+const TAG_EXPAND = (() => {
+  const m = {};
+  const add = (a, b) => { (m[a] = m[a] || new Set()).add(b); };
+  Object.entries(TAG_ALIASES).forEach(([alias, canon]) => { add(alias, canon); add(canon, alias); });
+  return m;
+})();
+const expandTag = (t) => { const k = canonTag(t); return TAG_EXPAND[k] ? [k, ...TAG_EXPAND[k]] : [k]; };
 
 // Testo cercabile di un comando. Include le varianti (635 nei dati: un flag che vive
 // solo lì prima non si trovava) e i NOMI di fase e sotto-fase, non solo gli id.
 const cmdHaystack = (c) => [
   c.name, c.template, c.description, c.group, c.subcategory,
-  ...(c.tags || []),
+  ...(c.tags || []).flatMap(expandTag),
   ...(c.variants || []).flatMap(v => [v.label, v.template]),
   CAT_MAP[c.category]?.name,
   SUB_MAP[subKey(c.category, c.subcategory)]?.name,
@@ -381,6 +391,53 @@ const chainHaystack = (c) => [
   ...(c.mitre || []),
   ...(c.steps || []).map(s => s.title),
 ].filter(Boolean).join(' ').toLowerCase();
+
+// Ricerca testuale: AND dei termini separati da spazio, indipendente dall'ordine,
+// su testo "foldato" (minuscolo + accenti rimossi), così "piu" trova "più" e
+// "null smb" trova "SMB — null session". Nessun termine (query vuota) = passa tutto.
+// Superset del vecchio includes(q): tutto ciò che matchava prima matcha ancora.
+const foldText = (s) => String(s).toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
+// Edit-distance <= 1 (O(n), early-exit): usata SOLO dal fallback fuzzy della palette.
+const withinEd1 = (a, b) => {
+  if (a === b) return true;
+  const la = a.length, lb = b.length;
+  if (la === lb) { let d = 0; for (let k = 0; k < la; k++) if (a[k] !== b[k] && ++d > 1) return false; return d === 1; }
+  if (Math.abs(la - lb) !== 1) return false;
+  const s = la < lb ? a : b, l = la < lb ? b : a;
+  let i = 0, j = 0, skipped = false;
+  while (i < s.length && j < l.length) {
+    if (s[i] === l[j]) { i++; j++; }
+    else { if (skipped) return false; skipped = true; j++; }
+  }
+  return true;
+};
+// Ricerca: AND dei termini (separati da spazio), indipendente dall'ordine, su testo
+// foldato (minuscolo + accenti rimossi). fuzzy=true (solo fallback palette): un termine
+// lungo >=4 matcha anche un token dell'haystack a distanza di edit 1 (tolleranza typo).
+const queryMatches = (haystack, query, fuzzy) => {
+  const terms = foldText(query).split(/\s+/).filter(Boolean);
+  if (!terms.length) return true;
+  const hay = foldText(haystack);
+  if (!fuzzy) return terms.every(t => hay.includes(t));
+  const tokens = hay.split(/[^a-z0-9]+/).filter(Boolean);
+  return terms.every(t => hay.includes(t) || (t.length >= 4 && tokens.some(tok => withinEd1(tok, t))));
+};
+// Punteggio di rilevanza per la palette: match sul nome > tag > resto, bonus prefisso.
+const scoreCmd = (c, query) => {
+  const terms = foldText(query).split(/\s+/).filter(Boolean);
+  if (!terms.length) return 0;
+  const name = foldText(c.name || '');
+  const tags = foldText((c.tags || []).flatMap(expandTag).join(' '));
+  const hay = foldText(cmdHaystack(c));
+  let s = 0;
+  for (const t of terms) {
+    if (name.startsWith(t)) s += 10;
+    else if (name.includes(t)) s += 6;
+    else if (tags.includes(t)) s += 4;
+    else if (hay.includes(t)) s += 1;
+  }
+  return s;
+};
 
 const catColor = (hue) => `oklch(0.72 0.12 ${hue})`;
 const catColorSoft = (hue) => `oklch(0.72 0.12 ${hue} / 0.14)`;
@@ -4067,7 +4124,7 @@ Schema esatto:
 
 Come scegliere:
 - Interpreta l'INTENTO, non solo le parole: gestisci sinonimi, termini IT/EN, nomi di tool e abbreviazioni (es. "scalare privilegi su windows" -> privesc Windows; "prendere l'handshake" -> cattura WPA).
-- Valuta ogni voce su nome + fase + tag + descrizione. Preferisci i comandi piu' specifici e direttamente azionabili per l'obiettivo dell'utente; scarta i match solo vagamente correlati.
+- Valuta ogni voce su nome + fase/sottofase + tag + descrizione + varianti. Preferisci i comandi piu' specifici e direttamente azionabili per l'obiettivo dell'utente; scarta i match solo vagamente correlati.
 - Resta nella disciplina "{{DISCIPLINE}}". Le uniche fasi disponibili sono: {{PHASES}}. Non proporre attivita' fuori da queste.
 
 Campi:
@@ -4080,7 +4137,7 @@ Vincoli:
 - Usa SOLO id presenti nell'indice, copiati ESATTAMENTE (case-sensitive): non inventarli, non modificarli, non tradurli.
 - Se nulla e' pertinente, rispondi: {"commandIds": [], "chainIds": [], "explanation": "", "suggestedCommand": null}.
 
-COMANDI (id | nome | fase | tag | descrizione):
+COMANDI (id | nome | fase › sottofase | tag | descrizione | varianti):
 {{COMMAND_INDEX}}
 
 PLAYBOOK (id | nome | obiettivo):
@@ -4155,8 +4212,11 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
   const [modelManual, setModelManual]     = useState(false);
   const [showSettings, setShowSettings] = useState(() => !localStorage.getItem('cm-openai-key'));
   const inputRef = useRef(null);
+  const abortRef = useRef(null);
 
   useEffect(() => { inputRef.current?.focus(); }, []);
+  // Annulla una richiesta AI in volo se la modale viene chiusa.
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   // Load defaults from secret.env + ai-system-prompt.md (localStorage overrides win)
   useEffect(() => {
@@ -4206,13 +4266,22 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
   const chainById = useMemo(() => Object.fromEntries(chains.map(c => [c.id, c])), [chains]);
 
   const buildIndex = () => {
-    const cmdLines = commands.map(c =>
-      `${c.id} | ${c.name} | ${CAT_MAP[c.category]?.name || c.category}`
-      + ` | ${(c.tags || []).slice(0, 5).join(',')}`
-      + ` | ${(c.description || '').replace(/\s+/g, ' ').slice(0, 90)}`
-    ).join('\n');
+    // Indice ricco: fase › sottofase, tag, descrizione e le label delle varianti
+    // (un tool/flag che vive solo in una variante ora è nell'indice e il modello lo vede).
+    const cmdLines = commands.map(c => {
+      const phase = CAT_MAP[c.category]?.name || c.category;
+      const sub = SUB_MAP[subKey(c.category, c.subcategory)]?.name;
+      const vlabels = (c.variants || []).map(v => v.label).filter(Boolean).join(',');
+      return [
+        c.id, c.name,
+        sub ? `${phase} › ${sub}` : phase,
+        (c.tags || []).slice(0, 6).join(','),
+        (c.description || '').replace(/\s+/g, ' ').slice(0, 160),
+        vlabels && `varianti: ${vlabels}`,
+      ].filter(Boolean).join(' | ');
+    }).join('\n');
     const chainLines = chains.map(c =>
-      `${c.id} | ${c.name} | ${(c.objective || '').replace(/\s+/g, ' ').slice(0, 110)}`
+      `${c.id} | ${c.name} | ${(c.objective || '').replace(/\s+/g, ' ').slice(0, 130)}`
     ).join('\n');
     return { cmdLines, chainLines };
   };
@@ -4281,6 +4350,9 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
     if (!q) return;
     if (!apiKey) { setShowSettings(true); setError('Inserisci prima la tua API key OpenAI.'); return; }
     setLoading(true); setError(null); setResult(null);
+    abortRef.current?.abort();                 // annulla una eventuale richiesta precedente
+    const ac = new AbortController();
+    abortRef.current = ac;
     const { cmdLines, chainLines } = buildIndex();
     const nMax = parseInt(maxResults, 10) || 15;
     const useWeb = webSearch === '1';
@@ -4321,6 +4393,7 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
         body: JSON.stringify(body),
+        signal: ac.signal,
       });
       if (!res.ok) {
         const txt = await res.text();
@@ -4343,9 +4416,10 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
       setResult(out);
       try { localStorage.setItem(lastKey, JSON.stringify({ q, result: out, ts: Date.now() })); } catch {}
     } catch (err) {
+      if (err.name === 'AbortError') return;    // annullata (modale chiusa o nuova ricerca): nessun errore
       setError(err.message || String(err));
     } finally {
-      setLoading(false);
+      if (abortRef.current === ac) setLoading(false);
     }
   };
 
@@ -4576,7 +4650,7 @@ const AISearchModal = ({ onClose, commands, chains, disciplineCfg,
 /* ─────────────────────────────────────────────────────────────
    Search palette — centered command finder (Ctrl+K, sidebar collapsed)
    ───────────────────────────────────────────────────────────── */
-const SearchPalette = ({ query, setQuery, results, categories, onPick, onClose }) => {
+const SearchPalette = ({ query, setQuery, results, fuzzy, categories, onPick, onClose }) => {
   const inputRef = useRef(null);
   const listRef  = useRef(null);
   const [sel, setSel] = useState(0);
@@ -4619,6 +4693,9 @@ const SearchPalette = ({ query, setQuery, results, categories, onPick, onClose }
           <span className="palette-kbd">Esc</span>
         </div>
         <div className="palette-results" ref={listRef}>
+          {fuzzy && results.length > 0 && (
+            <div className="palette-empty" style={{ padding: '8px 14px' }}>Nessun risultato esatto — mostro i più simili.</div>
+          )}
           {q === '' ? (
             <div className="palette-empty">Scrivi per cercare fra tutti i comandi.</div>
           ) : results.length === 0 ? (
@@ -5049,8 +5126,7 @@ function App() {
     // compaiono quando si filtra per un protocollo di rete — è la semantica giusta.
     if (proto !== 'all' && !(c.protocols || []).includes(proto)) return false;
     if (tag !== 'all' && !(c.tags || []).some(t => canonTag(t) === tag)) return false;
-    const q = query.trim().toLowerCase();
-    if (q && !cmdHaystack(c).includes(q)) return false;
+    if (!queryMatches(cmdHaystack(c), query, opts.fuzzy)) return false;
     return true;
   }, [disciplineCatIds, showFavs, favs, activeCat, activeSub,
       platform, access, proto, tag, query, taxVersion]);
@@ -5088,11 +5164,23 @@ function App() {
 
   // === Palette results — a GLOBAL command finder (ignores the active phase and
   //     favourites, keeps the platform/access context filters). ===
-  const paletteResults = useMemo(() => {
-    if (!query.trim()) return [];
-    return allCommands
-      .filter(c => passesFilters(c, { ignorePhase: true, ignoreFavs: true }))
+  const paletteData = useMemo(() => {
+    const qq = query.trim();
+    if (!qq) return { list: [], fuzzy: false };
+    let hits = allCommands.filter(c => passesFilters(c, { ignorePhase: true, ignoreFavs: true }));
+    let fuzzy = false;
+    if (hits.length === 0) {
+      // Fallback tollerante ai typo — SOLO qui (palette), non nella vista raggruppata né nei conteggi,
+      // e solo quando l'exact non trova nulla: così "mysql" non tira mai dentro "mssql" (edit-distance 1).
+      hits = allCommands.filter(c => passesFilters(c, { ignorePhase: true, ignoreFavs: true, fuzzy: true }));
+      fuzzy = hits.length > 0;
+    }
+    const list = hits
+      .map((c, i) => ({ c, i, s: scoreCmd(c, qq) }))
+      .sort((a, b) => b.s - a.s || a.i - b.i)   // rilevanza desc, stabile sui pari
+      .map(x => x.c)
       .slice(0, 60);
+    return { list, fuzzy };
   }, [allCommands, query, passesFilters]);
 
   // Categories that should be visible in sidebar (have at least one matching command)
@@ -5120,7 +5208,7 @@ function App() {
     }
     if (chainDiff !== 'all') out = out.filter(c => c.difficulty === chainDiff);
     if (chainTactic !== 'all') out = out.filter(c => (c.tactic || '') === chainTactic);
-    if (q) out = out.filter(c => chainHaystack(c).includes(q));
+    if (q) out = out.filter(c => queryMatches(chainHaystack(c), query));
     return out;
   }, [activeCat, activeSub, allChains, chainDiff, chainTactic, query]);
 
@@ -5783,7 +5871,8 @@ function App() {
         <SearchPalette
           query={query}
           setQuery={setQuery}
-          results={paletteResults}
+          results={paletteData.list}
+          fuzzy={paletteData.fuzzy}
           categories={disciplineCats}
           onPick={palettePick}
           onClose={() => setPaletteOpen(false)}
@@ -5851,6 +5940,19 @@ window.__taxCheck = () => {
   t('cmdHaystack include le varianti',
     cmdHaystack({ name: 'x', template: 'a', variants: [{ label: 'v', template: '--flag-raro' }] })
       .includes('--flag-raro'));
+  t('queryMatches è AND indipendente dall\'ordine',
+    queryMatches('SMB — null session enum', 'null smb') &&
+    !queryMatches('SMB — null session enum', 'null rdp'));
+  t('queryMatches ignora gli accenti e la query vuota',
+    queryMatches('cattura più pacchetti', 'piu pacchetti') && queryMatches('qualsiasi', '   '));
+  t('expandTag espande gli alias bidirezionali',
+    expandTag('nxc').includes('netexec') && expandTag('netexec').includes('nxc'));
+  t('withinEd1: un typo sì, due typo no',
+    withinEd1('kerberoast', 'kerberoost') && !withinEd1('kerberoast', 'kerbrooast'));
+  t('queryMatches fuzzy tollera il typo solo col flag',
+    !queryMatches('kerberoast crack', 'kerberoost') && queryMatches('kerberoast crack', 'kerberoost', true));
+  t('scoreCmd premia il match sul nome',
+    scoreCmd({ name: 'Kerberoast' }, 'kerberoast') > scoreCmd({ name: 'x', description: 'via kerberoast' }, 'kerberoast'));
 
   console.log(out.join('\n'));
   const bad = out.filter(l => l.startsWith('FAIL')).length;

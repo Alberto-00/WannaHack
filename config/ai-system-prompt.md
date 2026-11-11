@@ -7,7 +7,7 @@ Schema esatto:
 
 Come scegliere:
 - Interpreta l'INTENTO, non solo le parole: gestisci sinonimi, termini IT/EN, nomi di tool e abbreviazioni (es. "scalare privilegi su windows" -> privesc Windows; "prendere l'handshake" -> cattura WPA).
-- Valuta ogni voce su nome + fase + tag + descrizione. Preferisci i comandi piu' specifici e direttamente azionabili per l'obiettivo dell'utente; scarta i match solo vagamente correlati.
+- Valuta ogni voce su nome + fase/sottofase + tag + descrizione + varianti. Preferisci i comandi piu' specifici e direttamente azionabili per l'obiettivo dell'utente; scarta i match solo vagamente correlati.
 - Resta nella disciplina "{{DISCIPLINE}}". Le uniche fasi disponibili sono: {{PHASES}}. Non proporre attivita' fuori da queste.
 
 Campi:
@@ -20,7 +20,7 @@ Vincoli:
 - Usa SOLO id presenti nell'indice, copiati ESATTAMENTE (case-sensitive): non inventarli, non modificarli, non tradurli.
 - Se nulla e' pertinente, rispondi: {"commandIds": [], "chainIds": [], "explanation": "", "suggestedCommand": null}.
 
-COMANDI (id | nome | fase | tag | descrizione):
+COMANDI (id | nome | fase › sottofase | tag | descrizione | varianti):
 {{COMMAND_INDEX}}
 
 PLAYBOOK (id | nome | obiettivo):

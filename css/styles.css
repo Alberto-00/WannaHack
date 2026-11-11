@@ -888,6 +888,23 @@ input, select, textarea { font: inherit; color: inherit; }
   font-size: 0.9em;
   color: var(--phase-color);
 }
+/* Grafica/diagramma ASCII in una description (es. XXE PUBLIC): monospace,
+   niente wrap (allineamento), scroll orizzontale sui pannelli stretti. */
+.builder-description pre,
+.builder-variant-note-body pre,
+.step-desc pre,
+.step-variant-desc pre {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  line-height: 1.5;
+  margin: 7px 0;
+  padding: 8px 10px;
+  background: var(--bg-code);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow-x: auto;
+  color: var(--fg-1);
+}
 /* Per-variant note — inside the Description box, separated from the main text */
 .builder-variant-note {
   margin-top: 12px;
@@ -973,9 +990,11 @@ input, select, textarea { font: inherit; color: inherit; }
 
 .variant-tabs {
   display: inline-flex;
+  flex-wrap: wrap;
+  max-width: 100%;
   background: var(--bg-1);
   border: 1px solid var(--border);
-  border-radius: 99px;
+  border-radius: 16px;
   padding: 3px;
   gap: 2px;
 }

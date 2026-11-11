@@ -9,8 +9,8 @@
 
 <p align="center">
   <img src="https://img.shields.io/badge/license-MIT-blue" alt="MIT License">
-  <img src="https://img.shields.io/badge/commands-393-4fd1ab" alt="393 commands">
-  <img src="https://img.shields.io/badge/playbooks-56-4fd1ab" alt="56 playbooks">
+  <img src="https://img.shields.io/badge/commands-496-4fd1ab" alt="496 commands">
+  <img src="https://img.shields.io/badge/playbooks-67-4fd1ab" alt="67 playbooks">
   <img src="https://img.shields.io/badge/disciplines-Pentest%20%7C%20WiFi-4fd1ab" alt="Pentest and WiFi disciplines">
   <img src="https://img.shields.io/badge/MITRE%20ATT%26CK-mapped-c77dff" alt="MITRE ATT&CK mapped">
   <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-lightgrey" alt="Linux, macOS and Windows">
@@ -95,7 +95,7 @@ The dropdown at the top left switches **discipline**. Each one brings its own ph
 
 ### Pentest (infrastructure, Active Directory, Web)
 
-286 commands, 31 playbooks. Target: `ip`, `user`, `password`, `domain`, `hash`.
+385 commands, 41 playbooks. Target: `ip`, `user`, `password`, `domain`, `hash`.
 
 | # | Phase | Content |
 |---|-------|---------|
@@ -113,7 +113,7 @@ Access filter: `no-creds`, `password`, `hash` (NTLM), `ticket` (Kerberos), `cert
 
 ### WiFi (802.11 wireless assessment)
 
-107 commands, 25 playbooks. Target: `iface`, `mon`, `bssid`, `essid`, `channel`, `client`, `capfile`, `password`.
+111 commands, 26 playbooks. Target: `iface`, `mon`, `bssid`, `essid`, `channel`, `client`, `capfile`, `password`.
 
 | # | Phase | Content |
 |---|-------|---------|

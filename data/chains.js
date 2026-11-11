@@ -132,6 +132,227 @@ const CHAINS = [
     ]
   },
   {
+    "id": "sqli-to-creds",
+    "name": "SQLi, Dump, Login",
+    "short": "sqli",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "tactic": "Credential Access",
+    "difficulty": "easy",
+    "estTime": "20 min",
+    "objective": "Da un’iniezione SQL estrai le credenziali applicative, crackale se hashate e riusale per autenticarti.",
+    "outcome": "Credenziali valide dall’applicazione",
+    "prereqs": [
+      "Parametro iniettabile (SQLi)"
+    ],
+    "mitre": [
+      "T1190",
+      "T1110.002"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "verify": "La pagina risponde in modo diverso rispetto al valore legittimo, per esempio restituendo tutte le righe oppure un errore SQL.",
+        "title": "Conferma l’iniezione",
+        "cmdRef": "sqli-detect"
+      },
+      {
+        "id": "s2",
+        "verify": "sqlmap elenca i database sotto `available databases`. Se dichiara il parametro non iniettabile vanno alzati `--level` e `--risk`.",
+        "title": "Enumera i database",
+        "cmdRef": "sqlmap",
+        "variant": "default"
+      },
+      {
+        "id": "s3",
+        "verify": "Il contenuto della tabella viene salvato sotto `~/.local/share/sqlmap/output/<host>/dump/`.",
+        "title": "Dumpa la tabella utenti",
+        "cmdRef": "sqlmap",
+        "variant": "dump"
+      },
+      {
+        "id": "s4",
+        "verify": "`Status...: Cracked`. Il mode va scelto in base al formato osservato, per esempio 0 per MD5 e 1400 per SHA-256.",
+        "title": "Cracka se hashate, poi riusa",
+        "cmdRef": "hashcat-ntlm",
+        "overrides": {
+          "mode": "0"
+        }
+      }
+    ]
+  },
+  {
+    "id": "lfi-to-rce",
+    "name": "LFI, Log Poisoning, RCE",
+    "short": "lfi",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "tactic": "Exploitation",
+    "difficulty": "medium",
+    "estTime": "20 min",
+    "objective": "Trasforma una Local File Inclusion in esecuzione di codice avvelenando un log con PHP e poi includendolo.",
+    "outcome": "RCE come utente del web server",
+    "prereqs": [
+      "Parametro vulnerabile a LFI",
+      "Accesso in lettura a un log (Apache/Nginx/auth)"
+    ],
+    "mitre": [
+      "T1190",
+      "T1505.003"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "verify": "La risposta contiene il contenuto di `/etc/passwd`, quindi l'inclusione arbitraria di file è confermata.",
+        "title": "Conferma la LFI",
+        "cmdRef": "lfi"
+      },
+      {
+        "id": "s2",
+        "verify": "La richiesta viene registrata nel log di access con lo User-Agent malevolo. Il percorso varia fra `/var/log/apache2/access.log` e `/var/log/nginx/access.log` e deve essere leggibile.",
+        "title": "Inietta PHP nel log (User-Agent)",
+        "cmdRef": "lfi-logpoison",
+        "variant": "default"
+      },
+      {
+        "id": "s3",
+        "verify": "Includendo il log e passando il parametro `cmd`, l'output del comando compare nella pagina e conferma l'esecuzione.",
+        "title": "Includi il log ed esegui",
+        "cmdRef": "lfi-logpoison",
+        "variant": "trigger"
+      }
+    ]
+  },
+  {
+    "id": "payload-to-shell",
+    "name": "Payload, Listener, Shell stabile",
+    "short": "payload",
+    "category": "exploitation",
+    "subcategory": "payloads",
+    "tactic": "Execution",
+    "difficulty": "easy",
+    "estTime": "15 min",
+    "objective": "Trasformare una esecuzione di comandi qualsiasi in una shell interattiva utilizzabile. Il flusso è sempre lo stesso: si genera il payload nel formato adatto al target, si mette in ascolto un listener, si consegna ed esegue il payload e infine si stabilizza la shell, perché una shell non stabilizzata muore al primo Ctrl+C e non gestisce editor né sudo.",
+    "outcome": "Shell interattiva e stabile sul target",
+    "prereqs": [
+      "Un modo per eseguire comandi sul target, anche limitato",
+      "Connettività di rete dal target verso la macchina attaccante",
+      "Il formato del payload deve corrispondere al sistema operativo e all'architettura"
+    ],
+    "mitre": [
+      "T1059",
+      "T1105"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Generazione del payload",
+        "cmdRef": "msfvenom",
+        "variant": "default",
+        "verify": "Il file viene creato e `file shell.elf` ne conferma architettura e formato. La dimensione anomala di pochi byte indica un errore nella generazione."
+      },
+      {
+        "id": "s2",
+        "title": "Listener in ascolto",
+        "cmdRef": "nc-listen",
+        "variant": "default",
+        "verify": "Il listener resta in attesa senza restituire il prompt. `ss -lntp` conferma la porta in stato LISTEN."
+      },
+      {
+        "id": "s3",
+        "title": "Consegna del payload al target",
+        "cmdRef": "transfer-http",
+        "variant": "default",
+        "verify": "Il log del server HTTP registra la richiesta GET con codice `200` proveniente dall'IP del target."
+      },
+      {
+        "id": "s4",
+        "title": "Alternativa senza file, one-liner",
+        "cmdRef": "revshell",
+        "variant": "default",
+        "verify": "La connessione arriva sul listener senza che nulla sia stato scritto su disco, il che evita del tutto l'antivirus su filesystem."
+      },
+      {
+        "id": "s5",
+        "title": "Stabilizzazione della shell",
+        "cmdRef": "shell-pty",
+        "variant": "full",
+        "verify": "Dopo l'upgrade funzionano Ctrl+C senza chiudere la sessione, la cronologia con le frecce, `clear` e gli editor a schermo intero."
+      },
+      {
+        "id": "s6",
+        "title": "Handler Metasploit per meterpreter",
+        "cmdRef": "msf-handler",
+        "verify": "`Meterpreter session 1 opened`. Da lì `getuid` e `sysinfo` confermano contesto utente e sistema operativo."
+      }
+    ]
+  },
+  {
+    "id": "webshell-to-shell",
+    "name": "Upload, Web Shell, Reverse Shell",
+    "short": "webshell",
+    "category": "exploitation",
+    "subcategory": "webshells",
+    "tactic": "Persistence",
+    "difficulty": "medium",
+    "estTime": "20 min",
+    "objective": "Passare da un form di upload mal filtrato a una shell interattiva. La web shell serve da testa di ponte, perché vive dentro il processo del web server e ne eredita i privilegi, ma resta scomoda: il passo successivo è sempre convertirla in una reverse shell vera.",
+    "outcome": "Reverse shell come utente del web server",
+    "prereqs": [
+      "Un punto di upload raggiungibile e una directory di destinazione servita dal web server",
+      "Conoscenza del linguaggio lato server, per scegliere l'estensione giusta",
+      "Connettività in uscita dal target verso la macchina attaccante"
+    ],
+    "mitre": [
+      "T1505.003",
+      "T1059"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Bypass dei controlli di estensione",
+        "cmdRef": "file-upload",
+        "variant": "ext",
+        "verify": "L'upload viene accettato e il file risulta raggiungibile via HTTP. Un `403` sulla directory di upload indica che l'esecuzione è disabilitata e serve un'altra destinazione."
+      },
+      {
+        "id": "s2",
+        "title": "Bypass basato sui magic bytes",
+        "cmdRef": "file-upload",
+        "variant": "magic",
+        "verify": "Il file supera la validazione sul contenuto pur restando eseguibile lato server."
+      },
+      {
+        "id": "s3",
+        "title": "Web shell da caricare",
+        "cmdRef": "kali-webshells",
+        "variant": "default",
+        "verify": "Richiamando la web shell con il parametro previsto, per esempio `?cmd=id`, la risposta contiene l'output del comando."
+      },
+      {
+        "id": "s4",
+        "title": "Listener in ascolto",
+        "cmdRef": "nc-listen",
+        "variant": "default",
+        "verify": "Il listener resta in attesa sulla porta scelta."
+      },
+      {
+        "id": "s5",
+        "title": "Reverse shell dalla web shell",
+        "cmdRef": "revshell",
+        "variant": "php",
+        "verify": "La connessione arriva sul listener e `id` restituisce l'utente del web server, tipicamente `www-data` o `apache`."
+      },
+      {
+        "id": "s6",
+        "title": "Stabilizzazione della shell",
+        "cmdRef": "shell-pty",
+        "variant": "full",
+        "verify": "La sessione regge Ctrl+C, cronologia ed editor interattivi."
+      }
+    ]
+  },
+  {
     "id": "jenkins-rce",
     "name": "Jenkins Script Console, RCE",
     "short": "jenkins",
@@ -614,223 +835,52 @@ const CHAINS = [
     ]
   },
   {
-    "id": "sqli-to-creds",
-    "name": "SQLi, Dump, Login",
-    "short": "sqli",
-    "category": "vuln-analysis",
-    "subcategory": "web-app-testing",
-    "tactic": "Credential Access",
-    "difficulty": "easy",
-    "estTime": "20 min",
-    "objective": "Da un’iniezione SQL estrai le credenziali applicative, crackale se hashate e riusale per autenticarti.",
-    "outcome": "Credenziali valide dall’applicazione",
-    "prereqs": [
-      "Parametro iniettabile (SQLi)"
-    ],
-    "mitre": [
-      "T1190",
-      "T1110.002"
-    ],
-    "steps": [
-      {
-        "id": "s1",
-        "verify": "La pagina risponde in modo diverso rispetto al valore legittimo, per esempio restituendo tutte le righe oppure un errore SQL.",
-        "title": "Conferma l’iniezione",
-        "cmdRef": "sqli-detect"
-      },
-      {
-        "id": "s2",
-        "verify": "sqlmap elenca i database sotto `available databases`. Se dichiara il parametro non iniettabile vanno alzati `--level` e `--risk`.",
-        "title": "Enumera i database",
-        "cmdRef": "sqlmap",
-        "variant": "default"
-      },
-      {
-        "id": "s3",
-        "verify": "Il contenuto della tabella viene salvato sotto `~/.local/share/sqlmap/output/<host>/dump/`.",
-        "title": "Dumpa la tabella utenti",
-        "cmdRef": "sqlmap",
-        "variant": "dump"
-      },
-      {
-        "id": "s4",
-        "verify": "`Status...: Cracked`. Il mode va scelto in base al formato osservato, per esempio 0 per MD5 e 1400 per SHA-256.",
-        "title": "Cracka se hashate, poi riusa",
-        "cmdRef": "hashcat-ntlm",
-        "overrides": {
-          "mode": "0"
-        }
-      }
-    ]
-  },
-  {
-    "id": "lfi-to-rce",
-    "name": "LFI, Log Poisoning, RCE",
-    "short": "lfi",
-    "category": "vuln-analysis",
-    "subcategory": "web-app-testing",
+    "id": "mysql-rce-win",
+    "name": "MySQL UDF, RCE Windows (SYSTEM)",
+    "short": "mysql-rce-win",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
     "tactic": "Exploitation",
     "difficulty": "medium",
     "estTime": "20 min",
-    "objective": "Trasforma una Local File Inclusion in esecuzione di codice avvelenando un log con PHP e poi includendolo.",
-    "outcome": "RCE come utente del web server",
+    "objective": "Quando un server MySQL gira su Windows e si dispone di credenziali valide, spesso quelle di `root` recuperate da un file di configurazione dell'applicazione, il privilegio `FILE` apre la strada all'esecuzione di comandi tramite una User Defined Function. Si carica nel `plugin_dir` la libreria `lib_mysqludf_sys_64.dll` e si registra la funzione `sys_exec`, che esegue comandi sul sistema operativo. Poiché il servizio MySQL è avviato di norma come LocalSystem, tutto ciò che passa da `sys_exec` viene eseguito con i privilegi di SYSTEM: si crea così un amministratore locale e si rientra sull'host con una sessione stabile via WinRM.",
+    "outcome": "Esecuzione di comandi come SYSTEM sull'host Windows e accesso stabile come amministratore locale via evil-winrm.",
     "prereqs": [
-      "Parametro vulnerabile a LFI",
-      "Accesso in lettura a un log (Apache/Nginx/auth)"
+      "Credenziali MySQL valide",
+      "Privilegio FILE e secure_file_priv permissivo",
+      "Target Windows (`@@version_compile_os` = Win64)",
+      "DLL lib_mysqludf_sys_64.dll (da sqlmap, de-cloak con cloak.py -d)"
     ],
     "mitre": [
       "T1190",
-      "T1505.003"
+      "T1505.001",
+      "T1136.001"
     ],
     "steps": [
       {
         "id": "s1",
-        "verify": "La risposta contiene il contenuto di `/etc/passwd`, quindi l'inclusione arbitraria di file è confermata.",
-        "title": "Conferma la LFI",
-        "cmdRef": "lfi"
+        "title": "Connetti al DB (anche da shell senza PTY)",
+        "cmdRef": "mysql-noninteractive",
+        "variant": "default",
+        "verify": "Ottieni i database: credenziali valide. Se MySQL è su 127.0.0.1, usa un port forward o query dalla shell locale."
       },
       {
         "id": "s2",
-        "verify": "La richiesta viene registrata nel log di access con lo User-Agent malevolo. Il percorso varia fra `/var/log/apache2/access.log` e `/var/log/nginx/access.log` e deve essere leggibile.",
-        "title": "Inietta PHP nel log (User-Agent)",
-        "cmdRef": "lfi-logpoison",
-        "variant": "default"
+        "title": "Verifica prerequisiti (target Windows)",
+        "cmdRef": "mysql-privcheck",
+        "verify": "Utente con FILE privilege, `secure_file_priv` vuoto e `@@version_compile_os` = Win64: la via UDF Windows è aperta."
       },
       {
         "id": "s3",
-        "verify": "Includendo il log e passando il parametro `cmd`, l'output del comando compare nella pagina e conferma l'esecuzione.",
-        "title": "Includi il log ed esegui",
-        "cmdRef": "lfi-logpoison",
-        "variant": "trigger"
-      }
-    ]
-  },
-  {
-    "id": "payload-to-shell",
-    "name": "Payload, Listener, Shell stabile",
-    "short": "payload",
-    "category": "exploitation",
-    "subcategory": "payloads",
-    "tactic": "Execution",
-    "difficulty": "easy",
-    "estTime": "15 min",
-    "objective": "Trasformare una esecuzione di comandi qualsiasi in una shell interattiva utilizzabile. Il flusso è sempre lo stesso: si genera il payload nel formato adatto al target, si mette in ascolto un listener, si consegna ed esegue il payload e infine si stabilizza la shell, perché una shell non stabilizzata muore al primo Ctrl+C e non gestisce editor né sudo.",
-    "outcome": "Shell interattiva e stabile sul target",
-    "prereqs": [
-      "Un modo per eseguire comandi sul target, anche limitato",
-      "Connettività di rete dal target verso la macchina attaccante",
-      "Il formato del payload deve corrispondere al sistema operativo e all'architettura"
-    ],
-    "mitre": [
-      "T1059",
-      "T1105"
-    ],
-    "steps": [
-      {
-        "id": "s1",
-        "title": "Generazione del payload",
-        "cmdRef": "msfvenom",
-        "variant": "default",
-        "verify": "Il file viene creato e `file shell.elf` ne conferma architettura e formato. La dimensione anomala di pochi byte indica un errore nella generazione."
-      },
-      {
-        "id": "s2",
-        "title": "Listener in ascolto",
-        "cmdRef": "nc-listen",
-        "variant": "default",
-        "verify": "Il listener resta in attesa senza restituire il prompt. `ss -lntp` conferma la porta in stato LISTEN."
-      },
-      {
-        "id": "s3",
-        "title": "Consegna del payload al target",
-        "cmdRef": "transfer-http",
-        "variant": "default",
-        "verify": "Il log del server HTTP registra la richiesta GET con codice `200` proveniente dall'IP del target."
+        "title": "Carica la UDF .dll ed esegui (sys_exec, blind)",
+        "cmdRef": "mysql-oscmd-win",
+        "verify": "`sys_exec` gira come SYSTEM. Essendo blind (nessun output), aggiungi un admin locale (`net user pwn Pwn123! /add` poi `net localgroup administrators pwn /add`). L'appartenenza ai gruppi di accesso remoto non è automatica: per evil-winrm aggiungi/verifica `Remote Management Users`, per l'RDP `Remote Desktop Users`. In alternativa il tab `sqlmap` automatizza tutto con `--os-shell`."
       },
       {
         "id": "s4",
-        "title": "Alternativa senza file, one-liner",
-        "cmdRef": "revshell",
-        "variant": "default",
-        "verify": "La connessione arriva sul listener senza che nulla sia stato scritto su disco, il che evita del tutto l'antivirus su filesystem."
-      },
-      {
-        "id": "s5",
-        "title": "Stabilizzazione della shell",
-        "cmdRef": "shell-pty",
-        "variant": "full",
-        "verify": "Dopo l'upgrade funzionano Ctrl+C senza chiudere la sessione, la cronologia con le frecce, `clear` e gli editor a schermo intero."
-      },
-      {
-        "id": "s6",
-        "title": "Handler Metasploit per meterpreter",
-        "cmdRef": "msf-handler",
-        "verify": "`Meterpreter session 1 opened`. Da lì `getuid` e `sysinfo` confermano contesto utente e sistema operativo."
-      }
-    ]
-  },
-  {
-    "id": "webshell-to-shell",
-    "name": "Upload, Web Shell, Reverse Shell",
-    "short": "webshell",
-    "category": "exploitation",
-    "subcategory": "webshells",
-    "tactic": "Persistence",
-    "difficulty": "medium",
-    "estTime": "20 min",
-    "objective": "Passare da un form di upload mal filtrato a una shell interattiva. La web shell serve da testa di ponte, perché vive dentro il processo del web server e ne eredita i privilegi, ma resta scomoda: il passo successivo è sempre convertirla in una reverse shell vera.",
-    "outcome": "Reverse shell come utente del web server",
-    "prereqs": [
-      "Un punto di upload raggiungibile e una directory di destinazione servita dal web server",
-      "Conoscenza del linguaggio lato server, per scegliere l'estensione giusta",
-      "Connettività in uscita dal target verso la macchina attaccante"
-    ],
-    "mitre": [
-      "T1505.003",
-      "T1059"
-    ],
-    "steps": [
-      {
-        "id": "s1",
-        "title": "Bypass dei controlli di estensione",
-        "cmdRef": "file-upload",
-        "variant": "ext",
-        "verify": "L'upload viene accettato e il file risulta raggiungibile via HTTP. Un `403` sulla directory di upload indica che l'esecuzione è disabilitata e serve un'altra destinazione."
-      },
-      {
-        "id": "s2",
-        "title": "Bypass basato sui magic bytes",
-        "cmdRef": "file-upload",
-        "variant": "magic",
-        "verify": "Il file supera la validazione sul contenuto pur restando eseguibile lato server."
-      },
-      {
-        "id": "s3",
-        "title": "Web shell da caricare",
-        "cmdRef": "kali-webshells",
-        "variant": "default",
-        "verify": "Richiamando la web shell con il parametro previsto, per esempio `?cmd=id`, la risposta contiene l'output del comando."
-      },
-      {
-        "id": "s4",
-        "title": "Listener in ascolto",
-        "cmdRef": "nc-listen",
-        "variant": "default",
-        "verify": "Il listener resta in attesa sulla porta scelta."
-      },
-      {
-        "id": "s5",
-        "title": "Reverse shell dalla web shell",
-        "cmdRef": "revshell",
-        "variant": "php",
-        "verify": "La connessione arriva sul listener e `id` restituisce l'utente del web server, tipicamente `www-data` o `apache`."
-      },
-      {
-        "id": "s6",
-        "title": "Stabilizzazione della shell",
-        "cmdRef": "shell-pty",
-        "variant": "full",
-        "verify": "La sessione regge Ctrl+C, cronologia ed editor interattivi."
+        "title": "Entra col nuovo admin via WinRM",
+        "cmdRef": "evil-winrm",
+        "verify": "Sessione PowerShell stabile come amministratore: hai una shell interattiva e upload/download."
       }
     ]
   },
@@ -1554,6 +1604,71 @@ const CHAINS = [
         "cmdRef": "nxc-pth",
         "variant": "default",
         "verify": "Un `(Pwn3d!)` su altri host indica che l'account amministratore locale è condiviso, situazione comune e ottima per il movimento laterale."
+      }
+    ]
+  },
+  {
+    "id": "win-privgroups",
+    "name": "Gruppi privilegiati Windows → SYSTEM/DC",
+    "short": "privgrp",
+    "category": "privesc-windows",
+    "subcategory": "priv-groups",
+    "tactic": "Privilege Escalation",
+    "difficulty": "medium",
+    "estTime": "20-40 min",
+    "objective": "Molti gruppi locali Windows, oltre agli Administrators, concedono privilegi che portano a SYSTEM o alla compromissione del Domain Controller. Il primo passo è scoprire a quali gruppi appartiene l'utente controllato; da lì si abusa il vettore corrispondente. Su un Domain Controller gruppi come DnsAdmins, Server Operators e Backup Operators sono particolarmente pericolosi, perché i loro privilegi agiscono direttamente sul dominio.",
+    "outcome": "Esecuzione come SYSTEM sull'host o sul Domain Controller, oppure estrazione di credenziali e hash dai gruppi con diritti di lettura.",
+    "prereqs": [
+      "Shell come utente locale o di dominio",
+      "L'utente deve appartenere a un gruppo privilegiato (da verificare al passo 1)"
+    ],
+    "mitre": [
+      "T1078.002",
+      "T1134",
+      "T1003.003"
+    ],
+    "steps": [
+      {
+        "id": "s1",
+        "title": "Quali gruppi privilegiati? (enum)",
+        "cmdRef": "sa-win-users",
+        "verify": "`whoami /groups` o `net user <utente>` mostrano le appartenenze. Cerca: DnsAdmins, Backup Operators, Server Operators, Print Operators, Event Log Readers, Hyper-V Administrators. Gli step successivi sono alternativi: usa quello del gruppo di cui fai parte."
+      },
+      {
+        "id": "s2",
+        "title": "DnsAdmins → DLL, SYSTEM su DC",
+        "cmdRef": "dnsadmins-dll",
+        "verify": "Vale se sei in `DnsAdmins`: il servizio DNS (SYSTEM, tipicamente sul DC) carica la tua DLL. Serve poter riavviare il servizio DNS."
+      },
+      {
+        "id": "s3",
+        "title": "Backup Operators → SAM/NTDS",
+        "cmdRef": "backup-operators",
+        "verify": "Vale se sei in `Backup Operators` (SeBackupPrivilege): copi SAM+SYSTEM su un membro, o NTDS.dit su un DC, poi secretsdump offline."
+      },
+      {
+        "id": "s4",
+        "title": "Server Operators → servizio, SYSTEM",
+        "cmdRef": "server-operators",
+        "verify": "Vale se sei in `Server Operators`: riconfiguri un servizio perché esegua il tuo binario come SYSTEM. Gruppo tipico sui DC."
+      },
+      {
+        "id": "s5",
+        "title": "Print Operators → SeLoadDriver, SYSTEM",
+        "cmdRef": "print-operators",
+        "verify": "Vale se sei in `Print Operators` (SeLoadDriverPrivilege): carichi Capcom.sys ed esegui come SYSTEM. Fallisce con HVCI/Driver Blocklist."
+      },
+      {
+        "id": "s6",
+        "title": "Event Log Readers → credenziali",
+        "cmdRef": "event-log-readers",
+        "verify": "Vale se sei in `Event Log Readers`: cerchi credenziali in chiaro nelle command line degli eventi 4688 del Security log."
+      },
+      {
+        "id": "s7",
+        "title": "Hyper-V Administrators → NTDS da VM",
+        "cmdRef": "hyperv-admins",
+        "verify": "Vale se sei in `Hyper-V Administrators` e il DC è virtualizzato: estrai NTDS.dit dal disco della VM, oppure abusi un servizio vulnerabile dell'host."
       }
     ]
   },
@@ -2593,121 +2708,6 @@ const CHAINS = [
         "verify": "Con il TGT del DC iniettato in `KRB5CCNAME`, il dump degli hash di dominio va a buon fine partendo da `Administrator:500:`.",
         "title": "Inietta il TGT del DC$ e fai `DCSync`",
         "cmdRef": "dcsync"
-      }
-    ]
-  },
-  {
-    "id": "mysql-rce-win",
-    "name": "MySQL UDF, RCE Windows (SYSTEM)",
-    "short": "mysql-rce-win",
-    "category": "exploitation",
-    "subcategory": "infrastructure",
-    "tactic": "Exploitation",
-    "difficulty": "medium",
-    "estTime": "20 min",
-    "objective": "Quando un server MySQL gira su Windows e si dispone di credenziali valide, spesso quelle di `root` recuperate da un file di configurazione dell'applicazione, il privilegio `FILE` apre la strada all'esecuzione di comandi tramite una User Defined Function. Si carica nel `plugin_dir` la libreria `lib_mysqludf_sys_64.dll` e si registra la funzione `sys_exec`, che esegue comandi sul sistema operativo. Poiché il servizio MySQL è avviato di norma come LocalSystem, tutto ciò che passa da `sys_exec` viene eseguito con i privilegi di SYSTEM: si crea così un amministratore locale e si rientra sull'host con una sessione stabile via WinRM.",
-    "outcome": "Esecuzione di comandi come SYSTEM sull'host Windows e accesso stabile come amministratore locale via evil-winrm.",
-    "prereqs": [
-      "Credenziali MySQL valide",
-      "Privilegio FILE e secure_file_priv permissivo",
-      "Target Windows (`@@version_compile_os` = Win64)",
-      "DLL lib_mysqludf_sys_64.dll (da sqlmap, de-cloak con cloak.py -d)"
-    ],
-    "mitre": [
-      "T1190",
-      "T1505.001",
-      "T1136.001"
-    ],
-    "steps": [
-      {
-        "id": "s1",
-        "title": "Connetti al DB (anche da shell senza PTY)",
-        "cmdRef": "mysql-noninteractive",
-        "variant": "default",
-        "verify": "Ottieni i database: credenziali valide. Se MySQL è su 127.0.0.1, usa un port forward o query dalla shell locale."
-      },
-      {
-        "id": "s2",
-        "title": "Verifica prerequisiti (target Windows)",
-        "cmdRef": "mysql-privcheck",
-        "verify": "Utente con FILE privilege, `secure_file_priv` vuoto e `@@version_compile_os` = Win64: la via UDF Windows è aperta."
-      },
-      {
-        "id": "s3",
-        "title": "Carica la UDF .dll ed esegui (sys_exec, blind)",
-        "cmdRef": "mysql-oscmd-win",
-        "verify": "`sys_exec` gira come SYSTEM. Essendo blind (nessun output), aggiungi un admin locale (`net user pwn Pwn123! /add` poi `net localgroup administrators pwn /add`). L'appartenenza ai gruppi di accesso remoto non è automatica: per evil-winrm aggiungi/verifica `Remote Management Users`, per l'RDP `Remote Desktop Users`. In alternativa il tab `sqlmap` automatizza tutto con `--os-shell`."
-      },
-      {
-        "id": "s4",
-        "title": "Entra col nuovo admin via WinRM",
-        "cmdRef": "evil-winrm",
-        "verify": "Sessione PowerShell stabile come amministratore: hai una shell interattiva e upload/download."
-      }
-    ]
-  },
-  {
-    "id": "win-privgroups",
-    "name": "Gruppi privilegiati Windows → SYSTEM/DC",
-    "short": "privgrp",
-    "category": "privesc-windows",
-    "subcategory": "priv-groups",
-    "tactic": "Privilege Escalation",
-    "difficulty": "medium",
-    "estTime": "20-40 min",
-    "objective": "Molti gruppi locali Windows, oltre agli Administrators, concedono privilegi che portano a SYSTEM o alla compromissione del Domain Controller. Il primo passo è scoprire a quali gruppi appartiene l'utente controllato; da lì si abusa il vettore corrispondente. Su un Domain Controller gruppi come DnsAdmins, Server Operators e Backup Operators sono particolarmente pericolosi, perché i loro privilegi agiscono direttamente sul dominio.",
-    "outcome": "Esecuzione come SYSTEM sull'host o sul Domain Controller, oppure estrazione di credenziali e hash dai gruppi con diritti di lettura.",
-    "prereqs": [
-      "Shell come utente locale o di dominio",
-      "L'utente deve appartenere a un gruppo privilegiato (da verificare al passo 1)"
-    ],
-    "mitre": [
-      "T1078.002",
-      "T1134",
-      "T1003.003"
-    ],
-    "steps": [
-      {
-        "id": "s1",
-        "title": "Quali gruppi privilegiati? (enum)",
-        "cmdRef": "sa-win-users",
-        "verify": "`whoami /groups` o `net user <utente>` mostrano le appartenenze. Cerca: DnsAdmins, Backup Operators, Server Operators, Print Operators, Event Log Readers, Hyper-V Administrators. Gli step successivi sono alternativi: usa quello del gruppo di cui fai parte."
-      },
-      {
-        "id": "s2",
-        "title": "DnsAdmins → DLL, SYSTEM su DC",
-        "cmdRef": "dnsadmins-dll",
-        "verify": "Vale se sei in `DnsAdmins`: il servizio DNS (SYSTEM, tipicamente sul DC) carica la tua DLL. Serve poter riavviare il servizio DNS."
-      },
-      {
-        "id": "s3",
-        "title": "Backup Operators → SAM/NTDS",
-        "cmdRef": "backup-operators",
-        "verify": "Vale se sei in `Backup Operators` (SeBackupPrivilege): copi SAM+SYSTEM su un membro, o NTDS.dit su un DC, poi secretsdump offline."
-      },
-      {
-        "id": "s4",
-        "title": "Server Operators → servizio, SYSTEM",
-        "cmdRef": "server-operators",
-        "verify": "Vale se sei in `Server Operators`: riconfiguri un servizio perché esegua il tuo binario come SYSTEM. Gruppo tipico sui DC."
-      },
-      {
-        "id": "s5",
-        "title": "Print Operators → SeLoadDriver, SYSTEM",
-        "cmdRef": "print-operators",
-        "verify": "Vale se sei in `Print Operators` (SeLoadDriverPrivilege): carichi Capcom.sys ed esegui come SYSTEM. Fallisce con HVCI/Driver Blocklist."
-      },
-      {
-        "id": "s6",
-        "title": "Event Log Readers → credenziali",
-        "cmdRef": "event-log-readers",
-        "verify": "Vale se sei in `Event Log Readers`: cerchi credenziali in chiaro nelle command line degli eventi 4688 del Security log."
-      },
-      {
-        "id": "s7",
-        "title": "Hyper-V Administrators → NTDS da VM",
-        "cmdRef": "hyperv-admins",
-        "verify": "Vale se sei in `Hyper-V Administrators` e il DC è virtualizzato: estrai NTDS.dit dal disco della VM, oppure abusi un servizio vulnerabile dell'host."
       }
     ]
   }
