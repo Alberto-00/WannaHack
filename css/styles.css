@@ -2556,6 +2556,98 @@ body.bg-cool { --bg: oklch(0.205 0.014 250); --bg-1: oklch(0.235 0.014 250); --b
   gap: 12px;
 }
 
+/* ── "Modifica comando": layout a due pannelli (navigatore sezioni + campi) ── */
+.modal-body.cmd-editor-body {
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: stretch;
+  min-height: min(440px, 56vh);
+}
+.cmd-editor-nav {
+  flex: 0 0 186px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 10px;
+  border-right: 1px solid var(--border);
+  background: var(--bg);
+  overflow-y: auto;
+}
+.cmd-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 11px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--fg-2);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+.cmd-nav-item:hover { background: var(--bg-1); color: var(--fg); }
+.cmd-nav-item:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.cmd-nav-item.on {
+  background: var(--bg-1);
+  color: var(--fg);
+  border-color: var(--border);
+  box-shadow: inset 3px 0 0 var(--accent);   /* accento: unico punto "forte" = dove sei */
+}
+.cmd-nav-item > span:first-of-type { flex: 1; min-width: 0; }
+.cmd-nav-badge {
+  min-width: 18px; height: 18px;
+  padding: 0 5px;
+  display: inline-grid; place-items: center;
+  border-radius: 9px;
+  background: var(--accent); color: var(--accent-fg);
+  font-size: 11px; font-weight: 700;
+}
+.cmd-editor-pane {
+  flex: 1; min-width: 0;
+  padding: 20px 22px;
+  overflow-y: auto;
+}
+.cmd-editor-pane > .modal-row:last-child,
+.cmd-editor-pane > .params-help:last-child { margin-bottom: 0; }
+.cmd-pane-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 0 0 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--fg);
+}
+.cmd-pane-head h3 { margin: 0; font-size: 15px; font-weight: 600; }
+.cmd-pane-head > button { margin-left: auto; }   /* azione sezione: Suggerisci / Aggiungi */
+.cmd-empty {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 10px; text-align: center;
+  color: var(--fg-2);
+  padding: 34px 20px;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-lg);
+}
+.cmd-empty p { margin: 0; font-size: 13px; max-width: 42ch; line-height: 1.5; }
+@media (max-width: 720px) {
+  .modal-body.cmd-editor-body { flex-direction: column; min-height: 0; }
+  .cmd-editor-nav {
+    flex: none; flex-direction: row;
+    gap: 6px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  .cmd-nav-item { width: auto; white-space: nowrap; }
+  .cmd-nav-item > span:first-of-type { flex: none; }
+  .cmd-nav-item.on { box-shadow: inset 0 -3px 0 var(--accent); }
+}
+
 /* ── Command editor: sezione "Filtri", chip, bottone Suggerisci ── */
 .form-section {
   border: 1px solid var(--border);
@@ -3449,7 +3541,8 @@ textarea.step-editor-input {
   gap: 6px;
   align-items: center;
 }
-.variants-editor-row input {
+.variants-editor-row input,
+.variants-editor-row textarea {
   background: var(--bg-2);
   border: 1px solid var(--border);
   border-radius: 4px;
@@ -3457,9 +3550,17 @@ textarea.step-editor-input {
   font-size: 12px;
   color: var(--fg);
   outline: none;
+  box-sizing: border-box;
+  min-width: 0;
   transition: border-color 0.15s;
 }
-.variants-editor-row input:focus {
+.variants-editor-row textarea {
+  font-family: var(--font-mono);   /* template variante: monospace, leggibile su --bg-2 */
+  line-height: 1.5;
+  resize: vertical;
+}
+.variants-editor-row input:focus,
+.variants-editor-row textarea:focus {
   border-color: var(--phase-color, var(--accent));
 }
 .variants-editor-row input.mono {

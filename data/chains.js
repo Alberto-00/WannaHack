@@ -167,7 +167,7 @@ const CHAINS = [
         "id": "s3",
         "verify": "Il contenuto della tabella viene salvato sotto `~/.local/share/sqlmap/output/<host>/dump/`.",
         "title": "Dumpa la tabella utenti",
-        "cmdRef": "sqlmap",
+        "cmdRef": "sqlmap-enum",
         "variant": "dump"
       },
       {
@@ -1472,6 +1472,12 @@ const CHAINS = [
         "cmdRef": "cron-discover",
         "variant": "writable",
         "verify": "Uno script eseguito da root e scrivibile dall'utente corrente è escalation garantita al successivo avvio del job."
+      },
+      {
+        "id": "s7b",
+        "title": "Processi e cron in tempo reale (pspy)",
+        "cmdRef": "pspy",
+        "verify": "pspy mostra i job che non compaiono leggendo i file di cron: un processo lanciato da root che esegue uno script o un binario scrivibile dall'utente corrente è il vettore diretto. Annota UID 0, PID e percorso completo del comando."
       },
       {
         "id": "s8",

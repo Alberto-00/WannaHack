@@ -2470,6 +2470,16 @@ const ShortcutsModal = ({ open, onClose }) => {
 // `categories` = SOLO le fasi della disciplina attiva. Mostrarle tutte permette di
 // salvare un comando PT dentro una fase WiFi: sparisce da lista, conteggi e palette
 // e nessun filtro lo recupera (filteredCommands scarta per disciplina).
+// Sezioni del modale "Modifica comando": un navigatore laterale mostra una
+// sezione per volta, così l'editor non è più un unico scroll in cui ci si perde.
+const CMD_SECTIONS = [
+  { id: 'identita', label: 'Identità', icon: 'edit' },
+  { id: 'comando', label: 'Comando', icon: 'terminal' },
+  { id: 'classificazione', label: 'Classificazione', icon: 'settings' },
+  { id: 'contenuto', label: 'Contenuto', icon: 'book' },
+  { id: 'parametri', label: 'Parametri', icon: 'list' },
+  { id: 'varianti', label: 'Varianti', icon: 'layers' },
+];
 const EditModal = ({ cmd, categories, groupVocab, defaultCat, defaultSub, onClose, onSave, onDelete, dialog }) => {
   const [form, setForm] = useState(() => ({
     id: cmd?.id || `custom-${Date.now()}`,
@@ -2488,6 +2498,7 @@ const EditModal = ({ cmd, categories, groupVocab, defaultCat, defaultSub, onClos
     refs: (cmd?.refs || []).map(r => (typeof r === 'string' ? r : `${r.label || ''} | ${r.url}`)).join('\n'),
     note: cmd?.note || '',
   }));
+  const [section, setSection] = useState('identita');
 
   const cat = CAT_MAP[form.category];
   const subOptions = cat?.subcategories || [];
@@ -2552,6 +2563,7 @@ const EditModal = ({ cmd, categories, groupVocab, defaultCat, defaultSub, onClos
 
   const handleSave = () => {
     if (!form.name.trim() || !form.template.trim()) {
+      setSection(!form.name.trim() ? 'identita' : 'comando');
       dialog({
         type: 'warning',
         title: 'Campi mancanti',
@@ -2644,221 +2656,263 @@ const EditModal = ({ cmd, categories, groupVocab, defaultCat, defaultSub, onClos
 
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ width: 'min(760px, 94vw)' }}>
+      <div className="modal cmd-editor" style={{ width: 'min(940px, 96vw)' }}>
         <div className="modal-header">
           <h2>{cmd ? 'Modifica comando' : 'Aggiungi comando'}</h2>
           <button className="btn-icon btn" onClick={onClose} title="Chiudi (Esc)"><Icon name="x" size={14}/></button>
         </div>
-        <div className="modal-body">
-          <div className="modal-row">
-            <label>Nome</label>
-            <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
-                   placeholder="es. nxc smb — null session" />
-          </div>
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Fase</label>
-              <select value={form.category}
-                      onChange={e => setForm({ ...form, category: e.target.value })}>
-                {catOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div className="modal-row">
-              <label>Sotto-sezione</label>
-              <select value={form.subcategory}
-                      onChange={e => setForm({ ...form, subcategory: e.target.value })}>
-                {subOptions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="modal-row">
-            <label>Gruppo (nella sotto-sezione)</label>
-            {/* datalist nativo: suggerisce i gruppi già in uso restando testo libero,
-                così "Null Session" e "Null session" non diventano due gruppi. */}
-            <input value={form.group} list="cm-groups"
-                   onChange={e => setForm({ ...form, group: e.target.value })}
-                   placeholder="es. Null Session, Pillaging" />
-            <datalist id="cm-groups">
-              {(groupVocab || []).map(g => <option key={g} value={g} />)}
-            </datalist>
-          </div>
-          <div className="modal-row mono">
-            <label>Template — usa &lt;placeholder&gt; per i parametri</label>
-            <textarea value={form.template}
-                      onChange={e => setForm({ ...form, template: e.target.value })}
-                      placeholder="netexec smb <ip> -u '<user>' -p '<password>' --shares" />
-            {targetFields.length > 0 && (
-              <div className="chip-row" style={{ marginTop: 8 }}>
-                <span className="chip-row-label">Placeholder (clic per inserire):</span>
-                {targetFields.map(f => (
-                  <button key={f.key} type="button" className="chip mono"
-                          onClick={() => insertPlaceholder(f.key)} title={f.label}>
-                    &lt;{f.key}&gt;
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="modal-body cmd-editor-body">
+          <nav className="cmd-editor-nav" aria-label="Sezioni del comando">
+            {CMD_SECTIONS.map(s => {
+              const count = s.id === 'parametri'
+                ? form.params.length
+                : s.id === 'varianti'
+                  ? form.variants.filter(v => (v.label || '').trim() && (v.template || '').trim()).length
+                  : 0;
+              return (
+                <button key={s.id} type="button"
+                        className={`cmd-nav-item ${section === s.id ? 'on' : ''}`}
+                        aria-current={section === s.id ? 'true' : undefined}
+                        onClick={() => setSection(s.id)}>
+                  <Icon name={s.icon} size={14} />
+                  <span>{s.label}</span>
+                  {count > 0 && <span className="cmd-nav-badge">{count}</span>}
+                </button>
+              );
+            })}
+          </nav>
 
-          <div className="form-section">
-            <div className="form-section-head">
-              <span className="form-section-title">Filtri</span>
-              <button type="button" className={`btn-suggest ${suggested ? 'done' : ''}`}
-                      onClick={applySuggestion} disabled={!form.template.trim()}
-                      title="Compila Piattaforma e Cosa hai leggendo il template">
-                {suggested ? '✓ Compilati' : '⚡ Suggerisci dal template'}
-              </button>
-            </div>
-            <div className="modal-row-pair">
+          <div className="cmd-editor-pane">
+            {section === 'identita' && (<>
+              <div className="cmd-pane-head"><Icon name="edit" size={15} /><h3>Identità</h3></div>
               <div className="modal-row">
-                <label>Piattaforma</label>
-                <select value={form.platform}
-                        onChange={e => setForm({ ...form, platform: e.target.value })}>
-                  <option value="linux">linux</option>
-                  <option value="windows">windows</option>
-                  <option value="cross-platform">cross-platform</option>
-                </select>
+                <label>Nome</label>
+                <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })}
+                       placeholder="es. nxc smb — null session" />
               </div>
-              <div className="modal-row" />
-            </div>
-            <div className="modal-row">
-              <label>Cosa hai — requires <span className="form-hint">(clic per aggiungere/togliere)</span></label>
-              {accessOpts.length > 0 && (
-                <div className="chip-row" style={{ marginBottom: 6 }}>
-                  {accessOpts.map(o => (
-                    <button key={o.value} type="button"
-                            className={`chip ${reqSet.has(o.value) ? 'on' : ''}`}
-                            onClick={() => toggleReq(o.value)} title={o.label}>
-                      {reqSet.has(o.value) ? '✓ ' : ''}{o.value}
-                    </button>
-                  ))}
+              <div className="modal-row-pair">
+                <div className="modal-row">
+                  <label>Fase</label>
+                  <select value={form.category}
+                          onChange={e => setForm({ ...form, category: e.target.value })}>
+                    {catOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="modal-row">
+                  <label>Sotto-sezione</label>
+                  <select value={form.subcategory}
+                          onChange={e => setForm({ ...form, subcategory: e.target.value })}>
+                    {subOptions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              </div>
+              <div className="modal-row">
+                <label>Gruppo (nella sotto-sezione)</label>
+                {/* datalist nativo: suggerisce i gruppi già in uso restando testo libero,
+                    così "Null Session" e "Null session" non diventano due gruppi. */}
+                <input value={form.group} list="cm-groups"
+                       onChange={e => setForm({ ...form, group: e.target.value })}
+                       placeholder="es. Null Session, Pillaging" />
+                <datalist id="cm-groups">
+                  {(groupVocab || []).map(g => <option key={g} value={g} />)}
+                </datalist>
+              </div>
+            </>)}
+
+            {section === 'comando' && (<>
+              <div className="cmd-pane-head"><Icon name="terminal" size={15} /><h3>Comando</h3></div>
+              <div className="modal-row mono">
+                <label>Template — usa &lt;placeholder&gt; per i parametri</label>
+                <textarea value={form.template}
+                          onChange={e => setForm({ ...form, template: e.target.value })}
+                          placeholder="netexec smb <ip> -u '<user>' -p '<password>' --shares" />
+                {targetFields.length > 0 && (
+                  <div className="chip-row" style={{ marginTop: 8 }}>
+                    <span className="chip-row-label">Placeholder (clic per inserire):</span>
+                    {targetFields.map(f => (
+                      <button key={f.key} type="button" className="chip mono"
+                              onClick={() => insertPlaceholder(f.key)} title={f.label}>
+                        &lt;{f.key}&gt;
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>)}
+
+            {section === 'classificazione' && (<>
+              <div className="cmd-pane-head">
+                <Icon name="settings" size={15} /><h3>Classificazione</h3>
+                <button type="button" className={`btn-suggest ${suggested ? 'done' : ''}`}
+                        onClick={applySuggestion} disabled={!form.template.trim()}
+                        title="Compila Piattaforma e Cosa hai leggendo il template">
+                  {suggested ? '✓ Compilati' : '⚡ Suggerisci dal template'}
+                </button>
+              </div>
+              <div className="modal-row-pair">
+                <div className="modal-row">
+                  <label>Piattaforma</label>
+                  <select value={form.platform}
+                          onChange={e => setForm({ ...form, platform: e.target.value })}>
+                    <option value="linux">linux</option>
+                    <option value="windows">windows</option>
+                    <option value="cross-platform">cross-platform</option>
+                  </select>
+                </div>
+                <div className="modal-row" />
+              </div>
+              <div className="modal-row">
+                <label>Cosa hai — requires <span className="form-hint">(clic per aggiungere/togliere)</span></label>
+                {accessOpts.length > 0 && (
+                  <div className="chip-row" style={{ marginBottom: 6 }}>
+                    {accessOpts.map(o => (
+                      <button key={o.value} type="button"
+                              className={`chip ${reqSet.has(o.value) ? 'on' : ''}`}
+                              onClick={() => toggleReq(o.value)} title={o.label}>
+                        {reqSet.has(o.value) ? '✓ ' : ''}{o.value}
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <input value={form.requires}
+                       onChange={e => setForm({ ...form, requires: e.target.value })}
+                       placeholder="avanzato: password,hash" />
+              </div>
+              <div className="modal-row">
+                <label>Tag (separati da virgola)</label>
+                <input value={form.tags}
+                       onChange={e => setForm({ ...form, tags: e.target.value })}
+                       placeholder="nxc, recon" />
+              </div>
+              {filterWarnings.length > 0 && (
+                <div className="filter-lint">
+                  <strong>⚠ Controllo filtri (non bloccante)</strong>
+                  <ul>{filterWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
                 </div>
               )}
-              <input value={form.requires}
-                     onChange={e => setForm({ ...form, requires: e.target.value })}
-                     placeholder="avanzato: password,hash" />
-            </div>
-            {filterWarnings.length > 0 && (
-              <div className="filter-lint">
-                <strong>⚠ Controllo filtri (non bloccante)</strong>
-                <ul>{filterWarnings.map((w, i) => <li key={i}>{w}</li>)}</ul>
-              </div>
-            )}
-          </div>
+            </>)}
 
-          <br />
-          <div className="modal-row">
-            <label>Descrizione</label>
-            <textarea value={form.description}
-                      onChange={e => setForm({ ...form, description: e.target.value })}
-                      placeholder="Cosa fa il comando, quando usarlo, gotchas…" />
-          </div>
-          <div className="modal-row mono">
-            <label>Nota — callout Markdown e/o HTML, opzionale, appare prima dei Riferimenti</label>
-            <textarea value={form.note}
-                      onChange={e => setForm({ ...form, note: e.target.value })}
-                      placeholder={'# 🔥 Titolo\nTesto con **grassetto**, `codice` e *corsivo*.\nAnche <kbd>HTML</kbd> inline è ammesso.'} />
-          </div>
-          <div className="modal-row">
-            <label>Tag (separati da virgola)</label>
-            <input value={form.tags}
-                   onChange={e => setForm({ ...form, tags: e.target.value })}
-                   placeholder="nxc, recon" />
-          </div>
-          <div className="modal-row mono">
-            <label>Riferimenti — uno per riga: Etichetta | https://url</label>
-            <textarea value={form.refs}
-                      onChange={e => setForm({ ...form, refs: e.target.value })}
-                      placeholder={'HackTricks — SMB | https://book.hacktricks.xyz/...\nNetExec wiki | https://www.netexec.wiki/...'} />
-          </div>
-          {form.params.length > 0 && (
-            <div className="modal-row">
-              <label>Parametri (rilevati automaticamente dal template)</label>
-              <div className="params-editor">
-                <div className="params-editor-header">
-                  <span title="Auto — estratto dal template fra < >. Non modificabile.">
-                    Chiave
-                    <span className="hint-mark" title="Auto, presa dal template">?</span>
-                  </span>
-                  <span title="Nome leggibile mostrato nel Builder (es. 'Indirizzo IP', 'Nome utente').">
-                    Etichetta
-                    <span className="hint-mark" title="Nome mostrato all'utente">?</span>
-                  </span>
-                  <span title="Opzionale. Collega al Target Context per autofill. Valori: ip, user, password, domain, hash.">
-                    ctx
-                    <span className="hint-mark" title="Collega a Target: ip/user/password/domain/hash">?</span>
-                  </span>
-                  <span title="Testo di suggerimento (grigio) mostrato nel campo del Builder quando è vuoto. Es. il percorso di una wordlist.">
-                    Placeholder
-                    <span className="hint-mark" title="Hint grigio nel Builder. Non finisce nel comando finché non lo digiti/incolli.">?</span>
-                  </span>
-                </div>
-                {form.params.map((p, i) => (
-                  <div key={p.key} className="params-editor-row">
-                    <input value={p.key} disabled title="Chiave (auto)" />
-                    <input value={p.label} placeholder="es. Indirizzo IP"
-                           onChange={e => updateParam(i, { label: e.target.value })} />
-                    <input value={p.ctx || ''} placeholder="ip / user / password / domain / hash"
-                           onChange={e => updateParam(i, { ctx: e.target.value || undefined })} />
-                    <input value={p.placeholder || ''} placeholder=""
-                           onChange={e => updateParam(i, { placeholder: e.target.value })} />
-                  </div>
-                ))}
+            {section === 'contenuto' && (<>
+              <div className="cmd-pane-head"><Icon name="book" size={15} /><h3>Contenuto</h3></div>
+              <div className="modal-row">
+                <label>Descrizione</label>
+                <textarea value={form.description}
+                          onChange={e => setForm({ ...form, description: e.target.value })}
+                          placeholder="Cosa fa il comando, quando usarlo, gotchas…" />
               </div>
-            </div>
-          )}
+              <div className="modal-row mono">
+                <label>Nota — callout Markdown e/o HTML, opzionale, appare prima dei Riferimenti</label>
+                <textarea value={form.note}
+                          onChange={e => setForm({ ...form, note: e.target.value })}
+                          placeholder={'# 🔥 Titolo\nTesto con **grassetto**, `codice` e *corsivo*.\nAnche <kbd>HTML</kbd> inline è ammesso.'} />
+              </div>
+              <div className="modal-row mono">
+                <label>Riferimenti — uno per riga: Etichetta | https://url</label>
+                <textarea value={form.refs}
+                          onChange={e => setForm({ ...form, refs: e.target.value })}
+                          placeholder={'HackTricks — SMB | https://book.hacktricks.xyz/...\nNetExec wiki | https://www.netexec.wiki/...'} />
+              </div>
+            </>)}
 
-          {/* Varianti — alternative al template base */}
-          <div className="modal-row">
-            <label>
-              Varianti (opzionale)
-              <span className="hint-mark" title="Permettono di avere più versioni del comando. L'utente sceglie dal tab nel Builder.">?</span>
-            </label>
-            <div className="params-help">
-              <h5><Icon name="layers" size={11}/> Cosa sono le varianti</h5>
-              <p style={{ margin: 0 }}>
-                Permettono di avere alternative al template base. Esempi:
-                <br/>• <code>dig</code> → varianti <em>Any</em> / <em>MX</em> / <em>TXT</em>
-                <br/>• <code>ftp</code> → <em>Auth</em> / <em>Anonymous</em>
-                <br/>• <code>nmap</code> → <em>TCP</em> / <em>UDP</em> / <em>Full</em>
-                <br/>L'utente sceglie la variante dai tab nel Builder. Lascia vuoto se non servono.
-              </p>
-            </div>
-            {form.variants.length > 0 && (
-              <div className="variants-editor">
-                <div className="variants-editor-header">
-                  <span>Etichetta</span>
-                  <span>Template</span>
-                  <span/>
-                </div>
-                {form.variants.map((v, i) => (
-                  <div key={i} className="variant-edit-block">
-                    <div className="variants-editor-row">
-                      <input value={v.label || ''}
-                             placeholder="es. Anonymous"
-                             onChange={e => updateVariant(i, { label: e.target.value })}/>
-                      <textarea value={v.template || ''}
-                             placeholder="ftp -A <ip>"
-                             className="mono"
-                             rows={1}
-                             onChange={e => updateVariant(i, { template: e.target.value })}/>
-                      <button type="button" onClick={() => removeVariant(i)} title="Rimuovi variante">
-                        <Icon name="x" size={11}/>
-                      </button>
+            {section === 'parametri' && (<>
+              <div className="cmd-pane-head"><Icon name="list" size={15} /><h3>Parametri</h3></div>
+              {form.params.length > 0 ? (
+                <div className="modal-row">
+                  <label>Rilevati automaticamente dal template</label>
+                  <div className="params-editor">
+                    <div className="params-editor-header">
+                      <span title="Auto — estratto dal template fra < >. Non modificabile.">
+                        Chiave
+                        <span className="hint-mark" title="Auto, presa dal template">?</span>
+                      </span>
+                      <span title="Nome leggibile mostrato nel Builder (es. 'Indirizzo IP', 'Nome utente').">
+                        Etichetta
+                        <span className="hint-mark" title="Nome mostrato all'utente">?</span>
+                      </span>
+                      <span title="Opzionale. Collega al Target Context per autofill. Valori: ip, user, password, domain, hash.">
+                        ctx
+                        <span className="hint-mark" title="Collega a Target: ip/user/password/domain/hash">?</span>
+                      </span>
+                      <span title="Testo di suggerimento (grigio) mostrato nel campo del Builder quando è vuoto. Es. il percorso di una wordlist.">
+                        Placeholder
+                        <span className="hint-mark" title="Hint grigio nel Builder. Non finisce nel comando finché non lo digiti/incolli.">?</span>
+                      </span>
                     </div>
-                    <textarea className="variant-desc-input"
-                           value={v.description || ''}
-                           rows={2}
-                           placeholder="Descrizione variante (opzionale — sostituisce quella del comando)"
-                           onChange={e => updateVariant(i, { description: e.target.value })}/>
+                    {form.params.map((p, i) => (
+                      <div key={p.key} className="params-editor-row">
+                        <input value={p.key} disabled title="Chiave (auto)" />
+                        <input value={p.label} placeholder="es. Indirizzo IP"
+                               onChange={e => updateParam(i, { label: e.target.value })} />
+                        <input value={p.ctx || ''} placeholder="ip / user / password / domain / hash"
+                               onChange={e => updateParam(i, { ctx: e.target.value || undefined })} />
+                        <input value={p.placeholder || ''} placeholder=""
+                               onChange={e => updateParam(i, { placeholder: e.target.value })} />
+                      </div>
+                    ))}
                   </div>
-                ))}
+                </div>
+              ) : (
+                <div className="cmd-empty">
+                  <Icon name="list" size={22} />
+                  <p>Nessun parametro. Compaiono qui in automatico appena usi un <code>&lt;placeholder&gt;</code> nel Template.</p>
+                </div>
+              )}
+            </>)}
+
+            {section === 'varianti' && (<>
+              <div className="cmd-pane-head">
+                <Icon name="layers" size={15} /><h3>Varianti</h3>
+                <button className="btn" type="button" onClick={addVariant}>
+                  <Icon name="plus" size={12} /> Aggiungi
+                </button>
               </div>
-            )}
-            <button className="btn" type="button" onClick={addVariant}
-                    style={{ alignSelf: 'flex-start', marginTop: 6 }}>
-              <Icon name="plus" size={12}/> Aggiungi variante
-            </button>
+              <div className="params-help">
+                <h5><Icon name="layers" size={11} /> Cosa sono le varianti</h5>
+                <p style={{ margin: 0 }}>
+                  Permettono di avere alternative al template base. Esempi:
+                  <br />• <code>dig</code> → varianti <em>Any</em> / <em>MX</em> / <em>TXT</em>
+                  <br />• <code>ftp</code> → <em>Auth</em> / <em>Anonymous</em>
+                  <br />• <code>nmap</code> → <em>TCP</em> / <em>UDP</em> / <em>Full</em>
+                  <br />L'utente sceglie la variante dai tab nel Builder. Lascia vuoto se non servono.
+                </p>
+              </div>
+              {form.variants.length > 0 ? (
+                <div className="variants-editor">
+                  <div className="variants-editor-header">
+                    <span>Etichetta</span>
+                    <span>Template</span>
+                    <span />
+                  </div>
+                  {form.variants.map((v, i) => (
+                    <div key={i} className="variant-edit-block">
+                      <div className="variants-editor-row">
+                        <input value={v.label || ''}
+                               placeholder="es. Anonymous"
+                               onChange={e => updateVariant(i, { label: e.target.value })} />
+                        <textarea value={v.template || ''}
+                               placeholder="ftp -A <ip>"
+                               className="mono"
+                               rows={1}
+                               onChange={e => updateVariant(i, { template: e.target.value })} />
+                        <button type="button" onClick={() => removeVariant(i)} title="Rimuovi variante">
+                          <Icon name="x" size={11} />
+                        </button>
+                      </div>
+                      <textarea className="variant-desc-input"
+                             value={v.description || ''}
+                             rows={2}
+                             placeholder="Descrizione variante (opzionale — sostituisce quella del comando)"
+                             onChange={e => updateVariant(i, { description: e.target.value })} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="cmd-empty">
+                  <Icon name="layers" size={22} />
+                  <p>Nessuna variante. Usa <strong>Aggiungi</strong> per creare alternative al template base; appariranno come tab nel Builder.</p>
+                </div>
+              )}
+            </>)}
           </div>
         </div>
         <div className="modal-footer">
@@ -3041,6 +3095,13 @@ const StepCommandEditor = ({ step, allCommands, catIds, onChange }) => {
 /* ─────────────────────────────────────────────────────────────
    New / Edit Playbook modal
    ───────────────────────────────────────────────────────────── */
+// Stesse sezioni-navigatore del "Modifica comando", adattate al playbook.
+const CHAIN_SECTIONS = [
+  { id: 'identita', label: 'Identità', icon: 'edit' },
+  { id: 'metadati', label: 'Metadati', icon: 'settings' },
+  { id: 'contesto', label: 'Contesto', icon: 'book' },
+  { id: 'step', label: 'Step', icon: 'list' },
+];
 const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
                        onClose, onSave, onDelete, dialog }) => {
   const [form, setForm] = useState(() => ({
@@ -3067,6 +3128,7 @@ const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
       { id: 's1', title: '', cmdRef: '', verify: '', overrides: [] },
     ],
   }));
+  const [section, setSection] = useState('identita');
 
   const cat = CAT_MAP[form.category];
   const subOptions = cat?.subcategories || [];
@@ -3140,6 +3202,7 @@ const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
 
   const handleSave = () => {
     if (!form.name.trim() || form.steps.length === 0 || !form.steps[0].title.trim()) {
+      setSection(!form.name.trim() ? 'identita' : 'step');
       dialog({
         type: 'warning',
         title: 'Playbook incompleto',
@@ -3192,209 +3255,238 @@ const ChainModal = ({ chain, categories, defaultCat, defaultSub, allCommands,
 
   return (
     <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal" style={{ width: 'min(880px, 94vw)' }}>
+      <div className="modal cmd-editor" style={{ width: 'min(940px, 96vw)' }}>
         <div className="modal-header">
           <h2>{chain ? 'Modifica playbook' : 'Nuovo playbook'}</h2>
           <button className="btn-icon btn" onClick={onClose} title="Chiudi (Esc)"><Icon name="x" size={14}/></button>
         </div>
-        <div className="modal-body">
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Nome</label>
-              <input value={form.name}
-                     onChange={e => setForm({ ...form, name: e.target.value })}
-                     placeholder="es. SMB → SYSTEM via PrintNightmare" />
-            </div>
-            <div className="modal-row">
-              <label>Tag breve</label>
-              <input value={form.short}
-                     onChange={e => setForm({ ...form, short: e.target.value })}
-                     placeholder="es. printnight" />
-            </div>
-          </div>
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Fase</label>
-              <select value={form.category}
-                      onChange={e => setForm({ ...form, category: e.target.value })}>
-                {catOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div className="modal-row">
-              <label>Sotto-sezione</label>
-              <select value={form.subcategory}
-                      onChange={e => setForm({ ...form, subcategory: e.target.value })}>
-                {subOptions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
-            </div>
-          </div>
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Tattica</label>
-              <input value={form.tactic}
-                     onChange={e => setForm({ ...form, tactic: e.target.value })}
-                     placeholder="Privilege Escalation" />
-            </div>
-            <div className="modal-row">
-              <label>Difficoltà</label>
-              <select value={form.difficulty}
-                      onChange={e => setForm({ ...form, difficulty: e.target.value })}>
-                <option value="easy">easy</option>
-                <option value="medium">medium</option>
-                <option value="hard">hard</option>
-              </select>
-            </div>
-          </div>
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Tempo stimato</label>
-              <input value={form.estTime}
-                     onChange={e => setForm({ ...form, estTime: e.target.value })}
-                     placeholder="15 min" />
-            </div>
-            <div className="modal-row">
-              <label>MITRE (separati da virgola)</label>
-              <input value={form.mitre}
-                     onChange={e => setForm({ ...form, mitre: e.target.value })}
-                     placeholder="T1078, T1649" />
-            </div>
-          </div>
-          <div className="modal-row">
-            <label>Obiettivo</label>
-            <textarea value={form.objective}
-                      onChange={e => setForm({ ...form, objective: e.target.value })}
-                      placeholder="Cosa fa il playbook e quando usarlo…" />
-          </div>
-          <div className="modal-row-pair">
-            <div className="modal-row">
-              <label>Risultato</label>
-              <textarea value={form.outcome}
-                        onChange={e => setForm({ ...form, outcome: e.target.value })}
-                        placeholder="NT hash di Administrator" />
-            </div>
-            <div className="modal-row">
-              <label>Prerequisiti (uno per riga)</label>
-              <textarea value={form.prereqs}
-                        onChange={e => setForm({ ...form, prereqs: e.target.value })}
-                        placeholder={"Credenziali valide per qualsiasi utente\nAccesso di rete al DC"} />
-            </div>
-            <div className="modal-row mono">
-              <label>Riferimenti — uno per riga: Etichetta | https://url</label>
-              <textarea value={form.refs}
-                        onChange={e => setForm({ ...form, refs: e.target.value })}
-                        placeholder={'Ligolo-ng — guida pivoting | https://medium.com/...'} />
-            </div>
-          </div>
+        <div className="modal-body cmd-editor-body">
+          <nav className="cmd-editor-nav" aria-label="Sezioni del playbook">
+            {CHAIN_SECTIONS.map(s => {
+              const count = s.id === 'step' ? form.steps.length : 0;
+              return (
+                <button key={s.id} type="button"
+                        className={`cmd-nav-item ${section === s.id ? 'on' : ''}`}
+                        aria-current={section === s.id ? 'true' : undefined}
+                        onClick={() => setSection(s.id)}>
+                  <Icon name={s.icon} size={14} />
+                  <span>{s.label}</span>
+                  {count > 0 && <span className="cmd-nav-badge">{count}</span>}
+                </button>
+              );
+            })}
+          </nav>
 
-          <div className="modal-row">
-            <div className="step-editor-label-row">
-              <label>Step</label>
-              {form.steps.length > 1 && (
-                <div className="step-editor-allbtns">
-                  <button type="button" onClick={expandAllSteps}><Icon name="plus" size={10}/> Espandi</button>
-                  <button type="button" onClick={collapseAllSteps}><Icon name="minus" size={10}/> Comprimi</button>
+          <div className="cmd-editor-pane">
+            {section === 'identita' && (<>
+              <div className="cmd-pane-head"><Icon name="edit" size={15} /><h3>Identità</h3></div>
+              <div className="modal-row-pair">
+                <div className="modal-row">
+                  <label>Nome</label>
+                  <input value={form.name}
+                         onChange={e => setForm({ ...form, name: e.target.value })}
+                         placeholder="es. SMB → SYSTEM via PrintNightmare" />
                 </div>
-              )}
-            </div>
-            <div className="step-editor">
-              {form.steps.map((s, i) => {
-                const isOpen = openSteps.has(i);
-                const overridesArr = s.overrides || [];
-                const stepCmd = s.cmd || (s.cmdRef ? allCommands.find(c => c.id === s.cmdRef) : null);
-                // override keys = SOLO i parametri della variante scelta (fallback al base)
-                const stepTmpl = stepCmd
-                  ? ((s.variant && stepCmd.variants?.find(v => v.id === s.variant)?.template) || stepCmd.template || '')
-                  : '';
-                const overrideKeys = extractParamKeys(stepTmpl);
-                return (
-                  <div key={i} className={`step-editor-block ${isOpen ? '' : 'collapsed'}`}>
-                    <div className="step-editor-head">
-                      <button type="button" className="step-editor-toggle"
-                              onClick={() => toggleStepOpen(i)}
-                              title={isOpen ? 'Comprimi step' : 'Espandi step'}>
-                        <Icon name="chevron" size={12}
-                              style={{ transform: isOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }}/>
-                      </button>
-                      <span className="step-editor-num">{i + 1}</span>
-                      <input value={s.title}
-                             onChange={e => updateStep(i, { title: e.target.value })}
-                             placeholder="Titolo step (es. Enumera template vulnerabili)"
-                             className="step-editor-input"/>
-                      <button type="button" onClick={() => removeStep(i)}
-                              className="step-editor-remove"
-                              title="Rimuovi step">
-                        <Icon name="x" size={11}/>
-                      </button>
-                    </div>
+                <div className="modal-row">
+                  <label>Tag breve</label>
+                  <input value={form.short}
+                         onChange={e => setForm({ ...form, short: e.target.value })}
+                         placeholder="es. printnight" />
+                </div>
+              </div>
+              <div className="modal-row-pair">
+                <div className="modal-row">
+                  <label>Fase</label>
+                  <select value={form.category}
+                          onChange={e => setForm({ ...form, category: e.target.value })}>
+                    {catOptions.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                  </select>
+                </div>
+                <div className="modal-row">
+                  <label>Sotto-sezione</label>
+                  <select value={form.subcategory}
+                          onChange={e => setForm({ ...form, subcategory: e.target.value })}>
+                    {subOptions.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </>)}
 
-                    <div className={`step-editor-collapse ${isOpen ? 'open' : ''}`}>
-                    <div className="step-editor-body">
-                      <StepCommandEditor step={s} allCommands={allCommands} catIds={catIds}
-                                         onChange={(patch) => updateStep(i, patch)} />
+            {section === 'metadati' && (<>
+              <div className="cmd-pane-head"><Icon name="settings" size={15} /><h3>Metadati</h3></div>
+              <div className="modal-row-pair">
+                <div className="modal-row">
+                  <label>Tattica</label>
+                  <input value={form.tactic}
+                         onChange={e => setForm({ ...form, tactic: e.target.value })}
+                         placeholder="Privilege Escalation" />
+                </div>
+                <div className="modal-row">
+                  <label>Difficoltà</label>
+                  <select value={form.difficulty}
+                          onChange={e => setForm({ ...form, difficulty: e.target.value })}>
+                    <option value="easy">easy</option>
+                    <option value="medium">medium</option>
+                    <option value="hard">hard</option>
+                  </select>
+                </div>
+              </div>
+              <div className="modal-row-pair">
+                <div className="modal-row">
+                  <label>Tempo stimato</label>
+                  <input value={form.estTime}
+                         onChange={e => setForm({ ...form, estTime: e.target.value })}
+                         placeholder="15 min" />
+                </div>
+                <div className="modal-row">
+                  <label>MITRE (separati da virgola)</label>
+                  <input value={form.mitre}
+                         onChange={e => setForm({ ...form, mitre: e.target.value })}
+                         placeholder="T1078, T1649" />
+                </div>
+              </div>
+            </>)}
 
-                      <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
-                      <textarea value={s.verify || ''}
-                             onChange={e => updateStep(i, { verify: e.target.value })}
-                             placeholder="es. `Got hash for administrator@…`"
-                             rows={3}
-                             className="step-editor-input mono"/>
+            {section === 'contesto' && (<>
+              <div className="cmd-pane-head"><Icon name="book" size={15} /><h3>Contesto</h3></div>
+              <div className="modal-row">
+                <label>Obiettivo</label>
+                <textarea value={form.objective}
+                          onChange={e => setForm({ ...form, objective: e.target.value })}
+                          placeholder="Cosa fa il playbook e quando usarlo…" />
+              </div>
+              <div className="modal-row-pair">
+                <div className="modal-row">
+                  <label>Risultato</label>
+                  <textarea value={form.outcome}
+                            onChange={e => setForm({ ...form, outcome: e.target.value })}
+                            placeholder="NT hash di Administrator" />
+                </div>
+                <div className="modal-row">
+                  <label>Prerequisiti (uno per riga)</label>
+                  <textarea value={form.prereqs}
+                            onChange={e => setForm({ ...form, prereqs: e.target.value })}
+                            placeholder={"Credenziali valide per qualsiasi utente\nAccesso di rete al DC"} />
+                </div>
+              </div>
+              <div className="modal-row mono">
+                <label>Riferimenti — uno per riga: Etichetta | https://url</label>
+                <textarea value={form.refs}
+                          onChange={e => setForm({ ...form, refs: e.target.value })}
+                          placeholder={'Ligolo-ng — guida pivoting | https://medium.com/...'} />
+              </div>
+            </>)}
 
-                      <div className="step-editor-sub">
-                        <div className="step-editor-sub-head">
-                          <span className="step-editor-sub-title">
-                            <Icon name="edit" size={11}/>
-                            Override parametri comando (opzionale)
-                          </span>
-                          <button type="button" onClick={() => addOverride(i)} className="step-editor-add-mini"
-                                  disabled={overridesArr.length >= overrideKeys.length}
-                                  title={overridesArr.length >= overrideKeys.length ? 'Ogni parametro può avere un solo override' : ''}>
-                            <Icon name="plus" size={10}/> Override
-                          </button>
+            {section === 'step' && (<>
+              <div className="cmd-pane-head">
+                <Icon name="list" size={15} /><h3>Step</h3>
+                {form.steps.length > 1 && (
+                  <div className="step-editor-allbtns" style={{ marginLeft: 'auto' }}>
+                    <button type="button" onClick={expandAllSteps}><Icon name="plus" size={10} /> Espandi</button>
+                    <button type="button" onClick={collapseAllSteps}><Icon name="minus" size={10} /> Comprimi</button>
+                  </div>
+                )}
+              </div>
+              <div className="step-editor">
+                {form.steps.map((s, i) => {
+                  const isOpen = openSteps.has(i);
+                  const overridesArr = s.overrides || [];
+                  const stepCmd = s.cmd || (s.cmdRef ? allCommands.find(c => c.id === s.cmdRef) : null);
+                  // override keys = SOLO i parametri della variante scelta (fallback al base)
+                  const stepTmpl = stepCmd
+                    ? ((s.variant && stepCmd.variants?.find(v => v.id === s.variant)?.template) || stepCmd.template || '')
+                    : '';
+                  const overrideKeys = extractParamKeys(stepTmpl);
+                  return (
+                    <div key={i} className={`step-editor-block ${isOpen ? '' : 'collapsed'}`}>
+                      <div className="step-editor-head">
+                        <button type="button" className="step-editor-toggle"
+                                onClick={() => toggleStepOpen(i)}
+                                title={isOpen ? 'Comprimi step' : 'Espandi step'}>
+                          <Icon name="chevron" size={12}
+                                style={{ transform: isOpen ? 'none' : 'rotate(-90deg)', transition: 'transform .2s' }}/>
+                        </button>
+                        <span className="step-editor-num">{i + 1}</span>
+                        <input value={s.title}
+                               onChange={e => updateStep(i, { title: e.target.value })}
+                               placeholder="Titolo step (es. Enumera template vulnerabili)"
+                               className="step-editor-input"/>
+                        <button type="button" onClick={() => removeStep(i)}
+                                className="step-editor-remove"
+                                title="Rimuovi step">
+                          <Icon name="x" size={11}/>
+                        </button>
+                      </div>
+
+                      <div className={`step-editor-collapse ${isOpen ? 'open' : ''}`}>
+                      <div className="step-editor-body">
+                        <StepCommandEditor step={s} allCommands={allCommands} catIds={catIds}
+                                           onChange={(patch) => updateStep(i, patch)} />
+
+                        <div className="modal-section-title"><Icon name="check" size={12}/> Verify</div>
+                        <textarea value={s.verify || ''}
+                               onChange={e => updateStep(i, { verify: e.target.value })}
+                               placeholder="es. `Got hash for administrator@…`"
+                               rows={3}
+                               className="step-editor-input mono"/>
+
+                        <div className="step-editor-sub">
+                          <div className="step-editor-sub-head">
+                            <span className="step-editor-sub-title">
+                              <Icon name="edit" size={11}/>
+                              Override parametri comando (opzionale)
+                            </span>
+                            <button type="button" onClick={() => addOverride(i)} className="step-editor-add-mini"
+                                    disabled={overridesArr.length >= overrideKeys.length}
+                                    title={overridesArr.length >= overrideKeys.length ? 'Ogni parametro può avere un solo override' : ''}>
+                              <Icon name="plus" size={10}/> Override
+                            </button>
+                          </div>
+                          {stepCmd && overrideKeys.length > 0 && (
+                            <div className="override-hint">
+                              Param di <strong>{stepCmd.name}</strong>{s.variant ? ' (variante)' : ''}: <code>{overrideKeys.join('  ')}</code>
+                            </div>
+                          )}
+                          {overridesArr.length > 0 && (
+                            <div className="override-editor-grid">
+                              <span className="capture-editor-h">Param key</span>
+                              <span className="capture-editor-h">Valore</span>
+                              <span/>
+                              {overridesArr.map((o, oi) => (
+                                <React.Fragment key={oi}>
+                                  <select value={o.key}
+                                          onChange={e => updateOverride(i, oi, { key: e.target.value })}
+                                          className="step-editor-input mono">
+                                    <option value="">— param —</option>
+                                    {overrideKeys
+                                      .filter(k => k === o.key || !overridesArr.some((x, xi) => xi !== oi && x.key === k))
+                                      .map(k => <option key={k} value={k}>{k}</option>)}
+                                    {o.key && !overrideKeys.includes(o.key) && <option value={o.key}>{o.key}</option>}
+                                  </select>
+                                  <input value={o.value}
+                                         placeholder="administrator  oppure  <hash>"
+                                         onChange={e => updateOverride(i, oi, { value: e.target.value })}
+                                         className="step-editor-input mono"/>
+                                  <button type="button" onClick={() => removeOverride(i, oi)}
+                                          className="step-editor-remove" title="Rimuovi override">
+                                    <Icon name="x" size={10}/>
+                                  </button>
+                                </React.Fragment>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        {stepCmd && overrideKeys.length > 0 && (
-                          <div className="override-hint">
-                            Param di <strong>{stepCmd.name}</strong>{s.variant ? ' (variante)' : ''}: <code>{overrideKeys.join('  ')}</code>
-                          </div>
-                        )}
-                        {overridesArr.length > 0 && (
-                          <div className="override-editor-grid">
-                            <span className="capture-editor-h">Param key</span>
-                            <span className="capture-editor-h">Valore</span>
-                            <span/>
-                            {overridesArr.map((o, oi) => (
-                              <React.Fragment key={oi}>
-                                <select value={o.key}
-                                        onChange={e => updateOverride(i, oi, { key: e.target.value })}
-                                        className="step-editor-input mono">
-                                  <option value="">— param —</option>
-                                  {overrideKeys
-                                    .filter(k => k === o.key || !overridesArr.some((x, xi) => xi !== oi && x.key === k))
-                                    .map(k => <option key={k} value={k}>{k}</option>)}
-                                  {o.key && !overrideKeys.includes(o.key) && <option value={o.key}>{o.key}</option>}
-                                </select>
-                                <input value={o.value}
-                                       placeholder="administrator  oppure  <hash>"
-                                       onChange={e => updateOverride(i, oi, { value: e.target.value })}
-                                       className="step-editor-input mono"/>
-                                <button type="button" onClick={() => removeOverride(i, oi)}
-                                        className="step-editor-remove" title="Rimuovi override">
-                                  <Icon name="x" size={10}/>
-                                </button>
-                              </React.Fragment>
-                            ))}
-                          </div>
-                        )}
+                      </div>
                       </div>
                     </div>
-                    </div>
-                  </div>
-                );
-              })}
-              <button className="btn" type="button" onClick={addStep}
-                      style={{ marginTop: 8, alignSelf: 'flex-start' }}>
-                <Icon name="plus" size={12}/> Aggiungi step
-              </button>
-            </div>
+                  );
+                })}
+                <button className="btn" type="button" onClick={addStep}
+                        style={{ marginTop: 8, alignSelf: 'flex-start' }}>
+                  <Icon name="plus" size={12}/> Aggiungi step
+                </button>
+              </div>
+            </>)}
           </div>
         </div>
         <div className="modal-footer">
